@@ -1,0 +1,40 @@
+"""
+natal_profile.py
+Builds a structured natal profile using chart + numerology + rule engine.
+"""
+from __future__ import annotations
+
+from datetime import datetime
+from typing import Dict
+
+from ..chart_service import build_natal_chart
+from ..rule_engine import RuleEngine
+from ..numerology_engine import build_numerology
+
+
+def build_natal_profile(profile: Dict) -> Dict:
+    chart = build_natal_chart(profile)
+    numerology = build_numerology(profile["name"], profile["date_of_birth"], datetime.utcnow())
+    engine = RuleEngine()
+    general = engine.evaluate("natal_general", chart, numerology=numerology)
+    love = engine.evaluate("natal_love", chart, numerology=numerology)
+    career = engine.evaluate("natal_career", chart, numerology=numerology)
+    return {
+        "metadata": chart["metadata"],
+        "sections": [
+            _section("Overview", general),
+            _section("Love & Relationships", love),
+            _section("Career & Money", career),
+        ],
+        "numerology": numerology,
+        "chart": chart,
+    }
+
+
+def _section(title: str, result: Dict) -> Dict:
+    return {
+        "title": title,
+        "topic_scores": result["topic_scores"],
+        "highlights": [b["source"] + ": " + b["text"] for b in result["selected_blocks"][:3]],
+        "top_themes": result["top_themes"],
+    }
