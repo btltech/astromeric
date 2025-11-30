@@ -72,7 +72,7 @@ python -m uvicorn backend.app.main:app --host 0.0.0.0 --port 8000 --reload
 1. Push repo to GitHub.
 2. Create new Railway service → Deploy from repo.
 3. Set start command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`.
-4. Env (optional): `REDIS_URL` for caching; `APP_TZ` for timezone; `LOG_LEVEL` for verbosity; `RATE_LIMIT_PER_MIN` for rate limiting.
+4. Env (optional): `REDIS_URL` for caching; `APP_TZ` for timezone; `LOG_LEVEL` for verbosity; `RATE_LIMIT_PER_MIN` for rate limiting. For tighter CORS in production set `ALLOW_ORIGINS` to a comma-separated list of allowed origins (e.g., `https://your-frontend.com`).
 5. Grab the public URL.
 
 ## Frontend (Vite + React + drei)

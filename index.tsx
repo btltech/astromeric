@@ -12,6 +12,18 @@ const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8000
 // Force simulation for the preview environment since Python backend isn't running in browser
 const FORCE_SIMULATION = false; 
 
+// Unregister any service worker during local development to avoid stale caches.
+if (typeof window !== 'undefined' && (import.meta as any).env?.DEV && 'serviceWorker' in navigator) {
+  try {
+    navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(r => r.unregister()));
+    if ('caches' in window) {
+      caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
+    }
+  } catch (e) {
+    // ignore
+  }
+}
+
 // --- TYPES ---
 interface Profile {
   id: number;

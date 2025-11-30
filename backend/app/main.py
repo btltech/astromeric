@@ -18,13 +18,33 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Dict, Optional
 
+import os
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from .products import build_forecast, build_natal_profile, build_compatibility
 from .chart_service import EPHEMERIS_PATH, HAS_FLATLIB  # type: ignore
 
 api = FastAPI(title="AstroNumerology API", version="3.0.0")
+
+# Expose app alias for uvicorn compatibility if using backend.app.main:app
+app = api
+
+# CORS config; allow origins via ALLOW_ORIGINS env var (comma-separated)
+allow_origins_env = os.getenv("ALLOW_ORIGINS", "")
+if allow_origins_env:
+    allow_origins = [o.strip() for o in allow_origins_env.split(",") if o.strip()]
+else:
+    allow_origins = ["*"]
+
+api.add_middleware(
+    CORSMiddleware,
+    allow_origins=allow_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 class Location(BaseModel):
@@ -35,7 +55,7 @@ class Location(BaseModel):
 
 class ProfilePayload(BaseModel):
     name: str
-    date_of_birth: str = Field(..., regex=r"\d{4}-\d{2}-\d{2}")
+    date_of_birth: str = Field(..., pattern=r"\d{4}-\d{2}-\d{2}")
     time_of_birth: Optional[str] = None
     location: Optional[Location] = None
     house_system: Optional[str] = "Placidus"
