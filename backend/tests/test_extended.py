@@ -1,34 +1,34 @@
 """Tests for extended numerology, compatibility, and glossary modules."""
 
-import sys
 import os
+import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from app.engine.numerology_extended import (
-    get_full_numerology_profile,
-    analyze_name,
-    calculate_expression_number,
-    calculate_soul_urge_number,
-    calculate_personality_number,
-    calculate_maturity_number,
-    calculate_personal_year,
-    calculate_personal_month,
-    calculate_personal_day,
-    calculate_pinnacles,
-    calculate_challenges,
-)
 from app.engine.compatibility import (
     calculate_astro_compatibility,
-    calculate_numerology_compatibility,
     calculate_combined_compatibility,
+    calculate_numerology_compatibility,
 )
 from app.engine.glossary import (
-    get_sign_info,
-    get_number_explanation,
-    search_glossary,
-    ZODIAC_GLOSSARY,
     NUMEROLOGY_GLOSSARY,
+    ZODIAC_GLOSSARY,
+    get_number_explanation,
+    get_sign_info,
+    search_glossary,
+)
+from app.engine.numerology_extended import (
+    analyze_name,
+    calculate_challenges,
+    calculate_expression_number,
+    calculate_maturity_number,
+    calculate_personal_day,
+    calculate_personal_month,
+    calculate_personal_year,
+    calculate_personality_number,
+    calculate_pinnacles,
+    calculate_soul_urge_number,
+    get_full_numerology_profile,
 )
 
 

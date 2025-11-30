@@ -1,7 +1,8 @@
 """Compatibility calculations for astrology and numerology."""
 
 from typing import Dict
-from .astrology import get_zodiac_sign, get_element
+
+from .astrology import get_element, get_zodiac_sign
 from .numerology import calculate_life_path_number
 from .numerology_extended import calculate_expression_number, calculate_soul_urge_number
 

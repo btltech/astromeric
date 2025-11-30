@@ -3,11 +3,11 @@ from __future__ import annotations
 from typing import Dict, Optional
 
 from ..charts.engine import ChartEngine
-from ..rules import RuleEngine, RuleResult
 from ..compatibility import calculate_numerology_compatibility
+from ..rules import RuleEngine, RuleResult
+from .natal import _build_numerology, _section_from_result
 from .types import ProfileInput
 from .utils import build_chart_request
-from .natal import _build_numerology, _section_from_result
 
 
 def _compat_summary(result: RuleResult) -> Dict:

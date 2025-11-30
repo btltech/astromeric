@@ -9,7 +9,6 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Dict
 
-
 LETTER_VALUES = {
     **{c: i for i, c in enumerate("abcdefghijklmnopqrstuvwxyz", start=1)},
 }

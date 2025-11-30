@@ -1,11 +1,11 @@
-import sys
 import os
+import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from app.engine.astrology import get_zodiac_sign
-from app.engine.numerology import calculate_life_path_number, calculate_name_number
 from app.engine.fusion import fuse_prediction
+from app.engine.numerology import calculate_life_path_number, calculate_name_number
 
 
 def test_zodiac_boundaries():

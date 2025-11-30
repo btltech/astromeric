@@ -5,22 +5,22 @@ Builds a compatibility report using synastry and numerology between two profiles
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict
 
 from ..chart_service import build_natal_chart
-from ..rule_engine import RuleEngine
 from ..numerology_engine import build_numerology
+from ..rule_engine import RuleEngine
 
 
 def build_compatibility(person_a: Dict, person_b: Dict) -> Dict:
     chart_a = build_natal_chart(person_a)
     chart_b = build_natal_chart(person_b)
     numerology_a = build_numerology(
-        person_a["name"], person_a["date_of_birth"], datetime.utcnow()
+        person_a["name"], person_a["date_of_birth"], datetime.now(timezone.utc)
     )
     numerology_b = build_numerology(
-        person_b["name"], person_b["date_of_birth"], datetime.utcnow()
+        person_b["name"], person_b["date_of_birth"], datetime.now(timezone.utc)
     )
     engine = RuleEngine()
     result = engine.evaluate(

@@ -5,16 +5,16 @@ Builds daily/weekly forecasts using transit-to-natal aspects, numerology cycles,
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, List
 
 from ..chart_service import build_natal_chart, build_transit_chart
-from ..rule_engine import RuleEngine
 from ..numerology_engine import build_numerology
+from ..rule_engine import RuleEngine
 
 
 def build_forecast(profile: Dict, scope: str = "daily") -> Dict:
-    anchor = datetime.utcnow()
+    anchor = datetime.now(timezone.utc)
     natal = build_natal_chart(profile)
     transit = build_transit_chart(profile, anchor)
     numerology = build_numerology(profile["name"], profile["date_of_birth"], anchor)

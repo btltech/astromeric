@@ -4,14 +4,8 @@ import hashlib
 import os
 from typing import Dict, List, Optional, Tuple
 
-from .models import (
-    Aspect,
-    Chart,
-    ChartRequest,
-    HouseCusp,
-    PlanetPosition,
-)
 from ..astrology import get_zodiac_sign
+from .models import Aspect, Chart, ChartRequest, HouseCusp, PlanetPosition
 
 try:
     from flatlib import const as fl_const

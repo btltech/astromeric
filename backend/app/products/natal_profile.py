@@ -5,18 +5,18 @@ Builds a structured natal profile using chart + numerology + rule engine.
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict
 
 from ..chart_service import build_natal_chart
-from ..rule_engine import RuleEngine
 from ..numerology_engine import build_numerology
+from ..rule_engine import RuleEngine
 
 
 def build_natal_profile(profile: Dict) -> Dict:
     chart = build_natal_chart(profile)
     numerology = build_numerology(
-        profile["name"], profile["date_of_birth"], datetime.utcnow()
+        profile["name"], profile["date_of_birth"], datetime.now(timezone.utc)
     )
     engine = RuleEngine()
     general = engine.evaluate("natal_general", chart, numerology=numerology)

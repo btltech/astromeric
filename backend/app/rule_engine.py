@@ -16,13 +16,12 @@ from __future__ import annotations
 from typing import Dict, List, Optional
 
 from .interpretation import (
-    PLANET_SIGN_MEANINGS,
-    PLANET_HOUSE_MEANINGS,
     ASPECT_MEANINGS,
     HOUSE_THEMES,
     NUMEROLOGY_MEANINGS,
+    PLANET_HOUSE_MEANINGS,
+    PLANET_SIGN_MEANINGS,
 )
-
 
 ANGULAR_HOUSES = {1, 4, 7, 10}
 

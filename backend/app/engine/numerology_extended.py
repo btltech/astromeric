@@ -1,7 +1,7 @@
 """Extended numerology calculations: Expression, Soul Urge, Personality, Maturity, Cycles, Pinnacles, Challenges."""
 
-from typing import Dict, List
 from datetime import datetime
+from typing import Dict, List
 
 # Pythagorean vowels for Soul Urge
 VOWELS = set("aeiou")

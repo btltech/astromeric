@@ -1,26 +1,26 @@
 from __future__ import annotations
 
-from typing import Dict, Optional
 import hashlib
+from typing import Dict, Optional
 
 from ..charts.engine import ChartEngine
-from ..rules import RuleEngine, RuleResult
-from ..numerology_extended import (
-    calculate_personal_year,
-    calculate_personal_month,
-    calculate_personal_day,
-)
 from ..interpretation import (
-    ASPECT_TEMPLATES,
-    HOUSE_BLURBS,
-    PLANET_TONES,
-    NUMEROLOGY_OVERLAYS,
     ACTIONS,
     AFFIRMATIONS,
+    ASPECT_TEMPLATES,
+    HOUSE_BLURBS,
+    NUMEROLOGY_OVERLAYS,
+    PLANET_TONES,
 )
+from ..numerology_extended import (
+    calculate_personal_day,
+    calculate_personal_month,
+    calculate_personal_year,
+)
+from ..rules import RuleEngine, RuleResult
+from .natal import _build_numerology
 from .types import ProfileInput
 from .utils import build_chart_request, pick_scope_date
-from .natal import _build_numerology
 
 
 def _summarise(result: RuleResult, scope: str) -> Dict:

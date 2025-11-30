@@ -1,16 +1,17 @@
+import os
+from datetime import datetime
+
 from sqlalchemy import (
-    create_engine,
     Column,
+    DateTime,
+    ForeignKey,
     Integer,
     String,
-    DateTime,
     Text,
-    ForeignKey,
+    create_engine,
 )
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, relationship
-from datetime import datetime
-import os
+from sqlalchemy.orm import relationship, sessionmaker
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./astronumerology.db")
 

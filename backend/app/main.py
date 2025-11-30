@@ -16,16 +16,16 @@ Deployment notes:
 
 from __future__ import annotations
 
-from datetime import datetime
+import os
+from datetime import datetime, timezone
 from typing import Dict, Optional
 
-import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
-from .products import build_forecast, build_natal_profile, build_compatibility
 from .chart_service import EPHEMERIS_PATH, HAS_FLATLIB  # type: ignore
+from .products import build_compatibility, build_forecast, build_natal_profile
 
 api = FastAPI(title="AstroNumerology API", version="3.0.0")
 
@@ -123,5 +123,5 @@ def health():
         "status": "ok",
         "ephemeris_path": EPHEMERIS_PATH,
         "flatlib_available": bool(HAS_FLATLIB),
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
     }

@@ -10,14 +10,18 @@ import './styles.css';
 // Casting import.meta to any to avoid TypeScript error about 'env' property
 const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8000';
 // Force simulation for the preview environment since Python backend isn't running in browser
-const FORCE_SIMULATION = false; 
+const FORCE_SIMULATION = false;
 
 // Unregister any service worker during local development to avoid stale caches.
-if (typeof window !== 'undefined' && (import.meta as any).env?.DEV && 'serviceWorker' in navigator) {
+if (
+  typeof window !== 'undefined' &&
+  (import.meta as any).env?.DEV &&
+  'serviceWorker' in navigator
+) {
   try {
-    navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(r => r.unregister()));
+    navigator.serviceWorker.getRegistrations().then((regs) => regs.forEach((r) => r.unregister()));
     if ('caches' in window) {
-      caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
+      caches.keys().then((keys) => keys.forEach((k) => caches.delete(k)));
     }
   } catch (e) {
     // ignore
@@ -74,50 +78,67 @@ interface CompatibilityResult {
 
 // --- CLIENT-SIDE SIMULATION ENGINE (FALLBACK) ---
 const simulateBackend = async (profileId: number, scope: string): Promise<PredictionData> => {
-  await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate network delay
+  await new Promise((resolve) => setTimeout(resolve, 1500)); // Simulate network delay
 
   // Mock profile data
   const profiles = [
-    { id: 1, name: "John Doe", date_of_birth: "1990-01-01" },
-    { id: 2, name: "Jane Smith", date_of_birth: "1985-05-15" }
+    { id: 1, name: 'John Doe', date_of_birth: '1990-01-01' },
+    { id: 2, name: 'Jane Smith', date_of_birth: '1985-05-15' },
   ];
-  const profile = profiles.find(p => p.id === profileId) || profiles[0];
+  const profile = profiles.find((p) => p.id === profileId) || profiles[0];
   const date = new Date(profile.date_of_birth);
   const day = date.getDate();
   const month = date.getMonth() + 1;
-  
+
   // Basic Astrology Logic
-  let sign = "Capricorn";
-  if ((month === 1 && day >= 20) || (month === 2 && day <= 18)) sign = "Aquarius";
+  let sign = 'Capricorn';
+  if ((month === 1 && day >= 20) || (month === 2 && day <= 18)) sign = 'Aquarius';
   // ... (same as before)
 
   const elements: Record<string, string> = {
-    Aries: "Fire", Leo: "Fire", Sagittarius: "Fire",
-    Taurus: "Earth", Virgo: "Earth", Capricorn: "Earth",
-    Gemini: "Air", Libra: "Air", Aquarius: "Air",
-    Cancer: "Water", Scorpio: "Water", Pisces: "Water"
+    Aries: 'Fire',
+    Leo: 'Fire',
+    Sagittarius: 'Fire',
+    Taurus: 'Earth',
+    Virgo: 'Earth',
+    Capricorn: 'Earth',
+    Gemini: 'Air',
+    Libra: 'Air',
+    Aquarius: 'Air',
+    Cancer: 'Water',
+    Scorpio: 'Water',
+    Pisces: 'Water',
   };
 
   // Basic Numerology Logic
   const sumDigits = (n: number): number => {
     while (n > 9 && n !== 11 && n !== 22 && n !== 33) {
-      n = n.toString().split('').reduce((a, b) => a + parseInt(b), 0);
+      n = n
+        .toString()
+        .split('')
+        .reduce((a, b) => a + parseInt(b), 0);
     }
     return n;
   };
   const lifePath = sumDigits(date.getFullYear() + month + day);
-  const nameNum = sumDigits(profile.name.toLowerCase().replace(/[^a-z]/g, '').split('').reduce((acc, char) => acc + (char.charCodeAt(0) - 96), 0));
+  const nameNum = sumDigits(
+    profile.name
+      .toLowerCase()
+      .replace(/[^a-z]/g, '')
+      .split('')
+      .reduce((acc, char) => acc + (char.charCodeAt(0) - 96), 0)
+  );
 
   // Pseudo-random seed
-  const luckyNums = Array.from({length: 4}, () => Math.floor(Math.random() * 99) + 1);
-  const colors = ["#FF5252", "#448AFF", "#69F0AE", "#FFD740", "#E040FB", "#536DFE"];
+  const luckyNums = Array.from({ length: 4 }, () => Math.floor(Math.random() * 99) + 1);
+  const colors = ['#FF5252', '#448AFF', '#69F0AE', '#FFD740', '#E040FB', '#536DFE'];
 
   const tracks = {
     general: `Overview: Embrace the flow of ${elements[sign]} energy as a ${sign}.`,
-    love: "In matters of the heart, communication is key. Be open to new possibilities.",
-    money: "Financial prospects involve careful planning. Make informed decisions.",
-    health: "Wellbeing focuses on balance. Prioritize rest and nourishment.",
-    spiritual: "Personal growth calls for reflection. Trust your intuition."
+    love: 'In matters of the heart, communication is key. Be open to new possibilities.',
+    money: 'Financial prospects involve careful planning. Make informed decisions.',
+    health: 'Wellbeing focuses on balance. Prioritize rest and nourishment.',
+    spiritual: 'Personal growth calls for reflection. Trust your intuition.',
   };
 
   const ratings = {
@@ -125,79 +146,92 @@ const simulateBackend = async (profileId: number, scope: string): Promise<Predic
     love: Math.floor(Math.random() * 2) + 3,
     money: Math.floor(Math.random() * 3) + 2,
     health: Math.floor(Math.random() * 2) + 4,
-    spiritual: Math.floor(Math.random() * 2) + 3
+    spiritual: Math.floor(Math.random() * 2) + 3,
   };
 
   return {
     scope,
     date: new Date().toISOString().split('T')[0],
-    summary: { headline: `Today's cosmic alignment favors ${sign} with Life Path ${lifePath} energy.` },
+    summary: {
+      headline: `Today's cosmic alignment favors ${sign} with Life Path ${lifePath} energy.`,
+    },
     sections: [
-      { title: "Overview", rating: ratings.general, highlights: [tracks.general] },
-      { title: "Love & Relationships", rating: ratings.love, highlights: [tracks.love] },
-      { title: "Work & Money", rating: ratings.money, highlights: [tracks.money] },
-      { title: "Emotional / Spiritual", rating: ratings.spiritual, highlights: [tracks.spiritual] },
-      { title: "Actions & Advice", highlights: ["Trust your intuition; it knows the way."] },
+      { title: 'Overview', rating: ratings.general, highlights: [tracks.general] },
+      { title: 'Love & Relationships', rating: ratings.love, highlights: [tracks.love] },
+      { title: 'Work & Money', rating: ratings.money, highlights: [tracks.money] },
+      { title: 'Emotional / Spiritual', rating: ratings.spiritual, highlights: [tracks.spiritual] },
+      { title: 'Actions & Advice', highlights: ['Trust your intuition; it knows the way.'] },
     ],
     sign,
     life_path_number: lifePath,
-    element: elements[sign] || "Unknown",
+    element: elements[sign] || 'Unknown',
   };
 };
 
 // --- 3D COMPONENTS ---
 
-const ELEMENT_STYLES: Record<string, { 
-  primary: string; 
-  secondary: string; 
-  speed: number; 
-  rotationSpeed: number;
-  floatIntensity: number; 
-  glow: string;
-}> = {
-  Fire: { 
-    primary: '#ff5e57', 
-    secondary: '#ffc048', 
-    speed: 3, 
-    rotationSpeed: 0.1, 
-    floatIntensity: 1,
-    glow: '#ff9472'
-  },
-  Water: { 
-    primary: '#4bcffa', 
-    secondary: '#575fcf', 
-    speed: 1.5, 
-    rotationSpeed: 0.02, 
-    floatIntensity: 2,
-    glow: '#6dd5ed'
-  },
-  Earth: { 
-    primary: '#05c46b', 
-    secondary: '#ffd32a', 
-    speed: 1, 
-    rotationSpeed: 0.01, 
-    floatIntensity: 0.5,
-    glow: '#88d498'
-  },
-  Air: { 
-    primary: '#d2dae2', 
-    secondary: '#0fb9b1', 
-    speed: 4, 
-    rotationSpeed: 0.08, 
-    floatIntensity: 1.5,
-    glow: '#c8e0ff'
-  },
-  Default: { 
-    primary: '#88c0d0', 
-    secondary: '#bf616a', 
-    speed: 2, 
-    rotationSpeed: 0.05, 
-    floatIntensity: 0.6,
-    glow: '#88c0d0'
+const ELEMENT_STYLES: Record<
+  string,
+  {
+    primary: string;
+    secondary: string;
+    speed: number;
+    rotationSpeed: number;
+    floatIntensity: number;
+    glow: string;
   }
+> = {
+  Fire: {
+    primary: '#ff5e57',
+    secondary: '#ffc048',
+    speed: 3,
+    rotationSpeed: 0.1,
+    floatIntensity: 1,
+    glow: '#ff9472',
+  },
+  Water: {
+    primary: '#4bcffa',
+    secondary: '#575fcf',
+    speed: 1.5,
+    rotationSpeed: 0.02,
+    floatIntensity: 2,
+    glow: '#6dd5ed',
+  },
+  Earth: {
+    primary: '#05c46b',
+    secondary: '#ffd32a',
+    speed: 1,
+    rotationSpeed: 0.01,
+    floatIntensity: 0.5,
+    glow: '#88d498',
+  },
+  Air: {
+    primary: '#d2dae2',
+    secondary: '#0fb9b1',
+    speed: 4,
+    rotationSpeed: 0.08,
+    floatIntensity: 1.5,
+    glow: '#c8e0ff',
+  },
+  Default: {
+    primary: '#88c0d0',
+    secondary: '#bf616a',
+    speed: 2,
+    rotationSpeed: 0.05,
+    floatIntensity: 0.6,
+    glow: '#88c0d0',
+  },
 };
 
-function ZodiacRing({ element = 'Default', isMobile = false, tilt = 0 }: { element?: string, isMobile?: boolean, tilt?: number }) {
+function ZodiacRing({
+  element = 'Default',
+  isMobile = false,
+  tilt = 0,
+}: {
+  element?: string;
+  isMobile?: boolean;
+  tilt?: number;
+}) {
   const meshRef1 = useRef<THREE.Mesh>(null);
   const meshRef2 = useRef<THREE.Mesh>(null);
   const materialRef1 = useRef<THREE.MeshStandardMaterial>(null);
@@ -216,8 +250,9 @@ function ZodiacRing({ element = 'Default', isMobile = false, tilt = 0 }: { eleme
       // Rotation logic
       meshRef1.current.rotation.z += delta * style.rotationSpeed;
       // Add dynamic 'wobble' to rotation X based on element speed
-      meshRef1.current.rotation.x = Math.sin(time * 0.3) * 0.15 + Math.sin(time * style.speed * 0.2) * 0.05 + tiltClamped;
-      
+      meshRef1.current.rotation.x =
+        Math.sin(time * 0.3) * 0.15 + Math.sin(time * style.speed * 0.2) * 0.05 + tiltClamped;
+
       // Subtle pulsing effect linked to element speed
       const pulse = 1 + Math.sin(time * 0.5 * style.speed) * (0.02 * pulseFactor);
       meshRef1.current.scale.setScalar(pulse);
@@ -226,7 +261,8 @@ function ZodiacRing({ element = 'Default', isMobile = false, tilt = 0 }: { eleme
     if (meshRef2.current) {
       meshRef2.current.rotation.z -= delta * (style.rotationSpeed * 0.8);
       // Add dynamic 'wobble' to rotation Y based on element speed
-      meshRef2.current.rotation.y = Math.cos(time * 0.2) * 0.1 + Math.cos(time * style.speed * 0.2) * 0.05 + tiltClamped;
+      meshRef2.current.rotation.y =
+        Math.cos(time * 0.2) * 0.1 + Math.cos(time * style.speed * 0.2) * 0.05 + tiltClamped;
 
       // Subtle pulsing effect (offset phase)
       const pulse = 1 + Math.cos(time * 0.4 * style.speed) * (0.02 * pulseFactor);
@@ -255,32 +291,44 @@ function ZodiacRing({ element = 'Default', isMobile = false, tilt = 0 }: { eleme
       {/* Outer Ring */}
       <mesh ref={meshRef1} position={[0, 0, -2]}>
         <torusGeometry args={[3.5, 0.02, 64, 100]} />
-        <meshStandardMaterial ref={materialRef1} color="#88c0d0" emissive="#88c0d0" emissiveIntensity={0.5} wireframe />
+        <meshStandardMaterial
+          ref={materialRef1}
+          color="#88c0d0"
+          emissive="#88c0d0"
+          emissiveIntensity={0.5}
+          wireframe
+        />
       </mesh>
-      
+
       {/* Inner Ring */}
       <mesh ref={meshRef2} rotation={[0, 0, 1]}>
-         <torusGeometry args={[2.5, 0.015, 64, 100]} />
-         <meshStandardMaterial ref={materialRef2} color="#bf616a" emissive="#bf616a" emissiveIntensity={0.3} wireframe />
+        <torusGeometry args={[2.5, 0.015, 64, 100]} />
+        <meshStandardMaterial
+          ref={materialRef2}
+          color="#bf616a"
+          emissive="#bf616a"
+          emissiveIntensity={0.3}
+          wireframe
+        />
       </mesh>
 
       {/* Glow backplate influenced by element */}
-      <mesh ref={glowRef} position={[0,0,-3]} rotation={[Math.PI / 2, 0, 0]}>
+      <mesh ref={glowRef} position={[0, 0, -3]} rotation={[Math.PI / 2, 0, 0]}>
         <circleGeometry args={[5, 64]} />
         <meshBasicMaterial color={style.glow} transparent opacity={0.15} />
       </mesh>
 
       {/* Magical Particles */}
-      <Sparkles 
+      <Sparkles
         count={(() => {
           const base = element === 'Air' || element === 'Fire' ? 80 : 40;
           return isMobile ? Math.max(20, Math.floor(base * 0.5)) : base;
-        })()} 
-        scale={isMobile ? 4 : 6} 
-        size={isMobile ? 3 : element === 'Earth' ? 6 : 4} 
-        speed={style.speed * 0.2} 
-        opacity={0.5} 
-        color={style.primary} 
+        })()}
+        scale={isMobile ? 4 : 6}
+        size={isMobile ? 3 : element === 'Earth' ? 6 : 4}
+        speed={style.speed * 0.2}
+        opacity={0.5}
+        color={style.primary}
       />
     </Float>
   );
@@ -297,10 +345,10 @@ function CosmicBackground({ element }: { element?: string }) {
     if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', ' '].includes(e.key)) {
       e.preventDefault();
     }
-    if (e.key === 'ArrowLeft') setKeyboardTilt(t => Math.max(-0.35, t - 0.05));
-    if (e.key === 'ArrowRight') setKeyboardTilt(t => Math.min(0.35, t + 0.05));
-    if (e.key === 'ArrowUp') setKeyboardTilt(t => Math.min(0.35, t + 0.02));
-    if (e.key === 'ArrowDown') setKeyboardTilt(t => Math.max(-0.35, t - 0.02));
+    if (e.key === 'ArrowLeft') setKeyboardTilt((t) => Math.max(-0.35, t - 0.05));
+    if (e.key === 'ArrowRight') setKeyboardTilt((t) => Math.min(0.35, t + 0.05));
+    if (e.key === 'ArrowUp') setKeyboardTilt((t) => Math.min(0.35, t + 0.02));
+    if (e.key === 'ArrowDown') setKeyboardTilt((t) => Math.max(-0.35, t - 0.02));
     if (e.key === ' ') setKeyboardTilt(0);
   };
 
@@ -326,7 +374,15 @@ function CosmicBackground({ element }: { element?: string }) {
         <fog attach="fog" args={['#0b0c15', 5, 20]} />
         <ambientLight intensity={0.5} />
         <pointLight position={[10, 10, 10]} intensity={1} />
-        <Stars radius={100} depth={50} count={starCount} factor={starFactor} saturation={0} fade speed={1} />
+        <Stars
+          radius={100}
+          depth={50}
+          count={starCount}
+          factor={starFactor}
+          saturation={0}
+          fade
+          speed={1}
+        />
         <ZodiacRing element={element} isMobile={isMobile} tilt={keyboardTilt + pointerTilt} />
       </Canvas>
     </div>
@@ -335,19 +391,19 @@ function CosmicBackground({ element }: { element?: string }) {
 
 // --- UI COMPONENTS ---
 
-function FortuneForm({ onSubmit, isLoading }: { onSubmit: (d: any) => void, isLoading: boolean }) {
+function FortuneForm({ onSubmit, isLoading }: { onSubmit: (d: any) => void; isLoading: boolean }) {
   const [formData, setFormData] = useState({
     name: '',
     date_of_birth: '',
     time_of_birth: '',
-    place_of_birth: ''
+    place_of_birth: '',
   });
-  const [errors, setErrors] = useState<{[k:string]:string}>({});
+  const [errors, setErrors] = useState<{ [k: string]: string }>({});
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // Client-side validation
-    const newErrors: {[k:string]:string} = {};
+    const newErrors: { [k: string]: string } = {};
     if (!formData.name.trim()) newErrors.name = 'Please enter your full name.';
     if (!formData.date_of_birth) newErrors.date_of_birth = 'Please provide your date of birth.';
     else {
@@ -366,44 +422,44 @@ function FortuneForm({ onSubmit, isLoading }: { onSubmit: (d: any) => void, isLo
       <form onSubmit={handleSubmit}>
         <div className="form-group">
           <label>Full Name</label>
-          <input 
-            type="text" 
-            required 
+          <input
+            type="text"
+            required
             placeholder="e.g. Jane Doe"
             value={formData.name}
-            onChange={e => setFormData({...formData, name: e.target.value})}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
           />
-            {errors.name && <div className="error-text">{errors.name}</div>}
+          {errors.name && <div className="error-text">{errors.name}</div>}
         </div>
         <div className="form-group">
           <label>Date of Birth</label>
-          <input 
-            type="date" 
-            required 
+          <input
+            type="date"
+            required
             value={formData.date_of_birth}
-            onChange={e => setFormData({...formData, date_of_birth: e.target.value})}
+            onChange={(e) => setFormData({ ...formData, date_of_birth: e.target.value })}
           />
-            {errors.date_of_birth && <div className="error-text">{errors.date_of_birth}</div>}
+          {errors.date_of_birth && <div className="error-text">{errors.date_of_birth}</div>}
         </div>
         <div className="form-group">
           <label>Time of Birth (Optional)</label>
-          <input 
-            type="time" 
+          <input
+            type="time"
             value={formData.time_of_birth}
-            onChange={e => setFormData({...formData, time_of_birth: e.target.value})}
+            onChange={(e) => setFormData({ ...formData, time_of_birth: e.target.value })}
           />
         </div>
         <div className="form-group">
           <label>Place of Birth (Optional)</label>
-          <input 
-            type="text" 
+          <input
+            type="text"
             placeholder="City, Country"
             value={formData.place_of_birth}
-            onChange={e => setFormData({...formData, place_of_birth: e.target.value})}
+            onChange={(e) => setFormData({ ...formData, place_of_birth: e.target.value })}
           />
         </div>
         <button type="submit" className="btn-primary" disabled={isLoading}>
-          {isLoading ? 'Reading the Stars...' : 'Get Today\'s Prediction'}
+          {isLoading ? 'Reading the Stars...' : "Get Today's Prediction"}
         </button>
       </form>
     </div>
@@ -415,13 +471,15 @@ const styleEl = document.createElement('style');
 styleEl.innerHTML = `.error-text{color:#ffbcbc;font-size:0.85rem;margin-top:6px}`;
 document.head.appendChild(styleEl);
 
-function FortuneResult({ data, onReset }: { data: PredictionData, onReset: () => void }) {
-  const RatingBar = ({ value, label }: { value: number, label: string }) => (
+function FortuneResult({ data, onReset }: { data: PredictionData; onReset: () => void }) {
+  const RatingBar = ({ value, label }: { value: number; label: string }) => (
     <div className="rating-row">
       <span>{label}</span>
       <div className="stars">
         {[...Array(5)].map((_, i) => (
-          <span key={i} className={i < value ? "filled" : ""}>★</span>
+          <span key={i} className={i < value ? 'filled' : ''}>
+            ★
+          </span>
         ))}
       </div>
     </div>
@@ -435,9 +493,13 @@ function FortuneResult({ data, onReset }: { data: PredictionData, onReset: () =>
         {data.element === 'Air' && '🌬️'}
         {data.element === 'Earth' && '🌱'}
       </div>
-      <h1 style={{textAlign: 'center', marginBottom: '0.5rem'}}>{data.scope.charAt(0).toUpperCase() + data.scope.slice(1)} Reading</h1>
+      <h1 style={{ textAlign: 'center', marginBottom: '0.5rem' }}>
+        {data.scope.charAt(0).toUpperCase() + data.scope.slice(1)} Reading
+      </h1>
       {data.sign && data.life_path_number && (
-        <h3 style={{textAlign: 'center', color: '#88c0d0', fontWeight: 300, marginBottom: '2rem'}}>
+        <h3
+          style={{ textAlign: 'center', color: '#88c0d0', fontWeight: 300, marginBottom: '2rem' }}
+        >
           {data.sign} • Life Path {data.life_path_number}
         </h3>
       )}
@@ -453,7 +515,9 @@ function FortuneResult({ data, onReset }: { data: PredictionData, onReset: () =>
           {data.sections.map((section, idx) => (
             <div key={idx} className="track-item">
               <h3>{section.title}</h3>
-              {section.highlights.map((h, i) => <p key={i}>{h}</p>)}
+              {section.highlights.map((h, i) => (
+                <p key={i}>{h}</p>
+              ))}
               {section.rating ? <RatingBar label="Energy" value={section.rating} /> : null}
               {section.affirmation && <p className="affirmation-text">{section.affirmation}</p>}
             </div>
@@ -461,7 +525,9 @@ function FortuneResult({ data, onReset }: { data: PredictionData, onReset: () =>
         </div>
       )}
 
-      <button onClick={onReset} className="btn-secondary">Back to Profiles</button>
+      <button onClick={onReset} className="btn-secondary">
+        Back to Profiles
+      </button>
     </div>
   );
 }
@@ -469,7 +535,7 @@ function FortuneResult({ data, onReset }: { data: PredictionData, onReset: () =>
 function App() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [selectedProfile, setSelectedProfile] = useState<number | null>(null);
-  const [selectedScope, setSelectedScope] = useState<string>("daily");
+  const [selectedScope, setSelectedScope] = useState<string>('daily');
   const [result, setResult] = useState<PredictionData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -540,7 +606,7 @@ function App() {
         body: JSON.stringify({
           profile_id_1: selectedProfile,
           profile_id_2: compareProfile,
-          relationship_type: 'romantic'
+          relationship_type: 'romantic',
         }),
       });
       if (response.ok) {
@@ -562,7 +628,7 @@ function App() {
     try {
       const [zodiacRes, numRes] = await Promise.all([
         fetch(`${API_URL}/learn/zodiac`),
-        fetch(`${API_URL}/learn/numerology`)
+        fetch(`${API_URL}/learn/numerology`),
       ]);
       const zodiac = zodiacRes.ok ? await zodiacRes.json() : {};
       const numerology = numRes.ok ? await numRes.json() : {};
@@ -607,17 +673,23 @@ function App() {
         const data = await simulateBackend(selectedProfile, selectedScope);
         setResult(data);
       } else {
-        const response = await fetchWithRetry(`${API_URL}/forecast`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ profile_id: selectedProfile, scope: selectedScope }),
-        }, 2);
+        const response = await fetchWithRetry(
+          `${API_URL}/forecast`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ profile_id: selectedProfile, scope: selectedScope }),
+          },
+          2
+        );
         if (!response.ok) {
           let detail = 'The stars are cloudy... please try again.';
           try {
             const errJson = await response.json();
             detail = errJson.detail || detail;
-          } catch (_) {}
+          } catch (_) {
+            /* ignore parse error from backend */
+          }
           throw new Error(detail);
         }
         const data: PredictionData = await response.json();
@@ -634,7 +706,12 @@ function App() {
   };
 
   // Fetch with simple retry/backoff
-  async function fetchWithRetry(input: RequestInfo, init?: RequestInit, retries = 2, backoff = 300) {
+  async function fetchWithRetry(
+    input: RequestInfo,
+    init?: RequestInit,
+    retries = 2,
+    backoff = 300
+  ) {
     let attempt = 0;
     let lastError: any = null;
     while (true) {
@@ -646,24 +723,27 @@ function App() {
         lastError = err;
         if (attempt >= retries) throw err;
         setError('Connection lost—retrying...');
-        await new Promise(r => setTimeout(r, backoff * Math.pow(2, attempt)));
+        await new Promise((r) => setTimeout(r, backoff * Math.pow(2, attempt)));
         attempt++;
       }
     }
   }
 
   const friendlyError = (err: any, fallback: string) => {
-    if (err?.message?.includes('Failed to fetch')) return 'Connection lost—retrying failed. Check your network.';
+    if (err?.message?.includes('Failed to fetch'))
+      return 'Connection lost—retrying failed. Check your network.';
     return err?.message || fallback;
   };
 
   return (
     <div className="app-container">
       <CosmicBackground element={result?.element} />
-      
+
       <div className="content-wrapper">
         <header>
-          <h1 className="logo">ASTRO<span>NUMEROLOGY</span></h1>
+          <h1 className="logo">
+            ASTRO<span>NUMEROLOGY</span>
+          </h1>
         </header>
 
         {error && <div className="error-banner">{error}</div>}
@@ -671,13 +751,38 @@ function App() {
         {/* Main Navigation */}
         {selectedProfile && !result && (
           <div className="main-nav">
-            <button className={view === 'reading' ? 'nav-btn active' : 'nav-btn'} onClick={() => setView('reading')}>📖 Reading</button>
-            <button className={view === 'numerology' ? 'nav-btn active' : 'nav-btn'} onClick={() => { setView('numerology'); fetchNumerologyProfile(); }}>🔢 Numerology</button>
-            <button className={view === 'compatibility' ? 'nav-btn active' : 'nav-btn'} onClick={() => setView('compatibility')}>💕 Compatibility</button>
+            <button
+              className={view === 'reading' ? 'nav-btn active' : 'nav-btn'}
+              onClick={() => setView('reading')}
+            >
+              📖 Reading
+            </button>
+            <button
+              className={view === 'numerology' ? 'nav-btn active' : 'nav-btn'}
+              onClick={() => {
+                setView('numerology');
+                fetchNumerologyProfile();
+              }}
+            >
+              🔢 Numerology
+            </button>
+            <button
+              className={view === 'compatibility' ? 'nav-btn active' : 'nav-btn'}
+              onClick={() => setView('compatibility')}
+            >
+              💕 Compatibility
+            </button>
             <button
               className={view === 'learn' ? 'nav-btn active' : 'nav-btn'}
-              onClick={() => { setView('learn'); setZodiacPage(0); setNumerologyPage(0); fetchGlossary(); }}
-            >📚 Learn</button>
+              onClick={() => {
+                setView('learn');
+                setZodiacPage(0);
+                setNumerologyPage(0);
+                fetchGlossary();
+              }}
+            >
+              📚 Learn
+            </button>
           </div>
         )}
 
@@ -689,9 +794,16 @@ function App() {
               {profiles.length > 0 && (
                 <div className="form-group">
                   <label>Select Profile</label>
-                  <select value={selectedProfile || ''} onChange={e => setSelectedProfile(Number(e.target.value))}>
+                  <select
+                    value={selectedProfile || ''}
+                    onChange={(e) => setSelectedProfile(Number(e.target.value))}
+                  >
                     <option value="">Choose...</option>
-                    {profiles.map(p => <option key={p.id} value={p.id}>{p.name} ({p.date_of_birth})</option>)}
+                    {profiles.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name} ({p.date_of_birth})
+                      </option>
+                    ))}
                   </select>
                 </div>
               )}
@@ -706,10 +818,10 @@ function App() {
               <div className="card">
                 <h2>Select Scope</h2>
                 <div className="tabs">
-                  {["daily", "weekly", "monthly"].map(scope => (
+                  {['daily', 'weekly', 'monthly'].map((scope) => (
                     <button
                       key={scope}
-                      className={selectedScope === scope ? "tab active" : "tab"}
+                      className={selectedScope === scope ? 'tab active' : 'tab'}
                       onClick={() => setSelectedScope(scope)}
                     >
                       {scope.charAt(0).toUpperCase() + scope.slice(1)}
@@ -717,7 +829,11 @@ function App() {
                   ))}
                 </div>
                 <button onClick={getPrediction} className="btn-primary" disabled={loading}>
-                  {loading ? 'Reading...' : `Get ${selectedScope.charAt(0).toUpperCase() + selectedScope.slice(1)} Reading`}
+                  {loading
+                    ? 'Reading...'
+                    : `Get ${
+                        selectedScope.charAt(0).toUpperCase() + selectedScope.slice(1)
+                      } Reading`}
                 </button>
               </div>
             )}
@@ -775,7 +891,7 @@ function App() {
                           {numerologyProfile.pinnacles.map((p, i) => (
                             <div key={i} className="pinnacle">
                               <span className="pinnacle-num">{p.number}</span>
-                              <span className="pinnacle-label">Phase {i+1}</span>
+                              <span className="pinnacle-label">Phase {i + 1}</span>
                             </div>
                           ))}
                         </div>
@@ -788,7 +904,7 @@ function App() {
                           {numerologyProfile.challenges.map((c, i) => (
                             <div key={i} className="pinnacle challenge">
                               <span className="pinnacle-num">{c.number}</span>
-                              <span className="pinnacle-label">Challenge {i+1}</span>
+                              <span className="pinnacle-label">Challenge {i + 1}</span>
                             </div>
                           ))}
                         </div>
@@ -796,7 +912,9 @@ function App() {
                     )}
                   </div>
                 ) : (
-                  <p style={{textAlign: 'center', color: '#888'}}>Loading numerology profile...</p>
+                  <p style={{ textAlign: 'center', color: '#888' }}>
+                    Loading numerology profile...
+                  </p>
                 )}
               </div>
             )}
@@ -805,21 +923,28 @@ function App() {
             {selectedProfile && view === 'compatibility' && (
               <div className="card">
                 <h2>💕 Compatibility Check</h2>
-                <p style={{textAlign: 'center', marginBottom: '1rem', color: '#aaa'}}>
+                <p style={{ textAlign: 'center', marginBottom: '1rem', color: '#aaa' }}>
                   Compare your cosmic alignment with another profile
                 </p>
                 <div className="form-group">
                   <label>Compare With</label>
-                  <select value={compareProfile || ''} onChange={e => setCompareProfile(Number(e.target.value))}>
+                  <select
+                    value={compareProfile || ''}
+                    onChange={(e) => setCompareProfile(Number(e.target.value))}
+                  >
                     <option value="">Choose a profile...</option>
-                    {profiles.filter(p => p.id !== selectedProfile).map(p => (
-                      <option key={p.id} value={p.id}>{p.name} ({p.date_of_birth})</option>
-                    ))}
+                    {profiles
+                      .filter((p) => p.id !== selectedProfile)
+                      .map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name} ({p.date_of_birth})
+                        </option>
+                      ))}
                   </select>
                 </div>
-                <button 
-                  onClick={fetchCompatibility} 
-                  className="btn-primary" 
+                <button
+                  onClick={fetchCompatibility}
+                  className="btn-primary"
                   disabled={loading || !compareProfile}
                 >
                   {loading ? 'Calculating...' : 'Calculate Compatibility'}
@@ -828,9 +953,12 @@ function App() {
                 {compatibilityResult && (
                   <div className="compatibility-result">
                     <div className="compat-score">
-                      <div className="score-circle" style={{
-                        background: `conic-gradient(#88c0d0 ${compatibilityResult.overall_score}%, #2d3748 0)`
-                      }}>
+                      <div
+                        className="score-circle"
+                        style={{
+                          background: `conic-gradient(#88c0d0 ${compatibilityResult.overall_score}%, #2d3748 0)`,
+                        }}
+                      >
                         <span>{compatibilityResult.overall_score}%</span>
                       </div>
                       <h3>Overall Compatibility</h3>
@@ -840,14 +968,32 @@ function App() {
                       <div className="compat-section">
                         <h4>🌟 Astrology</h4>
                         <div className="score-bar">
-                          <div className="bar-fill" style={{width: `${(compatibilityResult.astrology.element_score + compatibilityResult.astrology.modality_score) / 2}%`}}></div>
+                          <div
+                            className="bar-fill"
+                            style={{
+                              width: `${
+                                (compatibilityResult.astrology.element_score +
+                                  compatibilityResult.astrology.modality_score) /
+                                2
+                              }%`,
+                            }}
+                          ></div>
                         </div>
                         <p>{compatibilityResult.astrology.analysis}</p>
                       </div>
                       <div className="compat-section">
                         <h4>🔢 Numerology</h4>
                         <div className="score-bar">
-                          <div className="bar-fill" style={{width: `${(compatibilityResult.numerology.life_path_score + compatibilityResult.numerology.expression_score) / 2}%`}}></div>
+                          <div
+                            className="bar-fill"
+                            style={{
+                              width: `${
+                                (compatibilityResult.numerology.life_path_score +
+                                  compatibilityResult.numerology.expression_score) /
+                                2
+                              }%`,
+                            }}
+                          ></div>
                         </div>
                         <p>{compatibilityResult.numerology.analysis}</p>
                       </div>
@@ -856,11 +1002,19 @@ function App() {
                     <div className="compat-lists">
                       <div className="compat-list strengths">
                         <h4>💪 Strengths</h4>
-                        <ul>{compatibilityResult.strengths.map((s, i) => <li key={i}>{s}</li>)}</ul>
+                        <ul>
+                          {compatibilityResult.strengths.map((s, i) => (
+                            <li key={i}>{s}</li>
+                          ))}
+                        </ul>
                       </div>
                       <div className="compat-list challenges">
                         <h4>⚡ Challenges</h4>
-                        <ul>{compatibilityResult.challenges.map((c, i) => <li key={i}>{c}</li>)}</ul>
+                        <ul>
+                          {compatibilityResult.challenges.map((c, i) => (
+                            <li key={i}>{c}</li>
+                          ))}
+                        </ul>
                       </div>
                     </div>
 
@@ -883,18 +1037,28 @@ function App() {
                       <div className="glossary-grid">
                         {zodiacEntries.map(([sign, info]: [string, any]) => (
                           <div key={sign} className="glossary-item">
-                            <h4>{info.symbol} {sign}</h4>
+                            <h4>
+                              {info.symbol} {sign}
+                            </h4>
                             <p className="dates">{info.dates}</p>
-                            <p className="element">{info.element} • {info.modality}</p>
+                            <p className="element">
+                              {info.element} • {info.modality}
+                            </p>
                             <p>{info.description?.slice(0, 100)}...</p>
                           </div>
                         ))}
                       </div>
-                      {glossary?.zodiac && zodiacEntries.length < Object.keys(glossary.zodiac).length && (
-                        <div className="load-more">
-                          <button className="btn-secondary" onClick={() => setZodiacPage(z => z + 1)}>Load more signs</button>
-                        </div>
-                      )}
+                      {glossary?.zodiac &&
+                        zodiacEntries.length < Object.keys(glossary.zodiac).length && (
+                          <div className="load-more">
+                            <button
+                              className="btn-secondary"
+                              onClick={() => setZodiacPage((z) => z + 1)}
+                            >
+                              Load more signs
+                            </button>
+                          </div>
+                        )}
                     </div>
                     <div className="learn-section">
                       <h3>🔢 Life Path Numbers</h3>
@@ -902,19 +1066,27 @@ function App() {
                         {numerologyEntries.map(([key, info]: [string, any]) => (
                           <div key={key} className="glossary-item">
                             <h4>{key}</h4>
-                            <p>{info.meaning?.slice(0, 100) || info.description?.slice(0, 100)}...</p>
+                            <p>
+                              {info.meaning?.slice(0, 100) || info.description?.slice(0, 100)}...
+                            </p>
                           </div>
                         ))}
                       </div>
-                      {glossary?.numerology && numerologyEntries.length < Object.keys(glossary.numerology).length && (
-                        <div className="load-more">
-                          <button className="btn-secondary" onClick={() => setNumerologyPage(n => n + 1)}>Load more numbers</button>
-                        </div>
-                      )}
+                      {glossary?.numerology &&
+                        numerologyEntries.length < Object.keys(glossary.numerology).length && (
+                          <div className="load-more">
+                            <button
+                              className="btn-secondary"
+                              onClick={() => setNumerologyPage((n) => n + 1)}
+                            >
+                              Load more numbers
+                            </button>
+                          </div>
+                        )}
                     </div>
                   </div>
                 ) : (
-                  <p style={{textAlign: 'center', color: '#888'}}>Loading glossary...</p>
+                  <p style={{ textAlign: 'center', color: '#888' }}>Loading glossary...</p>
                 )}
               </div>
             )}

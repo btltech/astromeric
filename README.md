@@ -1,8 +1,9 @@
 # AstroNumerology – One-Stop Astrology + Numerology Platform
+
 [View on GitHub](https://github.com/btltech/astromeric)
 
-
 ## Quick Start
+
 - **Run Locally**: Backend: `cd /path/to/project && python -m uvicorn backend.app.main:app --reload`. Frontend: `npm run dev`. Open http://localhost:3000.
 - **Deploy**: Push to GitHub, deploy backend to Railway, frontend to Netlify/Vercel with `VITE_API_URL` set to Railway URL.
 
@@ -11,6 +12,7 @@ Production-oriented stack that pairs a FastAPI engine (Railway) with a Vite + Re
 ## Features
 
 ### Core Features
+
 - **Daily/Weekly/Monthly Readings**: Get personalized horoscopes for different time scopes
 - **5 Life Tracks**: General, Love, Money, Health, and Spiritual readings with ratings
 - **TL;DR Summaries**: Quick overview of your day/week/month
@@ -20,6 +22,7 @@ Production-oriented stack that pairs a FastAPI engine (Railway) with a Vite + Re
 - **Favorites**: Save your favorite readings for quick access
 
 ### Extended Numerology
+
 - **Expression Number**: Your natural talents and how you express yourself
 - **Soul Urge Number**: Your heart's deepest desires
 - **Personality Number**: How others perceive you
@@ -28,16 +31,19 @@ Production-oriented stack that pairs a FastAPI engine (Railway) with a Vite + Re
 - **Pinnacles & Challenges**: Life's major turning points and lessons
 
 ### Compatibility Tools
+
 - **Astrology Compatibility**: Compare zodiac signs, elements, and modalities
 - **Numerology Compatibility**: Life path and expression number comparisons
 - **Combined Compatibility**: Full relationship analysis with scores and advice
 
 ### Learning Center
+
 - **Zodiac Glossary**: Detailed info on all 12 signs
 - **Numerology Glossary**: Explanations of all number meanings
 - **Search**: Find specific terms and concepts
 
 ## Architecture
+
 - Browser (Vite/React) → REST API → FastAPI on Railway.
 - SQLite database for profiles, readings, favorites, and preferences.
 - Optional Redis for caching and rate limiting.
@@ -46,6 +52,7 @@ Production-oriented stack that pairs a FastAPI engine (Railway) with a Vite + Re
 - Determinism: seed = `name + dob + date + scope + time_of_birth + place_of_birth` → stable results per user/day (stub ephemeris hashes inputs when flatlib/Swiss ephemeris isn’t available).
 
 ## Backend (FastAPI)
+
 - Location: `backend/app`.
 - Files:
   - `main.py`: FastAPI app, CORS, all API endpoints.
@@ -60,6 +67,7 @@ Production-oriented stack that pairs a FastAPI engine (Railway) with a Vite + Re
   - `requirements.txt`: dependencies.
 
 ### Run Backend Locally
+
 ```bash
 cd /path/to/project
 python -m venv .venv && source .venv/bin/activate
@@ -69,6 +77,7 @@ python -m uvicorn backend.app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 ### Deploy to Railway
+
 1. Push repo to GitHub.
 2. Create new Railway service → Deploy from repo.
 3. Set start command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`.
@@ -76,6 +85,7 @@ python -m uvicorn backend.app.main:app --host 0.0.0.0 --port 8000 --reload
 5. Grab the public URL.
 
 ## Frontend (Vite + React + drei)
+
 - Key files:
   - `index.tsx`: Main UI with profiles, readings, numerology, compatibility, and learning views.
   - `styles.css`: Comprehensive styling.
@@ -83,6 +93,7 @@ python -m uvicorn backend.app.main:app --host 0.0.0.0 --port 8000 --reload
   - `.env.example`: `VITE_API_URL` placeholder.
 
 ### Run Frontend Locally
+
 ```bash
 npm install
 VITE_API_URL=http://localhost:8000 npm run dev
@@ -90,6 +101,7 @@ VITE_API_URL=http://localhost:8000 npm run dev
 ```
 
 ### Build for Production
+
 ```bash
 VITE_API_URL=https://your-app.up.railway.app npm run build
 # deploy ./dist to your static host
@@ -98,31 +110,37 @@ VITE_API_URL=https://your-app.up.railway.app npm run build
 ## API Endpoints
 
 ### Profiles
+
 - `POST /profiles` - Create a profile
 - `GET /profiles` - List all profiles
 - `PUT /profiles/{id}` - Update a profile
 - `DELETE /profiles/{id}` - Delete a profile
 
 ### Core Products (engine v2)
+
 - `POST /natal-profile` - Structured natal profile. Body: inline `profile` or `{profile_id}`.
 - `POST /forecast` - Daily/weekly/monthly forecast. Body: `scope: daily|weekly|monthly`, optional `date`, plus inline `profile` or `{profile_id}`.
 - `POST /compatibility` - Synastry + numerology blend. Body: `person_a`, `person_b`, `relationship_type` (default `romantic`).
 
 ### Readings (legacy + v2)
+
 - `POST /reading` - Legacy sun-sign/numerology daily/weekly/monthly. Response also includes `engine_v2` forecast.
 - `GET /readings/{profile_id}` - Reading history
 - `POST /readings/{reading_id}/feedback` - Add feedback/journal
 
 ### Numerology
+
 - `GET /numerology/profile/{profile_id}` - Full numerology profile
 - `POST /numerology/name-analysis` - Analyze any name
 
 ### Compatibility (legacy simple endpoints)
+
 - `POST /compatibility/combined` - Full compatibility analysis
 - `POST /compatibility/astrology` - Astrology-only compatibility
 - `POST /compatibility/numerology` - Numerology-only compatibility
 
 ### Favorites & Preferences
+
 - `POST /favourites/{reading_id}` - Add to favorites
 - `DELETE /favourites/{reading_id}` - Remove from favorites
 - `GET /favourites/{profile_id}` - List favorites
@@ -130,6 +148,7 @@ VITE_API_URL=https://your-app.up.railway.app npm run build
 - `PUT /preferences/{profile_id}` - Update preferences
 
 ### Learning
+
 - `GET /learn/zodiac` - All zodiac signs
 - `GET /learn/zodiac/{sign}` - Specific sign info
 - `GET /learn/numerology` - All numerology terms
@@ -137,6 +156,7 @@ VITE_API_URL=https://your-app.up.railway.app npm run build
 - `GET /learn/search?q=term` - Search glossary
 
 ## Testing
+
 ```bash
 cd /path/to/project
 python -m pytest backend/tests/ -v
@@ -144,6 +164,7 @@ python -m pytest backend/tests/ -v
 ```
 
 ## Notes
+
 - CORS is open (`*`) for easy local testing; tighten allow_origins if needed.
 - Three.js layer is decorative; core UX still works without WebGL.
 - Deterministic outputs: same user/date → same reading; different dates → new reading.

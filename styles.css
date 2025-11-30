@@ -65,11 +65,19 @@
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-h1, h2, h3 {
+h1,
+h2,
+h3 {
   margin-top: 0;
 }
 
@@ -110,7 +118,8 @@ input:focus {
   box-shadow: 0 0 0 3px rgba(136, 192, 208, 0.2);
 }
 
-.btn-primary, .btn-secondary {
+.btn-primary,
+.btn-secondary {
   width: 100%;
   padding: 16px;
   border: none;
@@ -194,7 +203,7 @@ input:focus {
   font-style: italic;
   border-left: 3px solid var(--primary);
   padding-left: 1rem;
-  background: linear-gradient(90deg, rgba(136,192,208,0.1) 0%, transparent 100%);
+  background: linear-gradient(90deg, rgba(136, 192, 208, 0.1) 0%, transparent 100%);
   padding: 1rem;
   border-radius: 0 12px 12px 0;
 }
@@ -243,7 +252,7 @@ input:focus {
 }
 
 .prediction-item {
-  background: rgba(0,0,0,0.2);
+  background: rgba(0, 0, 0, 0.2);
   padding: 1rem;
   border-radius: 12px;
 }
@@ -269,7 +278,7 @@ input:focus {
   align-items: center;
   margin-top: 1rem;
   padding-top: 0.5rem;
-  border-top: 1px solid rgba(255,255,255,0.05);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .stars {
@@ -281,7 +290,7 @@ input:focus {
 }
 
 .lucky-section {
-  background: rgba(255,255,255,0.03);
+  background: rgba(255, 255, 255, 0.03);
   border-radius: 16px;
   padding: 1.5rem;
   margin-bottom: 1.5rem;
@@ -321,7 +330,7 @@ input:focus {
   width: 28px;
   height: 28px;
   line-height: 28px;
-  background: rgba(255,255,255,0.1);
+  background: rgba(255, 255, 255, 0.1);
   border-radius: 50%;
   margin: 0 2px;
   font-size: 0.8rem;
@@ -336,8 +345,8 @@ input:focus {
   border-radius: 50%;
   margin: 0 5px;
   position: relative;
-  border: 2px solid rgba(255,255,255,0.2);
-  box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
   cursor: help;
   transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   overflow: hidden;
@@ -347,14 +356,22 @@ input:focus {
 .color-badge::after {
   content: '';
   position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: linear-gradient(135deg, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0) 50%, rgba(0,0,0,0.1) 100%);
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.6) 0%,
+    rgba(255, 255, 255, 0) 50%,
+    rgba(0, 0, 0, 0.1) 100%
+  );
 }
 
 .color-badge:hover {
   transform: scale(1.2) translateY(-2px);
-  border-color: rgba(255,255,255,0.8);
-  box-shadow: 0 10px 15px rgba(0,0,0,0.4);
+  border-color: rgba(255, 255, 255, 0.8);
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.4);
 }
 
 .advice-box {
@@ -392,7 +409,7 @@ input:focus {
 .loader-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(11,12,21,0.75);
+  background: rgba(11, 12, 21, 0.75);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -413,7 +430,9 @@ input:focus {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* New styles for enhanced app */
@@ -805,24 +824,24 @@ select option {
   .numerology-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .num-card.wide {
     grid-column: span 1;
   }
-  
+
   .compat-breakdown,
   .compat-lists {
     grid-template-columns: 1fr;
   }
-  
+
   .glossary-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .main-nav {
     gap: 0.25rem;
   }
-  
+
   .nav-btn {
     padding: 0.5rem 0.75rem;
     font-size: 0.8rem;

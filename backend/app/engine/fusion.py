@@ -1,13 +1,13 @@
 import hashlib
-from typing import Dict, List, Any
 from functools import lru_cache
-from .astrology import get_zodiac_sign, get_element, get_sign_traits
+from typing import Any, Dict, List
+
+from .astrology import get_element, get_sign_traits, get_zodiac_sign
 from .numerology import (
     calculate_life_path_number,
     calculate_name_number,
     get_life_path_data,
 )
-
 
 # Pools for different scopes and tracks
 LOVE_POOLS = [

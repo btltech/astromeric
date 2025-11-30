@@ -7,9 +7,9 @@ from ..charts.models import Chart
 from ..numerology import calculate_life_path_number
 from ..numerology_extended import (
     calculate_expression_number,
-    calculate_soul_urge_number,
-    calculate_personality_number,
     calculate_maturity_number,
+    calculate_personality_number,
+    calculate_soul_urge_number,
 )
 from ..rules import RuleEngine, RuleResult
 from .types import ProfileInput
