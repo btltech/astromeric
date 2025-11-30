@@ -3,6 +3,7 @@ numerology_engine.py
 --------------------
 Computes core numerology numbers and cycles with meaning blocks.
 """
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -39,7 +40,9 @@ def soul_urge(name: str) -> int:
 
 
 def personality(name: str) -> int:
-    total = sum(LETTER_VALUES.get(c, 0) for c in name.lower() if c.isalpha() and c not in VOWELS)
+    total = sum(
+        LETTER_VALUES.get(c, 0) for c in name.lower() if c.isalpha() and c not in VOWELS
+    )
     return reduce_num(total)
 
 
@@ -75,7 +78,12 @@ def build_numerology(name: str, dob: str, ref: datetime) -> Dict:
         {"type": "personal_day", "value": pd},
     ]
     return {
-        "core_numbers": {"life_path": lp, "expression": expr, "soul_urge": soul, "personality": persona},
+        "core_numbers": {
+            "life_path": lp,
+            "expression": expr,
+            "soul_urge": soul,
+            "personality": persona,
+        },
         "cycles": {"personal_year": py, "personal_month": pm, "personal_day": pd},
         "meaning_blocks": meaning_blocks,
     }

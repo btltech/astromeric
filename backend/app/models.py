@@ -1,4 +1,12 @@
-from sqlalchemy import create_engine, Column, Integer, String, DateTime, Text, ForeignKey, Boolean
+from sqlalchemy import (
+    create_engine,
+    Column,
+    Integer,
+    String,
+    DateTime,
+    Text,
+    ForeignKey,
+)
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from datetime import datetime
@@ -8,12 +16,15 @@ DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./astronumerology.db")
 
 # Support SQLite (dev) and Postgres (production) via DATABASE_URL
 if DATABASE_URL.startswith("sqlite"):
-    engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False}, echo=False)
+    engine = create_engine(
+        DATABASE_URL, connect_args={"check_same_thread": False}, echo=False
+    )
 else:
     engine = create_engine(DATABASE_URL, echo=False)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
+
 
 class Profile(Base):
     __tablename__ = "profiles"
@@ -30,6 +41,7 @@ class Profile(Base):
     favourites = relationship("Favourite", back_populates="profile")
     preferences = relationship("Preference", back_populates="profile")
 
+
 class Reading(Base):
     __tablename__ = "readings"
     id = Column(Integer, primary_key=True, index=True)
@@ -44,6 +56,7 @@ class Reading(Base):
     profile = relationship("Profile", back_populates="readings")
     favourites = relationship("Favourite", back_populates="reading")
 
+
 class Favourite(Base):
     __tablename__ = "favourites"
     id = Column(Integer, primary_key=True, index=True)
@@ -53,6 +66,7 @@ class Favourite(Base):
     profile = relationship("Profile", back_populates="favourites")
     reading = relationship("Reading", back_populates="favourites")
 
+
 class Preference(Base):
     __tablename__ = "preferences"
     id = Column(Integer, primary_key=True, index=True)
@@ -61,6 +75,7 @@ class Preference(Base):
     tone = Column(String, default="balanced")  # softer, direct, balanced
 
     profile = relationship("Profile", back_populates="preferences")
+
 
 # Create tables
 Base.metadata.create_all(bind=engine)

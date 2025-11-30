@@ -12,6 +12,7 @@ Notes for deployment:
 - Place Swiss Ephemeris (*.se1/.*se2 etc.) files in /app/ephemeris on Railway.
 - Override the path with EPHEMERIS_PATH env var if you mount elsewhere.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -75,9 +76,14 @@ HOUSE_SYSTEM_MAP = {
 
 # ---------- Public API ----------
 
+
 def build_natal_chart(profile: Dict) -> Dict:
     """Compute a natal chart for a profile."""
-    dt = _parse_datetime(profile["date_of_birth"], profile.get("time_of_birth"), profile.get("timezone", "UTC"))
+    dt = _parse_datetime(
+        profile["date_of_birth"],
+        profile.get("time_of_birth"),
+        profile.get("timezone", "UTC"),
+    )
     return _build_chart(dt, profile, chart_type="natal")
 
 
@@ -92,6 +98,7 @@ def build_transit_chart(profile: Dict, target_date: datetime) -> Dict:
 
 
 # ---------- Internal helpers ----------
+
 
 def _parse_datetime(date_str: str, time_str: Optional[str], tz: str) -> datetime:
     time_part = time_str or "12:00"
@@ -108,7 +115,15 @@ def _build_chart(dt: datetime, profile: Dict, chart_type: str) -> Dict:
 
 
 def _chart_with_flatlib(dt: datetime, profile: Dict, chart_type: str) -> Dict:
-    fl_dt = FLDatetime(dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second, profile.get("timezone", "UTC"))
+    fl_dt = FLDatetime(
+        dt.year,
+        dt.month,
+        dt.day,
+        dt.hour,
+        dt.minute,
+        dt.second,
+        profile.get("timezone", "UTC"),
+    )
     pos = GeoPos(str(profile.get("latitude", 0.0)), str(profile.get("longitude", 0.0)))
     house_system = _resolve_house_system(profile.get("house_system"))
     fl_chart = FLChart(fl_dt, pos, hsys=house_system)
@@ -138,7 +153,10 @@ def _chart_with_flatlib(dt: datetime, profile: Dict, chart_type: str) -> Dict:
         "metadata": {
             "chart_type": chart_type,
             "datetime": dt.isoformat(),
-            "location": {"lat": float(profile.get("latitude", 0.0)), "lon": float(profile.get("longitude", 0.0))},
+            "location": {
+                "lat": float(profile.get("latitude", 0.0)),
+                "lon": float(profile.get("longitude", 0.0)),
+            },
             "house_system": profile.get("house_system", "Placidus"),
         },
         "planets": planets,
@@ -179,13 +197,23 @@ def _chart_with_stub(dt: datetime, profile: Dict, chart_type: str) -> Dict:
                 "retrograde": False,
             }
         )
-    houses = [{"house": i + 1, "sign": planets[i % len(planets)]["sign"], "degree": (i * 5.0) % 30} for i in range(12)]
+    houses = [
+        {
+            "house": i + 1,
+            "sign": planets[i % len(planets)]["sign"],
+            "degree": (i * 5.0) % 30,
+        }
+        for i in range(12)
+    ]
     aspects = _compute_aspects(planets)
     return {
         "metadata": {
             "chart_type": chart_type,
             "datetime": dt.isoformat(),
-            "location": {"lat": float(profile.get("latitude", 0.0)), "lon": float(profile.get("longitude", 0.0))},
+            "location": {
+                "lat": float(profile.get("latitude", 0.0)),
+                "lon": float(profile.get("longitude", 0.0)),
+            },
             "provider": "stub",
             "house_system": profile.get("house_system", "Placidus"),
         },

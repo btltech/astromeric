@@ -1,4 +1,5 @@
 """Glossary and learning content for astrology and numerology."""
+
 from typing import Dict, List
 
 ZODIAC_GLOSSARY = {
@@ -202,37 +203,42 @@ ELEMENTS_GLOSSARY = {
     },
 }
 
+
 def get_sign_info(sign: str) -> Dict:
     """Get full information about a zodiac sign."""
     return ZODIAC_GLOSSARY.get(sign, {})
+
 
 def get_number_explanation(number_type: str) -> Dict:
     """Get explanation of a numerology number type."""
     return NUMEROLOGY_GLOSSARY.get(number_type, {})
 
+
 def get_master_number_info(number: int) -> Dict:
     """Get information about a master number."""
     return MASTER_NUMBERS.get(number, {})
+
 
 def get_element_info(element: str) -> Dict:
     """Get information about an element."""
     return ELEMENTS_GLOSSARY.get(element, {})
 
+
 def search_glossary(query: str) -> List[Dict]:
     """Search all glossaries for a term."""
     results = []
     query = query.lower()
-    
+
     for sign, data in ZODIAC_GLOSSARY.items():
         if query in sign.lower() or query in data.get("description", "").lower():
             results.append({"type": "zodiac", "key": sign, "data": data})
-    
+
     for term, data in NUMEROLOGY_GLOSSARY.items():
         if query in term.lower() or query in data.get("meaning", "").lower():
             results.append({"type": "numerology", "key": term, "data": data})
-    
+
     for element, data in ELEMENTS_GLOSSARY.items():
         if query in element.lower() or query in data.get("description", "").lower():
             results.append({"type": "element", "key": element, "data": data})
-    
+
     return results

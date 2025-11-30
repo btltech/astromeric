@@ -1,9 +1,12 @@
 import hashlib
-from datetime import datetime
 from typing import Dict, List, Any
 from functools import lru_cache
 from .astrology import get_zodiac_sign, get_element, get_sign_traits
-from .numerology import calculate_life_path_number, calculate_name_number, get_life_path_data
+from .numerology import (
+    calculate_life_path_number,
+    calculate_name_number,
+    get_life_path_data,
+)
 
 
 # Pools for different scopes and tracks
@@ -12,7 +15,7 @@ LOVE_POOLS = [
     "Romantic energies suggest {traits}. Be open to new possibilities.",
     "Love life benefits from {traits}. Communicate your feelings clearly.",
     "Intimacy grows when you lean into {traits}. Offer steady presence.",
-    "Affection deepens through {traits}; choose quality time today."
+    "Affection deepens through {traits}; choose quality time today.",
 ]
 
 MONEY_POOLS = [
@@ -20,7 +23,7 @@ MONEY_POOLS = [
     "Wealth opportunities arise through {traits}. Stay grounded.",
     "Money matters favor {traits}. Plan for long-term stability.",
     "Prosperity follows {traits}; refine your plan before acting.",
-    "Resources respond to {traits}; be disciplined yet open to surprise."
+    "Resources respond to {traits}; be disciplined yet open to surprise.",
 ]
 
 CAREER_POOLS = [
@@ -28,7 +31,7 @@ CAREER_POOLS = [
     "Work life thrives on {traits}. Demonstrate your skills.",
     "Career growth comes from {traits}. Stay focused and dedicated.",
     "Authority notices {traits}; let your actions be visible.",
-    "Momentum builds through {traits}; prioritize the hard thing first."
+    "Momentum builds through {traits}; prioritize the hard thing first.",
 ]
 
 HEALTH_POOLS = [
@@ -55,7 +58,7 @@ SCOPE_SUMMARIES = {
     "monthly": [
         "This month brings {sign}'s {element} essence to the forefront, shaped by Life Path {life_path}.",
         "Big opportunities emerge for {sign} this month, with Life Path {life_path} as your guide.",
-    ]
+    ],
 }
 
 TRACK_POOLS = {
@@ -65,23 +68,17 @@ TRACK_POOLS = {
             "General outlook: Focus on {traits} for best results.",
             "Overall theme: Embrace {traits} to navigate today's path.",
         ],
-        "ratings": True
+        "ratings": True,
     },
-    "love": {
-        "pools": LOVE_POOLS,
-        "ratings": True
-    },
-    "money": {
-        "pools": MONEY_POOLS,
-        "ratings": True
-    },
+    "love": {"pools": LOVE_POOLS, "ratings": True},
+    "money": {"pools": MONEY_POOLS, "ratings": True},
     "health": {
         "pools": [
             "Wellbeing focuses on {traits}. Prioritize rest and nourishment.",
             "Health energies support {traits}. Listen to your body's signals.",
             "Vitality grows through {traits}; balance activity with recovery.",
         ],
-        "ratings": True
+        "ratings": True,
     },
     "spiritual": {
         "pools": [
@@ -89,8 +86,8 @@ TRACK_POOLS = {
             "Spiritual path deepens with {traits}. Trust your intuition.",
             "Enlightenment flows from {traits}; seek meaningful connections.",
         ],
-        "ratings": True
-    }
+        "ratings": True,
+    },
 }
 
 LOVE_POOLS = [
@@ -98,7 +95,7 @@ LOVE_POOLS = [
     "Romantic energies suggest {traits}. Be open to new possibilities.",
     "Love life benefits from {traits}. Communicate your feelings clearly.",
     "Intimacy grows when you lean into {traits}. Offer steady presence.",
-    "Affection deepens through {traits}; choose quality time today."
+    "Affection deepens through {traits}; choose quality time today.",
 ]
 
 MONEY_POOLS = [
@@ -106,7 +103,7 @@ MONEY_POOLS = [
     "Wealth opportunities arise through {traits}. Stay grounded.",
     "Money matters favor {traits}. Plan for long-term stability.",
     "Prosperity follows {traits}; refine your plan before acting.",
-    "Resources respond to {traits}; be disciplined yet open to surprise."
+    "Resources respond to {traits}; be disciplined yet open to surprise.",
 ]
 
 CAREER_POOLS = [
@@ -114,13 +111,26 @@ CAREER_POOLS = [
     "Work life thrives on {traits}. Demonstrate your skills.",
     "Career growth comes from {traits}. Stay focused and dedicated.",
     "Authority notices {traits}; let your actions be visible.",
-    "Momentum builds through {traits}; prioritize the hard thing first."
+    "Momentum builds through {traits}; prioritize the hard thing first.",
 ]
 
 THEME_WORDS = [
-    "Resilience", "Harmony", "Creativity", "Stability", "Freedom", "Responsibility",
-    "Wisdom", "Power", "Compassion", "Inspiration", "Momentum", "Clarity",
-    "Alignment", "Expansion", "Focus", "Equilibrium"
+    "Resilience",
+    "Harmony",
+    "Creativity",
+    "Stability",
+    "Freedom",
+    "Responsibility",
+    "Wisdom",
+    "Power",
+    "Compassion",
+    "Inspiration",
+    "Momentum",
+    "Clarity",
+    "Alignment",
+    "Expansion",
+    "Focus",
+    "Equilibrium",
 ]
 
 ADVICE_POOLS = [
@@ -134,7 +144,7 @@ ADVICE_POOLS = [
     "Simplify one plan before you move forward.",
     "Delegate the noise; keep the signal.",
     "Let curiosity lead one conversation.",
-    "Close a lingering loop to free energy."
+    "Close a lingering loop to free energy.",
 ]
 
 AFFIRMATION_POOLS = [
@@ -174,12 +184,32 @@ DAILY_ACTIONS = [
 ]
 
 LUCKY_NUMBERS_POOL = [1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 22, 33, 12, 15, 18, 21, 24, 27, 30]
-LUCKY_COLORS_POOL = ["#FF5252", "#448AFF", "#69F0AE", "#FFD740", "#E040FB", "#536DFE", "#05C46B", "#0FB9B1", "#D2DAE2"]
+LUCKY_COLORS_POOL = [
+    "#FF5252",
+    "#448AFF",
+    "#69F0AE",
+    "#FFD740",
+    "#E040FB",
+    "#536DFE",
+    "#05C46B",
+    "#0FB9B1",
+    "#D2DAE2",
+]
 
 # Simple rising sign approximation by hour bucket (placeholder for deeper astro)
 RISING_BY_HOUR = [
-    "Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo",
-    "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"
+    "Aries",
+    "Taurus",
+    "Gemini",
+    "Cancer",
+    "Leo",
+    "Virgo",
+    "Libra",
+    "Scorpio",
+    "Sagittarius",
+    "Capricorn",
+    "Aquarius",
+    "Pisces",
 ]
 
 # Cultural/place flavor tags for copy
@@ -198,11 +228,13 @@ PLACE_VIBES = [
     "crossroads energy",
 ]
 
+
 def generate_deterministic_index(seed: str, pool_size: int) -> int:
     """Generate a deterministic index from a seed string."""
     hash_obj = hashlib.md5(seed.encode())
     hash_int = int(hash_obj.hexdigest(), 16)
     return hash_int % pool_size
+
 
 def compute_rising_sign(time_of_birth: str) -> str:
     """Approximate rising sign based on hour bucket (placeholder for real astro)."""
@@ -213,6 +245,7 @@ def compute_rising_sign(time_of_birth: str) -> str:
         return RISING_BY_HOUR[bucket]
     except Exception:
         return ""
+
 
 def _pick_unique(pool: List[Any], seed: str, count: int, label: str) -> List[Any]:
     """Deterministically pick unique items from a pool."""
@@ -228,16 +261,30 @@ def _pick_unique(pool: List[Any], seed: str, count: int, label: str) -> List[Any
     return chosen
 
 
-
 @lru_cache(maxsize=4096)
-def fuse_prediction(name: str, dob: str, date: str, scope: str = "daily", time_of_birth: str = None, place_of_birth: str = None) -> Dict[str, Any]:
+def fuse_prediction(
+    name: str,
+    dob: str,
+    date: str,
+    scope: str = "daily",
+    time_of_birth: str = None,
+    place_of_birth: str = None,
+) -> Dict[str, Any]:
     """Public fused prediction with in-memory LRU caching.
 
     scope: 'daily', 'weekly', 'monthly'
     """
     return _fuse_prediction(name, dob, date, scope, time_of_birth, place_of_birth)
 
-def _fuse_prediction(name: str, dob: str, date: str, scope: str, time_of_birth: str = None, place_of_birth: str = None) -> Dict[str, Any]:
+
+def _fuse_prediction(
+    name: str,
+    dob: str,
+    date: str,
+    scope: str,
+    time_of_birth: str = None,
+    place_of_birth: str = None,
+) -> Dict[str, Any]:
     """Internal fusion logic for scopes and tracks."""
     sign = get_zodiac_sign(dob)
     element = get_element(sign)
@@ -247,12 +294,16 @@ def _fuse_prediction(name: str, dob: str, date: str, scope: str, time_of_birth: 
     life_data = get_life_path_data(life_path)
 
     # Seed includes scope
-    seed = f"{name.lower()}{dob}{date}{scope}{time_of_birth or ''}{place_of_birth or ''}"
+    seed = (
+        f"{name.lower()}{dob}{date}{scope}{time_of_birth or ''}{place_of_birth or ''}"
+    )
 
     # TL;DR summary
     scope_summaries = SCOPE_SUMMARIES.get(scope, SCOPE_SUMMARIES["daily"])
     tldr_idx = generate_deterministic_index(seed + "tldr", len(scope_summaries))
-    tldr = scope_summaries[tldr_idx].format(sign=sign, life_path=life_path, element=element)
+    tldr = scope_summaries[tldr_idx].format(
+        sign=sign, life_path=life_path, element=element
+    )
 
     # Tracks
     tracks = {}
@@ -261,16 +312,24 @@ def _fuse_prediction(name: str, dob: str, date: str, scope: str, time_of_birth: 
         pools = track_data["pools"]
         traits_key = f"{track_name}_traits"
         if track_name in sign_traits:
-            traits = sign_traits[track_name][generate_deterministic_index(seed + traits_key, len(sign_traits[track_name]))]
+            traits = sign_traits[track_name][
+                generate_deterministic_index(
+                    seed + traits_key, len(sign_traits[track_name])
+                )
+            ]
         else:
-            traits = sign_traits["general"][generate_deterministic_index(seed + traits_key, len(sign_traits["general"]))]  # fallback
+            traits = sign_traits["general"][
+                generate_deterministic_index(
+                    seed + traits_key, len(sign_traits["general"])
+                )
+            ]  # fallback
 
         text_idx = generate_deterministic_index(seed + track_name, len(pools))
         text = pools[text_idx].format(traits=traits)
         tracks[track_name] = text
 
         if track_data["ratings"]:
-            rating = (generate_deterministic_index(seed + f"{track_name}_rating", 5) + 1)
+            rating = generate_deterministic_index(seed + f"{track_name}_rating", 5) + 1
             ratings[track_name] = rating
 
     # Lucky elements (same as before)
@@ -278,18 +337,28 @@ def _fuse_prediction(name: str, dob: str, date: str, scope: str, time_of_birth: 
     lucky_numbers = _pick_unique(LUCKY_NUMBERS_POOL, seed, num_count, "num")
     color_count = 1 + generate_deterministic_index(seed + "color_count", 3)
     lucky_colors = _pick_unique(LUCKY_COLORS_POOL, seed, color_count, "color")
-    theme_word = THEME_WORDS[generate_deterministic_index(seed + "theme", len(THEME_WORDS))]
-    advice = ADVICE_POOLS[generate_deterministic_index(seed + "advice", len(ADVICE_POOLS))]
+    theme_word = THEME_WORDS[
+        generate_deterministic_index(seed + "theme", len(THEME_WORDS))
+    ]
+    advice = ADVICE_POOLS[
+        generate_deterministic_index(seed + "advice", len(ADVICE_POOLS))
+    ]
 
     # Rising and place
     rising_sign = compute_rising_sign(time_of_birth) if time_of_birth else ""
     place_vibe = None
     if place_of_birth:
-        place_vibe = PLACE_VIBES[generate_deterministic_index(seed + "place", len(PLACE_VIBES))]
+        place_vibe = PLACE_VIBES[
+            generate_deterministic_index(seed + "place", len(PLACE_VIBES))
+        ]
 
     # Affirmation and daily action
-    affirmation = AFFIRMATION_POOLS[generate_deterministic_index(seed + "affirmation", len(AFFIRMATION_POOLS))]
-    daily_action = DAILY_ACTIONS[generate_deterministic_index(seed + "action", len(DAILY_ACTIONS))]
+    affirmation = AFFIRMATION_POOLS[
+        generate_deterministic_index(seed + "affirmation", len(AFFIRMATION_POOLS))
+    ]
+    daily_action = DAILY_ACTIONS[
+        generate_deterministic_index(seed + "action", len(DAILY_ACTIONS))
+    ]
 
     return {
         "scope": scope,

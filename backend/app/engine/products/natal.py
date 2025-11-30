@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 from ..charts.engine import ChartEngine
 from ..charts.models import Chart
@@ -19,8 +19,7 @@ from .utils import build_chart_request
 def _section_from_result(title: str, result: RuleResult, limit: int = 5) -> Dict:
     ordered = sorted(result.factors, key=lambda f: f.score, reverse=True)[:limit]
     highlights = [
-        f"{f.label}: {f.meaning.text if f.meaning else ''}".strip()
-        for f in ordered
+        f"{f.label}: {f.meaning.text if f.meaning else ''}".strip() for f in ordered
     ]
     return {
         "title": title,
@@ -59,8 +58,12 @@ def build_natal_profile(
     numerology = _build_numerology(profile)
 
     general = rule_engine.evaluate("natal_general", chart, numerology=numerology)
-    love = rule_engine.evaluate("natal_love", chart, numerology={"soul_urge": numerology["soul_urge"]})
-    career = rule_engine.evaluate("natal_career", chart, numerology={"expression": numerology["expression"]})
+    love = rule_engine.evaluate(
+        "natal_love", chart, numerology={"soul_urge": numerology["soul_urge"]}
+    )
+    career = rule_engine.evaluate(
+        "natal_career", chart, numerology={"expression": numerology["expression"]}
+    )
 
     return {
         "profile": {

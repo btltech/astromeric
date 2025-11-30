@@ -12,7 +12,9 @@ from .natal import _build_numerology, _section_from_result
 
 def _compat_summary(result: RuleResult) -> Dict:
     ordered = sorted(result.factors, key=lambda f: f.score, reverse=True)
-    strengths = [f.label for f in ordered if "support" in f.topic_scores or f.score > 0.6][:5]
+    strengths = [
+        f.label for f in ordered if "support" in f.topic_scores or f.score > 0.6
+    ][:5]
     challenges = [f.label for f in ordered if f.topic_scores.get("challenge")][:5]
     return {
         "topic_scores": result.topic_scores,
@@ -51,8 +53,16 @@ def build_compatibility_report(
     return {
         "relationship_type": relationship_type,
         "people": [
-            {"name": person_a.name, "dob": person_a.date_of_birth, "chart": {"planets": [p.__dict__ for p in chart_a.planets]}},
-            {"name": person_b.name, "dob": person_b.date_of_birth, "chart": {"planets": [p.__dict__ for p in chart_b.planets]}},
+            {
+                "name": person_a.name,
+                "dob": person_a.date_of_birth,
+                "chart": {"planets": [p.__dict__ for p in chart_a.planets]},
+            },
+            {
+                "name": person_b.name,
+                "dob": person_b.date_of_birth,
+                "chart": {"planets": [p.__dict__ for p in chart_b.planets]},
+            },
         ],
         "synastry_aspects": [a.__dict__ for a in synastry],
         "summary": _compat_summary(result),

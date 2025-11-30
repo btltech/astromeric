@@ -10,6 +10,7 @@ Outputs:
   "top_themes": [...]
 }
 """
+
 from __future__ import annotations
 
 from typing import Dict, List, Optional
@@ -35,7 +36,13 @@ def _apply_weight(base: float, extra: float) -> float:
 
 
 def _aspect_weight(aspect_type: str, orb: float) -> float:
-    max_orb = {"conjunction": 7, "opposition": 7, "trine": 5.5, "square": 5.5, "sextile": 3.5}.get(aspect_type, 6)
+    max_orb = {
+        "conjunction": 7,
+        "opposition": 7,
+        "trine": 5.5,
+        "square": 5.5,
+        "sextile": 3.5,
+    }.get(aspect_type, 6)
     proximity = max(0.1, 1 - orb / max_orb)
     type_boost = 1.2 if aspect_type in ["conjunction", "opposition"] else 1.0
     type_boost = 1.1 if aspect_type in ["trine", "sextile"] else type_boost
@@ -86,7 +93,9 @@ class RuleEngine:
         # Aggregate topic scores
         for b in blocks:
             for topic, val in b.get("weights", {}).items():
-                topic_scores[topic] = topic_scores.get(topic, 0.0) + val * b.get("weight", 1.0)
+                topic_scores[topic] = topic_scores.get(topic, 0.0) + val * b.get(
+                    "weight", 1.0
+                )
 
         top_themes = sorted(blocks, key=lambda b: b.get("weight", 0), reverse=True)[:5]
 
@@ -103,7 +112,9 @@ class RuleEngine:
             if not meaning:
                 continue
             weight = _angular_boost(p.get("house"))
-            blocks.append({**meaning, "weight": weight, "source": f"{p['name']} in {p['sign']}"})
+            blocks.append(
+                {**meaning, "weight": weight, "source": f"{p['name']} in {p['sign']}"}
+            )
         return blocks
 
     def _planet_house_blocks(self, chart: Dict) -> List[Dict]:
@@ -112,10 +123,22 @@ class RuleEngine:
             meaning = PLANET_HOUSE_MEANINGS.get(p["name"], {}).get(p.get("house"))
             if meaning:
                 weight = _angular_boost(p.get("house"))
-                blocks.append({**meaning, "weight": weight, "source": f"{p['name']} house {p.get('house')}"})
+                blocks.append(
+                    {
+                        **meaning,
+                        "weight": weight,
+                        "source": f"{p['name']} house {p.get('house')}",
+                    }
+                )
             house_meaning = HOUSE_THEMES.get(p.get("house"))
             if house_meaning:
-                blocks.append({**house_meaning, "weight": 0.3, "source": f"House {p.get('house')}"})
+                blocks.append(
+                    {
+                        **house_meaning,
+                        "weight": 0.3,
+                        "source": f"House {p.get('house')}",
+                    }
+                )
         return blocks
 
     def _aspect_blocks(self, chart: Dict) -> List[Dict]:
@@ -125,7 +148,13 @@ class RuleEngine:
             if not meaning:
                 continue
             weight = _aspect_weight(asp["type"], asp["orb"])
-            blocks.append({**meaning, "weight": weight, "source": f"{asp['planet_a']} {asp['type']} {asp['planet_b']}"})
+            blocks.append(
+                {
+                    **meaning,
+                    "weight": weight,
+                    "source": f"{asp['planet_a']} {asp['type']} {asp['planet_b']}",
+                }
+            )
         return blocks
 
     def _cross_aspect_blocks(
@@ -152,7 +181,9 @@ class RuleEngine:
                 meaning = _aspect_meaning(p_a_name, p_b["name"], aspect_type)
                 if not meaning:
                     continue
-                base_weight = _aspect_weight(aspect_type, orb) * _angular_boost(p_a.get("house"))
+                base_weight = _aspect_weight(aspect_type, orb) * _angular_boost(
+                    p_a.get("house")
+                )
                 # Priority synastry weighting
                 pair_key = f"{p_a_name}-{p_b['name']}"
                 if priority_pairs and pair_key in priority_pairs:
@@ -169,9 +200,13 @@ class RuleEngine:
     def _numerology_blocks(self, numerology: Dict) -> List[Dict]:
         blocks = []
         for key, meaning in NUMEROLOGY_MEANINGS.items():
-            val = numerology.get("core_numbers", {}).get(key) or numerology.get("cycles", {}).get(key)
+            val = numerology.get("core_numbers", {}).get(key) or numerology.get(
+                "cycles", {}
+            ).get(key)
             if val:
-                blocks.append({**meaning, "weight": 1.0, "source": f"numerology:{key}={val}"})
+                blocks.append(
+                    {**meaning, "weight": 1.0, "source": f"numerology:{key}={val}"}
+                )
         return blocks
 
 
@@ -180,8 +215,20 @@ def _deg_diff(a: float, b: float) -> float:
 
 
 def _closest_aspect(diff: float):
-    angles = {"conjunction": 0, "sextile": 60, "square": 90, "trine": 120, "opposition": 180}
-    orbs = {"conjunction": 7.0, "sextile": 3.5, "square": 5.5, "trine": 5.5, "opposition": 7.0}
+    angles = {
+        "conjunction": 0,
+        "sextile": 60,
+        "square": 90,
+        "trine": 120,
+        "opposition": 180,
+    }
+    orbs = {
+        "conjunction": 7.0,
+        "sextile": 3.5,
+        "square": 5.5,
+        "trine": 5.5,
+        "opposition": 7.0,
+    }
     closest = None
     min_orb = 999.0
     for name, angle in angles.items():

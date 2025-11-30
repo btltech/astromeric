@@ -20,7 +20,7 @@ from ..interpretation import (
 )
 from .types import ProfileInput
 from .utils import build_chart_request, pick_scope_date
-from .natal import _build_numerology, _section_from_result
+from .natal import _build_numerology
 
 
 def _summarise(result: RuleResult, scope: str) -> Dict:
@@ -61,7 +61,9 @@ def build_forecast(
 
     anchor_date = pick_scope_date(scope, target_date)
     natal_request = build_chart_request(profile, chart_type="natal")
-    transit_request = build_chart_request(profile, chart_type="transit", target_date=anchor_date, time_override="12:00")
+    transit_request = build_chart_request(
+        profile, chart_type="transit", target_date=anchor_date, time_override="12:00"
+    )
 
     natal_chart = chart_engine.compute_chart(natal_request)
     transit_chart = chart_engine.compute_chart(transit_request)
@@ -72,9 +74,13 @@ def build_forecast(
     numerology = {**numerology_core, **numerology_cycles}
 
     query_type = f"{scope}_forecast"
-    result = rule_engine.evaluate(query_type, natal_chart, transit_aspects=transit_aspects, numerology=numerology)
+    result = rule_engine.evaluate(
+        query_type, natal_chart, transit_aspects=transit_aspects, numerology=numerology
+    )
 
-    seed = hashlib.md5(f"{profile.name}{profile.date_of_birth}{anchor_date}{scope}".encode()).hexdigest()
+    seed = hashlib.md5(
+        f"{profile.name}{profile.date_of_birth}{anchor_date}{scope}".encode()
+    ).hexdigest()
 
     structured = {
         "profile": {"name": profile.name, "dob": profile.date_of_birth},
@@ -97,12 +103,19 @@ def build_forecast(
 
 # ------------ Narrative helpers -------------
 
-def _build_sections(result: RuleResult, numerology: Dict, transit_aspects: list, seed: str) -> list:
+
+def _build_sections(
+    result: RuleResult, numerology: Dict, transit_aspects: list, seed: str
+) -> list:
     return [
         _build_topic_section("Overview", result, "general"),
-        _build_topic_section("Love & Relationships", result, "love", affirmation_key="love"),
+        _build_topic_section(
+            "Love & Relationships", result, "love", affirmation_key="love"
+        ),
         _build_topic_section("Work & Money", result, "career", affirmation_key="work"),
-        _build_topic_section("Emotional / Spiritual", result, "emotional", affirmation_key="emotional"),
+        _build_topic_section(
+            "Emotional / Spiritual", result, "emotional", affirmation_key="emotional"
+        ),
         _standout_transit_section(transit_aspects),
         _numerology_overlay_section(numerology),
         _actions_section(seed),
@@ -124,7 +137,9 @@ def _top_factors(result: RuleResult, topic: str, limit: int = 3):
     return ranked[:limit]
 
 
-def _build_topic_section(title: str, result: RuleResult, topic: str, affirmation_key: str = "overview") -> Dict:
+def _build_topic_section(
+    title: str, result: RuleResult, topic: str, affirmation_key: str = "overview"
+) -> Dict:
     factors = _top_factors(result, topic)
     explanations = [_format_factor(f) for f in factors if f]
     rating = _normalize_rating(result.topic_scores.get(topic, 0))
@@ -139,7 +154,9 @@ def _build_topic_section(title: str, result: RuleResult, topic: str, affirmation
 def _format_factor(factor) -> str:
     kind = factor.context.get("kind")
     if kind in ["transit", "synastry"]:
-        template = ASPECT_TEMPLATES.get(factor.label.split()[1], "A key alignment stirs movement.")
+        template = ASPECT_TEMPLATES.get(
+            factor.label.split()[1], "A key alignment stirs movement."
+        )
         a, _, b = factor.label.partition(" ")
         house_note = ""
         if factor.meaning and "house" in factor.meaning.tags:
@@ -158,12 +175,22 @@ def _format_factor(factor) -> str:
 
 def _standout_transit_section(transit_aspects: list) -> Dict:
     if not transit_aspects:
-        return {"title": "Standout Transit", "highlights": ["Quiet sky—no standout transit today."], "rating": 3}
+        return {
+            "title": "Standout Transit",
+            "highlights": ["Quiet sky—no standout transit today."],
+            "rating": 3,
+        }
     strongest = sorted(transit_aspects, key=lambda a: a.strength_score, reverse=True)[0]
-    template = ASPECT_TEMPLATES.get(strongest.aspect_type, "A key alignment shapes the day.")
+    template = ASPECT_TEMPLATES.get(
+        strongest.aspect_type, "A key alignment shapes the day."
+    )
     text = template.format(a=strongest.planet_a, b=strongest.planet_b)
     why = f"{text} (orb {strongest.orb:.2f}°, score {strongest.strength_score:.2f})."
-    return {"title": "Standout Transit", "highlights": [why], "rating": _normalize_rating(strongest.strength_score * 5)}
+    return {
+        "title": "Standout Transit",
+        "highlights": [why],
+        "rating": _normalize_rating(strongest.strength_score * 5),
+    }
 
 
 def _numerology_overlay_section(numerology: Dict) -> Dict:
@@ -185,7 +212,12 @@ def _numerology_overlay_section(numerology: Dict) -> Dict:
 def _actions_section(seed: str) -> Dict:
     action = _deterministic_pick(seed + "action", ACTIONS)
     affirmation = AFFIRMATIONS.get("overview")
-    return {"title": "Actions & Advice", "highlights": [action], "affirmation": affirmation, "rating": 4}
+    return {
+        "title": "Actions & Advice",
+        "highlights": [action],
+        "affirmation": affirmation,
+        "rating": 4,
+    }
 
 
 def _deterministic_pick(seed: str, items: list) -> str:

@@ -1,10 +1,12 @@
 """Tests for extended numerology, compatibility, and glossary modules."""
+
 import sys
 import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from app.engine.numerology_extended import (
-    get_full_numerology_profile, 
+    get_full_numerology_profile,
     analyze_name,
     calculate_expression_number,
     calculate_soul_urge_number,
@@ -14,19 +16,19 @@ from app.engine.numerology_extended import (
     calculate_personal_month,
     calculate_personal_day,
     calculate_pinnacles,
-    calculate_challenges
+    calculate_challenges,
 )
 from app.engine.compatibility import (
     calculate_astro_compatibility,
     calculate_numerology_compatibility,
-    calculate_combined_compatibility
+    calculate_combined_compatibility,
 )
 from app.engine.glossary import (
     get_sign_info,
     get_number_explanation,
     search_glossary,
     ZODIAC_GLOSSARY,
-    NUMEROLOGY_GLOSSARY
+    NUMEROLOGY_GLOSSARY,
 )
 
 
@@ -114,14 +116,18 @@ class TestCompatibility:
         assert 0 <= result["score"] <= 100
 
     def test_numerology_compatibility(self):
-        result = calculate_numerology_compatibility("John", "1990-01-01", "Jane", "1992-05-15")
+        result = calculate_numerology_compatibility(
+            "John", "1990-01-01", "Jane", "1992-05-15"
+        )
         assert "person1" in result
         assert "person2" in result
         assert "life_path_harmony" in result
         assert 0 <= result["life_path_harmony"] <= 100
 
     def test_combined_compatibility(self):
-        result = calculate_combined_compatibility("John", "1990-01-01", "Jane", "1992-05-15", "romantic")
+        result = calculate_combined_compatibility(
+            "John", "1990-01-01", "Jane", "1992-05-15", "romantic"
+        )
         assert "combined_score" in result
         assert "astrology" in result
         assert "numerology" in result
@@ -148,7 +154,9 @@ class TestGlossary:
     def test_numerology_glossary_exists(self):
         assert len(NUMEROLOGY_GLOSSARY) > 0
         # Check for general terms like "Life Path" without number
-        assert "Life Path" in NUMEROLOGY_GLOSSARY or any("Life" in k for k in NUMEROLOGY_GLOSSARY.keys())
+        assert "Life Path" in NUMEROLOGY_GLOSSARY or any(
+            "Life" in k for k in NUMEROLOGY_GLOSSARY.keys()
+        )
 
     def test_get_number_explanation(self):
         # Try getting explanation for "Life Path"
@@ -169,4 +177,5 @@ class TestGlossary:
 
 if __name__ == "__main__":
     import pytest
+
     pytest.main([__file__, "-v"])

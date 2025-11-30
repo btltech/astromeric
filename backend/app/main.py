@@ -13,13 +13,14 @@ Deployment notes:
 - Swiss Ephemeris files must live at /app/ephemeris (or set EPHEMERIS_PATH).
 - Railway start command: uvicorn main:api --host 0.0.0.0 --port $PORT
 """
+
 from __future__ import annotations
 
 from datetime import datetime
 from typing import Dict, Optional
 
 import os
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 

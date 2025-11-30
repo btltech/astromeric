@@ -2,6 +2,7 @@
 forecast.py
 Builds daily/weekly forecasts using transit-to-natal aspects, numerology cycles, and rule engine.
 """
+
 from __future__ import annotations
 
 from datetime import datetime, timedelta
@@ -31,7 +32,16 @@ def build_forecast(profile: Dict, scope: str = "daily") -> Dict:
         synastry_priority=synastry_priority,
     )
 
-    smoothed = _smooth_topic_scores(profile, natal, numerology, anchor, scope, engine, transit_filter, synastry_priority)
+    smoothed = _smooth_topic_scores(
+        profile,
+        natal,
+        numerology,
+        anchor,
+        scope,
+        engine,
+        transit_filter,
+        synastry_priority,
+    )
 
     return {
         "scope": scope,
@@ -67,7 +77,16 @@ def _ratings(topic_scores: Dict) -> Dict:
     return ratings
 
 
-def _smooth_topic_scores(profile: Dict, natal: Dict, numerology: Dict, anchor: datetime, scope: str, engine: RuleEngine, transit_filter: List[str], synastry_priority: List[str]) -> Dict:
+def _smooth_topic_scores(
+    profile: Dict,
+    natal: Dict,
+    numerology: Dict,
+    anchor: datetime,
+    scope: str,
+    engine: RuleEngine,
+    transit_filter: List[str],
+    synastry_priority: List[str],
+) -> Dict:
     # simple 3-point smoothing: day before, current, day after
     dates = [anchor - timedelta(days=1), anchor, anchor + timedelta(days=1)]
     scores_list = []
@@ -93,7 +112,17 @@ def _transit_planets(scope: str) -> List[str]:
     if scope == "daily":
         return ["Sun", "Moon", "Mercury", "Venus", "Mars", "Jupiter", "Saturn"]
     if scope == "weekly":
-        return ["Mars", "Jupiter", "Saturn", "Uranus", "Neptune", "Pluto", "Sun", "Venus", "Mercury"]
+        return [
+            "Mars",
+            "Jupiter",
+            "Saturn",
+            "Uranus",
+            "Neptune",
+            "Pluto",
+            "Sun",
+            "Venus",
+            "Mercury",
+        ]
     return []
 
 

@@ -148,10 +148,16 @@ ASPECT_MEANINGS: Dict[str, MeaningBlock] = {
 
 HOUSE_TOPICS: Dict[int, MeaningBlock] = {
     1: MeaningBlock(text="Identity, body, approach to life", tags=["identity"]),
-    2: MeaningBlock(text="Resources, money, skills, values", tags=["money", "stability"]),
-    5: MeaningBlock(text="Romance, creativity, joy, children", tags=["love", "creativity"]),
+    2: MeaningBlock(
+        text="Resources, money, skills, values", tags=["money", "stability"]
+    ),
+    5: MeaningBlock(
+        text="Romance, creativity, joy, children", tags=["love", "creativity"]
+    ),
     6: MeaningBlock(text="Daily work, health, service", tags=["health", "routine"]),
-    7: MeaningBlock(text="Partnerships, contracts, collaboration", tags=["love", "alliance"]),
+    7: MeaningBlock(
+        text="Partnerships, contracts, collaboration", tags=["love", "alliance"]
+    ),
     10: MeaningBlock(text="Career, reputation, public life", tags=["career", "status"]),
 }
 

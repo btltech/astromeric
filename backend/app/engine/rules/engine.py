@@ -3,10 +3,9 @@ from __future__ import annotations
 from dataclasses import dataclass, field, asdict
 from typing import Dict, List, Optional
 
-from ..charts.models import Aspect, Chart, PlanetPosition
+from ..charts.models import Aspect, Chart
 from ..interpretation import (
     ASPECT_MEANINGS,
-    HOUSE_TOPICS,
     NUMEROLOGY_MEANINGS,
     PLANET_HOUSE_MEANINGS,
     PLANET_SIGN_MEANINGS,
@@ -102,7 +101,9 @@ class RuleEngine:
         factors: List[Factor] = []
         for planet in chart.planets:
             if planet.house:
-                meaning = get_meaning_block(PLANET_HOUSE_MEANINGS, planet.name, planet.house)
+                meaning = get_meaning_block(
+                    PLANET_HOUSE_MEANINGS, planet.name, planet.house
+                )
                 if meaning:
                     score = self._base_score(meaning.weights, query_type)
                     factors.append(
@@ -117,7 +118,9 @@ class RuleEngine:
                     )
         return factors
 
-    def _aspect_factors(self, aspects: List[Aspect], aspect_origin: str) -> List[Factor]:
+    def _aspect_factors(
+        self, aspects: List[Aspect], aspect_origin: str
+    ) -> List[Factor]:
         factors: List[Factor] = []
         for asp in aspects:
             meaning = ASPECT_MEANINGS.get(asp.aspect_type)
@@ -191,5 +194,7 @@ class RuleEngine:
         total = sum(topic_weights.values())
         if not total:
             return 0.5
-        adj = sum(topic_weights.get(t, 0) * multiplier.get(t, 1.0) for t in topic_weights)
+        adj = sum(
+            topic_weights.get(t, 0) * multiplier.get(t, 1.0) for t in topic_weights
+        )
         return round(adj / total, 3)
