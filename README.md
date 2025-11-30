@@ -1,4 +1,6 @@
 # AstroNumerology – One-Stop Astrology + Numerology Platform
+[View on GitHub](https://github.com/btltech/astromeric)
+
 
 ## Quick Start
 - **Run Locally**: Backend: `cd /path/to/project && python -m uvicorn backend.app.main:app --reload`. Frontend: `npm run dev`. Open http://localhost:3000.
