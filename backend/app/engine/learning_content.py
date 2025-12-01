@@ -714,3 +714,129 @@ def get_all_learning_content() -> Dict:
         "retrogrades": RETROGRADE_GUIDE,
         "mini_courses": MINI_COURSES,
     }
+
+
+# ========== API-COMPATIBLE EXPORTS ==========
+
+# These aliases make the API endpoints work correctly
+ELEMENTS_AND_MODALITIES = {
+    "elements": ELEMENTS,
+    "modalities": MODALITIES,
+}
+
+RETROGRADE_INFO = RETROGRADE_GUIDE
+
+
+def get_learning_module(module_id: str) -> Dict:
+    """Get a learning module by ID for the API."""
+    modules = {
+        "moon_signs": {
+            "id": "moon_signs",
+            "title": "Moon Signs: Your Emotional Self",
+            "description": "Discover how your Moon sign shapes your inner world",
+            "content": MOON_SIGNS,
+        },
+        "rising_signs": {
+            "id": "rising_signs",
+            "title": "Rising Signs: Your Cosmic Mask",
+            "description": "Learn how your Ascendant influences first impressions",
+            "content": RISING_SIGNS,
+        },
+        "elements": {
+            "id": "elements",
+            "title": "Elements & Modalities",
+            "description": "Fire, Earth, Air, Water and Cardinal, Fixed, Mutable",
+            "content": ELEMENTS_AND_MODALITIES,
+        },
+        "retrogrades": {
+            "id": "retrogrades",
+            "title": "Planetary Retrogrades",
+            "description": "What happens when planets appear to move backward",
+            "content": RETROGRADE_INFO,
+        },
+        "courses": {
+            "id": "courses",
+            "title": "Mini Courses",
+            "description": "Structured lessons for deeper learning",
+            "content": list(MINI_COURSES.keys()),
+        },
+    }
+    return modules.get(module_id)
+
+
+def get_lesson(course_id: str, lesson_number: int) -> Dict:
+    """Get a specific lesson from a mini course."""
+    course = MINI_COURSES.get(course_id)
+    if not course:
+        return None
+    
+    lessons = course.get("lessons", [])
+    if lesson_number < 1 or lesson_number > len(lessons):
+        return None
+    
+    lesson = lessons[lesson_number - 1]
+    return {
+        "course_id": course_id,
+        "course_title": course["title"],
+        "lesson_number": lesson_number,
+        "total_lessons": len(lessons),
+        **lesson,
+    }
+
+
+def search_learning_content(query: str) -> List[Dict]:
+    """Search across all learning content."""
+    results = []
+    query_lower = query.lower()
+    
+    # Search moon signs
+    for sign, data in MOON_SIGNS.items():
+        if query_lower in sign.lower() or query_lower in data.get("short_desc", "").lower():
+            results.append({
+                "type": "moon_sign",
+                "key": sign,
+                "title": data["title"],
+                "preview": data["short_desc"],
+            })
+    
+    # Search rising signs
+    for sign, data in RISING_SIGNS.items():
+        if query_lower in sign.lower() or query_lower in data.get("first_impression", "").lower():
+            results.append({
+                "type": "rising_sign",
+                "key": sign,
+                "title": data["title"],
+                "preview": data["first_impression"],
+            })
+    
+    # Search elements
+    for element, data in ELEMENTS.items():
+        if query_lower in element.lower() or query_lower in data.get("description", "").lower():
+            results.append({
+                "type": "element",
+                "key": element,
+                "title": f"{element} Element",
+                "preview": ", ".join(data.get("keywords", [])),
+            })
+    
+    # Search retrogrades
+    for planet, data in RETROGRADE_GUIDE.items():
+        if query_lower in planet.lower() or query_lower in data.get("what_it_means", "").lower():
+            results.append({
+                "type": "retrograde",
+                "key": planet,
+                "title": f"{planet} Retrograde",
+                "preview": data.get("frequency", ""),
+            })
+    
+    # Search courses
+    for course_id, data in MINI_COURSES.items():
+        if query_lower in data.get("title", "").lower():
+            results.append({
+                "type": "course",
+                "key": course_id,
+                "title": data["title"],
+                "preview": f"{len(data.get('lessons', []))} lessons",
+            })
+    
+    return results[:10]  # Limit to 10 results

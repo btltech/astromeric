@@ -32,8 +32,8 @@
 .content-wrapper {
   position: relative;
   z-index: 10;
-  width: 100%;
-  max-width: 700px;
+  width: 90%;
+  max-width: 1400px;
   padding: 20px;
 }
 
@@ -248,6 +248,68 @@ input:focus {
 @media (min-width: 600px) {
   .predictions-grid {
     grid-template-columns: 1fr 1fr 1fr;
+  }
+}
+
+/* Wide layout improvements */
+@media (min-width: 900px) {
+  .predictions-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.25rem;
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+  
+  .numerology-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  
+  .tracks-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .glossary-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  .compat-breakdown {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  
+  .features-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  
+  .modules-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  .content-grid.signs-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1200px) {
+  .predictions-grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+  
+  .glossary-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  
+  .modules-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  
+  .content-grid.signs-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  
+  .cosmic-guide-chat {
+    height: 600px;
   }
 }
 

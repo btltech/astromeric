@@ -475,7 +475,7 @@ MOOD_FORECASTS = {
     },
 }
 
-def get_mood_forecast(
+def _calculate_mood_forecast(
     element: str,
     life_path: int,
     personal_day: int,
@@ -578,6 +578,179 @@ def get_all_daily_features(
         "affirmation": get_daily_affirmation(element, life_path, reference_date),
         "tarot": get_daily_tarot(reference_date, name),
         "manifestation": get_manifestation_prompt(life_path, personal_day, reference_date),
-        "mood_forecast": get_mood_forecast(element, life_path, personal_day, reference_date),
+        "mood_forecast": _calculate_mood_forecast(element, life_path, personal_day, reference_date),
         "retrograde_alerts": check_retrograde_alerts(reference_date),
+    }
+
+
+# ========== API-FACING FUNCTIONS ==========
+
+SIGN_ELEMENTS = {
+    "Aries": "Fire", "Leo": "Fire", "Sagittarius": "Fire",
+    "Taurus": "Earth", "Virgo": "Earth", "Capricorn": "Earth",
+    "Gemini": "Air", "Libra": "Air", "Aquarius": "Air",
+    "Cancer": "Water", "Scorpio": "Water", "Pisces": "Water",
+}
+
+
+def get_daily_features(birth_date: str, sun_sign: Optional[str] = None) -> Dict:
+    """Get daily features for the API endpoint."""
+    today = date.today()
+    
+    # Calculate life path from birth date
+    life_path = sum(int(d) for d in birth_date.replace("-", "")) % 9 or 9
+    
+    # Calculate personal day
+    personal_day = (today.day + today.month + life_path) % 9 or 9
+    
+    # Determine element from sun sign
+    element = SIGN_ELEMENTS.get(sun_sign, "Fire") if sun_sign else "Fire"
+    
+    # Generate a name seed from birth date
+    name_seed = f"cosmic_{birth_date}"
+    
+    return {
+        "date": today.isoformat(),
+        "lucky_numbers": calculate_lucky_numbers(birth_date, today),
+        "lucky_colors": get_lucky_colors(element, today),
+        "lucky_planet": get_lucky_planet(today, life_path),
+        "affirmation": get_daily_affirmation(element, life_path, today),
+        "tarot": get_daily_tarot(today, name_seed),
+        "manifestation": get_manifestation_prompt(life_path, personal_day, today),
+        "mood_forecast": _calculate_mood_forecast(element, life_path, personal_day, today),
+        "retrograde_alerts": check_retrograde_alerts(today),
+        "personal_day": personal_day,
+        "life_path": life_path,
+    }
+
+
+def get_tarot_card(question: Optional[str] = None) -> Dict:
+    """Draw a single tarot card."""
+    today = date.today()
+    seed = hash(f"{question or 'daily'}-{today.isoformat()}-{datetime.now().microsecond}")
+    random.seed(seed)
+    
+    card_num = random.randint(0, 21)
+    is_reversed = random.random() < 0.3
+    
+    card = MAJOR_ARCANA[card_num]
+    
+    return {
+        "card": card["name"],
+        "card_number": card_num,
+        "keywords": card["keywords"],
+        "message": card["reversed"] if is_reversed else card["upright"],
+        "reversed": is_reversed,
+        "daily_advice": card["advice"],
+        "drawn_at": datetime.now().isoformat(),
+    }
+
+
+def get_yes_no_reading(question: str, birth_date: Optional[str] = None) -> Dict:
+    """Get a cosmic yes/no reading."""
+    today = date.today()
+    seed = hash(f"{question}-{today.isoformat()}-{birth_date or ''}")
+    random.seed(seed)
+    
+    # Determine answer with cosmic reasoning
+    answers = [
+        {
+            "answer": "Yes",
+            "emoji": "✨",
+            "confidence": random.randint(70, 95),
+            "message": "The stars align in favor. Move forward with confidence.",
+            "reasoning": "The cosmic energies support this path. Trust the universe's guidance.",
+            "timing": "The timing feels right. Act within the next few days.",
+        },
+        {
+            "answer": "Yes",
+            "emoji": "🌟",
+            "confidence": random.randint(55, 75),
+            "message": "A soft yes. Proceed with awareness and intention.",
+            "reasoning": "The energy is favorable but requires your conscious effort.",
+            "timing": "Consider waiting until after the new moon for best results.",
+        },
+        {
+            "answer": "No",
+            "emoji": "🌑",
+            "confidence": random.randint(70, 95),
+            "message": "The cosmos advises against this path right now.",
+            "reasoning": "There are unseen obstacles. This isn't a permanent no, just not now.",
+            "timing": "Revisit this question in a lunar cycle.",
+        },
+        {
+            "answer": "No",
+            "emoji": "🌒",
+            "confidence": random.randint(55, 75),
+            "message": "Not at this moment. Patience may change the answer.",
+            "reasoning": "The universe is redirecting you toward something better.",
+            "timing": "Give it more time. The path will become clearer.",
+        },
+        {
+            "answer": "Maybe",
+            "emoji": "🔮",
+            "confidence": random.randint(40, 60),
+            "message": "The outcome depends on your actions. You have power here.",
+            "reasoning": "This is a crossroads moment. Your choice shapes the outcome.",
+            "timing": "Take action within 3 days to influence the outcome.",
+        },
+        {
+            "answer": "Wait",
+            "emoji": "⏳",
+            "confidence": random.randint(50, 70),
+            "message": "The timing isn't clear. Ask again when the moon shifts.",
+            "reasoning": "More information needs to emerge before this can be answered.",
+            "timing": "Ask again after the next major lunar phase.",
+        },
+    ]
+    
+    result = random.choice(answers)
+    result["question"] = question
+    result["asked_at"] = datetime.now().isoformat()
+    
+    return result
+
+
+def get_mood_forecast(sun_sign: str, moon_sign: Optional[str] = None) -> Dict:
+    """Get today's mood forecast based on astrological influences."""
+    today = date.today()
+    element = SIGN_ELEMENTS.get(sun_sign, "Fire")
+    
+    # Simple life path and personal day for forecasting
+    seed = hash(f"{sun_sign}-{moon_sign or ''}-{today.isoformat()}")
+    random.seed(seed)
+    
+    life_path = random.randint(1, 9)
+    personal_day = (today.day + today.month) % 9 or 9
+    
+    # Weight moods based on element and day
+    weights = {
+        "energetic": 1.5 if element in ["Fire", "Air"] else 0.8,
+        "reflective": 1.2 if personal_day in [7, 9] else 0.6,
+        "social": 1.5 if element in ["Air", "Fire"] or personal_day in [2, 3, 6] else 0.7,
+        "creative": 1.3 if personal_day in [3, 5] else 0.6,
+        "grounded": 1.5 if element == "Earth" or personal_day in [4, 8] else 0.7,
+        "transformative": 1.2 if element == "Water" or personal_day == 9 else 0.5,
+    }
+    
+    moods = list(weights.keys())
+    mood = random.choices(moods, weights=list(weights.values()))[0]
+    forecast = MOOD_FORECASTS[mood]
+    
+    # Calculate energy score (1-10)
+    base_score = random.randint(5, 8)
+    modifier = 1 if personal_day in [3, 5, 6] else -1 if personal_day in [4, 7] else 0
+    score = max(1, min(10, base_score + modifier))
+    
+    return {
+        "date": today.isoformat(),
+        "sun_sign": sun_sign,
+        "moon_sign": moon_sign,
+        "mood": mood,
+        "emoji": forecast["emoji"],
+        "energy_score": score,
+        "description": forecast["description"],
+        "tips": forecast["tips"],
+        "peak_hours": f"{10 + (personal_day % 3)}:00 AM - {2 + (personal_day % 4)}:00 PM",
+        "element_influence": f"{element} energy shapes your day",
     }
