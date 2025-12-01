@@ -80,16 +80,20 @@ export function TarotCard() {
               {/* Card Front */}
               <div className="card-front">
                 <div className="card-header">
-                  <h4 className="card-name">{card.name}</h4>
+                  <h4 className="card-name">{card.card}{card.reversed ? ' (Reversed)' : ''}</h4>
                 </div>
                 <div className="card-body">
+                  <div className="card-keywords">
+                    <span className="keywords-label">Keywords</span>
+                    <p>{card.keywords.join(' • ')}</p>
+                  </div>
                   <div className="card-meaning">
-                    <span className="meaning-label">Meaning</span>
-                    <p>{card.meaning}</p>
+                    <span className="meaning-label">Message</span>
+                    <p>{card.message}</p>
                   </div>
                   <div className="card-advice">
                     <span className="advice-label">Advice</span>
-                    <p>{card.advice}</p>
+                    <p>{card.daily_advice}</p>
                   </div>
                 </div>
               </div>

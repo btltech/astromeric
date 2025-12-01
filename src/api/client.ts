@@ -108,14 +108,55 @@ export function fetchAiExplanation(payload: AiExplainPayload) {
 
 export interface DailyFeaturesResponse {
   date: string;
-  lucky_number: number;
-  lucky_number_meaning: string;
-  lucky_color: { name: string; hex: string; meaning: string };
-  ruling_planet: { name: string; symbol: string; energy: string; focus: string };
-  daily_affirmation: string;
-  tarot_energy: { name: string; meaning: string; advice: string };
-  manifestation_focus: string;
-  cosmic_tip: string;
+  lucky_numbers: number[];
+  lucky_colors: { 
+    primary: string; 
+    primary_hex: string; 
+    accent: string;
+    description: string;
+  };
+  lucky_planet: { 
+    planet: string; 
+    keywords: string[];
+    best_for: string[];
+    avoid: string[];
+    message: string;
+  };
+  affirmation: {
+    text: string;
+    category: string;
+    instruction: string;
+  };
+  tarot: { 
+    card: string;
+    card_number: number;
+    keywords: string[];
+    message: string;
+    reversed: boolean;
+    daily_advice: string;
+  };
+  manifestation: {
+    prompt: string;
+    focus: string;
+    practice: string;
+    visualization: string;
+  };
+  mood_forecast: {
+    mood: string;
+    emoji: string;
+    score: number;
+    description: string;
+    tips: string[];
+    peak_hours: string;
+  };
+  retrograde_alerts: Array<{
+    planet: string;
+    status: string;
+    message: string;
+    advice: string[];
+  }>;
+  personal_day: number;
+  life_path: number;
 }
 
 export function fetchDailyFeatures(birthDate: string, sunSign?: string) {
@@ -128,9 +169,12 @@ export function fetchDailyFeatures(birthDate: string, sunSign?: string) {
 // ========== TAROT API ==========
 
 export interface TarotCardResponse {
-  name: string;
-  meaning: string;
-  advice: string;
+  card: string;
+  card_number: number;
+  keywords: string[];
+  message: string;
+  reversed: boolean;
+  daily_advice: string;
   drawn_at: string;
 }
 
@@ -144,11 +188,13 @@ export function drawTarotCard() {
 
 export interface YesNoResponse {
   question: string;
-  answer: 'Yes' | 'No' | 'Maybe';
+  answer: 'Yes' | 'No' | 'Maybe' | 'Wait';
+  emoji: string;
   confidence: number;
-  cosmic_reasoning: string;
-  advice: string;
+  message: string;
+  reasoning: string;
   timing: string;
+  asked_at: string;
 }
 
 export function askOracle(question: string, birthDate?: string) {

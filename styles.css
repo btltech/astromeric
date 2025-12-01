@@ -2286,3 +2286,76 @@ a:focus-visible {
     font-size: 0.8rem;
   }
 }
+
+/* ========== ADDITIONAL DAILY FEATURES STYLES ========== */
+
+.affirmation-instruction {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 0.5rem;
+  font-style: italic;
+}
+
+.manifestation-practice {
+  font-size: 0.85rem;
+  color: var(--primary);
+  margin-top: 0.5rem;
+}
+
+.retrograde-alert {
+  background: rgba(191, 97, 106, 0.15);
+  border: 1px solid rgba(191, 97, 106, 0.4);
+  border-radius: 12px;
+  padding: 1rem;
+  margin-top: 1rem;
+}
+
+.retrograde-alert .alert-icon {
+  display: block;
+  font-size: 0.9rem;
+  color: var(--accent);
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.retrograde-alert .alert-planet {
+  font-weight: 600;
+  color: var(--accent);
+  margin: 0 0 0.25rem;
+}
+
+.retrograde-alert .alert-message {
+  color: var(--text-muted);
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.card-keywords {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.keywords-label {
+  font-size: 0.7rem;
+  color: var(--primary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.features-grid {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+@media (min-width: 900px) {
+  .features-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1200px) {
+  .features-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}

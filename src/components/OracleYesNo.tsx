@@ -39,6 +39,7 @@ export function OracleYesNo({ birthDate }: Props) {
       case 'Yes': return '✅';
       case 'No': return '❌';
       case 'Maybe': return '🤔';
+      case 'Wait': return '⏳';
       default: return '🔮';
     }
   };
@@ -48,6 +49,7 @@ export function OracleYesNo({ birthDate }: Props) {
       case 'Yes': return '#4ade80';
       case 'No': return '#f87171';
       case 'Maybe': return '#facc15';
+      case 'Wait': return '#a78bfa';
       default: return '#a78bfa';
     }
   };
@@ -113,7 +115,7 @@ export function OracleYesNo({ birthDate }: Props) {
             className="answer-reveal"
             style={{ '--answer-color': getAnswerColor(result.answer) } as React.CSSProperties}
           >
-            <span className="answer-emoji">{getAnswerEmoji(result.answer)}</span>
+            <span className="answer-emoji">{result.emoji || getAnswerEmoji(result.answer)}</span>
             <span className="answer-text">{result.answer}</span>
             <div className="confidence-meter">
               <span className="confidence-label">Cosmic Confidence</span>
@@ -128,13 +130,13 @@ export function OracleYesNo({ birthDate }: Props) {
           </div>
 
           <div className="cosmic-reasoning">
-            <span className="section-label">🌌 Cosmic Reasoning</span>
-            <p>{result.cosmic_reasoning}</p>
+            <span className="section-label">🌌 Cosmic Message</span>
+            <p>{result.message}</p>
           </div>
 
           <div className="oracle-advice">
-            <span className="section-label">💫 Guidance</span>
-            <p>{result.advice}</p>
+            <span className="section-label">💫 Reasoning</span>
+            <p>{result.reasoning}</p>
           </div>
 
           <div className="oracle-timing">
