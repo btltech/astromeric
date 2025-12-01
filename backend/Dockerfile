@@ -10,17 +10,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 	&& rm -rf /var/lib/apt/lists/*
 
 # Install runtime deps
-COPY backend/requirements.txt ./
+COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy app
-COPY backend/app ./app
+COPY app ./app
 
 # Copy ephemeris files
-COPY backend/app/ephemeris ./app/ephemeris
+COPY app/ephemeris ./app/ephemeris
 
-# Override uvicorn binary with wrapper that resolves literal "$PORT"
-COPY backend/bin/uvicorn-wrapper.sh /usr/local/bin/uvicorn
+# Copy uvicorn wrapper
+COPY bin/uvicorn-wrapper.sh /usr/local/bin/uvicorn
 RUN chmod +x /usr/local/bin/uvicorn
 
 EXPOSE 8000
