@@ -624,3 +624,4 @@ if __name__ == "__main__":
     # In Docker container: working directory is /app so module is app.main
     # In development: use the api object directly
     uvicorn.run(api, host="0.0.0.0", port=port)
+# trigger deploy
