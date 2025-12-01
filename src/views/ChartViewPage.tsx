@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import ChartView from '../components/ChartView';
 import { useProfiles } from '../hooks';
 import { useStore } from '../store/useStore';
@@ -14,6 +15,7 @@ const fadeIn = {
 export function ChartViewPage() {
   const { selectedProfile } = useProfiles();
   const { setError } = useStore();
+  const navigate = useNavigate();
 
   if (!selectedProfile) {
     return (
@@ -22,6 +24,15 @@ export function ChartViewPage() {
         <p style={{ color: '#aaa', textAlign: 'center' }}>
           Select or create a profile in the Reading tab to generate a personalized chart.
         </p>
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className="btn-primary"
+          style={{ marginTop: '1.5rem' }}
+          onClick={() => navigate('/')}
+        >
+          Create or Select Profile
+        </motion.button>
       </motion.div>
     );
   }
