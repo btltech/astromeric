@@ -1,8 +1,5 @@
 name = "astromeric"
 pages_build_output_dir = "dist"
 
-[build]
-command = "npm install && npm run build"
-
 [env.production]
 name = "astromeric"
