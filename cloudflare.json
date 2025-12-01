@@ -1,0 +1,6 @@
+{
+  "buildConfig": {
+    "buildCommand": "npm run build",
+    "buildOutputDirectory": "dist"
+  }
+}

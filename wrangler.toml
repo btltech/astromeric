@@ -1,0 +1,8 @@
+name = "astromeric"
+type = "javascript"
+
+[env.production]
+name = "astromeric"
+routes = [
+  { pattern = "astromeric.pages.dev", zone_name = "pages.dev" }
+]
