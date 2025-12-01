@@ -257,6 +257,85 @@ def get_suggested_questions(
     return suggestions[:6]  # Return max 6 suggestions
 
 
+async def chat_with_cosmic_guide(
+    message: str,
+    user_context: Optional[Dict] = None,
+    history: Optional[List[Dict]] = None,
+) -> str:
+    """
+    Chat with the Cosmic Guide.
+    
+    Args:
+        message: User's message
+        user_context: Optional dict with sun_sign, moon_sign, rising_sign
+        history: Optional conversation history
+        
+    Returns:
+        Response string from the cosmic guide
+    """
+    # Build chart-like data from context
+    chart_data = None
+    if user_context:
+        planets = []
+        if user_context.get("sun_sign"):
+            planets.append({"name": "Sun", "sign": user_context["sun_sign"]})
+        if user_context.get("moon_sign"):
+            planets.append({"name": "Moon", "sign": user_context["moon_sign"]})
+        if planets:
+            chart_data = {"planets": planets}
+            if user_context.get("rising_sign"):
+                chart_data["houses"] = [{"house": 1, "sign": user_context["rising_sign"]}]
+    
+    result = await ask_cosmic_guide(
+        question=message,
+        chart_data=chart_data,
+        conversation_history=history,
+    )
+    
+    return result.get("response", FALLBACK_RESPONSES["default"])
+
+
+async def get_quick_insight(topic: str, sun_sign: Optional[str] = None) -> str:
+    """
+    Get a quick cosmic insight on a specific topic.
+    
+    Args:
+        topic: Topic to get insight on
+        sun_sign: Optional sun sign for personalization
+        
+    Returns:
+        Quick insight string
+    """
+    # Detect which category this falls into
+    topic_key = _detect_topic(topic)
+    
+    # Build minimal context
+    chart_data = None
+    if sun_sign:
+        chart_data = {"planets": [{"name": "Sun", "sign": sun_sign}]}
+    
+    # For quick insights, use a more focused prompt
+    api_key = _get_api_key()
+    
+    if not api_key or not HAS_GENAI:
+        return FALLBACK_RESPONSES.get(topic_key, FALLBACK_RESPONSES["default"])
+    
+    try:
+        genai.configure(api_key=api_key)
+        model = genai.GenerativeModel(_get_model_name())
+        
+        prompt = f"""You are the Cosmic Guide, a mystical AI advisor. 
+Give a brief, uplifting insight about: {topic}
+{f'The user is a {sun_sign}.' if sun_sign else ''}
+Keep it to 2-3 sentences maximum. Be warm and encouraging. Include one emoji."""
+        
+        response = model.generate_content(prompt)
+        return response.text.strip()
+        
+    except Exception:
+        return FALLBACK_RESPONSES.get(topic_key, FALLBACK_RESPONSES["default"])
+
+
 # Sync wrapper for non-async contexts
 def ask_cosmic_guide_sync(
     question: str,
