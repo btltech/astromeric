@@ -13,6 +13,7 @@ export function FortuneForm({ onSubmit, isLoading }: Props) {
     date_of_birth: '',
     time_of_birth: '',
     place_of_birth: '',
+    saveProfile: false, // Default: do NOT save profile
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -93,6 +94,21 @@ export function FortuneForm({ onSubmit, isLoading }: Props) {
             </div>
           )}
         </div>
+        <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <input
+            type="checkbox"
+            id="saveProfile"
+            checked={formData.saveProfile || false}
+            onChange={(e) => setFormData({ ...formData, saveProfile: e.target.checked })}
+            style={{ width: 'auto', margin: 0 }}
+          />
+          <label htmlFor="saveProfile" style={{ margin: 0, cursor: 'pointer' }}>
+            Save my profile for future readings
+          </label>
+        </div>
+        <p style={{ fontSize: 12, color: '#888', marginTop: 4, marginBottom: 16 }}>
+          Your data is only used to generate your reading. Check the box above to save your profile for future visits.
+        </p>
         <button type="submit" className="btn-primary" disabled={isLoading}>
           {isLoading ? 'Reading the Stars...' : "Get Today's Prediction"}
         </button>

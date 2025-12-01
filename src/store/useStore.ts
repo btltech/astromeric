@@ -11,12 +11,16 @@ import type {
 } from '../types';
 
 interface AppState {
-  // Profiles
+  // Profiles (saved to backend - opt-in only)
   profiles: SavedProfile[];
   selectedProfileId: number | null;
   setProfiles: (profiles: SavedProfile[]) => void;
   setSelectedProfileId: (id: number | null) => void;
   addProfile: (profile: SavedProfile) => void;
+
+  // Session profile (never saved to backend or localStorage)
+  sessionProfile: SavedProfile | null;
+  setSessionProfile: (profile: SavedProfile | null) => void;
 
   // Reading
   selectedScope: 'daily' | 'weekly' | 'monthly';
@@ -58,12 +62,16 @@ interface AppState {
 export const useStore = create<AppState>()(
   persist(
     (set) => ({
-      // Profiles
+      // Profiles (saved to backend - opt-in only)
       profiles: [],
       selectedProfileId: null,
       setProfiles: (profiles) => set({ profiles }),
       setSelectedProfileId: (id) => set({ selectedProfileId: id }),
       addProfile: (profile) => set((state) => ({ profiles: [...state.profiles, profile] })),
+
+      // Session profile (never saved)
+      sessionProfile: null,
+      setSessionProfile: (profile) => set({ sessionProfile: profile }),
 
       // Reading
       selectedScope: 'daily',
@@ -101,11 +109,10 @@ export const useStore = create<AppState>()(
     }),
     {
       name: 'astro-storage',
+      // Only persist UI preferences, NOT profile data
       partialize: (state) => ({
-        token: state.token,
-        user: state.user,
-        selectedProfileId: state.selectedProfileId,
         selectedScope: state.selectedScope,
+        // Removed: token, user, selectedProfileId, profiles
       }),
     }
   )

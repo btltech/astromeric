@@ -1,18 +1,26 @@
 /**
  * Custom hook for reading/forecast management
+ * Supports both saved profiles and session-only profiles
  */
 import { useCallback } from 'react';
 import { useStore } from '../store/useStore';
 import { fetchForecast } from '../api/client';
-import type { PredictionData } from '../types';
+import type { PredictionData, SavedProfile } from '../types';
 
 export function useReading() {
-  const { selectedScope, result, setSelectedScope, setResult, setLoading, setError, profiles } =
+  const { selectedScope, result, setSelectedScope, setResult, setLoading, setError, profiles, sessionProfile } =
     useStore();
 
   const getPrediction = useCallback(
     async (profileId: number) => {
-      const profile = profiles.find((p) => p.id === profileId);
+      // Find profile: check session profile first (negative ID), then saved profiles
+      let profile: SavedProfile | undefined;
+      if (sessionProfile && profileId < 0) {
+        profile = sessionProfile;
+      } else {
+        profile = profiles.find((p) => p.id === profileId);
+      }
+
       if (!profile) {
         setError('Profile not found. Please select or create a profile.');
         return null;
@@ -50,7 +58,7 @@ export function useReading() {
         setLoading(false);
       }
     },
-    [profiles, selectedScope, setResult, setLoading, setError]
+    [profiles, sessionProfile, selectedScope, setResult, setLoading, setError]
   );
 
   return {

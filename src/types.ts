@@ -72,6 +72,7 @@ export interface NewProfileForm {
   longitude?: number;
   timezone?: string;
   house_system?: string;
+  saveProfile?: boolean; // Opt-in to save profile to database
 }
 
 export interface SavedProfile {
