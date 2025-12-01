@@ -11,15 +11,23 @@ except ImportError:  # pragma: no cover - handled gracefully at runtime
     genai = None  # type: ignore
 
 
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "models/gemini-1.5-flash")
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+def _get_model_name() -> str:
+    """Get model name, stripping any 'models/' prefix."""
+    name = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
+    # Gemini SDK adds 'models/' prefix, so strip if provided
+    return name.removeprefix("models/")
+
+
+def _get_api_key() -> str | None:
+    return os.getenv("GEMINI_API_KEY")
 
 
 def _configure_client() -> bool:
-    if not genai or not GEMINI_API_KEY:
+    api_key = _get_api_key()
+    if not genai or not api_key:
         return False
     # Configure once per process; repeated calls are harmless.
-    genai.configure(api_key=GEMINI_API_KEY)
+    genai.configure(api_key=api_key)
     return True
 
 
@@ -62,7 +70,7 @@ def explain_with_gemini(
         return None
 
     prompt = build_prompt(scope, headline, theme, sections, numerology)
-    model = genai.GenerativeModel(GEMINI_MODEL)
+    model = genai.GenerativeModel(_get_model_name())
     response = model.generate_content(prompt)
     text = getattr(response, "text", None)
     if text:

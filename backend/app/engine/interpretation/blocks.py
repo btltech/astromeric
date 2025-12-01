@@ -3,6 +3,13 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass, field
 from typing import Dict, List, Optional
 
+# Import the improved text generator from interpretation module
+from ...interpretation.planet_sign_meanings import (
+    PLANET_ARCHETYPES,
+    SIGN_FLAVORS,
+    get_planet_sign_text,
+)
+
 
 @dataclass
 class MeaningBlock:
@@ -26,55 +33,20 @@ def get_meaning_block(blocks: Dict, *keys) -> Optional[MeaningBlock]:
     return current
 
 
-# Representative subset; extend freely.
-PLANET_SIGN_MEANINGS: Dict[str, Dict[str, MeaningBlock]] = {
-    "Sun": {
-        "Aries": MeaningBlock(
-            text="Bold, direct expression of will; thrives when leading.",
-            tags=["identity", "leadership", "courage"],
-            weights={"general": 0.7, "career": 0.6, "love": 0.3},
-        ),
-        "Taurus": MeaningBlock(
-            text="Steady, sensual and loyal expression of self; builds slowly.",
-            tags=["stability", "endurance", "sensuality"],
-            weights={"general": 0.6, "career": 0.5, "love": 0.5},
-        ),
-        "Gemini": MeaningBlock(
-            text="Curious, communicative identity; thrives on variety.",
-            tags=["communication", "learning", "connections"],
-            weights={"general": 0.6, "career": 0.4, "love": 0.4},
-        ),
-    },
-    "Moon": {
-        "Cancer": MeaningBlock(
-            text="Deeply nurturing and protective emotional core.",
-            tags=["emotional", "home", "intuition"],
-            weights={"emotional": 0.8, "love": 0.5, "general": 0.5},
-        ),
-        "Leo": MeaningBlock(
-            text="Warm, expressive feelings; seeks to be seen and adored.",
-            tags=["warmth", "self-expression", "play"],
-            weights={"emotional": 0.6, "love": 0.6},
-        ),
-        "Virgo": MeaningBlock(
-            text="Cares through practical help and attentive detail.",
-            tags=["service", "healing", "practicality"],
-            weights={"emotional": 0.5, "health": 0.5},
-        ),
-    },
-    "Venus": {
-        "Libra": MeaningBlock(
-            text="Graceful, relational and harmony-seeking in love and aesthetics.",
-            tags=["love", "beauty", "partnership"],
-            weights={"love": 0.8, "social": 0.6},
-        ),
-        "Scorpio": MeaningBlock(
-            text="Intense, magnetic desire; values loyalty and depth.",
-            tags=["intimacy", "passion", "depth"],
-            weights={"love": 0.9, "emotional": 0.6},
-        ),
-    },
-}
+def _build_planet_sign_meanings() -> Dict[str, Dict[str, MeaningBlock]]:
+    """Generate full planet-sign MeaningBlock dict using improved text."""
+    result: Dict[str, Dict[str, MeaningBlock]] = {}
+    for planet, pdata in PLANET_ARCHETYPES.items():
+        result[planet] = {}
+        for sign, sdata in SIGN_FLAVORS.items():
+            text = get_planet_sign_text(planet, sign)
+            tags = [pdata["focus"], *sdata["tags"]]
+            weights = {**pdata["weights"], **sdata["weights"]}
+            result[planet][sign] = MeaningBlock(text=text, tags=tags, weights=weights)
+    return result
+
+
+PLANET_SIGN_MEANINGS: Dict[str, Dict[str, MeaningBlock]] = _build_planet_sign_meanings()
 
 
 PLANET_HOUSE_MEANINGS: Dict[str, Dict[int, MeaningBlock]] = {

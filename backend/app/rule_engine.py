@@ -21,6 +21,7 @@ from .interpretation import (
     NUMEROLOGY_MEANINGS,
     PLANET_HOUSE_MEANINGS,
     PLANET_SIGN_MEANINGS,
+    get_planet_sign_text,
 )
 
 ANGULAR_HOUSES = {1, 4, 7, 10}
@@ -111,8 +112,15 @@ class RuleEngine:
             if not meaning:
                 continue
             weight = _angular_boost(p.get("house"))
+            # Generate fresh, readable text instead of static template
+            fresh_text = get_planet_sign_text(p["name"], p["sign"])
             blocks.append(
-                {**meaning, "weight": weight, "source": f"{p['name']} in {p['sign']}"}
+                {
+                    **meaning,
+                    "text": fresh_text,
+                    "weight": weight,
+                    "source": f"{p['name']} in {p['sign']}",
+                }
             )
         return blocks
 

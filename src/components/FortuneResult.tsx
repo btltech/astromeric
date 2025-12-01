@@ -47,8 +47,8 @@ export function FortuneResult({ data, onReset }: Props) {
       const response = await fetchAiExplanation(payload);
       setAiInsight(response.summary);
     } catch (err) {
-      console.error('Gemini assist failed', err);
-      setAiInsight('Gemini assist encountered a hiccup. Please try again soon.');
+      console.error('AI assist failed', err);
+      setAiInsight('AI assist encountered a hiccup. Please try again soon.');
     } finally {
       setAiLoading(false);
     }
@@ -90,7 +90,7 @@ export function FortuneResult({ data, onReset }: Props) {
           disabled={aiLoading}
           style={{ minWidth: 200 }}
         >
-          {aiLoading ? 'Asking Gemini…' : 'Explain with Gemini Flash'}
+          {aiLoading ? 'Thinking…' : '✨ Explain with AI'}
         </button>
         <button onClick={onReset} className="btn-secondary">
           Back to Profiles
