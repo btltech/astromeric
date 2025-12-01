@@ -6,11 +6,20 @@ on:
     paths:
       - 'backend/**'
       - '.github/workflows/deploy-railway.yml'
+  workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Trigger Railway Deploy
-        run: |
-          curl -X POST "${{ secrets.RAILWAY_WEBHOOK_URL }}"
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+
+      - name: Deploy to Railway
+        run: railway up -d
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        working-directory: ./backend
