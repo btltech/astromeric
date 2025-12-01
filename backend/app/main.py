@@ -29,10 +29,23 @@ import os
 from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Optional
 
-from fastapi import Depends, FastAPI, HTTPException, Query, status
+from fastapi import Depends, FastAPI, HTTPException, Query, Request, status
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel, Field, field_validator
 from sqlalchemy.orm import Session
+
+from .cache import get_chart_cache, cached_build_chart
+from .validators import (
+    ValidationError,
+    validate_date_of_birth,
+    validate_latitude,
+    validate_longitude,
+    validate_name,
+    validate_profile_data,
+    validate_time_of_birth,
+    validate_timezone,
+)
 
 from .auth import (
     ACCESS_TOKEN_EXPIRE_MINUTES,
@@ -54,7 +67,27 @@ from .models import SessionLocal, User
 from .numerology_engine import build_numerology
 from .products import build_compatibility, build_forecast, build_natal_profile
 
-api = FastAPI(title="AstroNumerology API", version="3.2.0")
+api = FastAPI(
+    title="AstroNumerology API", 
+    version="3.3.0",
+    description="""## AstroNumerology API
+    
+A comprehensive astrology and numerology API that provides:
+- **Natal Charts**: Calculate planetary positions, houses, and aspects
+- **Forecasts**: Daily, weekly, and monthly readings
+- **Compatibility**: Synastry analysis between two people
+- **Numerology**: Life path, expression, and personal year calculations
+- **AI Explanations**: Gemini-powered interpretations
+
+### Authentication
+Most endpoints work without authentication. Create an account for personalized features.
+
+### Rate Limits
+No rate limits currently. Be respectful of server resources.
+    """,
+    docs_url="/docs",
+    redoc_url="/redoc",
+)
 app = api  # alias for uvicorn import style
 
 # Allow configurable CORS via env; default open for dev
@@ -73,18 +106,66 @@ api.add_middleware(
 )
 
 
+# ========== EXCEPTION HANDLERS ==========
+
+
+@api.exception_handler(ValidationError)
+async def validation_error_handler(request: Request, exc: ValidationError):
+    """Handle validation errors with user-friendly messages."""
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        content={
+            "error": "Validation Error",
+            "detail": exc.to_dict(),
+            "message": exc.message,
+        },
+    )
+
+
+# ========== PYDANTIC MODELS ==========
+
+
 class Location(BaseModel):
-    latitude: float = 0.0
-    longitude: float = 0.0
-    timezone: str = "UTC"
+    """Geographic location for birth chart calculation."""
+    latitude: float = Field(0.0, ge=-90, le=90, description="Latitude (-90 to 90)")
+    longitude: float = Field(0.0, ge=-180, le=180, description="Longitude (-180 to 180)")
+    timezone: str = Field("UTC", description="IANA timezone (e.g., America/New_York)")
+
+    @field_validator("latitude")
+    @classmethod
+    def validate_lat(cls, v):
+        return validate_latitude(v)
+
+    @field_validator("longitude")
+    @classmethod
+    def validate_lon(cls, v):
+        return validate_longitude(v)
 
 
 class ProfilePayload(BaseModel):
-    name: str
-    date_of_birth: str = Field(..., pattern=r"\d{4}-\d{2}-\d{2}")
-    time_of_birth: Optional[str] = None
-    location: Optional[Location] = None
-    house_system: Optional[str] = "Placidus"
+    """Birth profile data for astrological calculations."""
+    name: str = Field(..., min_length=1, max_length=100, description="Name of the person")
+    date_of_birth: str = Field(..., pattern=r"\d{4}-\d{2}-\d{2}", description="Date in YYYY-MM-DD format")
+    time_of_birth: Optional[str] = Field(None, description="Time in HH:MM format (24-hour)")
+    location: Optional[Location] = Field(None, description="Birth location")
+    house_system: Optional[str] = Field("Placidus", description="House system (Placidus, Whole, Equal, Koch)")
+
+    @field_validator("date_of_birth")
+    @classmethod
+    def validate_dob(cls, v):
+        return validate_date_of_birth(v)
+
+    @field_validator("time_of_birth")
+    @classmethod
+    def validate_tob(cls, v):
+        if v is None:
+            return None
+        return validate_time_of_birth(v)
+
+    @field_validator("name")
+    @classmethod
+    def validate_profile_name(cls, v):
+        return validate_name(v)
 
 
 class DailyRequest(BaseModel):
@@ -301,26 +382,30 @@ def create_profile(
     }
 
 
-@api.post("/daily-reading")
+@api.post("/daily-reading", tags=["Readings"])
 def daily_reading(req: DailyRequest):
+    """Get a daily astrological and numerological reading."""
     profile = _profile_to_dict(req.profile)
     return build_forecast(profile, scope="daily")
 
 
-@api.post("/weekly-reading")
+@api.post("/weekly-reading", tags=["Readings"])
 def weekly_reading(req: WeeklyRequest):
+    """Get a weekly astrological and numerological reading."""
     profile = _profile_to_dict(req.profile)
     return build_forecast(profile, scope="weekly")
 
 
-@api.post("/monthly-reading")
+@api.post("/monthly-reading", tags=["Readings"])
 def monthly_reading(req: MonthlyRequest):
+    """Get a monthly astrological and numerological reading."""
     profile = _profile_to_dict(req.profile)
     return build_forecast(profile, scope="monthly")
 
 
-@api.post("/forecast")
+@api.post("/forecast", tags=["Readings"])
 def generic_forecast(req: ForecastRequest, db: Session = Depends(get_db)):
+    """Get a forecast for any scope (daily, weekly, monthly)."""
     if req.profile:
         profile = _profile_to_dict(req.profile)
     elif req.profile_id:
@@ -330,14 +415,16 @@ def generic_forecast(req: ForecastRequest, db: Session = Depends(get_db)):
     return build_forecast(profile, scope=req.scope)
 
 
-@api.post("/natal-profile")
+@api.post("/natal-profile", tags=["Readings"])
 def natal_profile(req: NatalRequest):
+    """Get a complete natal profile including chart and interpretations."""
     profile = _profile_to_dict(req.profile)
     return build_natal_profile(profile)
 
 
-@api.post("/compatibility")
+@api.post("/compatibility", tags=["Readings"])
 def compatibility(req: CompatibilityRequest):
+    """Get compatibility analysis between two people."""
     a = _profile_to_dict(req.person_a)
     b = _profile_to_dict(req.person_b)
     return build_compatibility(a, b)
@@ -348,7 +435,7 @@ class NumerologyRequest(BaseModel):
     profile: ProfilePayload
 
 
-@api.post("/numerology")
+@api.post("/numerology", tags=["Numerology"])
 def numerology_from_payload(req: NumerologyRequest):
     """Get numerology profile from profile data (no database lookup)."""
     return build_numerology(
@@ -358,8 +445,9 @@ def numerology_from_payload(req: NumerologyRequest):
     )
 
 
-@api.get("/numerology/profile/{profile_id}")
+@api.get("/numerology/profile/{profile_id}", tags=["Numerology"])
 def numerology_profile(profile_id: int, db: Session = Depends(get_db)):
+    """Get numerology profile for a saved profile."""
     profile = db.query(DBProfile).filter(DBProfile.id == profile_id).first()
     if not profile:
         raise HTTPException(status_code=404, detail="Profile not found")
@@ -557,26 +645,36 @@ def subscribe_transit_alerts(
 # ========== CHART DATA ENDPOINTS ==========
 
 
-@api.post("/chart/natal")
+@api.post("/chart/natal", tags=["Charts"])
 def get_natal_chart(req: NatalRequest):
-    """Get raw natal chart data for visualization."""
+    """
+    Get raw natal chart data for visualization.
+    
+    Returns planetary positions, house cusps, and aspects.
+    Results are cached for 1 hour for performance.
+    """
     from .chart_service import build_natal_chart
 
     profile = _profile_to_dict(req.profile)
-    return build_natal_chart(profile)
+    return cached_build_chart(profile, "natal", build_natal_chart)
 
 
-@api.post("/chart/synastry")
+@api.post("/chart/synastry", tags=["Charts"])
 def get_synastry_chart(req: CompatibilityRequest):
-    """Get synastry chart data for two people."""
+    """
+    Get synastry chart data for two people.
+    
+    Returns both natal charts plus aspects between them.
+    """
     from .chart_service import build_natal_chart
     from .transit_alerts import find_transit_aspects
 
     person_a = _profile_to_dict(req.person_a)
     person_b = _profile_to_dict(req.person_b)
 
-    chart_a = build_natal_chart(person_a)
-    chart_b = build_natal_chart(person_b)
+    # Use caching for individual charts
+    chart_a = cached_build_chart(person_a, "natal", build_natal_chart)
+    chart_b = cached_build_chart(person_b, "natal", build_natal_chart)
 
     # Find aspects between the two charts
     synastry_aspects = find_transit_aspects(chart_a, chart_b)
@@ -791,8 +889,9 @@ def search_learning(req: SearchLearningRequest):
     return {"results": results}
 
 
-@api.get("/health")
+@api.get("/health", tags=["System"])
 def health():
+    """Health check endpoint with system status."""
     redis_status = "disconnected"
     if os.getenv("REDIS_URL"):
         try:
@@ -804,11 +903,15 @@ def health():
         except Exception:
             redis_status = "error"
 
+    # Get cache stats
+    cache_stats = get_chart_cache().get_stats()
+
     return {
         "status": "ok",
         "ephemeris_path": EPHEMERIS_PATH,
         "flatlib_available": bool(HAS_FLATLIB),
         "redis_status": redis_status,
+        "cache": cache_stats,
         "features": {
             "pdf_export": True,
             "transit_alerts": True,
@@ -821,6 +924,41 @@ def health():
             "oracle": True,
         },
         "timestamp": datetime.now(timezone.utc).isoformat(),
+    }
+
+
+@api.post("/cache/clear", tags=["System"])
+def clear_cache():
+    """
+    Clear the chart calculation cache.
+    
+    Use this if you need to force recalculation of charts.
+    Returns the number of entries cleared.
+    """
+    cache = get_chart_cache()
+    count = cache.clear()
+    return {
+        "status": "ok",
+        "entries_cleared": count,
+        "message": f"Cleared {count} cached chart calculations"
+    }
+
+
+@api.post("/cache/cleanup", tags=["System"])
+def cleanup_expired_cache():
+    """
+    Remove expired entries from the chart cache.
+    
+    This happens automatically on access, but can be triggered manually.
+    """
+    cache = get_chart_cache()
+    count = cache.cleanup_expired()
+    stats = cache.get_stats()
+    return {
+        "status": "ok",
+        "expired_removed": count,
+        "current_size": stats["size"],
+        "message": f"Removed {count} expired entries"
     }
 
 
