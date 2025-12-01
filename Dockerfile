@@ -15,9 +15,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy app
 COPY backend/app ./app
 
-# Copy ephemeris files
-COPY backend/app/ephemeris ./app/ephemeris
-
 EXPOSE 8000
 
 # Copy startup script
