@@ -20,4 +20,7 @@ COPY backend/app/ephemeris ./app/ephemeris
 
 EXPOSE 8000
 
-CMD uvicorn app.main:app --host 0.0.0.0 --port 8000
+# Create a startup script to handle PORT variable
+RUN echo '#!/bin/bash\nport=${PORT:-8000}\nuvicorn app.main:app --host 0.0.0.0 --port $port' > /app/start.sh && chmod +x /app/start.sh
+
+CMD ["/app/start.sh"]
