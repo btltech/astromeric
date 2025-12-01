@@ -343,6 +343,21 @@ def compatibility(req: CompatibilityRequest):
     return build_compatibility(a, b)
 
 
+class NumerologyRequest(BaseModel):
+    """Request model for numerology profile - supports session-only profiles."""
+    profile: ProfilePayload
+
+
+@api.post("/numerology")
+def numerology_from_payload(req: NumerologyRequest):
+    """Get numerology profile from profile data (no database lookup)."""
+    return build_numerology(
+        req.profile.name,
+        req.profile.date_of_birth,
+        datetime.now(timezone.utc),
+    )
+
+
 @api.get("/numerology/profile/{profile_id}")
 def numerology_profile(profile_id: int, db: Session = Depends(get_db)):
     profile = db.query(DBProfile).filter(DBProfile.id == profile_id).first()

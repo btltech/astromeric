@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useNumerology, useProfiles } from '../hooks';
 import { useStore } from '../store/useStore';
@@ -23,21 +23,31 @@ const staggerItem = {
 };
 
 export function NumerologyView() {
-  const { selectedProfileId } = useProfiles();
-  const { numerologyProfile, fetchNumerologyProfile } = useNumerology();
+  const { selectedProfile } = useProfiles();
+  const { numerologyProfile, fetchNumerologyFromProfile, fetchNumerologyProfile } = useNumerology();
   const { loading } = useStore();
+  const lastFetchedId = useRef<number | null>(null);
 
   useEffect(() => {
-    if (selectedProfileId && !numerologyProfile) {
-      fetchNumerologyProfile(selectedProfileId);
+    if (selectedProfile && !numerologyProfile && lastFetchedId.current !== selectedProfile.id) {
+      lastFetchedId.current = selectedProfile.id;
+      
+      // Use session-based fetch for session profiles (negative IDs) or saved profiles
+      if (selectedProfile.id < 0) {
+        // Session profile - use POST endpoint with profile data
+        fetchNumerologyFromProfile(selectedProfile);
+      } else {
+        // Saved profile - use GET endpoint with ID
+        fetchNumerologyProfile(selectedProfile.id);
+      }
     }
-  }, [selectedProfileId, numerologyProfile, fetchNumerologyProfile]);
+  }, [selectedProfile, numerologyProfile, fetchNumerologyFromProfile, fetchNumerologyProfile]);
 
-  if (!selectedProfileId) {
+  if (!selectedProfile) {
     return (
       <motion.div className="card" {...fadeIn}>
         <p style={{ textAlign: 'center', color: '#888' }}>
-          Please select a profile first from the Reading tab.
+          Please enter your birth details first from the Reading tab.
         </p>
       </motion.div>
     );

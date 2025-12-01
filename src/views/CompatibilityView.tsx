@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useCompatibility, useProfiles } from '../hooks';
 import { useStore } from '../store/useStore';
 import { CompatibilityCard } from '../components/CompatibilityCard';
+import type { SavedProfile } from '../types';
 
 const fadeIn = {
   initial: { opacity: 0, y: 20 },
@@ -11,56 +12,108 @@ const fadeIn = {
 };
 
 export function CompatibilityView() {
-  const { profiles, selectedProfileId } = useProfiles();
-  const { compareProfileId, compatibilityResult, setCompareProfileId, fetchCompatibility } =
-    useCompatibility();
+  const { selectedProfile } = useProfiles();
+  const { compatibilityResult, fetchCompatibilityFromProfiles } = useCompatibility();
   const { loading } = useStore();
 
+  // Form state for second person
+  const [partnerName, setPartnerName] = useState('');
+  const [partnerDob, setPartnerDob] = useState('');
+  const [partnerTimeOfBirth, setPartnerTimeOfBirth] = useState('');
+  const [partnerPlaceOfBirth, setPartnerPlaceOfBirth] = useState('');
+
   const handleCalculate = async () => {
-    if (selectedProfileId && compareProfileId) {
-      await fetchCompatibility(selectedProfileId, compareProfileId);
-    }
+    if (!selectedProfile || !partnerName || !partnerDob) return;
+
+    // Create a temporary profile for the partner
+    const partnerProfile: SavedProfile = {
+      id: -Date.now() - 1, // Different negative ID
+      name: partnerName,
+      date_of_birth: partnerDob,
+      time_of_birth: partnerTimeOfBirth || null,
+      place_of_birth: partnerPlaceOfBirth || null,
+      latitude: null,
+      longitude: null,
+      timezone: null,
+      house_system: null,
+    };
+
+    await fetchCompatibilityFromProfiles(selectedProfile, partnerProfile);
   };
 
-  if (!selectedProfileId) {
+  if (!selectedProfile) {
     return (
       <motion.div className="card" {...fadeIn}>
         <p style={{ textAlign: 'center', color: '#888' }}>
-          Please select a profile first from the Reading tab.
+          Please enter your birth details first from the Reading tab.
         </p>
       </motion.div>
     );
   }
 
+  const isFormValid = partnerName.trim() && partnerDob;
+
   return (
     <motion.div className="card" {...fadeIn}>
       <h2>💕 Compatibility Check</h2>
       <p style={{ textAlign: 'center', marginBottom: '1rem', color: '#aaa' }}>
-        Compare your cosmic alignment with another profile
+        Compare your cosmic alignment with someone special
       </p>
-      <div className="form-group">
-        <label id="compare-label">Compare With</label>
-        <select
-          value={compareProfileId || ''}
-          onChange={(e) => setCompareProfileId(Number(e.target.value))}
-          aria-labelledby="compare-label"
-        >
-          <option value="">Choose a profile...</option>
-          {profiles
-            .filter((p) => p.id !== selectedProfileId)
-            .map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name} ({p.date_of_birth})
-              </option>
-            ))}
-        </select>
+      
+      <div style={{ marginBottom: '1rem', padding: '0.75rem', background: 'rgba(123, 97, 255, 0.1)', borderRadius: '8px' }}>
+        <strong>Your Profile:</strong> {selectedProfile.name} ({selectedProfile.date_of_birth})
       </div>
+
+      <div className="form-group">
+        <label htmlFor="partner-name">Partner's Name *</label>
+        <input
+          id="partner-name"
+          type="text"
+          value={partnerName}
+          onChange={(e) => setPartnerName(e.target.value)}
+          placeholder="Enter their name"
+          required
+        />
+      </div>
+
+      <div className="form-group">
+        <label htmlFor="partner-dob">Partner's Date of Birth *</label>
+        <input
+          id="partner-dob"
+          type="date"
+          value={partnerDob}
+          onChange={(e) => setPartnerDob(e.target.value)}
+          required
+        />
+      </div>
+
+      <div className="form-group">
+        <label htmlFor="partner-time">Time of Birth (optional)</label>
+        <input
+          id="partner-time"
+          type="time"
+          value={partnerTimeOfBirth}
+          onChange={(e) => setPartnerTimeOfBirth(e.target.value)}
+        />
+      </div>
+
+      <div className="form-group">
+        <label htmlFor="partner-place">Place of Birth (optional)</label>
+        <input
+          id="partner-place"
+          type="text"
+          value={partnerPlaceOfBirth}
+          onChange={(e) => setPartnerPlaceOfBirth(e.target.value)}
+          placeholder="City, Country"
+        />
+      </div>
+
       <motion.button
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
         onClick={handleCalculate}
         className="btn-primary"
-        disabled={loading || !compareProfileId}
+        disabled={loading || !isFormValid}
       >
         {loading ? 'Calculating...' : 'Calculate Compatibility'}
       </motion.button>
