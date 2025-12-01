@@ -19,6 +19,10 @@ COPY backend/app ./app
 # Copy ephemeris files
 COPY backend/app/ephemeris ./app/ephemeris
 
+# Override uvicorn binary with wrapper that resolves literal "$PORT"
+COPY backend/bin/uvicorn-wrapper.sh /usr/local/bin/uvicorn
+RUN chmod +x /usr/local/bin/uvicorn
+
 EXPOSE 8000
 
 # Let Python entrypoint resolve PORT via os.environ for Railway
