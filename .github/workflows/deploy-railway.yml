@@ -20,8 +20,8 @@ jobs:
 
       - name: Deploy to Railway
         run: |
-          railway status || true
-          railway up -d
+          railway service list || true
+          railway up -d --service astromeric-backend
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         working-directory: ./backend
