@@ -1,8 +1,5 @@
 name = "astromeric"
-type = "javascript"
+pages_build_output_dir = "dist"
 
 [env.production]
 name = "astromeric"
-routes = [
-  { pattern = "astromeric.pages.dev", zone_name = "pages.dev" }
-]
