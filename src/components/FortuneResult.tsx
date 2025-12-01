@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import type { PredictionData } from '../types';
 import { SectionGrid } from './SectionGrid';
 import { fetchAiExplanation } from '../api/client';
+import { downloadReadingPdf } from '../utils/pdfExport';
 
 interface Props {
   data: PredictionData;
@@ -83,14 +84,21 @@ export function FortuneResult({ data, onReset }: Props) {
         </div>
       )}
       {data.sections && data.sections.length > 0 && <SectionGrid sections={data.sections} />}
-      <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: '1.5rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: '1.5rem', flexWrap: 'wrap' }}>
         <button
           onClick={handleAiExplain}
           className="btn-secondary"
           disabled={aiLoading}
-          style={{ minWidth: 200 }}
+          style={{ minWidth: 180 }}
         >
           {aiLoading ? 'Thinking…' : '✨ Explain with AI'}
+        </button>
+        <button
+          onClick={() => downloadReadingPdf(data)}
+          className="btn-secondary"
+          style={{ minWidth: 180 }}
+        >
+          📄 Download PDF
         </button>
         <button onClick={onReset} className="btn-secondary">
           Back to Profiles
