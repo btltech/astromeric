@@ -6,12 +6,11 @@
     "context": "."
   },
   "deploy": {
-    "startCommand": "uvicorn app.main:app --host 0.0.0.0 --port $PORT",
+    "startCommand": "python -m app.main",
     "restartPolicyType": "on_failure",
     "restartPolicyMaxRetries": 5
   },
   "env": {
-    "PORT": "8000",
     "EPHEMERIS_PATH": "/app/ephemeris",
     "LOG_LEVEL": "info"
   }
