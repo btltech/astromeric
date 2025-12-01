@@ -3,6 +3,7 @@ planet_sign_meanings.py
 Programmatically generate planet-in-sign meaning blocks for full coverage.
 Each block contains text, tags, and weighted topics.
 """
+
 from __future__ import annotations
 
 from typing import Dict

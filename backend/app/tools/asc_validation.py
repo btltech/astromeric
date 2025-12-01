@@ -8,6 +8,7 @@ Usage:
 Place Swiss Ephemeris files in /app/ephemeris (or set EPHEMERIS_PATH) before running.
 Update TEST_PROFILES with birth data you want to validate against trusted sources.
 """
+
 from __future__ import annotations
 
 import json

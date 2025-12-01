@@ -4,6 +4,7 @@ transit_alerts.py
 Daily transit tracking and notification system.
 Checks for major transits hitting natal chart positions.
 """
+
 from __future__ import annotations
 
 import os

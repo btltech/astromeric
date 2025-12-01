@@ -5,6 +5,7 @@ Location geocoding and timezone lookup using free APIs.
 - Nominatim (OpenStreetMap) for geocoding
 - TimeZoneDB or calculation for timezone
 """
+
 from __future__ import annotations
 
 import httpx

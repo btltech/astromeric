@@ -22,6 +22,7 @@ Deployment notes:
 - Cache TTL: Set FUSION_CACHE_TTL (seconds, default 86400 = 24 hours)
 - JWT_SECRET_KEY: Set a secure secret key for JWT tokens
 """
+
 from __future__ import annotations
 
 import os
@@ -45,6 +46,7 @@ from .auth import (
     get_current_user_optional,
     get_user_by_email,
 )
+from .ai_service import explain_with_gemini, fallback_summary
 from .chart_service import EPHEMERIS_PATH, HAS_FLATLIB
 from .engine.glossary import NUMEROLOGY_GLOSSARY, ZODIAC_GLOSSARY
 from .models import Profile as DBProfile
@@ -123,6 +125,24 @@ class CreateProfileRequest(BaseModel):
     house_system: Optional[str] = "Placidus"
 
 
+class AIExplainSection(BaseModel):
+    title: Optional[str] = None
+    highlights: list[str] = Field(default_factory=list)
+
+
+class AIExplainRequest(BaseModel):
+    scope: str
+    headline: Optional[str] = None
+    theme: Optional[str] = None
+    sections: list[AIExplainSection] = Field(default_factory=list)
+    numerology_summary: Optional[str] = None
+
+
+class AIExplainResponse(BaseModel):
+    summary: str
+    provider: str
+
+
 def get_db():
     db = SessionLocal()
     try:
@@ -183,6 +203,28 @@ def login(user_data: UserLogin, db: Session = Depends(get_db)):
 def get_me(current_user: User = Depends(get_current_user)):
     """Get current user info."""
     return {"id": current_user.id, "email": current_user.email}
+
+
+# ========== AI ENDPOINTS ==========
+
+
+@api.post("/ai/explain", response_model=AIExplainResponse)
+def explain_reading(payload: AIExplainRequest):
+    sections = [section.dict() for section in payload.sections]
+    summary = explain_with_gemini(
+        payload.scope,
+        payload.headline,
+        payload.theme,
+        sections,
+        payload.numerology_summary,
+    )
+    provider = "gemini-flash"
+    if not summary:
+        provider = "fallback"
+        summary = fallback_summary(
+            payload.headline, sections, payload.numerology_summary
+        )
+    return {"summary": summary, "provider": provider}
 
 
 # ========== HELPER FUNCTIONS ==========
@@ -577,6 +619,7 @@ def health():
 # Startup for Railway / Render / etc - properly handles PORT env variable
 if __name__ == "__main__":
     import uvicorn
+
     port = int(os.environ.get("PORT", 8000))
     # In Docker container: working directory is /app so module is app.main
     # In development: use the api object directly

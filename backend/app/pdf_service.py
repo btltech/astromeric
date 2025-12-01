@@ -3,6 +3,7 @@ pdf_service.py
 --------------
 Generate PDF natal chart reports using reportlab.
 """
+
 from __future__ import annotations
 
 import io
@@ -387,9 +388,11 @@ def generate_compatibility_pdf(
                 "Score",
                 parent=styles["Heading1"],
                 alignment=1,
-                textColor=colors.HexColor("#4ecdc4")
-                if score >= 70
-                else colors.HexColor("#e17055"),
+                textColor=(
+                    colors.HexColor("#4ecdc4")
+                    if score >= 70
+                    else colors.HexColor("#e17055")
+                ),
             ),
         )
     )

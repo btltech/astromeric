@@ -2,6 +2,7 @@
 planet_house_meanings.py
 Auto-generate planet-in-house meanings for 10 planets × 12 houses.
 """
+
 from __future__ import annotations
 
 from typing import Dict

@@ -32,6 +32,24 @@ export interface ForecastResponse {
   numerology: NumerologyProfile;
 }
 
+export interface AiExplainSectionPayload {
+  title?: string;
+  highlights?: string[];
+}
+
+export interface AiExplainPayload {
+  scope: string;
+  headline?: string;
+  theme?: string;
+  sections: AiExplainSectionPayload[];
+  numerology_summary?: string;
+}
+
+export interface AiExplainResponse {
+  summary: string;
+  provider: string;
+}
+
 export async function apiFetch<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -76,5 +94,12 @@ export function fetchCompatibility(person_a: ProfilePayload, person_b: ProfilePa
   return apiFetch('/compatibility', {
     method: 'POST',
     body: JSON.stringify({ person_a, person_b }),
+  });
+}
+
+export function fetchAiExplanation(payload: AiExplainPayload) {
+  return apiFetch<AiExplainResponse>('/ai/explain', {
+    method: 'POST',
+    body: JSON.stringify(payload),
   });
 }

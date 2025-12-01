@@ -2,6 +2,7 @@
 numerology_meanings.py
 Expanded meaning blocks for numerology types and numbers 1–9.
 """
+
 from __future__ import annotations
 
 from typing import Dict

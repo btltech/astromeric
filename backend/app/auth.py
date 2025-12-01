@@ -9,6 +9,7 @@ Features:
 - JWT token generation and validation
 - Dependency injection for protected routes
 """
+
 from __future__ import annotations
 
 import os

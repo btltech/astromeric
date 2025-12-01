@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import type { PredictionData } from '../types';
 import { SectionGrid } from './SectionGrid';
+import { fetchAiExplanation } from '../api/client';
 
 interface Props {
   data: PredictionData;
@@ -31,15 +32,20 @@ export function FortuneResult({ data, onReset }: Props) {
   const handleAiExplain = async () => {
     setAiLoading(true);
     try {
-      // Placeholder summary derived locally until Gemini Flash endpoint is ready.
-      const topSection = data.sections?.[0];
-      const highlights = topSection?.highlights?.slice(0, 2).join(' ');
-      const numerologyNote = data.numerology?.cycles?.personal_day?.meaning;
-      const message =
-        `Gemini Flash summary: ${headline || 'Your reading emphasizes balance.'}` +
-        (highlights ? ` Key energy: ${highlights}` : '') +
-        (numerologyNote ? ` Numerology cue: ${numerologyNote}` : '');
-      setAiInsight(message);
+      const sections =
+        data.sections?.map((section) => ({
+          title: section.title,
+          highlights: section.highlights,
+        })) ?? [];
+      const payload = {
+        scope: data.scope,
+        headline,
+        theme: data.theme,
+        sections,
+        numerology_summary: data.numerology?.cycles?.personal_day?.meaning,
+      };
+      const response = await fetchAiExplanation(payload);
+      setAiInsight(response.summary);
     } catch (err) {
       console.error('Gemini assist failed', err);
       setAiInsight('Gemini assist encountered a hiccup. Please try again soon.');
@@ -71,7 +77,13 @@ export function FortuneResult({ data, onReset }: Props) {
           <strong>TL;DR:</strong> {headline}
         </div>
       )}
-      <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+      {aiInsight && (
+        <div className="tldr-box" style={{ background: 'rgba(158, 173, 255, 0.12)' }}>
+          {aiInsight}
+        </div>
+      )}
+      {data.sections && data.sections.length > 0 && <SectionGrid sections={data.sections} />}
+      <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: '1.5rem' }}>
         <button
           onClick={handleAiExplain}
           className="btn-secondary"
@@ -84,12 +96,7 @@ export function FortuneResult({ data, onReset }: Props) {
           Back to Profiles
         </button>
       </div>
-      {aiInsight && (
-        <div className="tldr-box" style={{ background: 'rgba(158, 173, 255, 0.12)' }}>
-          {aiInsight}
-        </div>
-      )}
-      {data.sections && data.sections.length > 0 && <SectionGrid sections={data.sections} />}
+
     </div>
   );
 }

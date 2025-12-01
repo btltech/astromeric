@@ -2,6 +2,7 @@
 aspect_meanings.py
 Aspect meanings with topic weights and expanded pair coverage.
 """
+
 from __future__ import annotations
 
 from typing import Dict, Tuple
