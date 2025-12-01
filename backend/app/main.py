@@ -572,3 +572,12 @@ def health():
         },
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }
+
+
+# Startup for Railway / Render / etc - properly handles PORT env variable
+if __name__ == "__main__":
+    import uvicorn
+    port = int(os.environ.get("PORT", 8000))
+    # In Docker container: working directory is /app so module is app.main
+    # In development: use the api object directly
+    uvicorn.run(api, host="0.0.0.0", port=port)
