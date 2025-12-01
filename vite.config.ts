@@ -19,5 +19,17 @@ export default defineConfig(({ mode }) => {
         '@': path.resolve(__dirname, '.'),
       },
     },
+    build: {
+      target: 'esnext',
+      minify: 'terser',
+      cssCodeSplit: true,
+      rollupOptions: {
+        output: {
+          entryFileNames: 'js/[name].[hash].js',
+          chunkFileNames: 'js/[name].[hash].js',
+          assetFileNames: 'assets/[name].[hash][extname]',
+        },
+      },
+    },
   };
 });
