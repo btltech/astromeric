@@ -30,15 +30,16 @@ def build_compatibility(person_a: Dict, person_b: Dict) -> Dict:
         comparison_chart=chart_b,
         synastry_priority=_synastry_priority_pairs(),
     )
+    strengths, challenges = _split_synastry_blocks(result["selected_blocks"])
     return {
         "people": [
             {"name": person_a["name"], "dob": person_a["date_of_birth"]},
             {"name": person_b["name"], "dob": person_b["date_of_birth"]},
         ],
         "topic_scores": result["topic_scores"],
-        "highlights": [
-            b["source"] + ": " + b["text"] for b in result["selected_blocks"][:6]
-        ],
+        "strengths": strengths,
+        "challenges": challenges,
+        "advice": _compatibility_advice(result["topic_scores"]),
         "numerology": {"a": numerology_a, "b": numerology_b},
     }
 
@@ -59,3 +60,26 @@ def _synastry_priority_pairs():
         "Saturn-Sun",
         "Saturn-Moon",
     ]
+
+
+def _split_synastry_blocks(blocks):
+    strengths = []
+    challenges = []
+    for block in blocks:
+        entry = f"{block['source']}: {block['text']}"
+        tags = block.get("tags", [])
+        if "challenge" in tags or block["weights"].get("challenge", 0) > 0.5:
+            challenges.append(entry)
+        elif "support" in tags or block["weights"].get("love", 0) > 0.4:
+            strengths.append(entry)
+        if len(strengths) >= 5 and len(challenges) >= 5:
+            break
+    return strengths[:5], challenges[:5]
+
+
+def _compatibility_advice(topic_scores: Dict[str, float]) -> str:
+    love = topic_scores.get("love", 0)
+    challenge = topic_scores.get("challenge", 0)
+    if love >= challenge:
+        return "Lean into the supportive aspects that already flow—celebrate what feels easy."
+    return "Name the sticking points early and build structure around them so chemistry has room to grow."

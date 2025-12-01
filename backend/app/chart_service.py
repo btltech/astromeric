@@ -20,7 +20,12 @@ import os
 from datetime import datetime
 from typing import Dict, List, Optional
 
-EPHEMERIS_PATH = os.getenv("EPHEMERIS_PATH", "/app/ephemeris")
+DEFAULT_EPHEMERIS = "/app/ephemeris"
+LOCAL_EPHEMERIS = os.path.join(os.path.dirname(__file__), "ephemeris")
+if os.path.isdir(LOCAL_EPHEMERIS):
+    DEFAULT_EPHEMERIS = LOCAL_EPHEMERIS
+
+EPHEMERIS_PATH = os.getenv("EPHEMERIS_PATH", DEFAULT_EPHEMERIS)
 
 try:
     # Flatlib uses Swiss Ephemeris under the hood
@@ -105,6 +110,21 @@ def _parse_datetime(date_str: str, time_str: Optional[str], tz: str) -> datetime
     return datetime.fromisoformat(f"{date_str}T{time_part}")
 
 
+def _get_house_for_longitude(planet_lon: float, house_cusps: List[float]) -> int:
+    """Determine which house a planet is in based on its longitude and house cusps."""
+    for i in range(12):
+        cusp_start = house_cusps[i]
+        cusp_end = house_cusps[(i + 1) % 12]
+        # Handle wrap-around at 360 degrees
+        if cusp_start > cusp_end:
+            if planet_lon >= cusp_start or planet_lon < cusp_end:
+                return i + 1
+        else:
+            if cusp_start <= planet_lon < cusp_end:
+                return i + 1
+    return 1  # Default to house 1
+
+
 def _build_chart(dt: datetime, profile: Dict, chart_type: str) -> Dict:
     if HAS_FLATLIB:
         try:
@@ -115,36 +135,48 @@ def _build_chart(dt: datetime, profile: Dict, chart_type: str) -> Dict:
 
 
 def _chart_with_flatlib(dt: datetime, profile: Dict, chart_type: str) -> Dict:
-    fl_dt = FLDatetime(
-        dt.year,
-        dt.month,
-        dt.day,
-        dt.hour,
-        dt.minute,
-        dt.second,
-        profile.get("timezone", "UTC"),
-    )
-    pos = GeoPos(str(profile.get("latitude", 0.0)), str(profile.get("longitude", 0.0)))
+    # Flatlib expects date as 'YYYY/MM/DD' and time as 'HH:MM'
+    date_str = dt.strftime("%Y/%m/%d")
+    time_str = dt.strftime("%H:%M")
+    # Convert timezone name to offset for flatlib (use +00:00 for simplicity)
+    fl_dt = FLDatetime(date_str, time_str, "+00:00")
+    # Handle None values for latitude/longitude
+    lat_val = profile.get("latitude")
+    lon_val = profile.get("longitude")
+    lat = float(lat_val) if lat_val is not None else 0.0
+    lon = float(lon_val) if lon_val is not None else 0.0
+    pos = GeoPos(lat, lon)
     house_system = _resolve_house_system(profile.get("house_system"))
-    fl_chart = FLChart(fl_dt, pos, hsys=house_system)
+
+    # Include all planets including outer planets
+    planet_ids = [getattr(const, p.upper()) for p in PLANETS]
+    fl_chart = FLChart(fl_dt, pos, IDs=planet_ids, hsys=house_system)
+
+    # Get house cusps first to calculate planet houses
+    house_cusps = []
+    for i in range(1, 13):
+        cusp = fl_chart.houses.get(getattr(const, f"HOUSE{i}"))
+        house_cusps.append(cusp.lon)
 
     planets = []
     for name in PLANETS:
         obj = fl_chart.get(getattr(const, name.upper()))
+        # Calculate which house the planet is in
+        planet_house = _get_house_for_longitude(obj.lon, house_cusps)
         planets.append(
             {
                 "name": name,
                 "sign": obj.sign,
                 "degree": obj.signlon,
                 "absolute_degree": obj.lon,
-                "house": int(obj.house),
-                "retrograde": obj.speed < 0,
+                "house": planet_house,
+                "retrograde": obj.isRetrograde(),
             }
         )
 
     houses = []
     for i in range(1, 13):
-        cusp = fl_chart.houses.get(i)
+        cusp = fl_chart.houses.get(getattr(const, f"HOUSE{i}"))
         houses.append({"house": i, "sign": cusp.sign, "degree": cusp.signlon})
 
     aspects = _compute_aspects(planets)

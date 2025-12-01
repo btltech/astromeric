@@ -72,6 +72,11 @@ Production-oriented stack that pairs a FastAPI engine (Railway) with a Vite + Re
 cd /path/to/project
 python -m venv .venv && source .venv/bin/activate
 pip install -r backend/requirements.txt
+export EPHEMERIS_PATH="$(pwd)/backend/app/ephemeris"  # Swiss ephemeris files live here locally
+# Optional: Set up Redis for caching
+# brew install redis && brew services start redis
+# echo "REDIS_URL=redis://localhost:6379" > backend/.env
+# echo "FUSION_CACHE_TTL=3600" >> backend/.env
 python -m uvicorn backend.app.main:app --host 0.0.0.0 --port 8000 --reload
 # health: curl http://localhost:8000/health
 ```
@@ -81,8 +86,12 @@ python -m uvicorn backend.app.main:app --host 0.0.0.0 --port 8000 --reload
 1. Push repo to GitHub.
 2. Create new Railway service → Deploy from repo.
 3. Set start command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`.
-4. Env (optional): `REDIS_URL` for caching; `APP_TZ` for timezone; `LOG_LEVEL` for verbosity; `RATE_LIMIT_PER_MIN` for rate limiting. For tighter CORS in production set `ALLOW_ORIGINS` to a comma-separated list of allowed origins (e.g., `https://your-frontend.com`).
-5. Grab the public URL.
+4. **Redis Setup**: 
+   - Add a Redis database to your Railway project
+   - Copy the Redis URL from Railway dashboard
+   - Set environment variables: `REDIS_URL` and `FUSION_CACHE_TTL=3600`
+5. Env (optional): `EPHEMERIS_PATH=/app/ephemeris`, `APP_TZ` for timezone, `LOG_LEVEL` for verbosity, `RATE_LIMIT_PER_MIN` for rate limiting. For tighter CORS in production set `ALLOW_ORIGINS` to a comma-separated list of allowed origins (e.g., `https://your-frontend.com`).
+6. Grab the public URL.
 
 ## Frontend (Vite + React + drei)
 
@@ -161,6 +170,9 @@ VITE_API_URL=https://your-app.up.railway.app npm run build
 cd /path/to/project
 python -m pytest backend/tests/ -v
 # 24 tests covering astrology, numerology, compatibility, and glossary
+
+# Validate Asc/house accuracy against astro.com/Astro-Seek:
+python -m backend.app.tools.asc_validation
 ```
 
 ## Notes
@@ -170,5 +182,5 @@ python -m pytest backend/tests/ -v
 - Deterministic outputs: same user/date → same reading; different dates → new reading.
 - Dev-only: `FORCE_SIMULATION` in `index.tsx` can be toggled true to bypass the backend for demos.
 - Logging: FastAPI uses Python logging with `LOG_LEVEL`.
-- Caching: If `REDIS_URL` is set, daily readings are cached by user/date for 24h.
+- Caching: If `REDIS_URL` is set, daily readings are cached by user/date for 24h (configurable via `FUSION_CACHE_TTL`). Falls back to in-memory LRU cache.
 - Rate Limiting: Redis-backed sliding window rate limiter (default 60 requests/min per IP).

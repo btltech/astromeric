@@ -9,6 +9,8 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Dict
 
+from .interpretation import NUMEROLOGY_MEANINGS
+
 LETTER_VALUES = {
     **{c: i for i, c in enumerate("abcdefghijklmnopqrstuvwxyz", start=1)},
 }
@@ -76,13 +78,33 @@ def build_numerology(name: str, dob: str, ref: datetime) -> Dict:
         {"type": "personal_month", "value": pm},
         {"type": "personal_day", "value": pd},
     ]
-    return {
-        "core_numbers": {
-            "life_path": lp,
-            "expression": expr,
-            "soul_urge": soul,
-            "personality": persona,
+    core = {
+        "life_path": {"number": lp, "meaning": _numerology_text("life_path", lp)},
+        "expression": {"number": expr, "meaning": _numerology_text("expression", expr)},
+        "soul_urge": {"number": soul, "meaning": _numerology_text("soul_urge", soul)},
+        "personality": {
+            "number": persona,
+            "meaning": _numerology_text("personality", persona),
         },
-        "cycles": {"personal_year": py, "personal_month": pm, "personal_day": pd},
-        "meaning_blocks": meaning_blocks,
     }
+    cycles = {
+        "personal_year": {
+            "number": py,
+            "meaning": _numerology_text("personal_year", py),
+        },
+        "personal_month": {
+            "number": pm,
+            "meaning": _numerology_text("personal_month", pm),
+        },
+        "personal_day": {"number": pd, "meaning": _numerology_text("personal_day", pd)},
+    }
+    return {"core_numbers": core, "cycles": cycles, "meaning_blocks": meaning_blocks}
+
+
+def _numerology_text(ntype: str, value: int) -> str:
+    key = f"{ntype}_{value}"
+    meaning = NUMEROLOGY_MEANINGS.get(key)
+    if meaning:
+        return meaning["text"]
+    base = NUMEROLOGY_MEANINGS.get(ntype, {})
+    return base.get("text", "")

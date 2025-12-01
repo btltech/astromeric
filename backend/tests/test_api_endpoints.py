@@ -1,7 +1,12 @@
-from fastapi.testclient import TestClient
+import warnings
+
+from starlette.testclient import TestClient
 
 from backend.app.main import app
 
+# Suppress the deprecation warning - TestClient still works fine
+# The new async pattern requires httpx.AsyncClient with ASGITransport
+warnings.filterwarnings("ignore", message="The 'app' shortcut is now deprecated")
 client = TestClient(app)
 
 

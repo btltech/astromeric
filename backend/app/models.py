@@ -1,17 +1,19 @@
 import os
+import uuid
 from datetime import datetime
 
 from sqlalchemy import (
+    Boolean,
     Column,
     DateTime,
+    Float,
     ForeignKey,
     Integer,
     String,
     Text,
     create_engine,
 )
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship, sessionmaker
+from sqlalchemy.orm import declarative_base, relationship, sessionmaker
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./astronumerology.db")
 
@@ -27,6 +29,21 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
 
+class User(Base):
+    """User model for authentication."""
+
+    __tablename__ = "users"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    email = Column(String, unique=True, index=True, nullable=False)
+    hashed_password = Column(String, nullable=False)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationship to profiles
+    profiles = relationship("Profile", back_populates="owner")
+
+
 class Profile(Base):
     __tablename__ = "profiles"
     id = Column(Integer, primary_key=True, index=True)
@@ -34,10 +51,15 @@ class Profile(Base):
     date_of_birth = Column(String, nullable=False)  # ISO format
     time_of_birth = Column(String, nullable=True)
     place_of_birth = Column(String, nullable=True)
+    latitude = Column(Float, nullable=True)
+    longitude = Column(Float, nullable=True)
+    timezone = Column(String, default="UTC")
+    house_system = Column(String, default="Placidus")
     created_at = Column(DateTime, default=datetime.utcnow)
-    # For future multi-user
-    user_id = Column(String, default="default_user")
+    # User ownership (optional for guest users)
+    user_id = Column(String, ForeignKey("users.id"), nullable=True)
 
+    owner = relationship("User", back_populates="profiles")
     readings = relationship("Reading", back_populates="profile")
     favourites = relationship("Favourite", back_populates="profile")
     preferences = relationship("Preference", back_populates="profile")

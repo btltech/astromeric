@@ -1,6 +1,13 @@
 import hashlib
+import json
+import os
 from functools import lru_cache
 from typing import Any, Dict, List
+
+try:
+    import redis
+except ImportError:
+    redis = None
 
 from .astrology import get_element, get_sign_traits, get_zodiac_sign
 from .numerology import (
@@ -183,6 +190,10 @@ DAILY_ACTIONS = [
     "Perform a random act of kindness.",
 ]
 
+REDIS_URL = os.getenv("REDIS_URL")
+FUSION_CACHE_TTL = int(os.getenv("FUSION_CACHE_TTL", "86400"))
+_redis_client = None
+
 LUCKY_NUMBERS_POOL = [1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 22, 33, 12, 15, 18, 21, 24, 27, 30]
 LUCKY_COLORS_POOL = [
     "#FF5252",
@@ -261,7 +272,6 @@ def _pick_unique(pool: List[Any], seed: str, count: int, label: str) -> List[Any
     return chosen
 
 
-@lru_cache(maxsize=4096)
 def fuse_prediction(
     name: str,
     dob: str,
@@ -270,13 +280,24 @@ def fuse_prediction(
     time_of_birth: str = None,
     place_of_birth: str = None,
 ) -> Dict[str, Any]:
-    """Public fused prediction with in-memory LRU caching.
+    """Public fused prediction with optional Redis caching + in-memory LRU."""
+    cache_client = _get_redis_client()
+    cache_key = _fusion_cache_key(name, dob, date, scope, time_of_birth, place_of_birth)
+    if cache_client:
+        cached = cache_client.get(cache_key)
+        if cached:
+            try:
+                return json.loads(cached)
+            except Exception:
+                cache_client.delete(cache_key)
 
-    scope: 'daily', 'weekly', 'monthly'
-    """
-    return _fuse_prediction(name, dob, date, scope, time_of_birth, place_of_birth)
+    result = _fuse_prediction(name, dob, date, scope, time_of_birth, place_of_birth)
+    if cache_client:
+        cache_client.setex(cache_key, FUSION_CACHE_TTL, json.dumps(result))
+    return result
 
 
+@lru_cache(maxsize=4096)
 def _fuse_prediction(
     name: str,
     dob: str,
@@ -380,3 +401,23 @@ def _fuse_prediction(
         "element": element,
         "place_vibe": place_vibe,
     }
+
+
+def _get_redis_client():
+    global _redis_client
+    if not REDIS_URL or redis is None:
+        return None
+    if _redis_client is None:
+        _redis_client = redis.Redis.from_url(REDIS_URL)
+    return _redis_client
+
+
+def _fusion_cache_key(
+    name: str,
+    dob: str,
+    date: str,
+    scope: str,
+    time_of_birth: str,
+    place_of_birth: str,
+) -> str:
+    return f"fusion:{name}:{dob}:{date}:{scope}:{time_of_birth or ''}:{place_of_birth or ''}"

@@ -1,9 +1,12 @@
 """
 numerology_meanings.py
-Meaning blocks for core and cycle numerology numbers.
+Expanded meaning blocks for numerology types and numbers 1–9.
 """
+from __future__ import annotations
 
-NUMEROLOGY_MEANINGS = {
+from typing import Dict
+
+BASE_TYPES = {
     "life_path": {
         "text": "Core trajectory and repeated lessons.",
         "tags": ["purpose"],
@@ -39,50 +42,73 @@ NUMEROLOGY_MEANINGS = {
         "tags": ["timing"],
         "weights": {"general": 0.1},
     },
-    # Number-specific sample meanings (extendable)
-    "number_1": {
-        "text": "Initiation, independence, first moves.",
+}
+
+NUMBER_TRAITS = {
+    1: {
+        "phrase": "initiation and independence",
         "tags": ["start"],
         "weights": {"general": 0.3, "career": 0.3},
     },
-    "number_2": {
-        "text": "Cooperation, diplomacy, pairing.",
+    2: {
+        "phrase": "cooperation and diplomacy",
         "tags": ["partnership"],
         "weights": {"love": 0.3, "general": 0.2},
     },
-    "number_3": {
-        "text": "Expression, creativity, visibility.",
+    3: {
+        "phrase": "expression and creativity",
         "tags": ["expression"],
         "weights": {"general": 0.3, "career": 0.2},
     },
-    "number_4": {
-        "text": "Foundation, structure, steady building.",
+    4: {
+        "phrase": "structure and steady building",
         "tags": ["structure"],
         "weights": {"career": 0.3},
     },
-    "number_5": {
-        "text": "Change, freedom, adaptability.",
+    5: {
+        "phrase": "change and adaptability",
         "tags": ["change"],
         "weights": {"general": 0.3},
     },
-    "number_6": {
-        "text": "Care, responsibility, service.",
+    6: {
+        "phrase": "care and responsibility",
         "tags": ["care"],
         "weights": {"love": 0.3, "general": 0.2},
     },
-    "number_7": {
-        "text": "Insight, reflection, analysis.",
+    7: {
+        "phrase": "insight and reflection",
         "tags": ["insight"],
         "weights": {"spiritual": 0.3, "general": 0.2},
     },
-    "number_8": {
-        "text": "Power, material mastery, influence.",
+    8: {
+        "phrase": "power and material mastery",
         "tags": ["power"],
         "weights": {"career": 0.3},
     },
-    "number_9": {
-        "text": "Completion, compassion, release.",
+    9: {
+        "phrase": "completion and compassion",
         "tags": ["closure"],
         "weights": {"spiritual": 0.3, "emotional": 0.2},
     },
 }
+
+
+def _merge_weights(base: Dict[str, float], extra: Dict[str, float]) -> Dict[str, float]:
+    weights = base.copy()
+    for key, val in extra.items():
+        weights[key] = round(weights.get(key, 0.0) + val, 2)
+    return weights
+
+
+NUMEROLOGY_MEANINGS: Dict[str, Dict] = {}
+NUMEROLOGY_MEANINGS.update(BASE_TYPES)
+
+for tkey, tdata in BASE_TYPES.items():
+    for number, ndata in NUMBER_TRAITS.items():
+        key = f"{tkey}_{number}"
+        text = (
+            f"{tkey.replace('_', ' ').title()} {number}: emphasizes {ndata['phrase']}."
+        )
+        tags = tdata["tags"] + ndata["tags"]
+        weights = _merge_weights(tdata["weights"], ndata["weights"])
+        NUMEROLOGY_MEANINGS[key] = {"text": text, "tags": tags, "weights": weights}

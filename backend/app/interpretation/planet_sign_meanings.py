@@ -1,157 +1,122 @@
 """
 planet_sign_meanings.py
-Small reusable planet-in-sign meanings with topic weights.
+Programmatically generate planet-in-sign meaning blocks for full coverage.
+Each block contains text, tags, and weighted topics.
 """
+from __future__ import annotations
 
-PLANET_SIGN_MEANINGS = {
-    "Sun": {
-        "Aries": {
-            "text": "Direct, bold self-expression; leads with action.",
-            "tags": ["identity", "drive"],
-            "weights": {"general": 0.7, "career": 0.5},
-        },
-        "Taurus": {
-            "text": "Steady, sensual core; builds patiently.",
-            "tags": ["stability", "values"],
-            "weights": {"general": 0.6, "career": 0.4},
-        },
-        "Gemini": {
-            "text": "Curious, communicative identity; thrives on variety.",
-            "tags": ["mind", "network"],
-            "weights": {"general": 0.6},
-        },
-        "Cancer": {
-            "text": "Protective, feeling-led presence; home-oriented.",
-            "tags": ["emotional", "home"],
-            "weights": {"emotional": 0.6, "love": 0.3},
-        },
-        "Leo": {
-            "text": "Expressive, heart-forward; craves visibility.",
-            "tags": ["expression"],
-            "weights": {"general": 0.6, "career": 0.4},
-        },
-        "Virgo": {
-            "text": "Service-minded and precise; improves systems.",
-            "tags": ["service", "analysis"],
-            "weights": {"career": 0.5, "general": 0.4},
-        },
-    },
-    "Moon": {
-        "Cancer": {
-            "text": "Nurturing emotional core; protective instincts.",
-            "tags": ["emotional", "home"],
-            "weights": {"emotional": 0.8, "love": 0.4},
-        },
-        "Leo": {
-            "text": "Warm, expressive moods; wants to be seen.",
-            "tags": ["expression", "joy"],
-            "weights": {"emotional": 0.6, "love": 0.4},
-        },
-        "Virgo": {
-            "text": "Cares through practical service; attentive moods.",
-            "tags": ["care", "detail"],
-            "weights": {"emotional": 0.5, "health": 0.4},
-        },
-        "Scorpio": {
-            "text": "Intense, private feelings; loyal bonds.",
-            "tags": ["depth", "loyalty"],
-            "weights": {"emotional": 0.7, "love": 0.5},
-        },
-    },
+from typing import Dict
+
+PLANET_ARCHETYPES = {
+    "Sun": {"focus": "identity", "weights": {"general": 0.6, "career": 0.4}},
+    "Moon": {"focus": "emotional needs", "weights": {"emotional": 0.7, "love": 0.3}},
     "Mercury": {
-        "Gemini": {
-            "text": "Fast, flexible mind; conversational agility.",
-            "tags": ["communication"],
-            "weights": {"career": 0.4, "general": 0.4},
-        },
-        "Virgo": {
-            "text": "Analytical, precise communicator; practical focus.",
-            "tags": ["analysis"],
-            "weights": {"career": 0.5, "health": 0.3},
-        },
-        "Capricorn": {
-            "text": "Structured thinking; long-range planning.",
-            "tags": ["structure"],
-            "weights": {"career": 0.5},
-        },
+        "focus": "mind and communication",
+        "weights": {"general": 0.4, "career": 0.3},
     },
-    "Venus": {
-        "Libra": {
-            "text": "Relational harmony focus; aesthetic and fair.",
-            "tags": ["love", "harmony"],
-            "weights": {"love": 0.8, "social": 0.5},
-        },
-        "Scorpio": {
-            "text": "Intense bonds; loyal and magnetic.",
-            "tags": ["intimacy", "depth"],
-            "weights": {"love": 0.9, "emotional": 0.5},
-        },
-        "Pisces": {
-            "text": "Compassionate, artistic affection; dreamy bonds.",
-            "tags": ["compassion", "art"],
-            "weights": {"love": 0.6, "emotional": 0.5},
-        },
-    },
-    "Mars": {
-        "Aries": {
-            "text": "Fast, assertive drive; starts quickly.",
-            "tags": ["drive", "courage"],
-            "weights": {"career": 0.6, "general": 0.5},
-        },
-        "Capricorn": {
-            "text": "Disciplined, strategic action.",
-            "tags": ["ambition", "structure"],
-            "weights": {"career": 0.7, "general": 0.5},
-        },
-        "Scorpio": {
-            "text": "Intense, focused will; transformative actions.",
-            "tags": ["power"],
-            "weights": {"career": 0.6, "emotional": 0.4},
-        },
-    },
+    "Venus": {"focus": "relating style", "weights": {"love": 0.7, "emotional": 0.3}},
+    "Mars": {"focus": "drive and courage", "weights": {"career": 0.5, "general": 0.4}},
     "Jupiter": {
-        "Sagittarius": {
-            "text": "Expansive, optimistic; seeks horizons.",
-            "tags": ["growth"],
-            "weights": {"career": 0.4, "general": 0.5, "spiritual": 0.4},
-        },
-        "Pisces": {
-            "text": "Compassionate expansion; intuitive wisdom.",
-            "tags": ["spiritual"],
-            "weights": {"spiritual": 0.6, "general": 0.4},
-        },
+        "focus": "growth philosophy",
+        "weights": {"spiritual": 0.4, "general": 0.3},
     },
-    "Saturn": {
-        "Capricorn": {
-            "text": "Structured, responsible; mastery through rigor.",
-            "tags": ["structure"],
-            "weights": {"career": 0.6},
-        },
-        "Aquarius": {
-            "text": "Systems thinker; reforms with discipline.",
-            "tags": ["systems"],
-            "weights": {"career": 0.4, "general": 0.4},
-        },
-    },
+    "Saturn": {"focus": "structure and mastery", "weights": {"career": 0.5}},
     "Uranus": {
-        "Aquarius": {
-            "text": "Innovative, future-focused; breaks norms.",
-            "tags": ["innovation"],
-            "weights": {"career": 0.3, "general": 0.3},
-        },
+        "focus": "innovation impulse",
+        "weights": {"general": 0.3, "career": 0.2},
     },
     "Neptune": {
-        "Pisces": {
-            "text": "Mystical, porous boundaries; creative flow.",
-            "tags": ["spiritual", "dream"],
-            "weights": {"spiritual": 0.6, "emotional": 0.4},
-        },
+        "focus": "imagination and faith",
+        "weights": {"spiritual": 0.5, "emotional": 0.3},
     },
     "Pluto": {
-        "Scorpio": {
-            "text": "Transformative core; power and regeneration.",
-            "tags": ["power", "depth"],
-            "weights": {"emotional": 0.5, "career": 0.4},
-        },
+        "focus": "transformational power",
+        "weights": {"emotional": 0.4, "career": 0.3},
     },
 }
+
+SIGN_FLAVORS = {
+    "Aries": {
+        "keywords": "bold, pioneering fire",
+        "tags": ["courage"],
+        "weights": {"general": 0.2, "career": 0.2},
+    },
+    "Taurus": {
+        "keywords": "steady, sensual earth",
+        "tags": ["stability"],
+        "weights": {"love": 0.2, "career": 0.1},
+    },
+    "Gemini": {
+        "keywords": "curious, versatile air",
+        "tags": ["communication"],
+        "weights": {"general": 0.2},
+    },
+    "Cancer": {
+        "keywords": "protective, intuitive water",
+        "tags": ["home"],
+        "weights": {"emotional": 0.2, "love": 0.1},
+    },
+    "Leo": {
+        "keywords": "radiant, expressive fire",
+        "tags": ["expression"],
+        "weights": {"general": 0.2, "career": 0.1},
+    },
+    "Virgo": {
+        "keywords": "discerning, service-minded earth",
+        "tags": ["service"],
+        "weights": {"career": 0.2},
+    },
+    "Libra": {
+        "keywords": "harmonizing, relational air",
+        "tags": ["relationship"],
+        "weights": {"love": 0.2},
+    },
+    "Scorpio": {
+        "keywords": "intense, regenerative water",
+        "tags": ["depth"],
+        "weights": {"emotional": 0.2},
+    },
+    "Sagittarius": {
+        "keywords": "expansive, truth-seeking fire",
+        "tags": ["philosophy"],
+        "weights": {"spiritual": 0.2},
+    },
+    "Capricorn": {
+        "keywords": "ambitious, disciplined earth",
+        "tags": ["structure"],
+        "weights": {"career": 0.2},
+    },
+    "Aquarius": {
+        "keywords": "visionary, future-minded air",
+        "tags": ["innovation"],
+        "weights": {"general": 0.2},
+    },
+    "Pisces": {
+        "keywords": "dreamy, empathic water",
+        "tags": ["compassion"],
+        "weights": {"spiritual": 0.2, "emotional": 0.1},
+    },
+}
+
+
+def _combine_weights(
+    base: Dict[str, float], extra: Dict[str, float]
+) -> Dict[str, float]:
+    weights = base.copy()
+    for key, val in extra.items():
+        weights[key] = round(weights.get(key, 0.0) + val, 2)
+    return weights
+
+
+PLANET_SIGN_MEANINGS: Dict[str, Dict[str, Dict]] = {}
+for planet, pdata in PLANET_ARCHETYPES.items():
+    PLANET_SIGN_MEANINGS[planet] = {}
+    for sign, sdata in SIGN_FLAVORS.items():
+        text = f"{planet} {pdata['focus']} flows through {sign}'s {sdata['keywords']}, shaping instinctive choices."
+        tags = [pdata["focus"], *sdata["tags"]]
+        weights = _combine_weights(pdata["weights"], sdata["weights"])
+        PLANET_SIGN_MEANINGS[planet][sign] = {
+            "text": text,
+            "tags": tags,
+            "weights": weights,
+        }

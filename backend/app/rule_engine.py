@@ -167,6 +167,7 @@ class RuleEngine:
         blocks = []
         # Build quick lookup by planet name
         positions = {p["name"]: p for p in chart_a["planets"]}
+        priority_lookup = set(priority_pairs or [])
         for p_b in chart_b["planets"]:
             if planet_filter and p_b["name"] not in planet_filter:
                 continue
@@ -185,7 +186,10 @@ class RuleEngine:
                 )
                 # Priority synastry weighting
                 pair_key = f"{p_a_name}-{p_b['name']}"
-                if priority_pairs and pair_key in priority_pairs:
+                reverse_pair = f"{p_b['name']}-{p_a_name}"
+                if priority_lookup and (
+                    pair_key in priority_lookup or reverse_pair in priority_lookup
+                ):
                     base_weight *= 1.2
                 blocks.append(
                     {
@@ -198,13 +202,20 @@ class RuleEngine:
 
     def _numerology_blocks(self, numerology: Dict) -> List[Dict]:
         blocks = []
-        for key, meaning in NUMEROLOGY_MEANINGS.items():
-            val = numerology.get("core_numbers", {}).get(key) or numerology.get(
-                "cycles", {}
-            ).get(key)
-            if val:
+        added = set()
+        for entry in numerology.get("meaning_blocks", []):
+            etype = entry.get("type")
+            value = entry.get("value")
+            if not etype or value is None:
+                continue
+            base = NUMEROLOGY_MEANINGS.get(etype)
+            if base and etype not in added:
+                blocks.append({**base, "weight": 0.9, "source": f"numerology:{etype}"})
+                added.add(etype)
+            specific = NUMEROLOGY_MEANINGS.get(f"{etype}_{value}")
+            if specific:
                 blocks.append(
-                    {**meaning, "weight": 1.0, "source": f"numerology:{key}={val}"}
+                    {**specific, "weight": 1.0, "source": f"numerology:{etype}_{value}"}
                 )
         return blocks
 
