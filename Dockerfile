@@ -6,6 +6,7 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     build-essential \
+    bash \
     && rm -rf /var/lib/apt/lists/*
 
 # Install runtime deps
@@ -17,5 +18,5 @@ COPY backend/app ./app
 
 EXPOSE 8000
 
-# Start with simple direct command
-CMD ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Use shell form to properly expand PORT variable
+CMD /bin/bash -c "python -m uvicorn app.main:app --host 0.0.0.0 --port \${PORT:-8000}"
