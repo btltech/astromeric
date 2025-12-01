@@ -27,7 +27,7 @@ from __future__ import annotations
 
 import os
 from datetime import datetime, timedelta, timezone
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 
 from fastapi import Depends, FastAPI, HTTPException, Query, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -577,6 +577,205 @@ def get_synastry_chart(req: CompatibilityRequest):
     }
 
 
+# ========== DAILY FEATURES ENDPOINTS ==========
+
+
+class DailyFeaturesRequest(BaseModel):
+    """Request for daily cosmic features."""
+    birth_date: str
+    sun_sign: Optional[str] = None
+
+
+@api.post("/daily-features")
+def get_daily_features_endpoint(req: DailyFeaturesRequest):
+    """Get daily lucky number, color, planet, affirmation, and tarot energy."""
+    from .engine.daily_features import get_daily_features
+    
+    features = get_daily_features(req.birth_date, req.sun_sign)
+    return features
+
+
+@api.post("/tarot/draw")
+def draw_tarot_card():
+    """Draw a single tarot card with meaning and advice."""
+    from .engine.daily_features import get_tarot_card
+    
+    card = get_tarot_card()
+    return card
+
+
+class YesNoRequest(BaseModel):
+    """Request for yes/no cosmic reading."""
+    question: str
+    birth_date: Optional[str] = None
+
+
+@api.post("/oracle/yes-no")
+def get_yes_no_answer(req: YesNoRequest):
+    """Get a cosmic yes/no reading for a question."""
+    from .engine.daily_features import get_yes_no_reading
+    
+    result = get_yes_no_reading(req.question, req.birth_date)
+    return result
+
+
+class MoodForecastRequest(BaseModel):
+    """Request for mood forecast."""
+    sun_sign: str
+    moon_sign: Optional[str] = None
+
+
+@api.post("/forecast/mood")
+def get_mood_forecast_endpoint(req: MoodForecastRequest):
+    """Get today's mood forecast based on astrological influences."""
+    from .engine.daily_features import get_mood_forecast
+    
+    forecast = get_mood_forecast(req.sun_sign, req.moon_sign)
+    return forecast
+
+
+# ========== COSMIC GUIDE CHAT ENDPOINTS ==========
+
+
+class CosmicGuideRequest(BaseModel):
+    """Request for Cosmic Guide chat."""
+    message: str
+    sun_sign: Optional[str] = None
+    moon_sign: Optional[str] = None
+    rising_sign: Optional[str] = None
+    history: Optional[List[dict]] = None
+
+
+@api.post("/cosmic-guide/chat")
+async def chat_with_guide(req: CosmicGuideRequest):
+    """Chat with the AI Cosmic Guide for mystical wisdom."""
+    from .engine.cosmic_guide import chat_with_cosmic_guide
+    
+    user_context = {}
+    if req.sun_sign:
+        user_context["sun_sign"] = req.sun_sign
+    if req.moon_sign:
+        user_context["moon_sign"] = req.moon_sign
+    if req.rising_sign:
+        user_context["rising_sign"] = req.rising_sign
+    
+    response = await chat_with_cosmic_guide(
+        req.message, 
+        user_context if user_context else None,
+        req.history
+    )
+    return {"response": response}
+
+
+class QuickInsightRequest(BaseModel):
+    """Request for quick cosmic insight."""
+    topic: str
+    sun_sign: Optional[str] = None
+
+
+@api.post("/cosmic-guide/insight")
+async def get_insight(req: QuickInsightRequest):
+    """Get a quick cosmic insight on a specific topic."""
+    from .engine.cosmic_guide import get_quick_insight
+    
+    insight = await get_quick_insight(req.topic, req.sun_sign)
+    return {"insight": insight}
+
+
+# ========== LEARNING CONTENT ENDPOINTS ==========
+
+
+@api.get("/learn/modules")
+def list_learning_modules():
+    """List all available learning modules."""
+    from .engine.learning_content import (
+        MOON_SIGNS, RISING_SIGNS, ELEMENTS_AND_MODALITIES,
+        RETROGRADE_INFO, MINI_COURSES
+    )
+    
+    return {
+        "modules": [
+            {
+                "id": "moon_signs",
+                "title": "Moon Signs: Your Emotional Self",
+                "description": "Discover how your Moon sign shapes your inner world",
+                "item_count": len(MOON_SIGNS)
+            },
+            {
+                "id": "rising_signs",
+                "title": "Rising Signs: Your Cosmic Mask",
+                "description": "Learn how your Ascendant influences first impressions",
+                "item_count": len(RISING_SIGNS)
+            },
+            {
+                "id": "elements",
+                "title": "Elements & Modalities",
+                "description": "Fire, Earth, Air, Water and Cardinal, Fixed, Mutable",
+                "item_count": len(ELEMENTS_AND_MODALITIES.get("elements", {})) + len(ELEMENTS_AND_MODALITIES.get("modalities", {}))
+            },
+            {
+                "id": "retrogrades",
+                "title": "Planetary Retrogrades",
+                "description": "What happens when planets appear to move backward",
+                "item_count": len(RETROGRADE_INFO)
+            },
+            {
+                "id": "courses",
+                "title": "Mini Courses",
+                "description": "Structured lessons for deeper learning",
+                "item_count": len(MINI_COURSES)
+            }
+        ]
+    }
+
+
+@api.get("/learn/module/{module_id}")
+def get_module_content(module_id: str):
+    """Get full content for a learning module."""
+    from .engine.learning_content import get_learning_module
+    
+    content = get_learning_module(module_id)
+    if not content:
+        raise HTTPException(status_code=404, detail="Module not found")
+    return content
+
+
+@api.get("/learn/course/{course_id}")
+def get_course_content(course_id: str):
+    """Get a specific mini course with all lessons."""
+    from .engine.learning_content import MINI_COURSES
+    
+    course = MINI_COURSES.get(course_id)
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found")
+    return course
+
+
+@api.get("/learn/course/{course_id}/lesson/{lesson_number}")
+def get_lesson_content(course_id: str, lesson_number: int):
+    """Get a specific lesson from a mini course."""
+    from .engine.learning_content import get_lesson
+    
+    lesson = get_lesson(course_id, lesson_number)
+    if not lesson:
+        raise HTTPException(status_code=404, detail="Lesson not found")
+    return lesson
+
+
+class SearchLearningRequest(BaseModel):
+    """Request to search learning content."""
+    query: str
+
+
+@api.post("/learn/search")
+def search_learning(req: SearchLearningRequest):
+    """Search across all learning content."""
+    from .engine.learning_content import search_learning_content
+    
+    results = search_learning_content(req.query)
+    return {"results": results}
+
+
 @api.get("/health")
 def health():
     redis_status = "disconnected"
@@ -600,6 +799,11 @@ def health():
             "transit_alerts": True,
             "geocoding": True,
             "synastry": True,
+            "daily_features": True,
+            "cosmic_guide": True,
+            "learning": True,
+            "tarot": True,
+            "oracle": True,
         },
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }

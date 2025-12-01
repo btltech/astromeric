@@ -9,6 +9,8 @@ import {
   LearnView,
   AuthView,
   ChartViewPage,
+  CosmicToolsView,
+  LearningView,
 } from './views';
 import { useProfiles, useAuth } from './hooks';
 import { useStore } from './store/useStore';
@@ -65,6 +67,12 @@ function NavBar() {
           >
             🔭 Chart
           </NavLink>
+          <NavLink
+            to="/tools"
+            className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}
+          >
+            ✨ Tools
+          </NavLink>
           <NavLink to="/learn" className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}>
             📚 Learn
           </NavLink>
@@ -81,6 +89,17 @@ function NavBar() {
 
 function AnimatedRoutes() {
   const location = useLocation();
+  const { result } = useStore();
+  const { sessionProfile } = useProfiles();
+
+  // Extract chart data for cosmic tools
+  const chartData = result?.charts?.natal;
+  const sunSign = chartData?.planets?.find((p: { name: string }) => p.name === 'Sun')?.sign;
+  const moonSign = chartData?.planets?.find((p: { name: string }) => p.name === 'Moon')?.sign;
+  // Rising sign may be in ascendant or in planets array depending on backend
+  const risingSign = (result?.charts?.natal as { ascendant?: { sign?: string } })?.ascendant?.sign 
+    || chartData?.planets?.find((p: { name: string }) => p.name === 'Ascendant')?.sign;
+  const birthDate = sessionProfile?.date_of_birth;
 
   return (
     <AnimatePresence mode="wait">
@@ -89,7 +108,18 @@ function AnimatedRoutes() {
         <Route path="/numerology" element={<NumerologyView />} />
         <Route path="/compatibility" element={<CompatibilityView />} />
         <Route path="/chart" element={<ChartViewPage />} />
-        <Route path="/learn" element={<LearnView />} />
+        <Route 
+          path="/tools" 
+          element={
+            <CosmicToolsView 
+              birthDate={birthDate}
+              sunSign={sunSign}
+              moonSign={moonSign}
+              risingSign={risingSign}
+            />
+          } 
+        />
+        <Route path="/learn" element={<LearningView />} />
         <Route path="/auth" element={<AuthView />} />
       </Routes>
     </AnimatePresence>
