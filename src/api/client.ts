@@ -34,9 +34,19 @@ export interface ForecastResponse {
 
 export async function apiFetch<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
+  // Merge headers without losing defaults when callers pass Authorization, etc.
+  const mergedHeaders = new Headers(options.headers || undefined);
+  if (!mergedHeaders.has('Content-Type') && options.body !== undefined) {
+    mergedHeaders.set('Content-Type', 'application/json');
+  }
+  if (!mergedHeaders.has('Accept')) {
+    mergedHeaders.set('Accept', 'application/json');
+  }
+
   const resp = await fetch(`${baseUrl}${endpoint}`, {
-    headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
     ...options,
+    headers: mergedHeaders,
   });
   if (!resp.ok) {
     const text = await resp.text();
