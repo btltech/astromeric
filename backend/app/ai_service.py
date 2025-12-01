@@ -19,7 +19,7 @@ def _configure_client() -> bool:
     if not genai or not GEMINI_API_KEY:
         return False
     # Configure once per process; repeated calls are harmless.
-    genai.configure(api_key=AIzaSyAa5yHgdOqGOOF48LK9zuLQwAWMxrJgMzQ)
+    genai.configure(api_key=GEMINI_API_KEY)
     return True
 
 
