@@ -2,7 +2,14 @@ import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, NavLink, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CosmicBackground } from './components/CosmicBackground';
-import { ReadingView, NumerologyView, CompatibilityView, LearnView, AuthView } from './views';
+import {
+  ReadingView,
+  NumerologyView,
+  CompatibilityView,
+  LearnView,
+  AuthView,
+  ChartViewPage,
+} from './views';
 import { useProfiles, useAuth } from './hooks';
 import { useStore } from './store/useStore';
 // styles.css is imported at the root level (index.tsx)
@@ -52,6 +59,12 @@ function NavBar() {
           >
             💕 Compatibility
           </NavLink>
+          <NavLink
+            to="/chart"
+            className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}
+          >
+            🔭 Chart
+          </NavLink>
           <NavLink to="/learn" className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}>
             📚 Learn
           </NavLink>
@@ -75,6 +88,7 @@ function AnimatedRoutes() {
         <Route path="/" element={<ReadingView />} />
         <Route path="/numerology" element={<NumerologyView />} />
         <Route path="/compatibility" element={<CompatibilityView />} />
+        <Route path="/chart" element={<ChartViewPage />} />
         <Route path="/learn" element={<LearnView />} />
         <Route path="/auth" element={<AuthView />} />
       </Routes>
