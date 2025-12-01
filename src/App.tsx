@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { BrowserRouter, Routes, Route, NavLink, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CosmicBackground } from './components/CosmicBackground';
@@ -15,11 +15,11 @@ import { useStore } from './store/useStore';
 // styles.css is imported at the root level (index.tsx)
 
 function NavBar() {
-  const { selectedProfileId } = useProfiles();
+  const { sessionProfile } = useProfiles();
   const { isAuthenticated, user, logout } = useAuth();
 
-  // Only show nav when a profile is selected (or authenticated)
-  const showNav = selectedProfileId || isAuthenticated;
+  // Show nav when a session profile exists (or authenticated)
+  const showNav = sessionProfile || isAuthenticated;
 
   return (
     <header>
@@ -154,12 +154,9 @@ function ErrorBanner() {
 }
 
 export function App() {
-  const { fetchProfiles } = useProfiles();
   const { result } = useStore();
 
-  useEffect(() => {
-    fetchProfiles();
-  }, [fetchProfiles]);
+  // No fetchProfiles - all profiles are session-only for privacy
 
   return (
     <BrowserRouter>

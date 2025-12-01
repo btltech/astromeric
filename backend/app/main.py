@@ -269,23 +269,11 @@ def get_profiles(
     db: Session = Depends(get_db),
     current_user: Optional[User] = Depends(get_current_user_optional),
 ):
-    """Get all profiles. If authenticated, returns user's profiles only."""
-    if current_user:
-        profiles = (
-            db.query(DBProfile)
-            .filter(DBProfile.user_id == current_user.id)
-            .order_by(DBProfile.created_at.desc())
-            .all()
-        )
-    else:
-        # For guest users, return profiles without user_id (guest profiles)
-        profiles = (
-            db.query(DBProfile)
-            .filter(DBProfile.user_id.is_(None))
-            .order_by(DBProfile.created_at.desc())
-            .all()
-        )
-    return [_db_profile_to_dict(p) for p in profiles]
+    """
+    Profile storage is disabled for privacy.
+    Always returns empty list - profiles are session-only on frontend.
+    """
+    return []
 
 
 @api.post("/profiles")
@@ -294,22 +282,23 @@ def create_profile(
     db: Session = Depends(get_db),
     current_user: Optional[User] = Depends(get_current_user_optional),
 ):
-    """Create a new profile. Associates with user if authenticated."""
-    db_profile = DBProfile(
-        name=req.name,
-        date_of_birth=req.date_of_birth,
-        time_of_birth=req.time_of_birth,
-        place_of_birth=req.place_of_birth,
-        latitude=req.latitude,
-        longitude=req.longitude,
-        timezone=req.timezone or "UTC",
-        house_system=req.house_system or "Placidus",
-        user_id=current_user.id if current_user else None,
-    )
-    db.add(db_profile)
-    db.commit()
-    db.refresh(db_profile)
-    return _db_profile_to_dict(db_profile)
+    """
+    Profile storage is disabled for privacy.
+    Returns a fake ID but does NOT save to database.
+    Profiles are session-only on frontend.
+    """
+    # Return a response that looks successful but doesn't persist anything
+    return {
+        "id": -1,  # Negative ID indicates session-only
+        "name": req.name,
+        "date_of_birth": req.date_of_birth,
+        "time_of_birth": req.time_of_birth,
+        "place_of_birth": req.place_of_birth,
+        "latitude": req.latitude if req.latitude is not None else 0.0,
+        "longitude": req.longitude if req.longitude is not None else 0.0,
+        "timezone": req.timezone or "UTC",
+        "house_system": req.house_system or "Placidus",
+    }
 
 
 @api.post("/daily-reading")
