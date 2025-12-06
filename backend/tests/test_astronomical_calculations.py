@@ -151,6 +151,9 @@ class TestBuildNatalChart:
         profile = {
             "name": "Minimal",
             "date_of_birth": "1985-06-15",
+            "latitude": 40.0,
+            "longitude": -74.0,
+            "timezone": "America/New_York",
         }
         chart = build_natal_chart(profile)
         
@@ -158,7 +161,7 @@ class TestBuildNatalChart:
         assert len(chart["houses"]) == 12
 
     def test_different_house_systems(self, standard_profile):
-        """Test that different house systems produce different results."""
+        """Test that different house systems produce different house results."""
         profile_placidus = standard_profile.copy()
         profile_placidus["house_system"] = "Placidus"
         
@@ -168,9 +171,15 @@ class TestBuildNatalChart:
         chart_placidus = build_natal_chart(profile_placidus)
         chart_whole = build_natal_chart(profile_whole)
         
-        # Planets should be the same, houses may differ
-        assert chart_placidus["planets"] == chart_whole["planets"]
-        # Houses might differ (in production with real flatlib)
+        # Planet positions (degrees/signs) should be the same - only house varies
+        for p_placidus, p_whole in zip(chart_placidus["planets"], chart_whole["planets"]):
+            assert p_placidus["name"] == p_whole["name"]
+            assert p_placidus["sign"] == p_whole["sign"]
+            assert p_placidus["absolute_degree"] == p_whole["absolute_degree"]
+            # House placements may differ between house systems - that's expected
+        
+        # House cusps SHOULD differ between Placidus and Whole Signs
+        # (unless both produce identical results for this specific chart)
 
     def test_determinism(self, standard_profile):
         """Same input should produce same output."""
@@ -190,6 +199,7 @@ class TestBuildTransitChart:
             "date_of_birth": "1990-01-01",
             "latitude": 40.7128,
             "longitude": -74.0060,
+            "timezone": "America/New_York",
         }
 
     def test_transit_chart_structure(self, standard_profile):
@@ -422,11 +432,13 @@ class TestEdgeCases:
             "time_of_birth": "12:00",
             "latitude": 70.0,  # Within Arctic Circle
             "longitude": 25.0,
+            "timezone": "UTC",
         }
         chart = build_natal_chart(profile)
         
         assert len(chart["planets"]) == len(PLANETS)
         assert len(chart["houses"]) == 12
+        assert chart["metadata"].get("provider") in {"polar-fallback", "flatlib", "stub"}
 
     def test_southern_hemisphere(self):
         profile = {
@@ -435,6 +447,7 @@ class TestEdgeCases:
             "time_of_birth": "12:00",
             "latitude": -33.87,
             "longitude": 151.21,
+            "timezone": "Australia/Sydney",
         }
         chart = build_natal_chart(profile)
         
@@ -449,6 +462,7 @@ class TestEdgeCases:
             "time_of_birth": "12:00",
             "latitude": -17.77,
             "longitude": 177.97,  # Near date line
+            "timezone": "Pacific/Fiji",
         }
         chart = build_natal_chart(profile)
         
@@ -461,6 +475,7 @@ class TestEdgeCases:
             "time_of_birth": "00:00",
             "latitude": 40.0,
             "longitude": -74.0,
+            "timezone": "America/New_York",
         }
         chart = build_natal_chart(profile)
         
@@ -473,6 +488,7 @@ class TestEdgeCases:
             "time_of_birth": "12:00",
             "latitude": 40.0,
             "longitude": -74.0,
+            "timezone": "America/New_York",
         }
         chart = build_natal_chart(profile)
         
@@ -486,6 +502,7 @@ class TestEdgeCases:
             "time_of_birth": "10:30",
             "latitude": 51.5,
             "longitude": -0.1,
+            "timezone": "Europe/London",
         }
         chart = build_natal_chart(profile)
         

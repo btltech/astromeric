@@ -52,43 +52,52 @@ export function FortuneForm({ onSubmit, isLoading }: Props) {
       <h2 className="form-title">Enter Your Details</h2>
       <form onSubmit={handleSubmit}>
         <div className="form-group">
-          <label>Full Name</label>
+          <label htmlFor="name">Full Name</label>
           <input
+            id="name"
             type="text"
             required
             placeholder="e.g. Jane Doe"
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            aria-invalid={!!errors.name}
+            aria-describedby={errors.name ? "name-error" : undefined}
           />
-          {errors.name && <div className="error-text">{errors.name}</div>}
+          {errors.name && <div id="name-error" className="error-text" role="alert">{errors.name}</div>}
         </div>
         <div className="form-group">
-          <label>Date of Birth</label>
+          <label htmlFor="date_of_birth">Date of Birth</label>
           <input
+            id="date_of_birth"
             type="date"
             required
             value={formData.date_of_birth}
             onChange={(e) => setFormData({ ...formData, date_of_birth: e.target.value })}
+            aria-invalid={!!errors.date_of_birth}
+            aria-describedby={errors.date_of_birth ? "dob-error" : undefined}
           />
-          {errors.date_of_birth && <div className="error-text">{errors.date_of_birth}</div>}
+          {errors.date_of_birth && <div id="dob-error" className="error-text" role="alert">{errors.date_of_birth}</div>}
         </div>
         <div className="form-group">
-          <label>Time of Birth (Optional)</label>
+          <label htmlFor="time_of_birth">Time of Birth (Optional)</label>
           <input
+            id="time_of_birth"
             type="time"
             value={formData.time_of_birth}
             onChange={(e) => setFormData({ ...formData, time_of_birth: e.target.value })}
           />
         </div>
         <div className="form-group">
-          <label>Place of Birth (Optional)</label>
-          <LocationAutocomplete
-            onSelect={handleLocationSelect}
-            placeholder="Search city..."
-            initialValue={formData.place_of_birth}
-          />
+          <label htmlFor="place_of_birth">Place of Birth (Optional)</label>
+          <div id="place_of_birth">
+            <LocationAutocomplete
+              onSelect={handleLocationSelect}
+              placeholder="Search city..."
+              initialValue={formData.place_of_birth}
+            />
+          </div>
           {formData.latitude && formData.longitude && (
-            <div style={{ fontSize: 12, color: '#4ecdc4', marginTop: 4 }}>
+            <div className="geo-indicator">
               📍 {formData.latitude.toFixed(4)}, {formData.longitude.toFixed(4)} •{' '}
               {formData.timezone}
             </div>
@@ -106,7 +115,7 @@ export function FortuneForm({ onSubmit, isLoading }: Props) {
             Save my profile for future readings
           </label>
         </div>
-        <p style={{ fontSize: 12, color: '#888', marginTop: 4, marginBottom: 16 }}>
+        <p className="privacy-note">
           Your data is only used to generate your reading. Check the box above to save your profile for future visits.
         </p>
         <button type="submit" className="btn-primary" disabled={isLoading}>

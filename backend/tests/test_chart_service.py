@@ -24,11 +24,12 @@ def test_build_natal_chart_structure():
 
 
 def test_stub_fallback(monkeypatch):
+    """Test that the stub fallback works when flatlib is disabled."""
     profile = copy.deepcopy(_profile())
-    original = chart_service.HAS_FLATLIB
+    original_flatlib = chart_service.HAS_FLATLIB
     try:
         chart_service.HAS_FLATLIB = False
         chart = chart_service.build_natal_chart(profile)
         assert chart["metadata"].get("provider") == "stub"
     finally:
-        chart_service.HAS_FLATLIB = original
+        chart_service.HAS_FLATLIB = original_flatlib

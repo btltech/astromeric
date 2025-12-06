@@ -4,3 +4,4 @@ export { useNumerology } from './useNumerology';
 export { useCompatibility } from './useCompatibility';
 export { useGlossary } from './useGlossary';
 export { useAuth } from './useAuth';
+export { usePWA } from './usePWA';

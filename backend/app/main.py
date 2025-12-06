@@ -26,14 +26,24 @@ Deployment notes:
 from __future__ import annotations
 
 import os
+import logging
 from datetime import datetime, timedelta, timezone
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from fastapi import Depends, FastAPI, HTTPException, Query, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field, field_validator
 from sqlalchemy.orm import Session
+
+from .middleware import rate_limit_middleware
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
+logger = logging.getLogger(__name__)
 
 from .cache import get_chart_cache, cached_build_chart
 from .validators import (
@@ -60,9 +70,52 @@ from .auth import (
     get_user_by_email,
 )
 from .ai_service import explain_with_gemini, fallback_summary
-from .chart_service import EPHEMERIS_PATH, HAS_FLATLIB
+from .chart_service import EPHEMERIS_PATH, HAS_FLATLIB, build_natal_chart
 from .engine.glossary import NUMEROLOGY_GLOSSARY, ZODIAC_GLOSSARY
+from .engine.year_ahead import build_year_ahead_forecast
+from .engine.moon_phases import get_moon_phase_summary, calculate_moon_phase, get_upcoming_moon_events
+from .engine.timing_advisor import (
+    calculate_timing_score,
+    find_best_days,
+    get_timing_advice,
+    get_available_activities,
+    ACTIVITY_PROFILES,
+)
+from .engine.journal import (
+    add_journal_entry,
+    record_outcome,
+    calculate_accuracy_stats,
+    get_reading_insights,
+    analyze_prediction_patterns,
+    get_journal_prompts,
+    create_accountability_report,
+    format_reading_for_journal,
+)
+from .engine.relationship_timeline import (
+    get_venus_transit,
+    get_mars_transit,
+    is_venus_retrograde,
+    get_upcoming_relationship_dates,
+    analyze_relationship_timing,
+    get_best_relationship_days,
+    build_relationship_timeline,
+    get_relationship_phases,
+)
+from .engine.habit_tracker import (
+    LUNAR_HABIT_GUIDANCE,
+    HABIT_CATEGORIES,
+    get_moon_phase_name,
+    create_habit,
+    log_habit_completion,
+    calculate_lunar_alignment_score,
+    get_habit_streak,
+    get_lunar_habit_recommendations,
+    calculate_habit_analytics,
+    get_today_habit_forecast,
+    get_lunar_cycle_report,
+)
 from .models import Profile as DBProfile
+from .models import Reading as DBReading
 from .models import SessionLocal, User
 from .numerology_engine import build_numerology
 from .products import build_compatibility, build_forecast, build_natal_profile
@@ -83,23 +136,30 @@ A comprehensive astrology and numerology API that provides:
 Most endpoints work without authentication. Create an account for personalized features.
 
 ### Rate Limits
-No rate limits currently. Be respectful of server resources.
+Global limit: 100 requests per minute per IP.
     """,
     docs_url="/docs",
     redoc_url="/redoc",
 )
 app = api  # alias for uvicorn import style
 
+# Add custom rate limiting middleware (60 req/min with burst support)
+app.middleware("http")(rate_limit_middleware)
+
 # Allow configurable CORS via env; default open for dev
 allow_origins_env = os.getenv("ALLOW_ORIGINS", "")
 if allow_origins_env:
     allow_origins = [o.strip() for o in allow_origins_env.split(",") if o.strip()]
 else:
-    allow_origins = ["*"]
+    allow_origins = []
+
+# Always allow localhost, local network IPs, and all astromeric.pages.dev subdomains
+allow_origin_regex = r"https?://(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.(1[6-9]|2\d|3[0-1])\.\d+\.\d+|.*\.astromeric\.pages\.dev|astromeric\.pages\.dev)(:\d+)?"
 
 api.add_middleware(
     CORSMiddleware,
     allow_origins=allow_origins,
+    allow_origin_regex=allow_origin_regex,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -119,6 +179,19 @@ async def validation_error_handler(request: Request, exc: ValidationError):
             "detail": exc.to_dict(),
             "message": exc.message,
         },
+    )
+
+
+@api.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    """Catch-all exception handler with detailed logging."""
+    import traceback
+    error_detail = f"{type(exc).__name__}: {str(exc)}"
+    print(f"ERROR [{request.method} {request.url.path}]: {error_detail}")
+    traceback.print_exc()
+    return JSONResponse(
+        status_code=500,
+        content={"error": error_detail, "path": str(request.url.path)},
     )
 
 
@@ -291,7 +364,7 @@ def get_me(current_user: User = Depends(get_current_user)):
 
 @api.post("/ai/explain", response_model=AIExplainResponse)
 def explain_reading(payload: AIExplainRequest):
-    sections = [section.dict() for section in payload.sections]
+    sections = [section.model_dump() for section in payload.sections]
     summary = explain_with_gemini(
         payload.scope,
         payload.headline,
@@ -312,7 +385,7 @@ def explain_reading(payload: AIExplainRequest):
 
 
 def _profile_to_dict(payload: ProfilePayload) -> Dict:
-    loc = payload.location.dict() if payload.location else {}
+    loc = payload.location.model_dump() if payload.location else {}
     return {
         "name": payload.name,
         "date_of_birth": payload.date_of_birth,
@@ -350,10 +423,12 @@ def get_profiles(
     db: Session = Depends(get_db),
     current_user: Optional[User] = Depends(get_current_user_optional),
 ):
-    """
-    Profile storage is disabled for privacy.
-    Always returns empty list - profiles are session-only on frontend.
-    """
+    """Get all saved profiles."""
+    if current_user:
+        return [
+            _db_profile_to_dict(p)
+            for p in db.query(DBProfile).filter(DBProfile.user_id == current_user.id).all()
+        ]
     return []
 
 
@@ -363,23 +438,23 @@ def create_profile(
     db: Session = Depends(get_db),
     current_user: Optional[User] = Depends(get_current_user_optional),
 ):
-    """
-    Profile storage is disabled for privacy.
-    Returns a fake ID but does NOT save to database.
-    Profiles are session-only on frontend.
-    """
-    # Return a response that looks successful but doesn't persist anything
-    return {
-        "id": -1,  # Negative ID indicates session-only
-        "name": req.name,
-        "date_of_birth": req.date_of_birth,
-        "time_of_birth": req.time_of_birth,
-        "place_of_birth": req.place_of_birth,
-        "latitude": req.latitude if req.latitude is not None else 0.0,
-        "longitude": req.longitude if req.longitude is not None else 0.0,
-        "timezone": req.timezone or "UTC",
-        "house_system": req.house_system or "Placidus",
-    }
+    """Create a new profile."""
+    db_profile = DBProfile(
+        name=req.name,
+        date_of_birth=req.date_of_birth,
+        time_of_birth=req.time_of_birth,
+        place_of_birth=req.place_of_birth,
+        latitude=req.latitude,
+        longitude=req.longitude,
+        timezone=req.timezone,
+        house_system=req.house_system,
+        user_id=current_user.id if current_user else None,
+    )
+    db.add(db_profile)
+    db.commit()
+    db.refresh(db_profile)
+
+    return _db_profile_to_dict(db_profile)
 
 
 @api.post("/daily-reading", tags=["Readings"])
@@ -428,6 +503,903 @@ def compatibility(req: CompatibilityRequest):
     a = _profile_to_dict(req.person_a)
     b = _profile_to_dict(req.person_b)
     return build_compatibility(a, b)
+
+
+# ========== YEAR-AHEAD FORECAST ==========
+
+
+class YearAheadRequest(BaseModel):
+    """Request model for year-ahead forecast."""
+    profile: ProfilePayload
+    year: Optional[int] = Field(None, description="Year for forecast (defaults to current year)")
+
+
+@api.post("/year-ahead", tags=["Readings"])
+def year_ahead_forecast(req: YearAheadRequest):
+    """
+    Get comprehensive year-ahead forecast including:
+    - Personal Year number and themes
+    - Solar Return date
+    - Monthly breakdowns
+    - Eclipse impacts
+    - Major planetary ingresses
+    """
+    profile = _profile_to_dict(req.profile)
+    natal = build_natal_chart(profile)
+    year = req.year or datetime.now().year
+    
+    return build_year_ahead_forecast(profile, natal, year)
+
+
+# ========== MOON PHASES & RITUALS ==========
+
+
+@api.get("/moon-phase", tags=["Moon"])
+def current_moon_phase():
+    """
+    Get current Moon phase information.
+    Returns phase name, illumination, days until next phase.
+    """
+    return calculate_moon_phase()
+
+
+@api.get("/moon-upcoming", tags=["Moon"])
+def upcoming_moon_events(days: int = Query(30, ge=1, le=90, description="Days to look ahead")):
+    """
+    Get upcoming New and Full Moons.
+    """
+    return {"events": get_upcoming_moon_events(days)}
+
+
+class MoonRitualRequest(BaseModel):
+    """Request model for personalized Moon ritual."""
+    profile: Optional[ProfilePayload] = None
+
+
+@api.post("/moon-ritual", tags=["Moon"])
+def moon_ritual(req: MoonRitualRequest = None):
+    """
+    Get personalized Moon phase ritual recommendations.
+    Includes current phase, ritual activities, crystals, colors, and affirmations.
+    If profile provided, adds personalized natal and numerology insights.
+    """
+    natal_chart = None
+    numerology = None
+    
+    if req and req.profile:
+        profile = _profile_to_dict(req.profile)
+        natal_chart = build_natal_chart(profile)
+        numerology = build_numerology(
+            profile["name"],
+            profile["date_of_birth"],
+            datetime.now(timezone.utc),
+        )
+    
+    return get_moon_phase_summary(natal_chart, numerology)
+
+
+# ========== TIMING ADVISOR ==========
+
+
+class TimingAdviceRequest(BaseModel):
+    """Request model for timing advice."""
+    activity: str = Field(..., description="Activity type: business_meeting, travel, romance_date, signing_contracts, job_interview, starting_project, creative_work, medical_procedure, financial_decision, meditation_spiritual")
+    profile: Optional[ProfilePayload] = None
+    latitude: float = Field(40.7128, ge=-90, le=90, description="Location latitude for planetary hours")
+    longitude: float = Field(-74.006, ge=-180, le=180, description="Location longitude for planetary hours")
+    tz: str = Field("UTC", description="Timezone for calculations")
+
+
+@api.post("/timing/advice", tags=["Timing"])
+def get_timing_advice_endpoint(req: TimingAdviceRequest):
+    """
+    Get timing advice for an activity, including today's score and best upcoming days.
+    Analyzes planetary hours, Moon phase, Moon sign, VOC Moon, and retrogrades.
+    Returns score (0-100), rating, and detailed analysis with best hours.
+    """
+    if req.activity not in ACTIVITY_PROFILES:
+        valid_activities = list(ACTIVITY_PROFILES.keys())
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Invalid activity. Valid options: {', '.join(valid_activities)}"
+        )
+    
+    # Build transit chart for current time
+    from datetime import datetime as dt
+    
+    personal_day = None
+    transit_chart = {}
+    
+    if req.profile:
+        profile_dict = _profile_to_dict(req.profile)
+        natal_chart = build_natal_chart(profile_dict)
+        transit_chart = natal_chart  # Use natal as proxy (timing functions use planet positions)
+        
+        # Get personal day from numerology
+        numerology = build_numerology(
+            profile_dict["name"],
+            profile_dict["date_of_birth"],
+            datetime.now(timezone.utc),
+        )
+        personal_day = numerology.get("personal_day")
+    else:
+        # Build a minimal transit chart for current time
+        transit_chart = {
+            "planets": [],  # Will be populated by detect_retrogrades if needed
+        }
+    
+    return get_timing_advice(
+        activity=req.activity,
+        transit_chart=transit_chart,
+        latitude=req.latitude,
+        longitude=req.longitude,
+        timezone=req.tz,
+        personal_day=personal_day,
+    )
+
+
+class BestDaysRequest(BaseModel):
+    """Request model for finding best days."""
+    activity: str = Field(..., description="Activity type")
+    days_ahead: int = Field(7, ge=1, le=14, description="Days to look ahead")
+    profile: Optional[ProfilePayload] = None
+    latitude: float = Field(40.7128, ge=-90, le=90)
+    longitude: float = Field(-74.006, ge=-180, le=180)
+    tz: str = Field("UTC", description="Timezone")
+
+
+@api.post("/timing/best-days", tags=["Timing"])
+def find_best_days_endpoint(req: BestDaysRequest):
+    """
+    Find the best days for an activity in the upcoming period.
+    Returns sorted list of days with their scores.
+    """
+    if req.activity not in ACTIVITY_PROFILES:
+        valid_activities = list(ACTIVITY_PROFILES.keys())
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Invalid activity. Valid options: {', '.join(valid_activities)}"
+        )
+    
+    personal_year = None
+    transit_chart = {}
+    
+    if req.profile:
+        profile_dict = _profile_to_dict(req.profile)
+        transit_chart = build_natal_chart(profile_dict)
+        
+        numerology = build_numerology(
+            profile_dict["name"],
+            profile_dict["date_of_birth"],
+            datetime.now(timezone.utc),
+        )
+        personal_year = numerology.get("personal_year")
+    else:
+        transit_chart = {"planets": []}
+    
+    return {
+        "activity": req.activity,
+        "activity_name": ACTIVITY_PROFILES[req.activity]["name"],
+        "days_ahead": req.days_ahead,
+        "best_days": find_best_days(
+            activity=req.activity,
+            transit_chart=transit_chart,
+            latitude=req.latitude,
+            longitude=req.longitude,
+            timezone=req.tz,
+            days_ahead=req.days_ahead,
+            personal_day_cycle=personal_year,
+        )
+    }
+
+
+@api.get("/timing/activities", tags=["Timing"])
+def list_timing_activities():
+    """
+    Get list of supported activities with their descriptions and favorable conditions.
+    """
+    return {
+        "activities": get_available_activities()
+    }
+
+
+# =============================================================================
+# Journal & Accountability Endpoints
+# =============================================================================
+
+class JournalEntryRequest(BaseModel):
+    """Request to add or update a journal entry for a reading."""
+    reading_id: int
+    entry: str = Field(..., min_length=1, max_length=5000)
+
+
+class OutcomeRequest(BaseModel):
+    """Request to record prediction outcome."""
+    reading_id: int
+    outcome: str = Field(..., pattern="^(yes|no|partial|neutral)$")
+    notes: Optional[str] = None
+
+
+class AccountabilityReportRequest(BaseModel):
+    """Request for accountability report."""
+    profile_id: int
+    period: str = Field(default="month", pattern="^(week|month|year)$")
+
+
+@api.post("/journal/entry", tags=["Journal"])
+def add_journal_entry_endpoint(
+    req: JournalEntryRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Add or update a journal entry for a reading.
+    Requires authentication.
+    """
+    # Get the reading
+    reading = db.query(DBReading).filter(DBReading.id == req.reading_id).first()
+    if not reading:
+        raise HTTPException(status_code=404, detail="Reading not found")
+    
+    # Verify user owns this reading via profile
+    profile = db.query(DBProfile).filter(DBProfile.id == reading.profile_id).first()
+    if not profile or profile.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to edit this reading")
+    
+    # Update the journal entry
+    reading.journal = req.entry
+    db.commit()
+    
+    entry_data = add_journal_entry(req.reading_id, req.entry)
+    
+    return {
+        "success": True,
+        "message": "Journal entry saved",
+        "entry": entry_data
+    }
+
+
+@api.post("/journal/outcome", tags=["Journal"])
+def record_outcome_endpoint(
+    req: OutcomeRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Record whether a prediction came true.
+    Requires authentication.
+    """
+    # Get the reading
+    reading = db.query(DBReading).filter(DBReading.id == req.reading_id).first()
+    if not reading:
+        raise HTTPException(status_code=404, detail="Reading not found")
+    
+    # Verify user owns this reading
+    profile = db.query(DBProfile).filter(DBProfile.id == reading.profile_id).first()
+    if not profile or profile.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to edit this reading")
+    
+    # Update feedback
+    reading.feedback = req.outcome
+    db.commit()
+    
+    outcome_data = record_outcome(req.reading_id, req.outcome, notes=req.notes or "")
+    
+    return {
+        "success": True,
+        "message": "Outcome recorded",
+        "outcome": outcome_data
+    }
+
+
+@api.get("/journal/readings/{profile_id}", tags=["Journal"])
+def get_journal_readings(
+    profile_id: int,
+    limit: int = Query(default=20, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Get readings for journaling view with feedback and journal status.
+    Requires authentication.
+    """
+    # Verify profile belongs to user
+    profile = db.query(DBProfile).filter(DBProfile.id == profile_id).first()
+    if not profile or profile.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to view this profile")
+    
+    # Get readings with pagination
+    readings = (
+        db.query(DBReading)
+        .filter(DBReading.profile_id == profile_id)
+        .order_by(DBReading.date.desc())
+        .offset(offset)
+        .limit(limit)
+        .all()
+    )
+    
+    total = db.query(DBReading).filter(DBReading.profile_id == profile_id).count()
+    
+    return {
+        "profile_id": profile_id,
+        "total": total,
+        "limit": limit,
+        "offset": offset,
+        "readings": [
+            format_reading_for_journal({
+                "id": r.id,
+                "scope": r.scope,
+                "date": r.date,
+                "content": r.content,
+                "feedback": r.feedback,
+                "journal": r.journal or ""
+            })
+            for r in readings
+        ]
+    }
+
+
+@api.get("/journal/reading/{reading_id}", tags=["Journal"])
+def get_single_reading_journal(
+    reading_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Get a single reading with full journal and content.
+    Requires authentication.
+    """
+    reading = db.query(DBReading).filter(DBReading.id == reading_id).first()
+    if not reading:
+        raise HTTPException(status_code=404, detail="Reading not found")
+    
+    # Verify user owns this reading
+    profile = db.query(DBProfile).filter(DBProfile.id == reading.profile_id).first()
+    if not profile or profile.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to view this reading")
+    
+    import json
+    content = reading.content
+    if isinstance(content, str):
+        try:
+            content = json.loads(content)
+        except json.JSONDecodeError:
+            content = {"raw": content}
+    
+    return {
+        "id": reading.id,
+        "scope": reading.scope,
+        "date": reading.date,
+        "content": content,
+        "feedback": reading.feedback,
+        "journal": reading.journal or "",
+        "created_at": reading.created_at.isoformat() if reading.created_at else None
+    }
+
+
+@api.get("/journal/stats/{profile_id}", tags=["Journal"])
+def get_journal_stats(
+    profile_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Get accuracy statistics for a profile's readings.
+    Requires authentication.
+    """
+    # Verify profile belongs to user
+    profile = db.query(DBProfile).filter(DBProfile.id == profile_id).first()
+    if not profile or profile.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to view this profile")
+    
+    # Get all readings for stats
+    readings = db.query(DBReading).filter(DBReading.profile_id == profile_id).all()
+    
+    readings_data = [
+        {
+            "id": r.id,
+            "scope": r.scope,
+            "date": r.date,
+            "feedback": r.feedback,
+            "journal": r.journal or ""
+        }
+        for r in readings
+    ]
+    
+    stats = calculate_accuracy_stats(readings_data)
+    insights = get_reading_insights(readings_data)
+    
+    return {
+        "profile_id": profile_id,
+        "stats": stats,
+        "insights": insights
+    }
+
+
+@api.get("/journal/patterns/{profile_id}", tags=["Journal"])
+def get_reading_patterns(
+    profile_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Analyze prediction patterns over time.
+    Requires authentication.
+    """
+    # Verify profile belongs to user
+    profile = db.query(DBProfile).filter(DBProfile.id == profile_id).first()
+    if not profile or profile.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to view this profile")
+    
+    readings = db.query(DBReading).filter(DBReading.profile_id == profile_id).all()
+    
+    readings_data = [
+        {
+            "id": r.id,
+            "scope": r.scope,
+            "date": r.date,
+            "feedback": r.feedback
+        }
+        for r in readings
+    ]
+    
+    patterns = analyze_prediction_patterns(readings_data)
+    
+    return {
+        "profile_id": profile_id,
+        "patterns": patterns
+    }
+
+
+@api.post("/journal/report", tags=["Journal"])
+def get_accountability_report(
+    req: AccountabilityReportRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Generate comprehensive accountability report.
+    Requires authentication.
+    """
+    # Verify profile belongs to user
+    profile = db.query(DBProfile).filter(DBProfile.id == req.profile_id).first()
+    if not profile or profile.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to view this profile")
+    
+    # Calculate date range based on period
+    now = datetime.now(timezone.utc)
+    if req.period == "week":
+        start_date = now - timedelta(days=7)
+    elif req.period == "month":
+        start_date = now - timedelta(days=30)
+    else:  # year
+        start_date = now - timedelta(days=365)
+    
+    # Get readings in range
+    readings = (
+        db.query(DBReading)
+        .filter(
+            DBReading.profile_id == req.profile_id,
+            DBReading.date >= start_date.isoformat()
+        )
+        .all()
+    )
+    
+    readings_data = [
+        {
+            "id": r.id,
+            "scope": r.scope,
+            "date": r.date,
+            "feedback": r.feedback,
+            "journal": r.journal or "",
+            "created_at": r.created_at.isoformat() if r.created_at else None
+        }
+        for r in readings
+    ]
+    
+    report = create_accountability_report(readings_data, req.period)
+    
+    return {
+        "profile_id": req.profile_id,
+        "report": report
+    }
+
+
+@api.get("/journal/prompts", tags=["Journal"])
+def get_prompts(
+    scope: str = Query(default="daily", pattern="^(daily|weekly|monthly)$"),
+    themes: Optional[str] = Query(default=None, description="Comma-separated themes")
+):
+    """
+    Get journal prompts for reflection.
+    No authentication required.
+    """
+    theme_list = themes.split(",") if themes else None
+    prompts = get_journal_prompts(scope, theme_list)
+    
+    return {
+        "scope": scope,
+        "prompts": prompts
+    }
+
+
+# =============================================================================
+# Relationship Timeline Endpoints
+# =============================================================================
+
+class RelationshipTimelineRequest(BaseModel):
+    """Request for relationship timeline."""
+    sun_sign: str = Field(..., pattern="^(Aries|Taurus|Gemini|Cancer|Leo|Virgo|Libra|Scorpio|Sagittarius|Capricorn|Aquarius|Pisces)$")
+    partner_sign: Optional[str] = Field(default=None, pattern="^(Aries|Taurus|Gemini|Cancer|Leo|Virgo|Libra|Scorpio|Sagittarius|Capricorn|Aquarius|Pisces)$")
+    months_ahead: int = Field(default=6, ge=1, le=12)
+
+
+class RelationshipTimingRequest(BaseModel):
+    """Request for single day relationship timing analysis."""
+    sun_sign: str = Field(..., pattern="^(Aries|Taurus|Gemini|Cancer|Leo|Virgo|Libra|Scorpio|Sagittarius|Capricorn|Aquarius|Pisces)$")
+    partner_sign: Optional[str] = Field(default=None, pattern="^(Aries|Taurus|Gemini|Cancer|Leo|Virgo|Libra|Scorpio|Sagittarius|Capricorn|Aquarius|Pisces)$")
+    date: Optional[str] = Field(default=None, description="Date to analyze (YYYY-MM-DD)")
+
+
+@api.post("/relationship/timeline", tags=["Relationships"])
+def get_relationship_timeline(req: RelationshipTimelineRequest):
+    """
+    Get a comprehensive relationship timeline with key dates, events,
+    and best days for love and relationships.
+    """
+    timeline = build_relationship_timeline(
+        sun_sign=req.sun_sign,
+        partner_sign=req.partner_sign,
+        start_date=datetime.now(timezone.utc),
+        months_ahead=req.months_ahead
+    )
+    return timeline
+
+
+@api.post("/relationship/timing", tags=["Relationships"])
+def get_relationship_timing(req: RelationshipTimingRequest):
+    """
+    Analyze relationship timing for a specific date.
+    Returns Venus/Mars transits, retrograde status, and timing score.
+    """
+    if req.date:
+        try:
+            check_date = datetime.fromisoformat(req.date)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD")
+    else:
+        check_date = datetime.now(timezone.utc)
+    
+    analysis = analyze_relationship_timing(check_date, req.sun_sign, req.partner_sign)
+    return analysis
+
+
+@api.get("/relationship/best-days/{sun_sign}", tags=["Relationships"])
+def get_best_days_for_love(
+    sun_sign: str,
+    days_ahead: int = Query(default=30, ge=7, le=90)
+):
+    """
+    Find the best days for relationship activities in the coming period.
+    Returns days sorted by relationship score.
+    """
+    valid_signs = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo",
+                   "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"]
+    if sun_sign not in valid_signs:
+        raise HTTPException(status_code=400, detail=f"Invalid sign. Must be one of: {valid_signs}")
+    
+    best_days = get_best_relationship_days(
+        start_date=datetime.now(timezone.utc),
+        sun_sign=sun_sign,
+        days_ahead=days_ahead
+    )
+    
+    return {
+        "sun_sign": sun_sign,
+        "days_ahead": days_ahead,
+        "best_days": best_days[:10],  # Top 10
+        "top_day": best_days[0] if best_days else None
+    }
+
+
+@api.get("/relationship/events", tags=["Relationships"])
+def get_relationship_events(
+    days_ahead: int = Query(default=90, ge=30, le=365),
+    sun_sign: Optional[str] = Query(default=None, description="Sun sign for personalized events")
+):
+    """
+    Get upcoming relationship-focused astrological events.
+    Includes Venus/Mars transits, retrogrades, and eclipses.
+    """
+    events = get_upcoming_relationship_dates(
+        start_date=datetime.now(timezone.utc),
+        days_ahead=days_ahead,
+        sun_sign=sun_sign
+    )
+    
+    return {
+        "days_ahead": days_ahead,
+        "sun_sign": sun_sign,
+        "total_events": len(events),
+        "events": events
+    }
+
+
+@api.get("/relationship/venus-status", tags=["Relationships"])
+def get_venus_status():
+    """
+    Get current Venus transit and retrograde status.
+    Essential for relationship timing.
+    """
+    now = datetime.now(timezone.utc)
+    venus = get_venus_transit(now)
+    mars = get_mars_transit(now)
+    retrograde = is_venus_retrograde(now)
+    
+    return {
+        "date": now.strftime("%Y-%m-%d"),
+        "venus": venus,
+        "mars": mars,
+        "venus_retrograde": retrograde
+    }
+
+
+@api.get("/relationship/phases", tags=["Relationships"])
+def get_phases():
+    """
+    Get information about relationship phases and their astrological houses.
+    """
+    return get_relationship_phases()
+
+
+# =============================================================================
+# Habit Tracker with Lunar Cycles Endpoints
+# =============================================================================
+
+class HabitCreateRequest(BaseModel):
+    """Request to create a new habit."""
+    name: str = Field(..., min_length=1, max_length=100)
+    category: str = Field(..., description="Habit category key")
+    frequency: str = Field(default="daily", pattern="^(daily|weekly|lunar_cycle)$")
+    target_count: int = Field(default=1, ge=1, le=10)
+    description: Optional[str] = Field(default="", max_length=500)
+
+
+class HabitLogRequest(BaseModel):
+    """Request to log a habit completion."""
+    habit_id: int
+    notes: Optional[str] = Field(default="", max_length=500)
+
+
+class HabitAnalyticsRequest(BaseModel):
+    """Request for habit analytics."""
+    habit_id: int
+    period_days: int = Field(default=30, ge=7, le=365)
+
+
+class HabitForecastRequest(BaseModel):
+    """Request for today's habit forecast."""
+    habits: List[Dict[str, Any]]
+    completions_today: Optional[List[int]] = None
+    
+    model_config = {"extra": "allow"}
+
+
+class StreakRequest(BaseModel):
+    """Request for streak calculation."""
+    completions: List[Dict[str, Any]]
+    
+    model_config = {"extra": "allow"}
+
+
+# Rebuild models to resolve forward references from __future__ annotations
+HabitForecastRequest.model_rebuild()
+StreakRequest.model_rebuild()
+
+
+@api.get("/habits/categories", tags=["Habits"])
+def get_habit_categories():
+    """
+    Get all available habit categories with their descriptions
+    and lunar phase recommendations.
+    """
+    categories = []
+    for key, cat in HABIT_CATEGORIES.items():
+        categories.append({
+            "id": key,
+            "name": cat["name"],
+            "emoji": cat["emoji"],
+            "description": cat["description"],
+            "best_phases": cat["best_phases"],
+            "avoid_phases": cat["avoid_phases"]
+        })
+    return {"categories": categories}
+
+
+@api.get("/habits/lunar-guidance", tags=["Habits"])
+def get_lunar_guidance():
+    """
+    Get habit guidance for all moon phases.
+    """
+    phases = []
+    for key, phase in LUNAR_HABIT_GUIDANCE.items():
+        phases.append({
+            "id": key,
+            "name": phase["phase_name"],
+            "emoji": phase["emoji"],
+            "theme": phase["theme"],
+            "best_for": phase["best_for"],
+            "avoid": phase["avoid"],
+            "energy": phase["energy"],
+            "ideal_habits": phase["ideal_habits"]
+        })
+    return {"phases": phases}
+
+
+@api.get("/habits/lunar-guidance/{phase}", tags=["Habits"])
+def get_phase_guidance(phase: str):
+    """
+    Get habit guidance for a specific moon phase.
+    """
+    valid_phases = list(LUNAR_HABIT_GUIDANCE.keys())
+    if phase not in valid_phases:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid phase. Must be one of: {valid_phases}"
+        )
+    
+    phase_info = LUNAR_HABIT_GUIDANCE[phase]
+    return {
+        "phase": phase,
+        "phase_name": phase_info["phase_name"],
+        "emoji": phase_info["emoji"],
+        "theme": phase_info["theme"],
+        "energy": phase_info["energy"],
+        "best_for": phase_info["best_for"],
+        "avoid": phase_info["avoid"],
+        "ideal_habits": phase_info["ideal_habits"],
+        "power_modifier": phase_info["power_score_modifier"]
+    }
+
+
+@api.post("/habits/alignment", tags=["Habits"])
+def check_habit_alignment(
+    category: str = Query(..., description="Habit category key"),
+    moon_phase: str = Query(..., description="Moon phase key")
+):
+    """
+    Check how well a habit category aligns with a moon phase.
+    Returns alignment score and guidance.
+    """
+    if category not in HABIT_CATEGORIES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid category. Must be one of: {list(HABIT_CATEGORIES.keys())}"
+        )
+    if moon_phase not in LUNAR_HABIT_GUIDANCE:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid phase. Must be one of: {list(LUNAR_HABIT_GUIDANCE.keys())}"
+        )
+    
+    return calculate_lunar_alignment_score(category, moon_phase)
+
+
+@api.post("/habits/recommendations", tags=["Habits"])
+def get_recommendations(
+    moon_phase: str = Query(..., description="Current moon phase key"),
+    existing_habits: Optional[List[Dict[str, Any]]] = None
+):
+    """
+    Get habit recommendations based on the current moon phase.
+    Optionally provide existing habits for personalized suggestions.
+    """
+    if moon_phase not in LUNAR_HABIT_GUIDANCE:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid phase. Must be one of: {list(LUNAR_HABIT_GUIDANCE.keys())}"
+        )
+    
+    return get_lunar_habit_recommendations(moon_phase, existing_habits)
+
+
+@api.post("/habits/create", tags=["Habits"])
+def create_new_habit(req: HabitCreateRequest):
+    """
+    Create a new habit definition.
+    Returns the habit object (not persisted - for session use).
+    """
+    if req.category not in HABIT_CATEGORIES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid category. Must be one of: {list(HABIT_CATEGORIES.keys())}"
+        )
+    
+    habit = create_habit(
+        name=req.name,
+        category=req.category,
+        frequency=req.frequency,
+        target_count=req.target_count,
+        description=req.description
+    )
+    
+    return {"success": True, "habit": habit}
+
+
+@api.post("/habits/log", tags=["Habits"])
+def log_completion(
+    req: HabitLogRequest,
+    moon_phase: Optional[str] = Query(default=None, description="Current moon phase")
+):
+    """
+    Log a habit completion.
+    Returns the completion record.
+    """
+    completion = log_habit_completion(
+        habit_id=req.habit_id,
+        moon_phase=moon_phase,
+        notes=req.notes
+    )
+    
+    return {"success": True, "completion": completion}
+
+
+@api.post("/habits/streak", tags=["Habits"])
+def calculate_streak(
+    req: StreakRequest,
+    frequency: str = Query(default="daily", pattern="^(daily|weekly|lunar_cycle)$")
+):
+    """
+    Calculate habit streak from a list of completions.
+    """
+    return get_habit_streak(req.completions, frequency)
+
+
+@api.post("/habits/analytics", tags=["Habits"])
+def get_analytics(
+    habit: Dict[str, Any],
+    completions: List[Dict[str, Any]],
+    period_days: int = Query(default=30, ge=7, le=365)
+):
+    """
+    Get detailed analytics for a habit over a period.
+    """
+    return calculate_habit_analytics(habit, completions, period_days)
+
+
+@api.post("/habits/today", tags=["Habits"])
+def get_today_forecast(
+    req: HabitForecastRequest,
+    moon_phase: str = Query(..., description="Current moon phase key")
+):
+    """
+    Get today's habit forecast with lunar alignment for each habit.
+    """
+    if moon_phase not in LUNAR_HABIT_GUIDANCE:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid phase. Must be one of: {list(LUNAR_HABIT_GUIDANCE.keys())}"
+        )
+    
+    return get_today_habit_forecast(
+        habits=req.habits,
+        moon_phase=moon_phase,
+        completions_today=req.completions_today
+    )
+
+
+@api.post("/habits/lunar-report", tags=["Habits"])
+def get_lunar_report(
+    habits: List[Dict[str, Any]],
+    completions: List[Dict[str, Any]],
+    cycle_days: int = Query(default=29, ge=14, le=45)
+):
+    """
+    Generate a lunar cycle report for habits.
+    Analyzes performance over a complete moon cycle.
+    """
+    return get_lunar_cycle_report(habits, completions, cycle_days)
 
 
 class NumerologyRequest(BaseModel):
@@ -889,11 +1861,50 @@ def search_learning(req: SearchLearningRequest):
     return {"results": results}
 
 
+@api.get("/debug/ephemeris", tags=["System"])
+def debug_ephemeris():
+    """Debug endpoint to check ephemeris files."""
+    import swisseph as swe
+    ephe_path = EPHEMERIS_PATH
+    files = []
+    exists = os.path.isdir(ephe_path)
+    if exists:
+        files = os.listdir(ephe_path)
+    # Test swisseph
+    swe.set_ephe_path(ephe_path)
+    try:
+        jd = swe.julday(1990, 6, 15, 12.0)
+        result, flags = swe.calc_ut(jd, swe.SUN)
+        sun_works = True
+        sun_lon = result[0]
+    except Exception as e:
+        sun_works = False
+        sun_lon = str(e)
+    # Test asteroid (Chiron = 15)
+    try:
+        result, flags = swe.calc_ut(jd, swe.CHIRON)
+        chiron_works = True
+        chiron_lon = result[0]
+    except Exception as e:
+        chiron_works = False
+        chiron_lon = str(e)
+    return {
+        "ephemeris_path": ephe_path,
+        "path_exists": exists,
+        "files": files,
+        "sun_works": sun_works,
+        "sun_longitude": sun_lon,
+        "chiron_works": chiron_works,
+        "chiron_result": chiron_lon,
+    }
+
+
 @api.get("/health", tags=["System"])
 def health():
     """Health check endpoint with system status."""
-    redis_status = "disconnected"
-    if os.getenv("REDIS_URL"):
+    redis_url = os.getenv("REDIS_URL")
+    redis_status = "disabled" if not redis_url else "disconnected"
+    if redis_url:
         try:
             from .engine.fusion import _get_redis_client
 

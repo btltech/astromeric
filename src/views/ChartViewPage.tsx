@@ -21,14 +21,13 @@ export function ChartViewPage() {
     return (
       <motion.div className="card" {...fadeIn}>
         <h2>🔭 Birth Chart</h2>
-        <p style={{ color: '#aaa', textAlign: 'center' }}>
+        <p className="empty-state">
           Select or create a profile in the Reading tab to generate a personalized chart.
         </p>
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className="btn-primary"
-          style={{ marginTop: '1.5rem' }}
+          className="btn-primary mt-3"
           onClick={() => navigate('/')}
         >
           Create or Select Profile

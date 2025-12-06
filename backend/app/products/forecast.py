@@ -11,6 +11,7 @@ from typing import Dict, List, Optional
 from ..chart_service import build_natal_chart, build_transit_chart
 from ..numerology_engine import build_numerology
 from ..rule_engine import RuleEngine
+from ..engine.guidance import get_daily_guidance
 
 
 def build_forecast(profile: Dict, scope: str = "daily") -> Dict:
@@ -42,35 +43,49 @@ def build_forecast(profile: Dict, scope: str = "daily") -> Dict:
         transit_filter,
         synastry_priority,
     )
+    
+    # Generate daily guidance (Avoid/Embrace) with location for power hours
+    guidance = get_daily_guidance(
+        natal, 
+        transit, 
+        numerology, 
+        scope,
+        latitude=profile.get("latitude"),
+        longitude=profile.get("longitude"),
+        timezone=profile.get("timezone", "UTC"),
+    )
 
     return {
         "scope": scope,
         "date": anchor.date().isoformat(),
-        "sections": _sections(result, smoothed, numerology),
+        "sections": _sections(result, smoothed, numerology, scope),
         "theme": _top_theme(result),
         "numerology": numerology,
         "charts": {"natal": natal, "transit": transit},
         "ratings": _ratings(smoothed, numerology),
+        "guidance": guidance,
     }
 
 
-def _sections(result: Dict, smoothed_scores: Dict, numerology: Dict) -> list:
+def _sections(result: Dict, smoothed_scores: Dict, numerology: Dict, scope: str = "daily") -> list:
     blocks = result["selected_blocks"]
     sections = []
+    used_sources: set = set()  # Track sources to avoid repetition
+    
     sections.append(
-        _topic_section("Overview", None, blocks, smoothed_scores, numerology)
+        _topic_section("Overview", None, blocks, smoothed_scores, numerology, used_sources, scope)
     )
     sections.append(
         _topic_section(
-            "Love & Relationships", "love", blocks, smoothed_scores, numerology
+            "Love & Relationships", "love", blocks, smoothed_scores, numerology, used_sources, scope
         )
     )
     sections.append(
-        _topic_section("Career & Money", "career", blocks, smoothed_scores, numerology)
+        _topic_section("Career & Money", "career", blocks, smoothed_scores, numerology, used_sources, scope)
     )
     sections.append(
         _topic_section(
-            "Emotional & Spiritual", "emotional", blocks, smoothed_scores, numerology
+            "Emotional & Spiritual", "emotional", blocks, smoothed_scores, numerology, used_sources, scope
         )
     )
     return sections
@@ -188,23 +203,108 @@ def _topic_section(
     blocks: List[Dict],
     scores: Dict,
     numerology: Dict,
+    used_sources: Optional[set] = None,
+    scope: str = "daily",
 ) -> Dict:
+    """Build a section with highlights relevant to the topic, avoiding repetition."""
+    if used_sources is None:
+        used_sources = set()
+    
+    # Scope-specific source preferences
+    # Daily: emphasize transits and fast-moving indicators
+    # Weekly: emphasize Mars, Venus transits and medium-term themes
+    # Monthly: emphasize Jupiter, Saturn and structural themes
+    scope_source_boost = {
+        "daily": ["Transit Moon", "Transit Mercury", "Transit Sun", "personal day"],
+        "weekly": ["Transit Mars", "Transit Venus", "Transit Jupiter", "personal month"],
+        "monthly": ["Transit Jupiter", "Transit Saturn", "Transit Pluto", "personal year", "Life Path"],
+    }
+    preferred_sources = scope_source_boost.get(scope, [])
+    
+    def source_boost(b):
+        source = b.get("source", "")
+        for pref in preferred_sources:
+            if pref.lower() in source.lower():
+                return 0.5
+        return 0.0
+    
     if topic_key:
+        # Sort by how relevant blocks are to THIS specific topic
+        def topic_relevance(b):
+            weights = b.get("weights", {})
+            tags = b.get("tags", [])
+            # Primary: direct weight for this topic
+            direct_weight = weights.get(topic_key, 0)
+            # Secondary: tag match
+            tag_match = 0.5 if topic_key in tags else 0
+            # Penalty for blocks that are more relevant to OTHER topics
+            other_weight = sum(v for k, v in weights.items() if k != topic_key)
+            # Add scope-specific source boost
+            boost = source_boost(b)
+            # Include block weight from rule engine
+            block_weight = b.get("weight", 1.0)
+            return (direct_weight + tag_match - (other_weight * 0.3) + boost) * block_weight
+        
+        # Filter to blocks that have SOME relevance to this topic
         relevant = [
-            b
-            for b in blocks
+            b for b in blocks
             if topic_key in b.get("weights", {}) or topic_key in b.get("tags", [])
         ]
+        # Sort by topic-specific relevance
+        relevant = sorted(relevant, key=topic_relevance, reverse=True)
     else:
-        relevant = blocks
-    highlights = [b["source"] + ": " + b["text"] for b in relevant[:4]]
+        # Overview: prefer blocks with high general weight, avoid topic-specific ones
+        def overview_relevance(b):
+            weights = b.get("weights", {})
+            general = weights.get("general", 0)
+            # Bonus for blocks that span multiple topics
+            breadth = len([v for v in weights.values() if v > 0.2])
+            # Add scope-specific source boost
+            boost = source_boost(b)
+            # Include block weight from rule engine
+            block_weight = b.get("weight", 1.0)
+            return (general + (breadth * 0.1) + boost) * block_weight
+        
+        relevant = sorted(blocks, key=overview_relevance, reverse=True)
+    
+    # Select highlights, avoiding already-used sources
+    highlights = []
+    for b in relevant:
+        source = b.get("source", "")
+        # Skip if this exact source was already used in a previous section
+        if source in used_sources:
+            continue
+        highlights.append(f"{source}: {b['text']}")
+        used_sources.add(source)
+        if len(highlights) >= 4:
+            break
+    
+    # If we couldn't find enough unique blocks, allow some overlap
+    if len(highlights) < 2:
+        for b in relevant[:4]:
+            text = f"{b.get('source', '')}: {b['text']}"
+            if text not in highlights:
+                highlights.append(text)
+            if len(highlights) >= 4:
+                break
+    
     numerology_note = _numerology_hook(topic_key, numerology)
     if numerology_note:
         highlights.append(numerology_note)
+    
+    # Provide section-specific topic scores so the UI can render meaningful ratings.
+    if topic_key:
+        section_scores = {
+            topic_key: scores.get(topic_key, 0.0),
+            "general": scores.get("general", 0.0),
+        }
+    else:
+        section_scores = scores
+
     return {
         "title": title,
         "highlights": highlights or ["Quiet sky; stay present."],
-        "topic_scores": scores,
+        "topic_scores": section_scores,
     }
 
 

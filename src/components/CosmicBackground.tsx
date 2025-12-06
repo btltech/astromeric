@@ -156,6 +156,12 @@ function ZodiacRing({
 }
 
 export function CosmicBackground({ element }: { element?: string }) {
+  const reduceMotion =
+    typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reduceMotion) {
+    return <div className="cosmic-bg static" aria-hidden="true" />;
+  }
+
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
   const starCount = isMobile ? 2000 : 6000;
   const starFactor = isMobile ? 3 : 4;

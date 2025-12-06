@@ -32,7 +32,7 @@ export function NumerologyView({ profile }: Props) {
           {profile.challenges?.length ? renderChallenges(profile.challenges) : null}
         </div>
       ) : (
-        <p style={{ textAlign: 'center', color: '#888' }}>Loading numerology profile...</p>
+        <p className="loading-text">Loading numerology profile...</p>
       )}
     </div>
   );

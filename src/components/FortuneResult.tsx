@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import type { PredictionData } from '../types';
 import { SectionGrid } from './SectionGrid';
+import { DailyGuidance } from './DailyGuidance';
 import { fetchAiExplanation } from '../api/client';
 import { downloadReadingPdf } from '../utils/pdfExport';
 
@@ -63,13 +64,11 @@ export function FortuneResult({ data, onReset }: Props) {
         {data.element === 'Air' && '🌬️'}
         {data.element === 'Earth' && '🌱'}
       </div>
-      <h1 style={{ textAlign: 'center', marginBottom: '0.5rem' }}>
+      <h1 className="text-center mb-1">
         {data.scope.charAt(0).toUpperCase() + data.scope.slice(1)} Reading
       </h1>
       {sunSign && data.numerology?.core_numbers?.life_path && (
-        <h3
-          style={{ textAlign: 'center', color: '#88c0d0', fontWeight: 300, marginBottom: '2rem' }}
-        >
+        <h3 className="reading-subtitle">
           {sunSign} • Life Path {data.numerology.core_numbers.life_path.number}
         </h3>
       )}
@@ -79,28 +78,36 @@ export function FortuneResult({ data, onReset }: Props) {
         </div>
       )}
       {aiInsight && (
-        <div className="tldr-box" style={{ background: 'rgba(158, 173, 255, 0.12)' }}>
+        <div className="tldr-box ai-insight">
           {aiInsight}
         </div>
       )}
+      
+      {data.guidance && <DailyGuidance guidance={data.guidance} />}
+      
       {data.sections && data.sections.length > 0 && <SectionGrid sections={data.sections} />}
-      <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: '1.5rem', flexWrap: 'wrap' }}>
+      <div className="action-buttons">
         <button
           onClick={handleAiExplain}
-          className="btn-secondary"
+          className="btn-secondary btn-wide"
           disabled={aiLoading}
-          style={{ minWidth: 180 }}
+          aria-label="Explain this reading with AI"
+          aria-busy={aiLoading}
         >
           {aiLoading ? 'Thinking…' : '✨ Explain with AI'}
         </button>
         <button
           onClick={() => downloadReadingPdf(data)}
-          className="btn-secondary"
-          style={{ minWidth: 180 }}
+          className="btn-secondary btn-wide"
+          aria-label="Download reading as PDF"
         >
           📄 Download PDF
         </button>
-        <button onClick={onReset} className="btn-secondary">
+        <button 
+          onClick={onReset} 
+          className="btn-secondary"
+          aria-label="Go back to profiles"
+        >
           Back to Profiles
         </button>
       </div>

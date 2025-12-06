@@ -3,6 +3,8 @@ import { motion } from 'framer-motion';
 import { useCompatibility, useProfiles } from '../hooks';
 import { useStore } from '../store/useStore';
 import { CompatibilityCard } from '../components/CompatibilityCard';
+import { CardSkeleton } from '../components/Skeleton';
+import { toast } from '../components/Toast';
 import type { SavedProfile } from '../types';
 
 const fadeIn = {
@@ -38,13 +40,18 @@ export function CompatibilityView() {
       house_system: null,
     };
 
-    await fetchCompatibilityFromProfiles(selectedProfile, partnerProfile);
+    try {
+      await fetchCompatibilityFromProfiles(selectedProfile, partnerProfile);
+      toast.success('Compatibility analysis complete 💕');
+    } catch {
+      toast.error('Failed to calculate compatibility');
+    }
   };
 
   if (!selectedProfile) {
     return (
       <motion.div className="card" {...fadeIn}>
-        <p style={{ textAlign: 'center', color: '#888' }}>
+        <p className="empty-state">
           Please enter your birth details first from the Reading tab.
         </p>
       </motion.div>
@@ -56,11 +63,11 @@ export function CompatibilityView() {
   return (
     <motion.div className="card" {...fadeIn}>
       <h2>💕 Compatibility Check</h2>
-      <p style={{ textAlign: 'center', marginBottom: '1rem', color: '#aaa' }}>
+      <p className="section-subtitle">
         Compare your cosmic alignment with someone special
       </p>
       
-      <div style={{ marginBottom: '1rem', padding: '0.75rem', background: 'rgba(123, 97, 255, 0.1)', borderRadius: '8px' }}>
+      <div className="your-profile-box">
         <strong>Your Profile:</strong> {selectedProfile.name} ({selectedProfile.date_of_birth})
       </div>
 
@@ -117,6 +124,8 @@ export function CompatibilityView() {
       >
         {loading ? 'Calculating...' : 'Calculate Compatibility'}
       </motion.button>
+
+      {loading && !compatibilityResult && <CardSkeleton />}
 
       {compatibilityResult && (
         <motion.div

@@ -24,7 +24,7 @@ export function CompatibilityView({
   return (
     <div className="card">
       <h2>💕 Compatibility Check</h2>
-      <p style={{ textAlign: 'center', marginBottom: '1rem', color: '#aaa' }}>
+      <p className="section-subtitle">
         Compare your cosmic alignment with another profile
       </p>
       <div className="form-group">

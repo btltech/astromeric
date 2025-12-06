@@ -63,18 +63,19 @@ class RuleEngine:
         topic_scores: Dict[str, float] = {}
 
         # Natal factors
-        blocks += self._planet_sign_blocks(chart)
+        blocks += self._planet_sign_blocks(chart, query_type)
         blocks += self._planet_house_blocks(chart)
         blocks += self._aspect_blocks(chart)
 
-        # Transit to natal for daily/weekly
-        if query_type in ["daily_forecast", "weekly_forecast"] and comparison_chart:
+        # Transit to natal for daily/weekly/monthly forecasts
+        if query_type in ["daily_forecast", "weekly_forecast", "monthly_forecast"] and comparison_chart:
             blocks += self._cross_aspect_blocks(
                 comparison_chart,
                 chart,
                 origin="transit",
                 planet_filter=transit_planet_filter,
                 priority_pairs=synastry_priority,
+                scope=query_type,  # Pass scope for weighting
             )
 
         # Compatibility synastry
@@ -105,13 +106,27 @@ class RuleEngine:
             "top_themes": top_themes,
         }
 
-    def _planet_sign_blocks(self, chart: Dict) -> List[Dict]:
+    def _planet_sign_blocks(self, chart: Dict, query_type: str = "") -> List[Dict]:
         blocks = []
+        # Scope-specific planet emphasis
+        # Daily: fast planets matter more (Moon, Mercury, Sun)
+        # Weekly: medium planets (Venus, Mars) 
+        # Monthly: slow planets (Jupiter, Saturn, outer)
+        scope_weights = {
+            "daily_forecast": {"Moon": 1.5, "Mercury": 1.3, "Sun": 1.2, "Venus": 1.0, "Mars": 0.9},
+            "weekly_forecast": {"Mars": 1.4, "Venus": 1.3, "Sun": 1.1, "Mercury": 1.0, "Moon": 0.8},
+            "monthly_forecast": {"Jupiter": 1.5, "Saturn": 1.4, "Pluto": 1.3, "Neptune": 1.2, "Uranus": 1.2, "Mars": 1.0},
+        }
+        weights = scope_weights.get(query_type, {})
+        
         for p in chart["planets"]:
             meaning = PLANET_SIGN_MEANINGS.get(p["name"], {}).get(p["sign"])
             if not meaning:
                 continue
             weight = _angular_boost(p.get("house"))
+            # Apply scope-specific planet weighting
+            planet_emphasis = weights.get(p["name"], 1.0)
+            weight *= planet_emphasis
             # Generate fresh, readable text instead of static template
             fresh_text = get_planet_sign_text(p["name"], p["sign"])
             blocks.append(
@@ -171,8 +186,17 @@ class RuleEngine:
         origin: str,
         planet_filter: Optional[List[str]] = None,
         priority_pairs: Optional[List[str]] = None,
+        scope: str = "",
     ) -> List[Dict]:
         blocks = []
+        # Scope-specific transit planet emphasis
+        transit_weights = {
+            "daily_forecast": {"Moon": 1.8, "Mercury": 1.4, "Sun": 1.3, "Venus": 1.1, "Mars": 1.0, "Jupiter": 0.8, "Saturn": 0.8},
+            "weekly_forecast": {"Mars": 1.5, "Venus": 1.4, "Mercury": 1.2, "Sun": 1.1, "Jupiter": 1.3, "Saturn": 1.3, "Moon": 0.6},
+            "monthly_forecast": {"Jupiter": 1.6, "Saturn": 1.5, "Uranus": 1.4, "Neptune": 1.3, "Pluto": 1.3, "Mars": 1.1, "Venus": 1.0, "Sun": 0.9, "Moon": 0.5},
+        }
+        scope_weights = transit_weights.get(scope, {})
+        
         # Build quick lookup by planet name
         positions = {p["name"]: p for p in chart_a["planets"]}
         priority_lookup = set(priority_pairs or [])
@@ -192,6 +216,10 @@ class RuleEngine:
                 base_weight = _aspect_weight(aspect_type, orb) * _angular_boost(
                     p_a.get("house")
                 )
+                # Apply scope-specific transit planet emphasis
+                transit_planet_emphasis = scope_weights.get(p_a_name, 1.0)
+                base_weight *= transit_planet_emphasis
+                
                 # Priority synastry weighting
                 pair_key = f"{p_a_name}-{p_b['name']}"
                 reverse_pair = f"{p_b['name']}-{p_a_name}"
@@ -199,32 +227,58 @@ class RuleEngine:
                     pair_key in priority_lookup or reverse_pair in priority_lookup
                 ):
                     base_weight *= 1.2
+                
+                # Human-readable source label
+                if origin == "transit":
+                    source_label = f"Transit {p_a_name} {aspect_type} natal {p_b['name']}"
+                elif origin == "synastry":
+                    source_label = f"{p_a_name} {aspect_type} {p_b['name']} (synastry)"
+                else:
+                    source_label = f"{p_a_name} {aspect_type} {p_b['name']}"
+                
                 blocks.append(
                     {
                         **meaning,
                         "weight": base_weight,
-                        "source": f"{origin}:{p_a_name} {aspect_type} {p_b['name']}",
+                        "source": source_label,
                     }
                 )
         return blocks
 
     def _numerology_blocks(self, numerology: Dict) -> List[Dict]:
+        """Generate interpretation blocks from numerology data."""
         blocks = []
         added = set()
+        
+        # Human-readable names for numerology types
+        type_names = {
+            "life_path": "Life Path",
+            "expression": "Expression",
+            "soul_urge": "Soul Urge", 
+            "personality": "Personality",
+            "personal_year": "Personal Year",
+            "personal_month": "Personal Month",
+            "personal_day": "Personal Day",
+        }
+        
         for entry in numerology.get("meaning_blocks", []):
             etype = entry.get("type")
             value = entry.get("value")
             if not etype or value is None:
                 continue
-            base = NUMEROLOGY_MEANINGS.get(etype)
-            if base and etype not in added:
-                blocks.append({**base, "weight": 0.9, "source": f"numerology:{etype}"})
-                added.add(etype)
+            
+            # Skip base type blocks - only use specific numbered ones to avoid redundancy
+            # e.g., skip "soul_urge" generic, only include "Soul Urge 6"
             specific = NUMEROLOGY_MEANINGS.get(f"{etype}_{value}")
             if specific:
-                blocks.append(
-                    {**specific, "weight": 1.0, "source": f"numerology:{etype}_{value}"}
-                )
+                human_name = type_names.get(etype, etype.replace("_", " ").title())
+                blocks.append({
+                    **specific, 
+                    "weight": 1.0, 
+                    "source": f"{human_name} {value}"
+                })
+                added.add(f"{etype}_{value}")
+        
         return blocks
 
 
@@ -258,10 +312,51 @@ def _closest_aspect(diff: float):
 
 
 def _aspect_meaning(pa: str, pb: str, aspect_type: str) -> Optional[Dict]:
+    """Get aspect meaning, with dynamic fallback for unlisted pairs."""
     pair_key = (pa, pb, aspect_type)
     reverse_key = (pb, pa, aspect_type)
+    
+    # Check for specific pair meaning first
     if pair_key in ASPECT_MEANINGS:
         return ASPECT_MEANINGS[pair_key]
     if reverse_key in ASPECT_MEANINGS:
         return ASPECT_MEANINGS[reverse_key]
-    return ASPECT_MEANINGS.get(aspect_type)
+    
+    # Generate dynamic text for unlisted pairs
+    base = ASPECT_MEANINGS.get(aspect_type)
+    if not base:
+        return None
+    
+    # Planet themes for evocative dynamic text
+    planet_themes = {
+        "Sun": "radiant core",
+        "Moon": "emotional depths",
+        "Mercury": "quicksilver mind",
+        "Venus": "heart magnetism",
+        "Mars": "warrior flame",
+        "Jupiter": "abundance channel",
+        "Saturn": "mastery blueprint",
+        "Uranus": "lightning insight",
+        "Neptune": "mystic waters",
+        "Pluto": "phoenix power",
+    }
+    
+    aspect_verbs = {
+        "trine": "dances effortlessly with",
+        "sextile": "opens doors to",
+        "conjunction": "fuses intensely with",
+        "square": "wrestles productively with",
+        "opposition": "mirrors and balances",
+    }
+    
+    theme_a = planet_themes.get(pa, pa)
+    theme_b = planet_themes.get(pb, pb)
+    verb = aspect_verbs.get(aspect_type, "weaves into")
+    
+    # Create dynamic text with correct grammar (plural subject)
+    dynamic_text = f"Your {theme_a} {verb} your {theme_b}."
+    
+    return {
+        **base,
+        "text": dynamic_text,
+    }

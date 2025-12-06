@@ -38,7 +38,7 @@ export function GlossaryView({
   hasMoreSigns,
   hasMoreNumbers,
 }: Props) {
-  if (!glossary) return <p style={{ textAlign: 'center', color: '#888' }}>Loading glossary...</p>;
+  if (!glossary) return <p className="loading-text">Loading glossary...</p>;
 
   return (
     <div className="learn-content">

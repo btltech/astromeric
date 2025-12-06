@@ -46,14 +46,14 @@ export function useReading() {
         setResult(data as unknown as PredictionData);
         return data;
       } catch (err) {
-        console.error(err);
+        console.error('Prediction error:', err);
         const message = err instanceof Error ? err.message : 'Failed to get reading';
-        if (message.includes('Failed to fetch')) {
+        if (message.includes('Failed to fetch') || message.includes('NetworkError') || message.includes('TypeError')) {
           setError('Connection lost. Please check your network and try again.');
         } else {
           setError(message);
         }
-        return null;
+        throw err; // Re-throw so the calling code knows it failed
       } finally {
         setLoading(false);
       }

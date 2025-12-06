@@ -5,6 +5,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ChartWheel } from './ChartWheel';
+import { ChartSkeleton } from './Skeleton';
+import { toast } from './Toast';
 import { apiFetch } from '../api/client';
 import type { SavedProfile } from '../types';
 
@@ -279,33 +281,23 @@ export function ChartView({ profile, onExportPDF }: Props) {
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
 
+      toast.success('Chart exported successfully');
       onExportPDF?.();
     } catch (err) {
       console.error('PDF export failed:', err);
-      alert('Failed to export PDF. Please try again.');
+      toast.error('Failed to export PDF. Please try again.');
     } finally {
       setExporting(false);
     }
   };
 
   if (loading) {
-    return (
-      <div style={{ textAlign: 'center', padding: 40 }}>
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
-          style={{ fontSize: 48 }}
-        >
-          ✨
-        </motion.div>
-        <p style={{ color: '#888', marginTop: 16 }}>Calculating chart...</p>
-      </div>
-    );
+    return <ChartSkeleton />;
   }
 
   if (error) {
     return (
-      <div style={{ textAlign: 'center', padding: 40, color: '#ff6b6b' }}>
+      <div className="error-state">
         <p>⚠️ {error}</p>
       </div>
     );

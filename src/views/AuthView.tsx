@@ -48,7 +48,7 @@ export function AuthView() {
   return (
     <motion.div className="card" {...fadeIn}>
       <h2>{mode === 'login' ? '🔑 Sign In' : '✨ Create Account'}</h2>
-      <p style={{ textAlign: 'center', marginBottom: '1.5rem', color: '#aaa' }}>
+      <p className="section-subtitle mb-3">
         {mode === 'login'
           ? 'Sign in to access your cosmic profiles'
           : 'Join to save your readings and profiles'}
@@ -124,8 +124,8 @@ export function AuthView() {
         </motion.button>
       </form>
 
-      <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
-        <span style={{ color: '#888' }}>
+      <div className="auth-toggle">
+        <span className="text-muted">
           {mode === 'login' ? "Don't have an account? " : 'Already have an account? '}
         </span>
         <motion.button

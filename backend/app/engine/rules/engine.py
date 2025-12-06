@@ -184,8 +184,9 @@ class RuleEngine:
         emphasis = {
             "natal_love": {"love": 1.3, "emotional": 1.1},
             "natal_career": {"career": 1.3, "general": 1.05},
-            "daily_forecast": {"general": 1.05, "love": 1.05, "career": 1.05},
-            "weekly_forecast": {"general": 1.05, "love": 1.05, "career": 1.05},
+            "daily_forecast": {"general": 1.05, "love": 1.05, "career": 1.05, "emotional": 1.0},
+            "weekly_forecast": {"general": 1.1, "love": 1.08, "career": 1.12, "emotional": 1.05},
+            "monthly_forecast": {"general": 1.15, "career": 1.2, "love": 1.1, "emotional": 1.1},
             "compatibility_romantic": {"love": 1.35, "emotional": 1.1},
             "compatibility_business": {"career": 1.3, "general": 1.1},
         }

@@ -40,7 +40,7 @@ export function LearnView() {
   if (loading && !glossary) {
     return (
       <motion.div className="card" {...fadeIn}>
-        <p style={{ textAlign: 'center', color: '#888' }}>Loading glossary...</p>
+        <p className="loading-text">Loading glossary...</p>
       </motion.div>
     );
   }
@@ -142,7 +142,7 @@ export function LearnView() {
           </div>
         </div>
       ) : (
-        <p style={{ textAlign: 'center', color: '#888' }}>No glossary data available.</p>
+        <p className="empty-state">No glossary data available.</p>
       )}
     </motion.div>
   );

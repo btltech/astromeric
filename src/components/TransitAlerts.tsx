@@ -92,7 +92,7 @@ export function TransitAlerts({ profile }: Props) {
 
   if (loading) {
     return (
-      <div className="transit-loading" style={{ padding: 20, textAlign: 'center' }}>
+      <div className="transit-loading text-center" style={{ padding: 20 }}>
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
@@ -100,21 +100,21 @@ export function TransitAlerts({ profile }: Props) {
         >
           🌙
         </motion.div>
-        <p style={{ color: '#888', marginTop: 8 }}>Checking transits...</p>
+        <p className="loading-text mt-1">Checking transits...</p>
       </div>
     );
   }
 
   if (error) {
-    return <div style={{ padding: 20, textAlign: 'center', color: '#ff6b6b' }}>⚠️ {error}</div>;
+    return <div className="error-state">⚠️ {error}</div>;
   }
 
   if (!transitData) return null;
 
   const alertColors = {
-    low: '#4ecdc4',
-    medium: '#f9ca24',
-    high: '#ff6b6b',
+    low: 'var(--primary)',
+    medium: 'var(--accent-warning)',
+    high: 'var(--accent)',
   };
 
   const alertEmojis = {

@@ -3,25 +3,36 @@ import { BrowserRouter, Routes, Route, NavLink, useLocation } from 'react-router
 import { motion, AnimatePresence } from 'framer-motion';
 import { CosmicBackground } from './components/CosmicBackground';
 import {
-  ReadingView,
-  NumerologyView,
-  CompatibilityView,
-  LearnView,
-  AuthView,
-  ChartViewPage,
-  CosmicToolsView,
-  LearningView,
+  // ReadingView,
+  // NumerologyView,
+  // CompatibilityView,
+  // LearnView,
+  // AuthView,
+  // ChartViewPage,
+  // CosmicToolsView,
+  // LearningView,
 } from './views';
 import { useProfiles, useAuth } from './hooks';
 import { useStore } from './store/useStore';
+import { ToastContainer, useToasts } from './components/Toast';
+import { ErrorBoundary } from './components/ErrorBoundary';
+import { PWAPrompt } from './components/PWAPrompt';
+
+// Lazy load views for code splitting
+const ReadingView = React.lazy(() => import('./views/ReadingView').then(m => ({ default: m.ReadingView })));
+const NumerologyView = React.lazy(() => import('./views/NumerologyView').then(m => ({ default: m.NumerologyView })));
+const CompatibilityView = React.lazy(() => import('./views/CompatibilityView').then(m => ({ default: m.CompatibilityView })));
+const LearnView = React.lazy(() => import('./views/LearnView').then(m => ({ default: m.LearnView })));
+const AuthView = React.lazy(() => import('./views/AuthView').then(m => ({ default: m.AuthView })));
+const ChartViewPage = React.lazy(() => import('./views/ChartViewPage').then(m => ({ default: m.ChartViewPage })));
+const CosmicToolsView = React.lazy(() => import('./views/CosmicToolsView').then(m => ({ default: m.CosmicToolsView })));
+const LearningView = React.lazy(() => import('./views/LearningView').then(m => ({ default: m.LearningView })));
 // styles.css is imported at the root level (index.tsx)
 
 function NavBar() {
   const { sessionProfile } = useProfiles();
   const { isAuthenticated, user, logout } = useAuth();
-
-  // Show nav when a session profile exists (or authenticated)
-  const showNav = sessionProfile || isAuthenticated;
+  const [isOpen, setIsOpen] = React.useState(false);
 
   return (
     <header>
@@ -44,45 +55,56 @@ function NavBar() {
         </div>
       )}
 
-      {showNav && (
-        <nav className="main-nav" role="navigation" aria-label="Main navigation">
-          <NavLink to="/" className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}>
-            📖 Reading
+      <button
+        className="nav-toggle"
+        aria-label="Toggle navigation"
+        aria-expanded={isOpen}
+        onClick={() => setIsOpen((v) => !v)}
+      >
+        {isOpen ? '✕' : '☰'}
+      </button>
+
+      <nav className={`main-nav ${isOpen ? 'open' : ''}`} role="navigation" aria-label="Main navigation">
+        <NavLink to="/" className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`} onClick={() => setIsOpen(false)}>
+          📖 Reading
+        </NavLink>
+        <NavLink
+          to="/numerology"
+          className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}
+          onClick={() => setIsOpen(false)}
+        >
+          🔢 Numerology
+        </NavLink>
+        <NavLink
+          to="/compatibility"
+          className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}
+          onClick={() => setIsOpen(false)}
+        >
+          💕 Compatibility
+        </NavLink>
+        <NavLink
+          to="/chart"
+          className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}
+          onClick={() => setIsOpen(false)}
+        >
+          🔭 Chart
+        </NavLink>
+        <NavLink
+          to="/tools"
+          className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}
+          onClick={() => setIsOpen(false)}
+        >
+          ✨ Tools
+        </NavLink>
+        <NavLink to="/learn" className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`} onClick={() => setIsOpen(false)}>
+          📚 Learn
+        </NavLink>
+        {!isAuthenticated && (
+          <NavLink to="/auth" className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`} onClick={() => setIsOpen(false)}>
+            🔑 Sign In
           </NavLink>
-          <NavLink
-            to="/numerology"
-            className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}
-          >
-            🔢 Numerology
-          </NavLink>
-          <NavLink
-            to="/compatibility"
-            className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}
-          >
-            💕 Compatibility
-          </NavLink>
-          <NavLink
-            to="/chart"
-            className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}
-          >
-            🔭 Chart
-          </NavLink>
-          <NavLink
-            to="/tools"
-            className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}
-          >
-            ✨ Tools
-          </NavLink>
-          <NavLink to="/learn" className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}>
-            📚 Learn
-          </NavLink>
-          {!isAuthenticated && (
-            <NavLink to="/auth" className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}>
-              🔑 Sign In
-            </NavLink>
-          )}
-        </nav>
-      )}
+        )}
+      </nav>
     </header>
   );
 }
@@ -102,36 +124,41 @@ function AnimatedRoutes() {
   const birthDate = sessionProfile?.date_of_birth;
 
   return (
-    <AnimatePresence mode="wait">
-      <Routes location={location} key={location.pathname}>
-        <Route path="/" element={<ReadingView />} />
-        <Route path="/numerology" element={<NumerologyView />} />
-        <Route path="/compatibility" element={<CompatibilityView />} />
-        <Route path="/chart" element={<ChartViewPage />} />
-        <Route 
-          path="/tools" 
-          element={
-            <CosmicToolsView 
-              birthDate={birthDate}
-              sunSign={sunSign}
-              moonSign={moonSign}
-              risingSign={risingSign}
+    <ErrorBoundary>
+      <AnimatePresence mode="wait">
+        <React.Suspense fallback={<LoadingOverlay forceVisible />}>
+          <Routes location={location} key={location.pathname}>
+            <Route path="/" element={<ReadingView />} />
+            <Route path="/numerology" element={<NumerologyView />} />
+            <Route path="/compatibility" element={<CompatibilityView />} />
+            <Route path="/chart" element={<ChartViewPage />} />
+            <Route 
+              path="/tools" 
+              element={
+                <CosmicToolsView 
+                  birthDate={birthDate}
+                  sunSign={sunSign}
+                  moonSign={moonSign}
+                  risingSign={risingSign}
+                />
+              } 
             />
-          } 
-        />
-        <Route path="/learn" element={<LearningView />} />
-        <Route path="/auth" element={<AuthView />} />
-      </Routes>
-    </AnimatePresence>
+            <Route path="/learn" element={<LearningView />} />
+            <Route path="/auth" element={<AuthView />} />
+          </Routes>
+        </React.Suspense>
+      </AnimatePresence>
+    </ErrorBoundary>
   );
 }
 
-function LoadingOverlay() {
+function LoadingOverlay({ forceVisible = false }: { forceVisible?: boolean }) {
   const { loading } = useStore();
+  const isVisible = loading || forceVisible;
 
   return (
     <AnimatePresence>
-      {loading && (
+      {isVisible && (
         <motion.div
           className="loader-overlay"
           initial={{ opacity: 0 }}
@@ -149,6 +176,26 @@ function LoadingOverlay() {
         </motion.div>
       )}
     </AnimatePresence>
+  );
+}
+
+function HeroBanner() {
+  const location = useLocation();
+  if (location.pathname !== '/') return null;
+  return (
+    <section className="hero">
+      <div className="hero-copy">
+        <p className="eyebrow">Astrology × Numerology</p>
+        <h2>Personalized guidance that actually feels personal.</h2>
+        <p className="lede">
+          Real ephemeris data, poetic interpretations, and clear actions for love, career, and wellbeing—beautiful on any device.
+        </p>
+        <div className="hero-actions">
+          <NavLink to="/" className="btn-primary btn-cta">Start your reading</NavLink>
+          <NavLink to="/learn" className="btn-secondary">Explore the library</NavLink>
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -183,24 +230,40 @@ function ErrorBanner() {
   );
 }
 
-export function App() {
+function Layout() {
   const { result } = useStore();
-
-  // No fetchProfiles - all profiles are session-only for privacy
+  const { toasts, dismiss } = useToasts();
 
   return (
-    <BrowserRouter>
-      <div className="app-container">
-        <CosmicBackground element={result?.element} />
+    <div className="app-container">
+      {/* Skip link for keyboard navigation */}
+      <a href="#main-content" className="skip-link">
+        Skip to main content
+      </a>
+      
+      <CosmicBackground element={result?.element} />
 
-        <div className="content-wrapper">
-          <NavBar />
-          <ErrorBanner />
+      <div className="content-wrapper">
+        <NavBar />
+        <HeroBanner />
+        <ErrorBanner />
+        <main id="main-content" tabIndex={-1}>
           <AnimatedRoutes />
-        </div>
-
-        <LoadingOverlay />
+        </main>
       </div>
+
+      <LoadingOverlay />
+      <ToastContainer toasts={toasts} onDismiss={dismiss} />
+      <PWAPrompt />
+    </div>
+  );
+}
+
+export function App() {
+  // No fetchProfiles - all profiles are session-only for privacy
+  return (
+    <BrowserRouter>
+      <Layout />
     </BrowserRouter>
   );
 }

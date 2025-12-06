@@ -46,7 +46,7 @@ export function NumerologyView() {
   if (!selectedProfile) {
     return (
       <motion.div className="card" {...fadeIn}>
-        <p style={{ textAlign: 'center', color: '#888' }}>
+        <p className="empty-state">
           Please enter your birth details first from the Reading tab.
         </p>
       </motion.div>
@@ -57,7 +57,7 @@ export function NumerologyView() {
     <motion.div className="card" {...fadeIn}>
       <h2>🔢 Your Numerology Profile</h2>
       {loading && !numerologyProfile && (
-        <p style={{ textAlign: 'center', color: '#888' }}>Loading numerology profile...</p>
+        <p className="loading-text">Loading numerology profile...</p>
       )}
       {numerologyProfile && (
         <motion.div

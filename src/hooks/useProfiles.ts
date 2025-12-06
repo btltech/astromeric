@@ -6,6 +6,7 @@ import { useCallback } from 'react';
 import { useStore } from '../store/useStore';
 import { apiFetch } from '../api/client';
 import type { NewProfileForm, SavedProfile } from '../types';
+import { toast } from '../components/Toast';
 
 export function useProfiles() {
   const {
@@ -76,16 +77,19 @@ export function useProfiles() {
           addProfile(savedData);
           setSelectedProfileId(savedData.id);
           setSessionProfile(null); // Clear session profile
+          toast.success('Profile saved successfully');
           return savedData;
         }
 
         // Session-only: store in memory, don't save to backend
         setSessionProfile(sessionOnlyProfile);
         setSelectedProfileId(null);
+        toast.info('Profile created for this session');
         return sessionOnlyProfile;
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Failed to create profile';
         setError(message);
+        toast.error(message);
         throw err;
       } finally {
         setLoading(false);

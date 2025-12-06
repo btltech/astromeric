@@ -4,6 +4,8 @@ import { useProfiles, useReading } from '../hooks';
 import { useStore } from '../store/useStore';
 import { FortuneForm } from '../components/FortuneForm';
 import { FortuneResult } from '../components/FortuneResult';
+import { ReadingSkeleton } from '../components/Skeleton';
+import { toast } from '../components/Toast';
 
 const fadeIn = {
   initial: { opacity: 0, y: 20 },
@@ -19,9 +21,23 @@ export function ReadingView() {
 
   const handleGetPrediction = async () => {
     if (sessionProfile) {
-      await getPrediction(sessionProfile.id);
+      try {
+        await getPrediction(sessionProfile.id);
+        toast.success('Your cosmic reading is ready ✨');
+      } catch {
+        toast.error('Failed to generate reading. Please try again.');
+      }
     }
   };
+
+  // Show skeleton while loading
+  if (loading && !result) {
+    return (
+      <motion.div {...fadeIn}>
+        <ReadingSkeleton />
+      </motion.div>
+    );
+  }
 
   if (result) {
     return (
@@ -41,8 +57,8 @@ export function ReadingView() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            <h3 style={{ color: '#4ecdc4', marginBottom: 8 }}>✨ {sessionProfile.name}</h3>
-            <p style={{ fontSize: 13, color: '#888', marginTop: 0, marginBottom: 16 }}>
+            <h3 className="profile-highlight">✨ {sessionProfile.name}</h3>
+            <p className="profile-meta">
               Born {sessionProfile.date_of_birth} • Session only (not saved)
             </p>
             <h4>Select Reading Scope</h4>

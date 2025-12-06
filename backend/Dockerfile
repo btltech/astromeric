@@ -19,11 +19,12 @@ COPY app ./app
 # Copy ephemeris files
 COPY app/ephemeris ./app/ephemeris
 
-# Copy uvicorn wrapper
-COPY bin/uvicorn-wrapper.sh /usr/local/bin/uvicorn
-RUN chmod +x /usr/local/bin/uvicorn
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+ENV EPHEMERIS_PATH=/app/app/ephemeris
+ENV SE_EPHE_PATH=/app/app/ephemeris
 
 EXPOSE 8000
 
-# Let Python entrypoint resolve PORT via os.environ for Railway
-CMD ["python", "-m", "app.main"]
+# Railway uses $PORT environment variable
+CMD uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}
