@@ -34,16 +34,22 @@ export interface PlanetaryHourInfo {
   suggestion: string;
 }
 
+// Color object with name and hex code for CSS rendering
+export interface ColorInfo {
+  name: string;
+  hex: string;
+}
+
 // Enhanced guidance structure
 export interface DailyGuidance {
   avoid: {
     activities: string[];
-    colors: string[];
+    colors: (string | ColorInfo)[];  // Support both old string and new object format
     numbers: number[];
   };
   embrace: {
     activities: string[];
-    colors: string[];
+    colors: (string | ColorInfo)[];  // Support both old string and new object format
     time: string;
   };
   retrogrades: RetrogradeInfo[];

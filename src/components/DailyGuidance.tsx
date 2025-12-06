@@ -1,5 +1,15 @@
 import React from 'react';
-import type { PredictionData, RetrogradeInfo, VoidOfCourseMoon, PlanetaryHourInfo } from '../types';
+import type { PredictionData, RetrogradeInfo, VoidOfCourseMoon, PlanetaryHourInfo, ColorInfo } from '../types';
+
+// Helper to get color hex and name from color data (supports both string and object formats)
+function getColorData(color: string | ColorInfo): { hex: string; name: string } {
+  if (typeof color === 'string') {
+    // Old format: string color name - use CSS name or fallback
+    return { hex: color.toLowerCase(), name: color };
+  }
+  // New format: object with name and hex
+  return { hex: color.hex, name: color.name };
+}
 
 interface Props {
   guidance: NonNullable<PredictionData['guidance']>;
@@ -139,14 +149,17 @@ export function DailyGuidance({ guidance }: Props) {
               <div className="color-row">
                 <span className="label">Power Colors:</span>
                 <div className="swatches">
-                  {embrace.colors.map((c, i) => (
-                    <span 
-                      key={i} 
-                      className="color-swatch" 
-                      style={{ backgroundColor: c.toLowerCase() }}
-                      title={c}
-                    />
-                  ))}
+                  {embrace.colors.map((c, i) => {
+                    const { hex, name } = getColorData(c);
+                    return (
+                      <span 
+                        key={i} 
+                        className="color-swatch" 
+                        style={{ backgroundColor: hex }}
+                        title={name}
+                      />
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -171,14 +184,17 @@ export function DailyGuidance({ guidance }: Props) {
               <div className="color-row">
                 <span className="label">Avoid Colors:</span>
                 <div className="swatches">
-                  {avoid.colors.map((c, i) => (
-                    <span 
-                      key={i} 
-                      className="color-swatch" 
-                      style={{ backgroundColor: c.toLowerCase() }}
-                      title={c}
-                    />
-                  ))}
+                  {avoid.colors.map((c, i) => {
+                    const { hex, name } = getColorData(c);
+                    return (
+                      <span 
+                        key={i} 
+                        className="color-swatch" 
+                        style={{ backgroundColor: hex }}
+                        title={name}
+                      />
+                    );
+                  })}
                 </div>
               </div>
             )}

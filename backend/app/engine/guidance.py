@@ -195,8 +195,39 @@ def _get_astrology_guidance(natal: Dict, transit: Dict) -> Dict[str, List[str]]:
     return {"avoid": avoid, "embrace": embrace}
 
 
-def _get_color_guidance(day_number: int) -> Dict[str, List[str]]:
-    """Returns lucky and avoid colors based on numerology."""
+def _get_color_guidance(day_number: int) -> Dict[str, List[Dict[str, str]]]:
+    """Returns lucky and avoid colors based on numerology with hex values."""
+    # Color name to hex mapping for CSS compatibility
+    COLOR_HEX = {
+        "Red": "#E53935",
+        "Gold": "#FFD700",
+        "Black": "#1A1A1A",
+        "Grey": "#808080",
+        "White": "#FFFFFF",
+        "Silver": "#C0C0C0",
+        "Orange": "#FF9800",
+        "Bright Orange": "#FF5722",
+        "Yellow": "#FFEB3B",
+        "Purple": "#9C27B0",
+        "Dark Blue": "#1565C0",
+        "Green": "#4CAF50",
+        "Brown": "#795548",
+        "Pastels": "#E1BEE7",  # Light lavender as representative pastel
+        "Blue": "#2196F3",
+        "Turquoise": "#00BCD4",
+        "Heavy Black": "#0D0D0D",
+        "Indigo": "#3F51B5",
+        "Pink": "#E91E63",
+        "Violet": "#7B1FA2",
+        "Bright Yellow": "#FFFF00",
+        "Dark Brown": "#4E342E",
+        "Coral": "#FF7043",
+        "Dark colors": "#37474F",  # Dark blue-grey as representative
+    }
+    
+    def to_color_obj(name: str) -> Dict[str, str]:
+        return {"name": name, "hex": COLOR_HEX.get(name, "#808080")}
+    
     maps = {
         1: {"embrace": ["Red", "Gold"], "avoid": ["Black", "Grey"]},
         2: {"embrace": ["White", "Silver"], "avoid": ["Red", "Bright Orange"]},
@@ -211,7 +242,12 @@ def _get_color_guidance(day_number: int) -> Dict[str, List[str]]:
         22: {"embrace": ["Gold", "Green"], "avoid": ["Grey"]},
         33: {"embrace": ["Turquoise", "Coral"], "avoid": ["Dark colors"]},
     }
-    return maps.get(day_number, {"embrace": ["Any"], "avoid": []})
+    
+    result = maps.get(day_number, {"embrace": ["Grey"], "avoid": []})
+    return {
+        "embrace": [to_color_obj(c) for c in result["embrace"]],
+        "avoid": [to_color_obj(c) for c in result["avoid"]],
+    }
 
 
 def _get_challenge_numbers(numerology: Dict) -> List[int]:

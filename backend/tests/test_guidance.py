@@ -62,13 +62,20 @@ def test_all_day_numbers_covered():
 def test_color_guidance():
     # Test Day 1 Colors
     c1 = _get_color_guidance(1)
-    assert "Red" in c1["embrace"]
-    assert "Black" in c1["avoid"]
+    embrace_names = [c["name"] for c in c1["embrace"]]
+    avoid_names = [c["name"] for c in c1["avoid"]]
+    assert "Red" in embrace_names
+    assert "Black" in avoid_names
+    # Check hex values are present
+    assert all("hex" in c for c in c1["embrace"])
+    assert all("hex" in c for c in c1["avoid"])
     
     # Test Day 2 Colors
     c2 = _get_color_guidance(2)
-    assert "White" in c2["embrace"]
-    assert "Bright Orange" in c2["avoid"]
+    embrace_names_2 = [c["name"] for c in c2["embrace"]]
+    avoid_names_2 = [c["name"] for c in c2["avoid"]]
+    assert "White" in embrace_names_2
+    assert "Bright Orange" in avoid_names_2
 
 
 def test_color_guidance_structure():
@@ -222,8 +229,9 @@ def test_full_guidance_integration():
     # Earth Moon Avoid: Risky spending
     assert "Risky spending" in result["avoid"]["activities"]
     
-    # Check Colors (Day 4)
-    assert "Green" in result["embrace"]["colors"]
+    # Check Colors (Day 4) - colors are now objects with name and hex
+    embrace_color_names = [c["name"] for c in result["embrace"]["colors"]]
+    assert "Green" in embrace_color_names
     
     # Check Challenge Numbers
     assert 1 in result["avoid"]["numbers"]
