@@ -132,8 +132,7 @@ function AnimatedRoutes() {
             <Route path="/numerology" element={<NumerologyView />} />
             <Route path="/compatibility" element={<CompatibilityView />} />
             <Route path="/chart" element={<ChartViewPage />} />
-            <Route 
-              path="/tools" 
+            <Route path="/tools" 
               element={
                 <CosmicToolsView 
                   birthDate={birthDate}
@@ -143,7 +142,7 @@ function AnimatedRoutes() {
                 />
               } 
             />
-            <Route path="/learn" element={<LearningView />} />
+            <Route path="/learn" element={<LearnView />} />
             <Route path="/auth" element={<AuthView />} />
           </Routes>
         </React.Suspense>
