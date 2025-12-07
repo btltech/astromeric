@@ -8509,3 +8509,244 @@ p, .body-text {
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
 }
+
+/* ========== NEW LEARN PAGE ========== */
+.learn-page {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.learn-page h2 {
+  text-align: center;
+  margin-bottom: 0.5rem;
+}
+
+.learn-intro {
+  text-align: center;
+  color: var(--text-muted);
+  margin-bottom: 1.5rem;
+  font-size: 1rem;
+}
+
+/* Category Tabs */
+.learn-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 0.35rem;
+  border-radius: 12px;
+}
+
+.learn-tab {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  background: transparent;
+  border: none;
+  border-radius: 10px;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.learn-tab:hover {
+  color: var(--text);
+  background: rgba(136, 192, 208, 0.1);
+}
+
+.learn-tab.active {
+  background: rgba(136, 192, 208, 0.2);
+  color: var(--primary);
+}
+
+/* Progress Bars */
+.learn-progress {
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.learn-progress.overall {
+  margin-bottom: 0.5rem;
+}
+
+.learn-progress.category {
+  margin-bottom: 1.5rem;
+}
+
+.learn-progress .progress-bar {
+  flex: 1;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.learn-progress .progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), var(--secondary));
+  border-radius: 4px;
+  transition: width 0.4s ease;
+}
+
+.learn-progress .progress-text {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  white-space: nowrap;
+  min-width: 140px;
+  text-align: right;
+}
+
+/* Lessons List */
+.lessons-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* Lesson Card */
+.lesson-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(136, 192, 208, 0.15);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.lesson-card:hover {
+  border-color: rgba(136, 192, 208, 0.35);
+}
+
+.lesson-card.expanded {
+  border-color: rgba(136, 192, 208, 0.5);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.lesson-card .lesson-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  width: 100%;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  margin-bottom: 0;
+}
+
+.lesson-card .lesson-icon {
+  font-size: 1.75rem;
+  line-height: 1;
+}
+
+.lesson-card .lesson-info {
+  flex: 1;
+}
+
+.lesson-card .lesson-info h4 {
+  margin: 0 0 0.25rem;
+  font-size: 1.05rem;
+  color: var(--text);
+  font-weight: 500;
+}
+
+.lesson-card .lesson-duration {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+}
+
+.lesson-card .lesson-toggle {
+  font-size: 1.5rem;
+  color: var(--primary);
+  font-weight: 300;
+  line-height: 1;
+  width: 28px;
+  text-align: center;
+}
+
+/* Lesson Content */
+.lesson-card .lesson-content {
+  overflow: hidden;
+}
+
+.lesson-card .lesson-body {
+  padding: 0 1.25rem 1.25rem;
+  border-top: 1px solid rgba(136, 192, 208, 0.1);
+  padding-top: 1.25rem;
+}
+
+.lesson-card .lesson-body p {
+  margin: 0 0 1rem;
+  line-height: 1.75;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+.lesson-card .lesson-body p:last-child {
+  margin-bottom: 0;
+}
+
+.lesson-card .lesson-body strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.lesson-card .lesson-body em {
+  color: var(--text-dim);
+  font-style: italic;
+}
+
+/* Completion Message */
+.completion-message {
+  margin-top: 1.5rem;
+  padding: 1.25rem;
+  text-align: center;
+  background: linear-gradient(135deg, rgba(163, 190, 140, 0.15), rgba(136, 192, 208, 0.15));
+  border: 1px solid rgba(163, 190, 140, 0.3);
+  border-radius: 12px;
+  color: var(--text);
+  font-size: 1rem;
+}
+
+/* Mobile adjustments for Learn page */
+@media (max-width: 600px) {
+  .learn-tabs {
+    flex-direction: column;
+  }
+  
+  .learn-tab {
+    padding: 0.6rem 1rem;
+  }
+  
+  .learn-progress {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.35rem;
+  }
+  
+  .learn-progress .progress-text {
+    text-align: center;
+    min-width: auto;
+  }
+  
+  .lesson-card .lesson-header {
+    padding: 0.85rem 1rem;
+  }
+  
+  .lesson-card .lesson-icon {
+    font-size: 1.5rem;
+  }
+  
+  .lesson-card .lesson-info h4 {
+    font-size: 0.95rem;
+  }
+  
+  .lesson-card .lesson-body {
+    padding: 0 1rem 1rem;
+    padding-top: 1rem;
+  }
+}
