@@ -11,8 +11,21 @@ function getColorData(color: string | ColorInfo): { hex: string; name: string } 
   return { hex: color.hex, name: color.name };
 }
 
+// Scope-aware text helpers
+function getScopeLabel(scope: string): { title: string; period: string; periodLong: string } {
+  switch (scope) {
+    case 'weekly':
+      return { title: 'Weekly Cosmic Guidance', period: 'This Week', periodLong: 'this week' };
+    case 'monthly':
+      return { title: 'Monthly Cosmic Guidance', period: 'This Month', periodLong: 'this month' };
+    default:
+      return { title: 'Daily Cosmic Guidance', period: 'Today', periodLong: 'today' };
+  }
+}
+
 interface Props {
   guidance: NonNullable<PredictionData['guidance']>;
+  scope?: string;
 }
 
 // Planet emoji map
@@ -88,12 +101,13 @@ function PlanetaryHourCard({ hour }: { hour: PlanetaryHourInfo }) {
   );
 }
 
-export function DailyGuidance({ guidance }: Props) {
+export function DailyGuidance({ guidance, scope = 'daily' }: Props) {
   const { avoid, embrace, retrogrades, void_of_course_moon, current_planetary_hour } = guidance;
+  const { title, period } = getScopeLabel(scope);
 
   return (
     <div className="guidance-container">
-      <h3 className="guidance-title">✨ Daily Cosmic Guidance</h3>
+      <h3 className="guidance-title">✨ {title}</h3>
       
       {/* Alerts Row: Retrogrades + VOC Moon */}
       {(retrogrades?.length > 0 || void_of_course_moon?.is_void) && (
@@ -128,11 +142,11 @@ export function DailyGuidance({ guidance }: Props) {
         <div className="guidance-card embrace-card">
           <div className="guidance-header">
             <span className="icon">✅</span>
-            <h4>Embrace Today</h4>
+            <h4>Embrace {period}</h4>
           </div>
           
           <div className="guidance-content">
-            {embrace.time && (
+            {embrace.time && scope === 'daily' && (
               <div className="power-hour">
                 <span className="label">⚡ Power Hour</span>
                 <span className="value">{embrace.time}</span>
@@ -152,12 +166,14 @@ export function DailyGuidance({ guidance }: Props) {
                   {embrace.colors.map((c, i) => {
                     const { hex, name } = getColorData(c);
                     return (
-                      <span 
-                        key={i} 
-                        className="color-swatch" 
-                        style={{ backgroundColor: hex }}
-                        title={name}
-                      />
+                      <div key={i} className="color-swatch-labeled">
+                        <span 
+                          className="color-swatch" 
+                          style={{ backgroundColor: hex }}
+                          title={name}
+                        />
+                        <span className="color-name">{name}</span>
+                      </div>
                     );
                   })}
                 </div>
@@ -170,7 +186,7 @@ export function DailyGuidance({ guidance }: Props) {
         <div className="guidance-card avoid-card">
           <div className="guidance-header">
             <span className="icon">🛑</span>
-            <h4>Avoid Today</h4>
+            <h4>Avoid {period}</h4>
           </div>
 
           <div className="guidance-content">
@@ -187,12 +203,14 @@ export function DailyGuidance({ guidance }: Props) {
                   {avoid.colors.map((c, i) => {
                     const { hex, name } = getColorData(c);
                     return (
-                      <span 
-                        key={i} 
-                        className="color-swatch" 
-                        style={{ backgroundColor: hex }}
-                        title={name}
-                      />
+                      <div key={i} className="color-swatch-labeled">
+                        <span 
+                          className="color-swatch" 
+                          style={{ backgroundColor: hex }}
+                          title={name}
+                        />
+                        <span className="color-name">{name}</span>
+                      </div>
                     );
                   })}
                 </div>

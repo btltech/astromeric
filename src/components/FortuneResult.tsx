@@ -58,6 +58,17 @@ export function FortuneResult({ data, onReset }: Props) {
 
   return (
     <div className="card">
+      {/* Top navigation bar for easy access */}
+      <div className="reading-top-nav">
+        <button 
+          onClick={onReset} 
+          className="btn-link"
+          aria-label="Go back to profiles"
+        >
+          ← Back to Profiles
+        </button>
+      </div>
+      
       <div className="header-badge">
         {data.element === 'Fire' && '🔥'}
         {data.element === 'Water' && '💧'}
@@ -83,7 +94,7 @@ export function FortuneResult({ data, onReset }: Props) {
         </div>
       )}
       
-      {data.guidance && <DailyGuidance guidance={data.guidance} />}
+      {data.guidance && <DailyGuidance guidance={data.guidance} scope={data.scope} />}
       
       {data.sections && data.sections.length > 0 && <SectionGrid sections={data.sections} />}
       <div className="action-buttons">
