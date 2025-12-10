@@ -64,7 +64,7 @@ export function SectionGrid({ sections, scope, profileId }: Props) {
         }
 
         return (
-          <div key={idx} className="track-item">
+          <div key={idx} className="track-item card-section">
             <h3>{section.title}</h3>
             {section.highlights.map((h, i) => (
               <p key={i}>{h}</p>

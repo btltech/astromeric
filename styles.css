@@ -122,14 +122,45 @@
   }
 }
 
-/* Checkbox focus ring */
+/* Custom save checkbox toggle */
 .save-checkbox {
-  width: auto;
+  appearance: none;
+  -webkit-appearance: none;
+  width: 44px;
+  height: 24px;
   margin: 0;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  position: relative;
+  transition: background var(--duration-fast) var(--easing-smooth), border-color var(--duration-fast) var(--easing-smooth);
+}
+.save-checkbox::before {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  transition: transform var(--duration-fast) var(--easing-smooth), background var(--duration-fast) var(--easing-smooth);
+}
+.save-checkbox:checked {
+  background: linear-gradient(135deg, var(--primary), #22d3ee);
+  border-color: transparent;
+}
+.save-checkbox:checked::before {
+  transform: translateX(20px);
+  background: #0b1120;
 }
 .save-checkbox:focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
+}
+.save-checkbox:hover:not(:checked) {
+  border-color: rgba(255, 255, 255, 0.35);
 }
 
 .error-text {
@@ -350,6 +381,13 @@
   border-color: rgba(255, 255, 255, 0.16);
 }
 
+/* Mobile card padding */
+@media (max-width: 480px) {
+  .card {
+    padding: 1.5rem 1.25rem;
+  }
+}
+
 /* Nested/secondary cards with lighter shadow */
 .card-nested,
 .card.card-nested {
@@ -362,6 +400,17 @@
 /* Stacked cards spacing */
 .card + .card {
   margin-top: 1.5rem;
+}
+
+/* Section cards with accent top border */
+.card-section,
+.card.card-section {
+  border-top: 3px solid var(--primary);
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+}
+
+.card-section:hover {
+  border-top-color: #a855f7;
 }
 
 @keyframes fadeIn {
@@ -456,6 +505,11 @@ input[type="time"]::-webkit-calendar-picker-indicator {
   cursor: pointer;
 }
 
+input:hover:not(:focus):not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(12, 15, 28, 0.7);
+}
+
 input:focus {
   outline: none;
   border-color: var(--primary);
@@ -527,11 +581,22 @@ input:focus {
   color: #0b0c15;
   margin-top: 1rem;
   box-shadow: 0 10px 24px rgba(139, 92, 246, 0.35);
+  animation: btnGlow 2.5s ease-in-out infinite;
+}
+
+@keyframes btnGlow {
+  0%, 100% {
+    box-shadow: 0 10px 24px rgba(139, 92, 246, 0.35);
+  }
+  50% {
+    box-shadow: 0 12px 32px rgba(139, 92, 246, 0.5), 0 0 20px rgba(139, 92, 246, 0.25);
+  }
 }
 
 .btn-primary:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 14px 28px rgba(139, 92, 246, 0.4);
+  box-shadow: 0 14px 28px rgba(139, 92, 246, 0.5);
+  animation: none;
 }
 
 .btn-primary:disabled {
@@ -3314,21 +3379,22 @@ header {
 /* ========== LOADING SKELETON SHIMMER ========== */
 
 .skeleton-card {
-  background: rgba(136, 192, 208, 0.06);
-  border: 1px solid rgba(136, 192, 208, 0.12);
-  border-radius: 16px;
+  background: var(--card-bg);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-lg);
   padding: var(--space-5);
   overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
 }
 
 .skeleton-line {
   height: 1rem;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   background: linear-gradient(
     90deg,
-    rgba(136, 192, 208, 0.08) 25%,
-    rgba(136, 192, 208, 0.18) 50%,
-    rgba(136, 192, 208, 0.08) 75%
+    rgba(139, 92, 246, 0.06) 25%,
+    rgba(139, 92, 246, 0.16) 50%,
+    rgba(139, 92, 246, 0.06) 75%
   );
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
@@ -6458,6 +6524,18 @@ header {
   padding: 0.4rem 0.6rem;
   border-radius: 999px;
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.28);
+}
+
+/* Mobile: move reminder to bottom-left to avoid overlap */
+@media (max-width: 480px) {
+  .reminder-toggle {
+    right: auto;
+    left: 12px;
+    bottom: 12px;
+  }
+  .reminder-toggle.closed {
+    padding: 0.35rem 0.5rem;
+  }
 }
 .reminder-heading {
   display: flex;
