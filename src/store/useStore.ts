@@ -54,8 +54,8 @@ interface AppState {
 
   // Auth (new)
   token: string | null;
-  user: { id: string; email: string } | null;
-  setAuth: (token: string | null, user: { id: string; email: string } | null) => void;
+  user: { id: string; email: string; is_paid: boolean } | null;
+  setAuth: (token: string | null, user: { id: string; email: string; is_paid: boolean } | null) => void;
   logout: () => void;
 }
 
@@ -109,10 +109,11 @@ export const useStore = create<AppState>()(
     }),
     {
       name: 'astro-storage',
-      // Only persist UI preferences, NOT profile data
+      // Persist UI preferences and auth
       partialize: (state) => ({
         selectedScope: state.selectedScope,
-        // Removed: token, user, selectedProfileId, profiles
+        token: state.token,
+        user: state.user,
       }),
     }
   )

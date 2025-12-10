@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { toast } from './Toast';
 import {
   fetchRelationshipTimeline,
   fetchRelationshipTiming,
@@ -60,7 +61,7 @@ export function RelationshipTimeline() {
     if (activeTab === 'best-days' && bestDays.length === 0) {
       fetchBestRelationshipDays(30, 60)
         .then((res) => setBestDays(res.best_days))
-        .catch(console.error);
+        .catch(() => toast.error('Failed to load best days'));
     }
   }, [activeTab, bestDays.length]);
 
@@ -69,7 +70,7 @@ export function RelationshipTimeline() {
     if (activeTab === 'phases' && phases.length === 0) {
       fetchRelationshipPhases()
         .then((res) => setPhases(res.phases))
-        .catch(console.error);
+        .catch(() => toast.error('Failed to load relationship phases'));
     }
   }, [activeTab, phases.length]);
 

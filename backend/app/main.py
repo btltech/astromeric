@@ -187,11 +187,13 @@ async def global_exception_handler(request: Request, exc: Exception):
     """Catch-all exception handler with detailed logging."""
     import traceback
     error_detail = f"{type(exc).__name__}: {str(exc)}"
-    print(f"ERROR [{request.method} {request.url.path}]: {error_detail}")
-    traceback.print_exc()
+    # Log full error details server-side only
+    logger.error(f"[{request.method} {request.url.path}]: {error_detail}")
+    logger.debug(traceback.format_exc())
+    # Return generic message to client (don't leak internal details)
     return JSONResponse(
         status_code=500,
-        content={"error": error_detail, "path": str(request.url.path)},
+        content={"error": "An internal error occurred. Please try again later."},
     )
 
 
@@ -326,7 +328,7 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
     return {
         "access_token": access_token,
         "token_type": "bearer",
-        "user": {"id": user.id, "email": user.email},
+        "user": {"id": user.id, "email": user.email, "is_paid": user.is_paid},
     }
 
 
@@ -349,21 +351,31 @@ def login(user_data: UserLogin, db: Session = Depends(get_db)):
     return {
         "access_token": access_token,
         "token_type": "bearer",
-        "user": {"id": user.id, "email": user.email},
+        "user": {"id": user.id, "email": user.email, "is_paid": user.is_paid},
     }
 
 
 @api.get("/auth/me")
 def get_me(current_user: User = Depends(get_current_user)):
     """Get current user info."""
-    return {"id": current_user.id, "email": current_user.email}
+    return {"id": current_user.id, "email": current_user.email, "is_paid": current_user.is_paid}
 
 
 # ========== AI ENDPOINTS ==========
 
 
 @api.post("/ai/explain", response_model=AIExplainResponse)
-def explain_reading(payload: AIExplainRequest):
+def explain_reading(
+    payload: AIExplainRequest,
+    current_user: User = Depends(get_current_user),
+):
+    """Explain reading with AI - requires paid subscription."""
+    if not current_user.is_paid:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="AI insights require a premium subscription. Upgrade to unlock this feature.",
+        )
+    
     sections = [section.model_dump() for section in payload.sections]
     summary = explain_with_gemini(
         payload.scope,
@@ -1734,22 +1746,29 @@ class CosmicGuideRequest(BaseModel):
 @api.post("/cosmic-guide/chat")
 async def chat_with_guide(req: CosmicGuideRequest):
     """Chat with the AI Cosmic Guide for mystical wisdom."""
-    from .engine.cosmic_guide import chat_with_cosmic_guide
+    from .engine.cosmic_guide import ask_cosmic_guide
     
-    user_context = {}
-    if req.sun_sign:
-        user_context["sun_sign"] = req.sun_sign
-    if req.moon_sign:
-        user_context["moon_sign"] = req.moon_sign
-    if req.rising_sign:
-        user_context["rising_sign"] = req.rising_sign
+    # Build chart-like data from context
+    chart_data = None
+    if req.sun_sign or req.moon_sign:
+        planets = []
+        if req.sun_sign:
+            planets.append({"name": "Sun", "sign": req.sun_sign})
+        if req.moon_sign:
+            planets.append({"name": "Moon", "sign": req.moon_sign})
+        if planets:
+            chart_data = {"planets": planets}
+            if req.rising_sign:
+                chart_data["houses"] = [{"house": 1, "sign": req.rising_sign}]
     
-    response = await chat_with_cosmic_guide(
-        req.message, 
-        user_context if user_context else None,
-        req.history
+    result = await ask_cosmic_guide(
+        question=req.message,
+        chart_data=chart_data,
+        conversation_history=req.history,
     )
-    return {"response": response}
+    
+    # Return full result for debugging, frontend uses 'response' field
+    return result
 
 
 class QuickInsightRequest(BaseModel):
@@ -1916,12 +1935,25 @@ def health():
 
     # Get cache stats
     cache_stats = get_chart_cache().get_stats()
+    
+    # Check Gemini AI status
+    gemini_status = "disabled"
+    gemini_api_key = os.getenv("GEMINI_API_KEY")
+    try:
+        import google.generativeai as genai
+        if gemini_api_key:
+            gemini_status = "configured"
+        else:
+            gemini_status = "no_api_key"
+    except ImportError:
+        gemini_status = "not_installed"
 
     return {
         "status": "ok",
         "ephemeris_path": EPHEMERIS_PATH,
         "flatlib_available": bool(HAS_FLATLIB),
         "redis_status": redis_status,
+        "gemini_status": gemini_status,
         "cache": cache_stats,
         "features": {
             "pdf_export": True,

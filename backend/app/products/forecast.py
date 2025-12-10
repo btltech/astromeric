@@ -268,13 +268,15 @@ def _topic_section(
         relevant = sorted(blocks, key=overview_relevance, reverse=True)
     
     # Select highlights, avoiding already-used sources
+    # Output clean text only (no source prefix for cleaner UX)
     highlights = []
     for b in relevant:
         source = b.get("source", "")
         # Skip if this exact source was already used in a previous section
         if source in used_sources:
             continue
-        highlights.append(f"{source}: {b['text']}")
+        # Clean text only - no technical prefixes
+        highlights.append(b['text'])
         used_sources.add(source)
         if len(highlights) >= 4:
             break
@@ -282,7 +284,7 @@ def _topic_section(
     # If we couldn't find enough unique blocks, allow some overlap
     if len(highlights) < 2:
         for b in relevant[:4]:
-            text = f"{b.get('source', '')}: {b['text']}"
+            text = b['text']
             if text not in highlights:
                 highlights.append(text)
             if len(highlights) >= 4:
@@ -334,8 +336,8 @@ def _numerology_hook(topic: Optional[str], numerology: Dict) -> Optional[str]:
     cycle = numerology.get("cycles", {}).get(target)
     if not cycle:
         return None
-    number = cycle.get("number")
     meaning = cycle.get("meaning")
-    if number is None or not meaning:
+    if not meaning:
         return None
-    return f"Numerology {target.replace('_', ' ')} {number}: {meaning}"
+    # Return just the meaning - clean and concise
+    return meaning

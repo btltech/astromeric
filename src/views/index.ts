@@ -5,4 +5,3 @@ export { LearnView } from './LearnView';
 export { AuthView } from './AuthView';
 export { ChartViewPage } from './ChartViewPage';
 export { CosmicToolsView } from './CosmicToolsView';
-export { LearningView } from './LearningView';

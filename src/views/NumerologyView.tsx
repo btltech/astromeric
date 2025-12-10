@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNumerology, useProfiles } from '../hooks';
 import { useStore } from '../store/useStore';
+import { fetchAiExplanation } from '../api/client';
 
 // Tooltip component for explaining numerology terms
 function Tooltip({ term, children }: { term: string; children: React.ReactNode }) {
@@ -60,8 +61,57 @@ const staggerItem = {
 export function NumerologyView() {
   const { selectedProfile } = useProfiles();
   const { numerologyProfile, fetchNumerologyFromProfile, fetchNumerologyProfile } = useNumerology();
-  const { loading } = useStore();
+  const { loading, user, token } = useStore();
   const lastFetchedId = useRef<number | null>(null);
+  const [aiInsight, setAiInsight] = useState<string | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [showUpgradeMessage, setShowUpgradeMessage] = useState(false);
+
+  const handleAiExplain = async () => {
+    if (!numerologyProfile) return;
+    
+    // Check if user is paid
+    if (!user?.is_paid) {
+      setShowUpgradeMessage(true);
+      return;
+    }
+    
+    setAiLoading(true);
+    try {
+      const payload = {
+        scope: 'numerology',
+        headline: `Life Path ${numerologyProfile.core_numbers.life_path.number} Profile`,
+        theme: numerologyProfile.core_numbers.life_path.meaning,
+        sections: [
+          {
+            title: 'Core Numbers',
+            highlights: [
+              `Life Path ${numerologyProfile.core_numbers.life_path.number}: ${numerologyProfile.core_numbers.life_path.meaning}`,
+              `Expression ${numerologyProfile.core_numbers.expression.number}: ${numerologyProfile.core_numbers.expression.meaning}`,
+              `Soul Urge ${numerologyProfile.core_numbers.soul_urge.number}: ${numerologyProfile.core_numbers.soul_urge.meaning}`,
+              `Personality ${numerologyProfile.core_numbers.personality.number}: ${numerologyProfile.core_numbers.personality.meaning}`,
+            ],
+          },
+          {
+            title: 'Current Cycles',
+            highlights: [
+              `Personal Year ${numerologyProfile.cycles.personal_year.number}: ${numerologyProfile.cycles.personal_year.meaning}`,
+              `Personal Month ${numerologyProfile.cycles.personal_month.number}: ${numerologyProfile.cycles.personal_month.meaning}`,
+              `Personal Day ${numerologyProfile.cycles.personal_day.number}: ${numerologyProfile.cycles.personal_day.meaning}`,
+            ],
+          },
+        ],
+        numerology_summary: `Life Path ${numerologyProfile.core_numbers.life_path.number} with Personal Year ${numerologyProfile.cycles.personal_year.number}`,
+      };
+      const response = await fetchAiExplanation(payload, token ?? undefined);
+      setAiInsight(response.summary);
+    } catch (err) {
+      console.error('AI assist failed', err);
+      setAiInsight('AI assist encountered a hiccup. Please try again soon.');
+    } finally {
+      setAiLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (selectedProfile && !numerologyProfile && lastFetchedId.current !== selectedProfile.id) {
@@ -95,12 +145,13 @@ export function NumerologyView() {
         <p className="loading-text">Loading numerology profile...</p>
       )}
       {numerologyProfile && (
-        <motion.div
-          className="numerology-grid"
-          variants={staggerContainer}
-          initial="initial"
-          animate="animate"
-        >
+        <>
+          <motion.div
+            className="numerology-grid"
+            variants={staggerContainer}
+            initial="initial"
+            animate="animate"
+          >
           <motion.div className="num-card" variants={staggerItem}>
             <h4><Tooltip term="Life Path">Life Path</Tooltip></h4>
             <div className="num-value">{numerologyProfile.core_numbers.life_path.number}</div>
@@ -170,6 +221,42 @@ export function NumerologyView() {
             </motion.div>
           )}
         </motion.div>
+        
+        {aiInsight && (
+          <motion.div 
+            className="tldr-box ai-insight" 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            style={{ marginTop: '1.5rem' }}
+          >
+            {aiInsight}
+          </motion.div>
+        )}
+        
+        {showUpgradeMessage && (
+          <motion.div 
+            className="tldr-box upgrade-message" 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            style={{ marginTop: '1.5rem' }}
+          >
+            ✨ <strong>Premium Feature</strong> — AI insights are available for premium members. 
+            Upgrade to unlock personalized numerology explanations!
+          </motion.div>
+        )}
+        
+        <div className="action-buttons" style={{ marginTop: '1.5rem' }}>
+          <button
+            onClick={handleAiExplain}
+            className="btn-secondary btn-wide"
+            disabled={aiLoading}
+            aria-label="Explain numerology profile with AI"
+            aria-busy={aiLoading}
+          >
+            {aiLoading ? 'Thinking…' : '✨ Explain with AI'}
+          </button>
+        </div>
+        </>
       )}
     </motion.div>
   );

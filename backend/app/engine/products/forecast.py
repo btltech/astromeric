@@ -152,24 +152,30 @@ def _build_topic_section(
 
 
 def _format_factor(factor) -> str:
+    """Format a factor into a concise, readable highlight."""
     kind = factor.context.get("kind")
+    
     if kind in ["transit", "synastry"]:
-        template = ASPECT_TEMPLATES.get(
-            factor.label.split()[1], "A key alignment stirs movement."
-        )
-        a, _, b = factor.label.partition(" ")
-        house_note = ""
-        if factor.meaning and "house" in factor.meaning.tags:
-            house_note = f" in house {factor.context.get('house', '')}"
-        return f"{template.format(a=a, b=b)}{house_note} (orb-weighted strength {factor.score:.2f})."
-    if factor.context.get("kind") == "planet_house":
-        house = factor.label.split()[-1]
-        return f"{factor.meaning.text} ({HOUSE_BLURBS.get(int(house), '')})".strip()
-    if factor.context.get("kind") == "planet_sign":
-        tone = PLANET_TONES.get(factor.label.split()[0], "tone")
-        return f"{factor.meaning.text}—shaping {tone} today."
-    if factor.context.get("kind") == "numerology":
-        return f"{factor.label}: {factor.meaning.text}"
+        template = ASPECT_TEMPLATES.get(factor.label.split()[1], "{a}-{b} alignment.")
+        parts = factor.label.split()
+        a, b = parts[0], parts[-1]
+        return template.format(a=a, b=b)
+    
+    if kind == "planet_house":
+        house = int(factor.label.split()[-1])
+        house_name = HOUSE_BLURBS.get(house, f"house {house}")
+        planet = factor.label.split()[0]
+        tone = PLANET_TONES.get(planet, "energy")
+        return f"{tone.title()} focused on {house_name.lower()}."
+    
+    if kind == "planet_sign":
+        return factor.meaning.text if factor.meaning else factor.label
+    
+    if kind == "numerology":
+        # Extract just the number part for concise display
+        label_parts = factor.label.split(":")
+        return factor.meaning.text if factor.meaning else factor.label
+    
     return factor.meaning.text if factor.meaning else factor.label
 
 

@@ -3,110 +3,72 @@
 from datetime import datetime
 from typing import Dict, List
 
-# Pythagorean vowels for Soul Urge
-VOWELS = set("aeiou")
-
-LETTER_VALUES = {
-    "a": 1,
-    "b": 2,
-    "c": 3,
-    "d": 4,
-    "e": 5,
-    "f": 6,
-    "g": 7,
-    "h": 8,
-    "i": 9,
-    "j": 1,
-    "k": 2,
-    "l": 3,
-    "m": 4,
-    "n": 5,
-    "o": 6,
-    "p": 7,
-    "q": 8,
-    "r": 9,
-    "s": 1,
-    "t": 2,
-    "u": 3,
-    "v": 4,
-    "w": 5,
-    "x": 6,
-    "y": 7,
-    "z": 8,
-}
+from .constants import LETTER_VALUES, VOWELS, reduce_number
 
 NUMBER_MEANINGS = {
     1: {
         "keyword": "Leadership",
-        "description": "Independent, pioneering, ambitious. Natural leader who forges their own path.",
+        "description": "Independent pioneer. Forge your own path.",
     },
     2: {
         "keyword": "Cooperation",
-        "description": "Diplomatic, sensitive, partnership-oriented. Excels in collaboration.",
+        "description": "Diplomatic partner. Excel through collaboration.",
     },
     3: {
         "keyword": "Expression",
-        "description": "Creative, communicative, joyful. Natural entertainer and artist.",
+        "description": "Creative communicator. Let your artistry shine.",
     },
     4: {
         "keyword": "Foundation",
-        "description": "Practical, organized, disciplined. Builder of stable structures.",
+        "description": "Practical builder. Create lasting structures.",
     },
     5: {
         "keyword": "Freedom",
-        "description": "Adventurous, versatile, dynamic. Thrives on change and variety.",
+        "description": "Adventurous spirit. Embrace change and variety.",
     },
     6: {
         "keyword": "Responsibility",
-        "description": "Nurturing, harmonious, service-oriented. Natural caretaker.",
+        "description": "Nurturing caretaker. Serve through love.",
     },
     7: {
         "keyword": "Analysis",
-        "description": "Introspective, spiritual, analytical. Seeker of deeper truths.",
+        "description": "Spiritual seeker. Trust deeper truths.",
     },
     8: {
         "keyword": "Power",
-        "description": "Ambitious, authoritative, material success. Business-minded achiever.",
+        "description": "Ambitious achiever. Master material success.",
     },
     9: {
         "keyword": "Humanitarianism",
-        "description": "Compassionate, idealistic, global vision. Universal love and service.",
+        "description": "Compassionate visionary. Serve the greater good.",
     },
     11: {
         "keyword": "Illumination",
-        "description": "Intuitive, inspiring, visionary. Master of spiritual insight.",
+        "description": "Intuitive visionary. Trust your inner light.",
     },
     22: {
         "keyword": "Master Builder",
-        "description": "Powerful manifestor, practical visionary. Builds lasting legacies.",
+        "description": "Powerful manifestor. Build a lasting legacy.",
     },
     33: {
         "keyword": "Master Teacher",
-        "description": "Selfless healer, spiritual guide. Uplifts humanity through love.",
+        "description": "Spiritual healer. Uplift through love.",
     },
 }
-
-
-def reduce_to_single(num: int, keep_master: bool = True) -> int:
-    """Reduce number to single digit, optionally preserving master numbers."""
-    master = {11, 22, 33} if keep_master else set()
-    while num > 9 and num not in master:
-        num = sum(int(d) for d in str(num))
-    return num
 
 
 def calculate_expression_number(full_name: str) -> int:
     """Expression/Destiny Number: Sum of all letters in birth name."""
     name = full_name.lower().replace(" ", "").replace("-", "")
     total = sum(LETTER_VALUES.get(c, 0) for c in name if c.isalpha())
-    return reduce_to_single(total)
+    return reduce_number(total)
 
 
 def calculate_soul_urge_number(full_name: str) -> int:
     """Soul Urge/Heart's Desire: Sum of vowels only."""
     name = full_name.lower()
     total = sum(LETTER_VALUES.get(c, 0) for c in name if c in VOWELS)
-    return reduce_to_single(total)
+    return reduce_number(total)
 
 
 def calculate_personality_number(full_name: str) -> int:
@@ -115,12 +77,12 @@ def calculate_personality_number(full_name: str) -> int:
     total = sum(
         LETTER_VALUES.get(c, 0) for c in name if c.isalpha() and c not in VOWELS
     )
-    return reduce_to_single(total)
+    return reduce_number(total)
 
 
 def calculate_maturity_number(life_path: int, expression: int) -> int:
     """Maturity Number: Life Path + Expression, reduced."""
-    return reduce_to_single(life_path + expression)
+    return reduce_number(life_path + expression)
 
 
 def calculate_personal_year(dob: str, year: int = None) -> int:
@@ -129,17 +91,17 @@ def calculate_personal_year(dob: str, year: int = None) -> int:
     month, day = int(parts[1]), int(parts[2])
     if year is None:
         year = datetime.now().year
-    return reduce_to_single(month + day + year, keep_master=False)
+    return reduce_number(month + day + year, keep_master=False)
 
 
 def calculate_personal_month(personal_year: int, month: int) -> int:
     """Personal Month: Personal Year + calendar month, reduced."""
-    return reduce_to_single(personal_year + month, keep_master=False)
+    return reduce_number(personal_year + month, keep_master=False)
 
 
 def calculate_personal_day(personal_month: int, day: int) -> int:
     """Personal Day: Personal Month + calendar day, reduced."""
-    return reduce_to_single(personal_month + day, keep_master=False)
+    return reduce_number(personal_month + day, keep_master=False)
 
 
 def calculate_pinnacles(dob: str) -> List[Dict]:
@@ -148,18 +110,18 @@ def calculate_pinnacles(dob: str) -> List[Dict]:
     year, month, day = int(parts[0]), int(parts[1]), int(parts[2])
 
     # Reduce each component
-    month_r = reduce_to_single(month, keep_master=False)
-    day_r = reduce_to_single(day, keep_master=False)
-    year_r = reduce_to_single(year, keep_master=False)
+    month_r = reduce_number(month, keep_master=False)
+    day_r = reduce_number(day, keep_master=False)
+    year_r = reduce_number(year, keep_master=False)
 
     # Life Path for timing
-    life_path = reduce_to_single(month + day + year, keep_master=False)
+    life_path = reduce_number(month + day + year, keep_master=False)
 
     # Pinnacle numbers
-    p1 = reduce_to_single(month_r + day_r)
-    p2 = reduce_to_single(day_r + year_r)
-    p3 = reduce_to_single(p1 + p2)
-    p4 = reduce_to_single(month_r + year_r)
+    p1 = reduce_number(month_r + day_r)
+    p2 = reduce_number(day_r + year_r)
+    p3 = reduce_number(p1 + p2)
+    p4 = reduce_number(month_r + year_r)
 
     # Pinnacle timing (36 - Life Path = end of first pinnacle)
     first_end = 36 - life_path
@@ -198,9 +160,9 @@ def calculate_challenges(dob: str) -> List[Dict]:
     parts = dob.split("-")
     year, month, day = int(parts[0]), int(parts[1]), int(parts[2])
 
-    month_r = reduce_to_single(month, keep_master=False)
-    day_r = reduce_to_single(day, keep_master=False)
-    year_r = reduce_to_single(year, keep_master=False)
+    month_r = reduce_number(month, keep_master=False)
+    day_r = reduce_number(day, keep_master=False)
+    year_r = reduce_number(year, keep_master=False)
 
     c1 = abs(month_r - day_r)
     c2 = abs(day_r - year_r)

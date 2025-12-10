@@ -97,9 +97,14 @@ export function fetchCompatibility(person_a: ProfilePayload, person_b: ProfilePa
   });
 }
 
-export function fetchAiExplanation(payload: AiExplainPayload) {
+export function fetchAiExplanation(payload: AiExplainPayload, token?: string) {
+  const headers: Record<string, string> = {};
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
   return apiFetch<AiExplainResponse>('/ai/explain', {
     method: 'POST',
+    headers,
     body: JSON.stringify(payload),
   });
 }

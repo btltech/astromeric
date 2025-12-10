@@ -66,7 +66,8 @@ def _split_synastry_blocks(blocks):
     strengths = []
     challenges = []
     for block in blocks:
-        entry = f"{block['source']}: {block['text']}"
+        # Clean text only - no technical source prefixes
+        entry = block['text']
         tags = block.get("tags", [])
         if "challenge" in tags or block["weights"].get("challenge", 0) > 0.5:
             challenges.append(entry)

@@ -143,11 +143,91 @@ body {
   text-align: center;
   color: var(--primary);
   font-weight: 300;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Cosmic Stones Section */
+.cosmic-stones-section {
+  background: rgba(136, 192, 208, 0.08);
+  border-radius: 12px;
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid rgba(136, 192, 208, 0.15);
+}
+
+.cosmic-stones-title {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 1rem 0;
+  color: var(--text);
+  text-align: center;
+}
+
+.stones-grid {
+  display: flex;
+  gap: 1.5rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.stone-category {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.stone-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.stone-list {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.stone-tag {
+  background: rgba(136, 192, 208, 0.15);
+  color: var(--primary);
+  padding: 0.35rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  border: 1px solid rgba(136, 192, 208, 0.25);
+}
+
+.stone-tag.birthstone-tag {
+  background: linear-gradient(135deg, rgba(136, 192, 208, 0.2), rgba(var(--stone-color), 0.15));
+  border-color: var(--stone-color, var(--primary));
+  position: relative;
+}
+
+.stone-tag.birthstone-tag::before {
+  content: '✦';
+  margin-right: 0.35rem;
+  font-size: 0.7rem;
+}
+
+.stone-meaning {
+  font-size: 0.8rem;
+  color: var(--muted);
+  font-style: italic;
 }
 
 .tldr-box.ai-insight {
   background: rgba(136, 192, 208, 0.12);
+}
+
+.tldr-box.upgrade-message {
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.15), rgba(255, 165, 0, 0.1));
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  color: #ffd700;
 }
 
 .action-buttons {
@@ -2408,10 +2488,156 @@ a:focus-visible {
 .cosmic-tools-view .view-title {
   font-size: 1.5rem;
   text-align: center;
-  margin-bottom: 0.5rem;
+  margin-bottom: 1.5rem;
   color: var(--primary);
 }
 
+/* Redesigned accordion-style tools */
+.cosmic-tools-view.redesigned {
+  background: transparent;
+  padding: 0;
+}
+
+.tools-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.tool-card {
+  background: var(--card-bg);
+  border-radius: 12px;
+  border: 1px solid rgba(136, 192, 208, 0.15);
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.tool-card.tool-link-card {
+  text-decoration: none;
+  display: block;
+}
+
+.tool-card.tool-link-card:hover {
+  border-color: var(--primary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(136, 192, 208, 0.15);
+}
+
+.tool-card.expanded {
+  border-color: var(--primary);
+  box-shadow: 0 4px 20px rgba(136, 192, 208, 0.15);
+}
+
+.tool-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 1rem 1.25rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text);
+  transition: background 0.2s;
+}
+
+.tool-card-header:hover {
+  background: rgba(136, 192, 208, 0.05);
+}
+
+.tool-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.tool-icon {
+  font-size: 1.75rem;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(136, 192, 208, 0.1);
+  border-radius: 12px;
+}
+
+.tool-text {
+  text-align: left;
+}
+
+.tool-text h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.tool-text p {
+  margin: 0.25rem 0 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.expand-icon {
+  font-size: 1.5rem;
+  color: var(--primary);
+  font-weight: 300;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(136, 192, 208, 0.1);
+}
+
+.tool-card-content {
+  padding: 0 1.25rem 1.25rem;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.tool-placeholder {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 2rem;
+  margin: 0;
+}
+
+/* Nested card styles */
+.tool-card-content .daily-features-card,
+.tool-card-content .tarot-card-component,
+.tool-card-content .oracle-yes-no,
+.tool-card-content .cosmic-guide-chat {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+  padding: 1rem;
+  border: none;
+}
+
+.tool-card-content .daily-features-card .card-title,
+.tool-card-content .tarot-title,
+.tool-card-content .oracle-title {
+  display: none;
+}
+
+.tool-card-content .tarot-subtitle,
+.tool-card-content .oracle-subtitle {
+  display: none;
+}
+
+/* Old tab styles - kept for backwards compatibility */
 .cosmic-tools-view .view-subtitle {
   text-align: center;
   color: var(--text-muted);
@@ -2488,6 +2714,24 @@ a:focus-visible {
 }
 
 @media (max-width: 600px) {
+  .tool-card-header {
+    padding: 0.875rem 1rem;
+  }
+  
+  .tool-icon {
+    font-size: 1.5rem;
+    width: 40px;
+    height: 40px;
+  }
+  
+  .tool-text h3 {
+    font-size: 1rem;
+  }
+  
+  .tool-text p {
+    font-size: 0.8rem;
+  }
+  
   .tools-tabs {
     -webkit-overflow-scrolling: touch;
   }

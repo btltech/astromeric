@@ -187,6 +187,7 @@ async def ask_cosmic_guide(
         return {
             "response": FALLBACK_RESPONSES.get(topic, FALLBACK_RESPONSES["default"]),
             "provider": "fallback",
+            "reason": "no_api_key" if not api_key else "no_genai_library",
             "topic_detected": topic,
         }
     
@@ -218,12 +219,14 @@ async def ask_cosmic_guide(
         }
         
     except Exception as e:
-        # Fallback on any error
+        # Log and fallback on any error
+        import logging
+        logging.error(f"Cosmic Guide Gemini error: {type(e).__name__}: {e}")
         topic = _detect_topic(question)
         return {
             "response": FALLBACK_RESPONSES.get(topic, FALLBACK_RESPONSES["default"]),
             "provider": "fallback",
-            "error": str(e),
+            "error": f"{type(e).__name__}: {str(e)}",
             "topic_detected": topic,
         }
 

@@ -20,7 +20,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, field_validator
 from sqlalchemy.orm import Session
 
 from .models import SessionLocal, User
@@ -44,6 +44,17 @@ class UserCreate(BaseModel):
     email: EmailStr
     password: str
 
+    @field_validator("password")
+    @classmethod
+    def validate_password(cls, v: str) -> str:
+        if len(v) < 8:
+            raise ValueError("Password must be at least 8 characters long")
+        if not any(c.isdigit() for c in v):
+            raise ValueError("Password must contain at least one number")
+        if not any(c.isalpha() for c in v):
+            raise ValueError("Password must contain at least one letter")
+        return v
+
 
 class UserLogin(BaseModel):
     email: EmailStr
@@ -53,7 +64,7 @@ class UserLogin(BaseModel):
 class Token(BaseModel):
     access_token: str
     token_type: str
-    user: dict
+    user: dict  # {id, email, is_paid}
 
 
 class TokenData(BaseModel):

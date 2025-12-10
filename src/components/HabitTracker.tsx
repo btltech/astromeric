@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { toast } from './Toast';
 import {
   fetchHabitCategories,
   fetchLunarHabitGuidance,
@@ -100,7 +101,7 @@ export function HabitTracker() {
 
       fetchTodayHabitForecast(habits, currentPhase, todayCompletions)
         .then(setForecast)
-        .catch(console.error);
+        .catch(() => toast.error('Failed to load habit forecast'));
     }
   }, [habits, currentPhase, completions, activeTab]);
 

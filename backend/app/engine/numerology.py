@@ -1,34 +1,6 @@
 from typing import Dict
 
-# Pythagorean numerology letter values
-LETTER_VALUES = {
-    "a": 1,
-    "b": 2,
-    "c": 3,
-    "d": 4,
-    "e": 5,
-    "f": 6,
-    "g": 7,
-    "h": 8,
-    "i": 9,
-    "j": 1,
-    "k": 2,
-    "l": 3,
-    "m": 4,
-    "n": 5,
-    "o": 6,
-    "p": 7,
-    "q": 8,
-    "r": 9,
-    "s": 1,
-    "t": 2,
-    "u": 3,
-    "v": 4,
-    "w": 5,
-    "x": 6,
-    "y": 7,
-    "z": 8,
-}
+from .constants import LETTER_VALUES, reduce_number
 
 # Life Path meanings and advice pools
 LIFE_PATH_DATA = {
@@ -88,21 +60,14 @@ def calculate_life_path_number(dob: str) -> int:
     parts = dob.split("-")
     year, month, day = int(parts[0]), int(parts[1]), int(parts[2])
     total = year + month + day
-    return reduce_to_single_digit(total)
+    return reduce_number(total)
 
 
 def calculate_name_number(name: str) -> int:
     """Calculate Name Number using Pythagorean numerology."""
     name = name.lower().replace(" ", "").replace("-", "")
     total = sum(LETTER_VALUES.get(char, 0) for char in name)
-    return reduce_to_single_digit(total)
-
-
-def reduce_to_single_digit(num: int) -> int:
-    """Reduce a number to a single digit, preserving master numbers."""
-    while num > 9 and num not in [11, 22, 33]:
-        num = sum(int(digit) for digit in str(num))
-    return num
+    return reduce_number(total)
 
 
 def get_life_path_data(number: int) -> Dict[str, any]:

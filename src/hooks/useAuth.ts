@@ -11,6 +11,7 @@ interface AuthResponse {
   user: {
     id: string;
     email: string;
+    is_paid: boolean;
   };
 }
 

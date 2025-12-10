@@ -1,6 +1,6 @@
 import os
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import (
     Boolean,
@@ -38,7 +38,8 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    is_paid = Column(Boolean, default=False)  # Premium subscription status
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     # Relationship to profiles
     profiles = relationship("Profile", back_populates="owner")
@@ -55,7 +56,7 @@ class Profile(Base):
     longitude = Column(Float, nullable=True)
     timezone = Column(String, default="UTC")
     house_system = Column(String, default="Placidus")
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     # User ownership (optional for guest users)
     user_id = Column(String, ForeignKey("users.id"), nullable=True)
 
@@ -72,7 +73,7 @@ class Reading(Base):
     scope = Column(String, nullable=False)  # daily, weekly, monthly
     date = Column(String, nullable=False)  # ISO date for the reading
     content = Column(Text, nullable=False)  # JSON string
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     feedback = Column(String, nullable=True)  # yes/no/neutral
     journal = Column(Text, nullable=True)
 

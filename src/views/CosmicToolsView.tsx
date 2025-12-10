@@ -1,4 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { DailyFeaturesCard } from '../components/DailyFeaturesCard';
 import { TarotCard } from '../components/TarotCard';
 import { OracleYesNo } from '../components/OracleYesNo';
@@ -11,107 +12,131 @@ interface Props {
   risingSign?: string;
 }
 
-type Tab = 'daily' | 'tarot' | 'oracle' | 'guide';
+type ExpandedTool = 'daily' | 'tarot' | 'oracle' | 'guide' | null;
 
 export function CosmicToolsView({ birthDate, sunSign, moonSign, risingSign }: Props) {
-  const [activeTab, setActiveTab] = useState<Tab>('daily');
-  const tabRefs = useRef<{ [key: string]: HTMLButtonElement | null }>({});
+  const [expandedTool, setExpandedTool] = useState<ExpandedTool>(null);
 
-  const tabs: { id: Tab; label: string; icon: string }[] = [
-    { id: 'daily', label: 'Daily Cosmic', icon: '✨' },
-    { id: 'tarot', label: 'Tarot', icon: '🃏' },
-    { id: 'oracle', label: 'Oracle', icon: '🔮' },
-    { id: 'guide', label: 'Cosmic Guide', icon: '💫' },
-  ];
-
-  const handleKeyDown = (e: React.KeyboardEvent, currentIndex: number) => {
-    let newIndex = currentIndex;
-    if (e.key === 'ArrowRight') {
-      newIndex = (currentIndex + 1) % tabs.length;
-    } else if (e.key === 'ArrowLeft') {
-      newIndex = (currentIndex - 1 + tabs.length) % tabs.length;
-    } else {
-      return;
-    }
-    const newTab = tabs[newIndex];
-    setActiveTab(newTab.id);
-    tabRefs.current[newTab.id]?.focus();
+  const toggleTool = (tool: ExpandedTool) => {
+    setExpandedTool(expandedTool === tool ? null : tool);
   };
 
   return (
-    <div className="cosmic-tools-view">
-      <h2 className="view-title">🌟 Cosmic Tools & Entertainment</h2>
-      <p className="view-subtitle">
-        Explore mystical insights, draw tarot cards, consult the oracle, or chat with your AI guide
-      </p>
+    <div className="cosmic-tools-view redesigned">
+      <h2 className="view-title">🌟 Cosmic Tools</h2>
+      
+      <div className="tools-grid">
+        {/* Compatibility Link Card */}
+        <Link to="/compatibility" className="tool-card tool-link-card">
+          <div className="tool-card-header" style={{ cursor: 'pointer' }}>
+            <div className="tool-info">
+              <span className="tool-icon">💕</span>
+              <div className="tool-text">
+                <h3>Compatibility</h3>
+                <p>Check your cosmic match</p>
+              </div>
+            </div>
+            <span className="expand-icon">→</span>
+          </div>
+        </Link>
 
-      <div className="tools-tabs" role="tablist" aria-label="Cosmic tools">
-        {tabs.map((tab, index) => (
-          <button
-            key={tab.id}
-            ref={(el) => { tabRefs.current[tab.id] = el; }}
-            role="tab"
-            aria-selected={activeTab === tab.id}
-            aria-controls={`${tab.id}-panel`}
-            id={`${tab.id}-tab`}
-            tabIndex={activeTab === tab.id ? 0 : -1}
-            className={`tab-button ${activeTab === tab.id ? 'active' : ''}`}
-            onClick={() => setActiveTab(tab.id)}
-            onKeyDown={(e) => handleKeyDown(e, index)}
+        {/* Daily Cosmic Card */}
+        <div className={`tool-card ${expandedTool === 'daily' ? 'expanded' : ''}`}>
+          <button 
+            className="tool-card-header"
+            onClick={() => toggleTool('daily')}
+            aria-expanded={expandedTool === 'daily'}
           >
-            <span className="tab-icon" aria-hidden="true">{tab.icon}</span>
-            <span className="tab-label">{tab.label}</span>
+            <div className="tool-info">
+              <span className="tool-icon">✨</span>
+              <div className="tool-text">
+                <h3>Daily Cosmic</h3>
+                <p>Lucky numbers, colors & mood</p>
+              </div>
+            </div>
+            <span className="expand-icon">{expandedTool === 'daily' ? '−' : '+'}</span>
           </button>
-        ))}
-      </div>
-
-      <div className="tools-content">
-        <div
-          role="tabpanel"
-          id="daily-panel"
-          aria-labelledby="daily-tab"
-          hidden={activeTab !== 'daily'}
-        >
-          {activeTab === 'daily' && birthDate && (
-            <DailyFeaturesCard birthDate={birthDate} sunSign={sunSign} />
-          )}
-          {activeTab === 'daily' && !birthDate && (
-            <div className="placeholder-message">
-              <p>Enter your birth date in your Reading to unlock Daily Cosmic features</p>
+          {expandedTool === 'daily' && (
+            <div className="tool-card-content">
+              {birthDate ? (
+                <DailyFeaturesCard birthDate={birthDate} sunSign={sunSign} />
+              ) : (
+                <p className="tool-placeholder">Enter your birth date in Reading to unlock</p>
+              )}
             </div>
           )}
         </div>
 
-        <div
-          role="tabpanel"
-          id="tarot-panel"
-          aria-labelledby="tarot-tab"
-          hidden={activeTab !== 'tarot'}
-        >
-          {activeTab === 'tarot' && <TarotCard />}
+        {/* Tarot Card */}
+        <div className={`tool-card ${expandedTool === 'tarot' ? 'expanded' : ''}`}>
+          <button 
+            className="tool-card-header"
+            onClick={() => toggleTool('tarot')}
+            aria-expanded={expandedTool === 'tarot'}
+          >
+            <div className="tool-info">
+              <span className="tool-icon">🃏</span>
+              <div className="tool-text">
+                <h3>Tarot Draw</h3>
+                <p>Draw a card for guidance</p>
+              </div>
+            </div>
+            <span className="expand-icon">{expandedTool === 'tarot' ? '−' : '+'}</span>
+          </button>
+          {expandedTool === 'tarot' && (
+            <div className="tool-card-content">
+              <TarotCard />
+            </div>
+          )}
         </div>
 
-        <div
-          role="tabpanel"
-          id="oracle-panel"
-          aria-labelledby="oracle-tab"
-          hidden={activeTab !== 'oracle'}
-        >
-          {activeTab === 'oracle' && <OracleYesNo birthDate={birthDate} />}
+        {/* Oracle Card */}
+        <div className={`tool-card ${expandedTool === 'oracle' ? 'expanded' : ''}`}>
+          <button 
+            className="tool-card-header"
+            onClick={() => toggleTool('oracle')}
+            aria-expanded={expandedTool === 'oracle'}
+          >
+            <div className="tool-info">
+              <span className="tool-icon">🔮</span>
+              <div className="tool-text">
+                <h3>Yes/No Oracle</h3>
+                <p>Ask a cosmic question</p>
+              </div>
+            </div>
+            <span className="expand-icon">{expandedTool === 'oracle' ? '−' : '+'}</span>
+          </button>
+          {expandedTool === 'oracle' && (
+            <div className="tool-card-content">
+              <OracleYesNo birthDate={birthDate} />
+            </div>
+          )}
         </div>
 
-        <div
-          role="tabpanel"
-          id="guide-panel"
-          aria-labelledby="guide-tab"
-          hidden={activeTab !== 'guide'}
-        >
-          {activeTab === 'guide' && (
-            <CosmicGuideChat
-              sunSign={sunSign}
-              moonSign={moonSign}
-              risingSign={risingSign}
-            />
+        {/* AI Guide Card */}
+        <div className={`tool-card ${expandedTool === 'guide' ? 'expanded' : ''}`}>
+          <button 
+            className="tool-card-header"
+            onClick={() => toggleTool('guide')}
+            aria-expanded={expandedTool === 'guide'}
+          >
+            <div className="tool-info">
+              <span className="tool-icon">💫</span>
+              <div className="tool-text">
+                <h3>AI Cosmic Guide</h3>
+                <p>Chat with your AI advisor</p>
+              </div>
+            </div>
+            <span className="expand-icon">{expandedTool === 'guide' ? '−' : '+'}</span>
+          </button>
+          {expandedTool === 'guide' && (
+            <div className="tool-card-content">
+              <CosmicGuideChat
+                sunSign={sunSign}
+                moonSign={moonSign}
+                risingSign={risingSign}
+              />
+            </div>
           )}
         </div>
       </div>

@@ -4,11 +4,44 @@ import { SectionGrid } from './SectionGrid';
 import { DailyGuidance } from './DailyGuidance';
 import { fetchAiExplanation } from '../api/client';
 import { downloadReadingPdf } from '../utils/pdfExport';
+import { useStore } from '../store/useStore';
 
 interface Props {
   data: PredictionData;
   onReset: () => void;
 }
+
+// Zodiac crystals by sun sign
+const ZODIAC_STONES: Record<string, { stones: string[]; meaning: string }> = {
+  Aries: { stones: ['Carnelian', 'Red Jasper', 'Diamond'], meaning: 'Courage & vitality' },
+  Taurus: { stones: ['Rose Quartz', 'Emerald', 'Lapis Lazuli'], meaning: 'Love & abundance' },
+  Gemini: { stones: ['Citrine', 'Tiger\'s Eye', 'Agate'], meaning: 'Communication & clarity' },
+  Cancer: { stones: ['Moonstone', 'Pearl', 'Ruby'], meaning: 'Intuition & protection' },
+  Leo: { stones: ['Sunstone', 'Peridot', 'Amber'], meaning: 'Confidence & creativity' },
+  Virgo: { stones: ['Amazonite', 'Moss Agate', 'Sapphire'], meaning: 'Healing & precision' },
+  Libra: { stones: ['Opal', 'Rose Quartz', 'Tourmaline'], meaning: 'Balance & harmony' },
+  Scorpio: { stones: ['Obsidian', 'Malachite', 'Topaz'], meaning: 'Transformation & power' },
+  Sagittarius: { stones: ['Turquoise', 'Amethyst', 'Tanzanite'], meaning: 'Wisdom & adventure' },
+  Capricorn: { stones: ['Garnet', 'Onyx', 'Black Tourmaline'], meaning: 'Discipline & success' },
+  Aquarius: { stones: ['Aquamarine', 'Labradorite', 'Amethyst'], meaning: 'Innovation & insight' },
+  Pisces: { stones: ['Amethyst', 'Aquamarine', 'Fluorite'], meaning: 'Dreams & intuition' },
+};
+
+// Traditional birthstones by month
+const BIRTHSTONES: Record<number, { stone: string; color: string }> = {
+  1: { stone: 'Garnet', color: '#8B0000' },
+  2: { stone: 'Amethyst', color: '#9966CC' },
+  3: { stone: 'Aquamarine', color: '#7FFFD4' },
+  4: { stone: 'Diamond', color: '#B9F2FF' },
+  5: { stone: 'Emerald', color: '#50C878' },
+  6: { stone: 'Pearl', color: '#FDEEF4' },
+  7: { stone: 'Ruby', color: '#E0115F' },
+  8: { stone: 'Peridot', color: '#E6E200' },
+  9: { stone: 'Sapphire', color: '#0F52BA' },
+  10: { stone: 'Opal', color: '#A8C3BC' },
+  11: { stone: 'Topaz', color: '#FFC87C' },
+  12: { stone: 'Tanzanite', color: '#4D5BA8' },
+};
 
 // RatingBar reserved for future use
 // const RatingBar = ({ value, label }: { value: number; label: string }) => (
@@ -23,15 +56,34 @@ interface Props {
 // );
 
 export function FortuneResult({ data, onReset }: Props) {
+  // Get user and token from store for paid check
+  const { user, token } = useStore();
+  
   // Derive sign from charts if not explicitly provided
   const sunSign = data.sign || data.charts?.natal?.planets?.find((p) => p.name === 'Sun')?.sign;
+
+  // Get birth month for birthstone
+  const birthMonth = data.numerology?.birth_date 
+    ? new Date(data.numerology.birth_date).getMonth() + 1 
+    : null;
+  
+  // Get zodiac stones data
+  const zodiacStones = sunSign ? ZODIAC_STONES[sunSign] : null;
+  const birthstone = birthMonth ? BIRTHSTONES[birthMonth] : null;
 
   // Use theme as headline if summary is missing
   const headline = data.summary?.headline || data.theme;
   const [aiInsight, setAiInsight] = useState<string | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
+  const [showUpgradeMessage, setShowUpgradeMessage] = useState(false);
 
   const handleAiExplain = async () => {
+    // Check if user is paid
+    if (!user?.is_paid) {
+      setShowUpgradeMessage(true);
+      return;
+    }
+    
     setAiLoading(true);
     try {
       const sections =
@@ -46,7 +98,7 @@ export function FortuneResult({ data, onReset }: Props) {
         sections,
         numerology_summary: data.numerology?.cycles?.personal_day?.meaning,
       };
-      const response = await fetchAiExplanation(payload);
+      const response = await fetchAiExplanation(payload, token ?? undefined);
       setAiInsight(response.summary);
     } catch (err) {
       console.error('AI assist failed', err);
@@ -83,6 +135,38 @@ export function FortuneResult({ data, onReset }: Props) {
           {sunSign} • Life Path {data.numerology.core_numbers.life_path.number}
         </h3>
       )}
+      
+      {/* Cosmic Stones Section */}
+      {(zodiacStones || birthstone) && (
+        <div className="cosmic-stones-section">
+          <h4 className="cosmic-stones-title">💎 Your Cosmic Stones</h4>
+          <div className="stones-grid">
+            {zodiacStones && (
+              <div className="stone-category">
+                <span className="stone-label">{sunSign} Crystals</span>
+                <div className="stone-list">
+                  {zodiacStones.stones.map((stone, i) => (
+                    <span key={i} className="stone-tag">{stone}</span>
+                  ))}
+                </div>
+                <span className="stone-meaning">{zodiacStones.meaning}</span>
+              </div>
+            )}
+            {birthstone && (
+              <div className="stone-category birthstone">
+                <span className="stone-label">Birthstone</span>
+                <span 
+                  className="stone-tag birthstone-tag" 
+                  style={{ '--stone-color': birthstone.color } as React.CSSProperties}
+                >
+                  {birthstone.stone}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+      
       {headline && (
         <div className="tldr-box">
           <strong>TL;DR:</strong> {headline}
@@ -91,6 +175,12 @@ export function FortuneResult({ data, onReset }: Props) {
       {aiInsight && (
         <div className="tldr-box ai-insight">
           {aiInsight}
+        </div>
+      )}
+      {showUpgradeMessage && (
+        <div className="tldr-box upgrade-message">
+          ✨ <strong>Premium Feature</strong> — AI insights are available for premium members. 
+          Upgrade to unlock personalized cosmic explanations!
         </div>
       )}
       

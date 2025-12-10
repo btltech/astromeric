@@ -96,16 +96,6 @@ export function DailyFeaturesCard({ birthDate, sunSign }: Props) {
           </div>
         </div>
 
-        {/* Tarot Energy */}
-        <div className="feature-item tarot-energy">
-          <div className="feature-icon">🃏</div>
-          <div className="feature-content">
-            <span className="feature-label">Today's Tarot Energy</span>
-            <span className="feature-value">{features.tarot.card}{features.tarot.reversed ? ' (Reversed)' : ''}</span>
-            <span className="feature-meaning">{features.tarot.message}</span>
-          </div>
-        </div>
-
         {/* Mood Forecast */}
         <div className="feature-item mood-forecast">
           <div className="feature-icon">{features.mood_forecast.emoji}</div>
@@ -129,27 +119,13 @@ export function DailyFeaturesCard({ birthDate, sunSign }: Props) {
 
       {/* Daily Affirmation */}
       <div className="daily-affirmation">
-        <span className="affirmation-label">🌟 Your Daily Affirmation ({features.affirmation.category})</span>
+        <span className="affirmation-label">🌟 Daily Affirmation</span>
         <blockquote className="affirmation-text">
           "{features.affirmation.text}"
         </blockquote>
-        <p className="affirmation-instruction">{features.affirmation.instruction}</p>
       </div>
 
-      {/* Manifestation Focus */}
-      <div className="manifestation-focus">
-        <span className="manifestation-label">🎯 Manifestation Focus: {features.manifestation.focus}</span>
-        <p className="manifestation-text">{features.manifestation.prompt}</p>
-        <p className="manifestation-practice">{features.manifestation.practice}</p>
-      </div>
-
-      {/* Best For Today */}
-      <div className="cosmic-tip">
-        <span className="tip-icon">💫 Best Activities for Today</span>
-        <p className="tip-text">{features.lucky_planet.best_for.join(' • ')}</p>
-      </div>
-
-      {/* Retrograde Alerts */}
+      {/* Retrograde Alerts - only show if there are any */}
       {features.retrograde_alerts.length > 0 && (
         <div className="retrograde-alert">
           <span className="alert-icon">⚠️ Retrograde Alert</span>

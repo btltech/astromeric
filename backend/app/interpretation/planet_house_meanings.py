@@ -1,6 +1,6 @@
 """
 planet_house_meanings.py
-Auto-generate planet-in-house meanings for 10 planets × 12 houses.
+Concise planet-in-house meanings.
 """
 
 from __future__ import annotations
@@ -9,137 +9,127 @@ from typing import Dict
 
 PLANET_THEMES = {
     "Sun": {
-        "verb": "illuminates",
+        "keyword": "Identity",
         "focus": "core purpose",
-        "essence": "You shine brightest and find your identity",
         "weights": {"general": 0.5, "career": 0.4},
     },
     "Moon": {
-        "verb": "finds its nest in",
+        "keyword": "Emotions",
         "focus": "emotional anchor",
-        "essence": "Your soul seeks nourishment and safety",
         "weights": {"emotional": 0.6, "love": 0.3},
     },
     "Mercury": {
-        "verb": "circulates through",
+        "keyword": "Mind",
         "focus": "mental territory",
-        "essence": "Your mind wanders and wonders most keenly",
         "weights": {"general": 0.4, "career": 0.3},
     },
     "Venus": {
-        "verb": "weaves beauty into",
+        "keyword": "Love",
         "focus": "magnetism",
-        "essence": "Love and pleasure arrive most naturally",
         "weights": {"love": 0.7},
     },
     "Mars": {
-        "verb": "charges through",
+        "keyword": "Drive",
         "focus": "warrior energy",
-        "essence": "Your fighting spirit awakens",
         "weights": {"career": 0.5, "general": 0.4},
     },
     "Jupiter": {
-        "verb": "scatters abundance across",
+        "keyword": "Growth",
         "focus": "growth path",
-        "essence": "Fortune tends to multiply",
         "weights": {"spiritual": 0.3, "general": 0.3},
     },
     "Saturn": {
-        "verb": "builds fortresses around",
+        "keyword": "Discipline",
         "focus": "mastery zone",
-        "essence": "Life assigns you homework that ultimately crowns you",
         "weights": {"career": 0.4},
     },
     "Uranus": {
-        "verb": "electrifies",
+        "keyword": "Change",
         "focus": "breakthrough point",
-        "essence": "The unexpected arrives to liberate you",
         "weights": {"general": 0.3},
     },
     "Neptune": {
-        "verb": "dissolves the walls around",
+        "keyword": "Dreams",
         "focus": "dreamscape",
-        "essence": "Boundaries blur and magic seeps through",
         "weights": {"spiritual": 0.4},
     },
     "Pluto": {
-        "verb": "excavates the depths of",
+        "keyword": "Power",
         "focus": "transformation crucible",
-        "essence": "You're called to die and be reborn",
         "weights": {"emotional": 0.4, "career": 0.3},
     },
 }
 
 HOUSE_THEMES = {
     1: {
-        "area": "your identity and the mask you wear",
-        "zone": "the front door of your existence",
+        "area": "self & presence",
+        "action": "Be authentic",
         "tags": ["self", "presence"],
         "weights": {"general": 0.3},
     },
     2: {
-        "area": "your resources, talents, and sense of worth",
-        "zone": "the treasury where you store your gifts",
+        "area": "money & values",
+        "action": "Build resources",
         "tags": ["money", "value"],
         "weights": {"career": 0.3},
     },
     3: {
-        "area": "how you think, speak, and move through your neighborhood",
-        "zone": "the crossroads where ideas meet words",
+        "area": "communication",
+        "action": "Share ideas",
         "tags": ["communication", "learning"],
         "weights": {"general": 0.2},
     },
     4: {
-        "area": "your roots, home, and ancestral inheritance",
-        "zone": "the foundation of your inner castle",
+        "area": "home & roots",
+        "action": "Create security",
         "tags": ["home", "roots"],
         "weights": {"emotional": 0.3},
     },
     5: {
-        "area": "your creative fire, romance, and childlike play",
-        "zone": "the stage where your heart performs",
+        "area": "creativity & romance",
+        "action": "Express yourself",
         "tags": ["love", "creativity"],
         "weights": {"love": 0.3},
     },
     6: {
-        "area": "your daily rituals, service, and bodily temple",
-        "zone": "the workshop where craft meets devotion",
+        "area": "health & work",
+        "action": "Serve with skill",
         "tags": ["health", "service"],
         "weights": {"career": 0.2, "health": 0.4},
     },
     7: {
-        "area": "your mirrors, partnerships, and committed bonds",
-        "zone": "the dance floor where two become we",
+        "area": "partnerships",
+        "action": "Collaborate",
         "tags": ["relationship", "partnership"],
         "weights": {"love": 0.4},
     },
     8: {
-        "area": "the depths you share with others, transformation, and taboo",
-        "zone": "the cave where shadows hold treasure",
+        "area": "transformation",
+        "action": "Embrace depth",
         "tags": ["intimacy", "depth"],
         "weights": {"emotional": 0.3},
     },
     9: {
-        "area": "your philosophy, far horizons, and quest for meaning",
-        "zone": "the mountain where truth becomes visible",
+        "area": "philosophy & travel",
+        "action": "Expand horizons",
         "tags": ["vision", "wisdom"],
         "weights": {"spiritual": 0.3},
     },
     10: {
-        "area": "your calling, public role, and summit ambitions",
-        "zone": "the throne room of your worldly purpose",
+        "area": "career & legacy",
+        "action": "Build your reputation",
         "tags": ["career", "legacy"],
         "weights": {"career": 0.5},
     },
     11: {
-        "area": "your tribes, future visions, and collective dreams",
-        "zone": "the network that amplifies your frequency",
+        "area": "community & goals",
+        "action": "Connect with like minds",
         "tags": ["community", "innovation"],
         "weights": {"general": 0.2},
     },
     12: {
-        "area": "the unseen, your solitude, and spiritual undercurrents",
-        "zone": "the sanctuary behind the veil",
+        "area": "spirituality & solitude",
+        "action": "Seek inner wisdom",
         "tags": ["inner", "transcendence"],
         "weights": {"spiritual": 0.3, "emotional": 0.2},
     },
@@ -157,7 +147,7 @@ PLANET_HOUSE_MEANINGS: Dict[str, Dict[int, Dict]] = {}
 for planet, pdata in PLANET_THEMES.items():
     PLANET_HOUSE_MEANINGS[planet] = {}
     for house, hdata in HOUSE_THEMES.items():
-        text = f"{planet} {pdata['verb']} {hdata['area']}—{pdata['essence']} in {hdata['zone']}."
+        text = f"{pdata['keyword']} focused on {hdata['area']}. {hdata['action']}."
         tags = [pdata["focus"], *hdata["tags"]]
         weights = _merge_weights(pdata["weights"], hdata["weights"])
         PLANET_HOUSE_MEANINGS[planet][house] = {

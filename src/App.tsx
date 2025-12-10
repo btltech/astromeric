@@ -2,16 +2,6 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, NavLink, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CosmicBackground } from './components/CosmicBackground';
-import {
-  // ReadingView,
-  // NumerologyView,
-  // CompatibilityView,
-  // LearnView,
-  // AuthView,
-  // ChartViewPage,
-  // CosmicToolsView,
-  // LearningView,
-} from './views';
 import { useProfiles, useAuth } from './hooks';
 import { useStore } from './store/useStore';
 import { ToastContainer, useToasts } from './components/Toast';
@@ -26,7 +16,6 @@ const LearnView = React.lazy(() => import('./views/LearnView').then(m => ({ defa
 const AuthView = React.lazy(() => import('./views/AuthView').then(m => ({ default: m.AuthView })));
 const ChartViewPage = React.lazy(() => import('./views/ChartViewPage').then(m => ({ default: m.ChartViewPage })));
 const CosmicToolsView = React.lazy(() => import('./views/CosmicToolsView').then(m => ({ default: m.CosmicToolsView })));
-const LearningView = React.lazy(() => import('./views/LearningView').then(m => ({ default: m.LearningView })));
 // styles.css is imported at the root level (index.tsx)
 
 function NavBar() {
@@ -36,9 +25,11 @@ function NavBar() {
 
   return (
     <header>
-      <h1 className="logo">
-        ASTRO<span>NUMEROLOGY</span>
-      </h1>
+      <NavLink to="/" className="logo-link">
+        <h1 className="logo">
+          ASTRO<span>NUMERIC</span>
+        </h1>
+      </NavLink>
 
       {isAuthenticated && user && (
         <div className="user-bar">
@@ -66,42 +57,28 @@ function NavBar() {
 
       <nav className={`main-nav ${isOpen ? 'open' : ''}`} role="navigation" aria-label="Main navigation">
         <NavLink to="/" className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`} onClick={() => setIsOpen(false)}>
-          📖 Reading
+          ✨ Reading
         </NavLink>
         <NavLink
           to="/numerology"
           className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}
           onClick={() => setIsOpen(false)}
         >
-          🔢 Numerology
-        </NavLink>
-        <NavLink
-          to="/compatibility"
-          className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}
-          onClick={() => setIsOpen(false)}
-        >
-          💕 Compatibility
-        </NavLink>
-        <NavLink
-          to="/chart"
-          className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}
-          onClick={() => setIsOpen(false)}
-        >
-          🔭 Chart
+          🔢 Numbers
         </NavLink>
         <NavLink
           to="/tools"
           className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}
           onClick={() => setIsOpen(false)}
         >
-          ✨ Tools
+          🔮 Tools
         </NavLink>
         <NavLink to="/learn" className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`} onClick={() => setIsOpen(false)}>
           📚 Learn
         </NavLink>
         {!isAuthenticated && (
-          <NavLink to="/auth" className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`} onClick={() => setIsOpen(false)}>
-            🔑 Sign In
+          <NavLink to="/auth" className={({ isActive }) => `nav-btn nav-btn-secondary ${isActive ? 'active' : ''}`} onClick={() => setIsOpen(false)}>
+            Sign In
           </NavLink>
         )}
       </nav>
@@ -178,26 +155,6 @@ function LoadingOverlay({ forceVisible = false }: { forceVisible?: boolean }) {
   );
 }
 
-function HeroBanner() {
-  const location = useLocation();
-  if (location.pathname !== '/') return null;
-  return (
-    <section className="hero">
-      <div className="hero-copy">
-        <p className="eyebrow">Astrology × Numerology</p>
-        <h2>Personalized guidance that actually feels personal.</h2>
-        <p className="lede">
-          Real ephemeris data, poetic interpretations, and clear actions for love, career, and wellbeing—beautiful on any device.
-        </p>
-        <div className="hero-actions">
-          <NavLink to="/" className="btn-primary btn-cta">Start your reading</NavLink>
-          <NavLink to="/learn" className="btn-secondary">Explore the library</NavLink>
-        </div>
-      </div>
-    </section>
-  );
-}
-
 function ErrorBanner() {
   const { error, setError } = useStore();
 
@@ -244,7 +201,6 @@ function Layout() {
 
       <div className="content-wrapper">
         <NavBar />
-        <HeroBanner />
         <ErrorBanner />
         <main id="main-content" tabIndex={-1}>
           <AnimatedRoutes />
