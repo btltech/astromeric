@@ -101,5 +101,15 @@ class Preference(Base):
     profile = relationship("Profile", back_populates="preferences")
 
 
+class SectionFeedback(Base):
+    __tablename__ = "section_feedback"
+    id = Column(Integer, primary_key=True, index=True)
+    profile_id = Column(Integer, ForeignKey("profiles.id"), nullable=True)
+    scope = Column(String, nullable=False)
+    section = Column(String, nullable=False)
+    vote = Column(String, nullable=False)  # "up" or "down"
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+
 # Create tables
 Base.metadata.create_all(bind=engine)

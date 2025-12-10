@@ -73,12 +73,14 @@ export function HabitTracker() {
         }
 
         // Load demo habits from localStorage
-        const savedHabits = localStorage.getItem('astromeric_habits');
+        const savedHabits = localStorage.getItem('astromeric_habits')
+          || localStorage.getItem('astronumeric_habits');
         if (savedHabits) {
           setHabits(JSON.parse(savedHabits));
         }
 
-        const savedCompletions = localStorage.getItem('astromeric_completions');
+        const savedCompletions = localStorage.getItem('astromeric_completions')
+          || localStorage.getItem('astronumeric_completions');
         if (savedCompletions) {
           setCompletions(JSON.parse(savedCompletions));
         }

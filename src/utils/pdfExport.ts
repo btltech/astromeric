@@ -50,7 +50,7 @@ export function downloadReadingPdf(data: PredictionData): void {
   const addPageHeader = () => {
     doc.setFontSize(10);
     doc.setTextColor(...COLORS.muted);
-    doc.text('Astromeric Premium Reading', margin, 15);
+    doc.text('Astronumeric Premium Reading', margin, 15);
     doc.setDrawColor(...COLORS.primary);
     doc.line(margin, 18, pageWidth - margin, 18);
     y = 30;
@@ -61,7 +61,7 @@ export function downloadReadingPdf(data: PredictionData): void {
     doc.setFontSize(8);
     doc.setTextColor(128, 128, 128);
     doc.text(`Page ${currentPage}`, margin, pageHeight - 10);
-    doc.text('Astromeric • Cosmic Wisdom', pageWidth / 2, pageHeight - 10, { align: 'center' });
+    doc.text('Astronumeric • Cosmic Wisdom', pageWidth / 2, pageHeight - 10, { align: 'center' });
     doc.text(new Date().toLocaleDateString(), pageWidth - margin, pageHeight - 10, { align: 'right' });
   };
 
@@ -179,7 +179,7 @@ export function downloadReadingPdf(data: PredictionData): void {
   doc.setFontSize(28);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(...COLORS.primary);
-  doc.text('ASTROMERIC', pageWidth / 2, 25, { align: 'center' });
+  doc.text('ASTRONUMERIC', pageWidth / 2, 25, { align: 'center' });
   
   doc.setFontSize(14);
   doc.setFont('helvetica', 'normal');
@@ -405,6 +405,6 @@ export function downloadReadingPdf(data: PredictionData): void {
   addFooter();
 
   // Download
-  const fileName = `astromeric-premium-${data.scope}-${new Date().toISOString().split('T')[0]}.pdf`;
+  const fileName = `astronumeric-premium-${data.scope}-${new Date().toISOString().split('T')[0]}.pdf`;
   doc.save(fileName);
 }

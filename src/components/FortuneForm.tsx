@@ -109,18 +109,20 @@ export function FortuneForm({ onSubmit, isLoading }: Props) {
             id="saveProfile"
             checked={formData.saveProfile || false}
             onChange={(e) => setFormData({ ...formData, saveProfile: e.target.checked })}
-            style={{ width: 'auto', margin: 0 }}
+            className="save-checkbox"
           />
           <label htmlFor="saveProfile" style={{ margin: 0, cursor: 'pointer' }}>
             Save my profile for future readings
           </label>
         </div>
-        <p className="privacy-note">
-          Your data is only used to generate your reading. Check the box above to save your profile for future visits.
-        </p>
-        <button type="submit" className="btn-primary" disabled={isLoading}>
-          {isLoading ? 'Reading the Stars...' : "Get Today's Prediction"}
-        </button>
+        <div className="form-footer">
+          <p className="privacy-note">
+            Used only to generate your reading — check the box to save for future visits.
+          </p>
+          <button type="submit" className="btn-primary" disabled={isLoading}>
+            {isLoading ? 'Reading the Stars...' : "Get Today's Prediction"}
+          </button>
+        </div>
       </form>
     </div>
   );

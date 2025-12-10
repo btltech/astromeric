@@ -26,9 +26,9 @@ function NavBar() {
   return (
     <header>
       <NavLink to="/" className="logo-link">
-        <h1 className="logo">
-          ASTRO<span>NUMERIC</span>
-        </h1>
+        <div className="logo" aria-label="Astromeric home">
+          ASTRO<span>MERIC</span>
+        </div>
       </NavLink>
 
       {isAuthenticated && user && (

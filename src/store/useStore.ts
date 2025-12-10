@@ -52,6 +52,16 @@ interface AppState {
   setError: (error: string) => void;
   setShowCreateForm: (show: boolean) => void;
 
+  // Reminders
+  dailyReminderEnabled: boolean;
+  setDailyReminder: (enabled: boolean) => void;
+  reminderCadence: 'daily' | 'weekdays' | 'weekly';
+  setReminderCadence: (cadence: 'daily' | 'weekdays' | 'weekly') => void;
+
+  // Cloud history opt-in
+  allowCloudHistory: boolean;
+  setAllowCloudHistory: (allow: boolean) => void;
+
   // Auth (new)
   token: string | null;
   user: { id: string; email: string; is_paid: boolean } | null;
@@ -101,6 +111,16 @@ export const useStore = create<AppState>()(
       setError: (error) => set({ error }),
       setShowCreateForm: (show) => set({ showCreateForm: show }),
 
+      // Reminders
+      dailyReminderEnabled: false,
+      setDailyReminder: (enabled) => set({ dailyReminderEnabled: enabled }),
+      reminderCadence: 'daily',
+      setReminderCadence: (cadence) => set({ reminderCadence: cadence }),
+
+      // Cloud history opt-in
+      allowCloudHistory: false,
+      setAllowCloudHistory: (allow) => set({ allowCloudHistory: allow }),
+
       // Auth
       token: null,
       user: null,
@@ -114,6 +134,9 @@ export const useStore = create<AppState>()(
         selectedScope: state.selectedScope,
         token: state.token,
         user: state.user,
+        dailyReminderEnabled: state.dailyReminderEnabled,
+        reminderCadence: state.reminderCadence,
+        allowCloudHistory: state.allowCloudHistory,
       }),
     }
   )

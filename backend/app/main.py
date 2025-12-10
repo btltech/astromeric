@@ -116,6 +116,7 @@ from .engine.habit_tracker import (
 )
 from .models import Profile as DBProfile
 from .models import Reading as DBReading
+from .models import SectionFeedback
 from .models import SessionLocal, User
 from .numerology_engine import build_numerology
 from .products import build_compatibility, build_forecast, build_natal_profile
@@ -299,6 +300,13 @@ class AIExplainResponse(BaseModel):
     provider: str
 
 
+class SectionFeedbackRequest(BaseModel):
+    scope: str
+    section: str
+    vote: str = Field(..., pattern=r"^(up|down)$")
+    profile_id: Optional[int] = None
+
+
 def get_db():
     db = SessionLocal()
     try:
@@ -448,19 +456,37 @@ def get_profiles(
 def create_profile(
     req: CreateProfileRequest,
     db: Session = Depends(get_db),
-    current_user: Optional[User] = Depends(get_current_user_optional),
+    current_user: User = Depends(get_current_user),
 ):
-    """Create a new profile."""
+    """Create a new profile (auth required)."""
+    # Validate incoming data with existing validators for consistency
+    validated = validate_profile_data(
+        {
+            "name": req.name,
+            "date_of_birth": req.date_of_birth,
+            "time_of_birth": req.time_of_birth,
+            "latitude": req.latitude,
+            "longitude": req.longitude,
+            "timezone": req.timezone,
+            "house_system": req.house_system,
+        }
+    )
+
+    # Lightly validate optional place string to avoid junk input
+    place_of_birth = (req.place_of_birth or "").strip() or None
+    if place_of_birth and len(place_of_birth) > 200:
+        raise HTTPException(status_code=400, detail="Place of birth is too long")
+
     db_profile = DBProfile(
-        name=req.name,
-        date_of_birth=req.date_of_birth,
-        time_of_birth=req.time_of_birth,
-        place_of_birth=req.place_of_birth,
-        latitude=req.latitude,
-        longitude=req.longitude,
-        timezone=req.timezone,
-        house_system=req.house_system,
-        user_id=current_user.id if current_user else None,
+        name=validated["name"],
+        date_of_birth=validated["date_of_birth"],
+        time_of_birth=validated["time_of_birth"],
+        place_of_birth=place_of_birth,
+        latitude=validated["latitude"],
+        longitude=validated["longitude"],
+        timezone=validated["timezone"],
+        house_system=validated["house_system"],
+        user_id=current_user.id,
     )
     db.add(db_profile)
     db.commit()
@@ -491,15 +517,57 @@ def monthly_reading(req: MonthlyRequest):
 
 
 @api.post("/forecast", tags=["Readings"])
-def generic_forecast(req: ForecastRequest, db: Session = Depends(get_db)):
+def generic_forecast(
+    req: ForecastRequest,
+    db: Session = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional),
+):
     """Get a forecast for any scope (daily, weekly, monthly)."""
     if req.profile:
         profile = _profile_to_dict(req.profile)
     elif req.profile_id:
-        profile = _profile_from_id(req.profile_id, db)
+        # Require authentication when using a stored profile and verify ownership
+        if not current_user:
+            raise HTTPException(status_code=401, detail="Authentication required")
+        profile_obj = db.query(DBProfile).filter(DBProfile.id == req.profile_id).first()
+        if not profile_obj:
+            raise HTTPException(status_code=404, detail="Profile not found")
+        if profile_obj.user_id != current_user.id:
+            raise HTTPException(status_code=403, detail="Not authorized to access this profile")
+        profile = _db_profile_to_dict(profile_obj)
     else:
         raise HTTPException(status_code=400, detail="Profile data is required")
     return build_forecast(profile, scope=req.scope)
+
+
+@api.post("/feedback/section", tags=["Feedback"])
+def submit_section_feedback(
+    req: SectionFeedbackRequest,
+    db: Session = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional),
+):
+    """Capture thumbs up/down for a reading section. Requires auth when tied to a saved profile."""
+    profile_id: Optional[int] = None
+    if req.profile_id is not None:
+        if not current_user:
+            raise HTTPException(status_code=401, detail="Authentication required")
+        profile = db.query(DBProfile).filter(DBProfile.id == req.profile_id).first()
+        if not profile:
+            raise HTTPException(status_code=404, detail="Profile not found")
+        if profile.user_id != current_user.id:
+            raise HTTPException(status_code=403, detail="Not authorized to rate this profile")
+        profile_id = profile.id
+
+    feedback_row = SectionFeedback(
+        profile_id=profile_id,
+        scope=req.scope,
+        section=req.section,
+        vote=req.vote,
+    )
+    db.add(feedback_row)
+    db.commit()
+
+    return {"status": "ok"}
 
 
 @api.post("/natal-profile", tags=["Readings"])
@@ -1430,11 +1498,18 @@ def numerology_from_payload(req: NumerologyRequest):
 
 
 @api.get("/numerology/profile/{profile_id}", tags=["Numerology"])
-def numerology_profile(profile_id: int, db: Session = Depends(get_db)):
-    """Get numerology profile for a saved profile."""
+def numerology_profile(
+    profile_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Get numerology profile for a saved profile (auth + ownership required)."""
     profile = db.query(DBProfile).filter(DBProfile.id == profile_id).first()
     if not profile:
         raise HTTPException(status_code=404, detail="Profile not found")
+    if profile.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to view this profile")
+
     return build_numerology(
         profile.name,
         profile.date_of_birth,
@@ -1583,20 +1658,48 @@ def export_compatibility_pdf(req: CompatibilityRequest):
 
 
 @api.get("/transits/daily/{profile_id}")
-def get_daily_transits(profile_id: int, db: Session = Depends(get_db)):
-    """Get today's transit aspects for a profile."""
+def get_daily_transits(
+    profile_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Get today's transit aspects for a profile (auth + ownership required)."""
     from .transit_alerts import check_daily_transits
 
-    profile = _profile_from_id(profile_id, db)
-    return check_daily_transits(profile)
+    profile = db.query(DBProfile).filter(DBProfile.id == profile_id).first()
+    if not profile:
+        raise HTTPException(status_code=404, detail="Profile not found")
+    if profile.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to view this profile")
+
+    profile_dict = _db_profile_to_dict(profile)
+    return check_daily_transits(profile_dict)
 
 
 @api.post("/transits/daily")
-def get_daily_transits_post(req: NatalRequest):
-    """Get today's transit aspects for a profile payload."""
+def get_daily_transits_post(
+    req: NatalRequest,
+    current_user: Optional[User] = Depends(get_current_user_optional),
+    db: Session = Depends(get_db),
+):
+    """Get today's transit aspects for a profile payload.
+    Requires auth + ownership when a stored profile_id is referenced; allows ad-hoc payloads without auth.
+    """
     from .transit_alerts import check_daily_transits
 
-    profile = _profile_to_dict(req.profile)
+    profile: Dict
+    if hasattr(req.profile, "id") and req.profile.id:  # defensive: if future schema adds id
+        if not current_user:
+            raise HTTPException(status_code=401, detail="Authentication required")
+        profile_obj = db.query(DBProfile).filter(DBProfile.id == req.profile.id).first()
+        if not profile_obj:
+            raise HTTPException(status_code=404, detail="Profile not found")
+        if profile_obj.user_id != current_user.id:
+            raise HTTPException(status_code=403, detail="Not authorized to view this profile")
+        profile = _db_profile_to_dict(profile_obj)
+    else:
+        profile = _profile_to_dict(req.profile)
+
     return check_daily_transits(profile)
 
 
@@ -1607,9 +1710,9 @@ def subscribe_transit_alerts(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Subscribe to daily transit alert emails for a profile."""
-    # In a full implementation, this would store the subscription
-    # For now, just validate and return success
+    """Subscribe to daily transit alert emails for a profile.
+    Currently stubbed: validates ownership and returns a not-implemented notice.
+    """
     profile = db.query(DBProfile).filter(DBProfile.id == profile_id).first()
     if not profile:
         raise HTTPException(status_code=404, detail="Profile not found")
@@ -1617,13 +1720,10 @@ def subscribe_transit_alerts(
     if profile.user_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not your profile")
 
-    # TODO: Store subscription in database
-    return {
-        "status": "subscribed",
-        "profile_id": profile_id,
-        "email": email,
-        "message": "You will receive daily transit alerts at this email.",
-    }
+    raise HTTPException(
+        status_code=status.HTTP_501_NOT_IMPLEMENTED,
+        detail="Transit alert subscriptions are not implemented yet",
+    )
 
 
 # ========== CHART DATA ENDPOINTS ==========

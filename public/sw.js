@@ -1,8 +1,8 @@
 /// <reference lib="webworker" />
 
-const CACHE_NAME = 'astromeric-v1';
-const STATIC_CACHE = 'astromeric-static-v1';
-const DYNAMIC_CACHE = 'astromeric-dynamic-v1';
+const CACHE_NAME = 'astronumeric-v1';
+const STATIC_CACHE = 'astronumeric-static-v1';
+const DYNAMIC_CACHE = 'astronumeric-dynamic-v1';
 
 // Static assets to cache on install
 const STATIC_ASSETS = [
@@ -166,7 +166,7 @@ self.addEventListener('push', (event) => {
   const data = event.data.json();
   
   event.waitUntil(
-    self.registration.showNotification(data.title || 'Astromeric', {
+    self.registration.showNotification(data.title || 'Astronumeric', {
       body: data.body || 'You have a new cosmic message',
       icon: '/icons/icon-192x192.png',
       badge: '/icons/icon-96x96.png',

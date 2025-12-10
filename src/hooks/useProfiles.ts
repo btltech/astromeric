@@ -2,7 +2,7 @@
  * Custom hook for profile management
  * Supports both saved profiles (opt-in) and session-only profiles (default)
  */
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useStore } from '../store/useStore';
 import { apiFetch } from '../api/client';
 import type { NewProfileForm, SavedProfile } from '../types';
@@ -21,6 +21,15 @@ export function useProfiles() {
     setError,
     token,
   } = useStore();
+
+  // Auto-fetch saved profiles from backend when token is available
+  useEffect(() => {
+    if (!token) return;
+    const headers: Record<string, string> = { Authorization: `Bearer ${token}` };
+    apiFetch<SavedProfile[]>('/profiles', { headers })
+      .then(setProfiles)
+      .catch((err) => console.error('Failed to auto-fetch profiles:', err));
+  }, [token, setProfiles]);
 
   // Get the active profile (session or saved)
   const selectedProfile = sessionProfile || profiles.find((p) => p.id === selectedProfileId) || null;

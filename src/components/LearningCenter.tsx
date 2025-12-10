@@ -62,7 +62,7 @@ export function LearningCenter() {
   const openCourse = async (courseId: string) => {
     setLoading(true);
     try {
-      const data = await fetchCourse(courseId) as Course;
+      const data = await fetchCourse(courseId) as unknown as Course;
       setView({ type: 'course', courseId, data });
     } catch (err) {
       console.error('Failed to load course:', err);
@@ -74,7 +74,7 @@ export function LearningCenter() {
   const openLesson = async (courseId: string, lessonNumber: number) => {
     setLoading(true);
     try {
-      const data = await fetchLesson(courseId, lessonNumber) as CourseLesson;
+      const data = await fetchLesson(courseId, lessonNumber) as unknown as CourseLesson;
       setView({ type: 'lesson', courseId, lessonNumber, data });
     } catch (err) {
       console.error('Failed to load lesson:', err);

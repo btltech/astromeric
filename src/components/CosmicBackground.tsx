@@ -163,6 +163,16 @@ export function CosmicBackground({ element }: { element?: string }) {
   }
 
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+  const lowPowerDevice =
+    typeof navigator !== 'undefined' &&
+    /Mobi|Android/i.test(navigator.userAgent) &&
+    (((navigator as never as { deviceMemory?: number }).deviceMemory ?? 4) <= 3 ||
+      (navigator.hardwareConcurrency ?? 4) <= 2);
+
+  if (lowPowerDevice) {
+    return <div className="cosmic-bg static" aria-hidden="true" />;
+  }
+
   const starCount = isMobile ? 2000 : 6000;
   const starFactor = isMobile ? 3 : 4;
   const [keyboardTilt, setKeyboardTilt] = useState(0);

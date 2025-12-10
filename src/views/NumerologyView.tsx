@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNumerology, useProfiles } from '../hooks';
 import { useStore } from '../store/useStore';
-import { fetchAiExplanation } from '../api/client';
+import { ApiError, fetchAiExplanation } from '../api/client';
 
 // Tooltip component for explaining numerology terms
 function Tooltip({ term, children }: { term: string; children: React.ReactNode }) {
@@ -106,8 +106,12 @@ export function NumerologyView() {
       const response = await fetchAiExplanation(payload, token ?? undefined);
       setAiInsight(response.summary);
     } catch (err) {
-      console.error('AI assist failed', err);
-      setAiInsight('AI assist encountered a hiccup. Please try again soon.');
+      if (err instanceof ApiError && (err.status === 401 || err.status === 403)) {
+        setAiInsight('Please sign in with a paid account to use AI insights.');
+      } else {
+        console.error('AI assist failed', err);
+        setAiInsight('AI assist encountered a hiccup. Please try again soon.');
+      }
     } finally {
       setAiLoading(false);
     }

@@ -1,8 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import type { PredictionData } from '../types';
+import { sendSectionFeedback } from '../api/client';
+import { useStore } from '../store/useStore';
 
 interface Props {
   sections: PredictionData['sections'];
+  scope?: string;
+  profileId?: number | null;
 }
 
 const RatingBar = ({ value, label }: { value: number; label: string }) => (
@@ -25,8 +29,28 @@ const TOPIC_MAP: Record<string, string> = {
   'Emotional & Spiritual': 'emotional',
 };
 
-export function SectionGrid({ sections }: Props) {
+export function SectionGrid({ sections, scope, profileId }: Props) {
+  const { token } = useStore();
+  const [votes, setVotes] = useState<Record<number, 'up' | 'down'>>({});
+
   if (!sections || sections.length === 0) return null;
+
+  const handleVote = async (index: number, direction: 'up' | 'down') => {
+    setVotes((prev) => ({ ...prev, [index]: direction }));
+    try {
+      await sendSectionFeedback(
+        {
+          scope: scope || 'daily',
+          section: sections[index].title,
+          vote: direction,
+          profile_id: profileId ?? undefined,
+        },
+        token || undefined
+      );
+    } catch (err) {
+      console.error('Feedback failed', err);
+    }
+  };
   return (
     <div className="tracks-grid">
       {sections.map((section, idx) => {
@@ -47,6 +71,24 @@ export function SectionGrid({ sections }: Props) {
             ))}
             {rating !== undefined ? <RatingBar label="Energy" value={rating} /> : null}
             {section.affirmation && <p className="affirmation-text">{section.affirmation}</p>}
+            <div className="feedback-row" aria-label="Feedback controls">
+              <button
+                type="button"
+                className={`thumb-btn ${votes[idx] === 'up' ? 'active' : ''}`}
+                onClick={() => handleVote(idx, 'up')}
+                aria-pressed={votes[idx] === 'up'}
+              >
+                👍
+              </button>
+              <button
+                type="button"
+                className={`thumb-btn ${votes[idx] === 'down' ? 'active' : ''}`}
+                onClick={() => handleVote(idx, 'down')}
+                aria-pressed={votes[idx] === 'down'}
+              >
+                👎
+              </button>
+            </div>
           </div>
         );
       })}

@@ -398,13 +398,15 @@ export function LearnView() {
   const [activeCategory, setActiveCategory] = useState<Category>('astrology');
   const [expandedLesson, setExpandedLesson] = useState<string | null>(null);
   const [completedLessons, setCompletedLessons] = useState<Set<string>>(() => {
-    const saved = localStorage.getItem('astromeric_completedLessons');
+    const saved = localStorage.getItem('astromeric_completedLessons')
+      || localStorage.getItem('astronumeric_completedLessons');
     return saved ? new Set(JSON.parse(saved)) : new Set();
   });
 
   const lessons = LESSONS[activeCategory];
   const completedCount = lessons.filter(l => completedLessons.has(l.id)).length;
   const progress = Math.round((completedCount / lessons.length) * 100);
+  const nextLesson = lessons.find((l) => !completedLessons.has(l.id)) || null;
 
   const toggleLesson = (id: string) => {
     if (expandedLesson === id) {
@@ -463,6 +465,18 @@ export function LearnView() {
         <span className="progress-text">
           {activeCategory === 'astrology' ? '🌟' : '🔢'} {completedCount}/{lessons.length} in {activeCategory}
         </span>
+      </div>
+
+      <div className="next-lesson" style={{ marginBottom: '1rem' }}>
+        {nextLesson ? (
+          <p className="text-muted" style={{ margin: 0 }}>
+            Next up: <strong>{nextLesson.icon} {nextLesson.title}</strong> — tap to continue your path.
+          </p>
+        ) : (
+          <p className="text-muted" style={{ margin: 0 }}>
+            You have completed this track. Switch categories or revisit any lesson for a refresher.
+          </p>
+        )}
       </div>
 
       {/* Lessons */}

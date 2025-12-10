@@ -1,6 +1,6 @@
 {
-  "name": "Astromeric",
-  "short_name": "Astromeric",
+  "name": "Astronumeric",
+  "short_name": "Astronumeric",
   "description": "AI-Powered Astrology & Numerology - Discover your cosmic blueprint through the fusion of celestial wisdom and advanced AI",
   "start_url": "/",
   "display": "standalone",
@@ -63,7 +63,7 @@
       "src": "/screenshots/home.png",
       "sizes": "1280x720",
       "type": "image/png",
-      "label": "Astromeric Home Screen"
+      "label": "Astronumeric Home Screen"
     }
   ],
   "shortcuts": [

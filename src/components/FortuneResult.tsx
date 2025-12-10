@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import type { PredictionData } from '../types';
 import { SectionGrid } from './SectionGrid';
 import { DailyGuidance } from './DailyGuidance';
-import { fetchAiExplanation } from '../api/client';
+import { ApiError, fetchAiExplanation } from '../api/client';
 import { downloadReadingPdf } from '../utils/pdfExport';
 import { useStore } from '../store/useStore';
+import { useProfiles } from '../hooks';
 
 interface Props {
   data: PredictionData;
@@ -58,6 +59,8 @@ const BIRTHSTONES: Record<number, { stone: string; color: string }> = {
 export function FortuneResult({ data, onReset }: Props) {
   // Get user and token from store for paid check
   const { user, token } = useStore();
+  const { selectedProfile } = useProfiles();
+  const isPaid = !!user?.is_paid;
   
   // Derive sign from charts if not explicitly provided
   const sunSign = data.sign || data.charts?.natal?.planets?.find((p) => p.name === 'Sun')?.sign;
@@ -79,7 +82,7 @@ export function FortuneResult({ data, onReset }: Props) {
 
   const handleAiExplain = async () => {
     // Check if user is paid
-    if (!user?.is_paid) {
+    if (!isPaid) {
       setShowUpgradeMessage(true);
       return;
     }
@@ -101,8 +104,12 @@ export function FortuneResult({ data, onReset }: Props) {
       const response = await fetchAiExplanation(payload, token ?? undefined);
       setAiInsight(response.summary);
     } catch (err) {
-      console.error('AI assist failed', err);
-      setAiInsight('AI assist encountered a hiccup. Please try again soon.');
+      if (err instanceof ApiError && (err.status === 401 || err.status === 403)) {
+        setAiInsight('Please sign in with a paid account to use AI insights.');
+      } else {
+        console.error('AI assist failed', err);
+        setAiInsight('AI assist encountered a hiccup. Please try again soon.');
+      }
     } finally {
       setAiLoading(false);
     }
@@ -180,22 +187,36 @@ export function FortuneResult({ data, onReset }: Props) {
       {showUpgradeMessage && (
         <div className="tldr-box upgrade-message">
           ✨ <strong>Premium Feature</strong> — AI insights are available for premium members. 
-          Upgrade to unlock personalized cosmic explanations!
+          Upgrade to unlock personalized cosmic explanations, longer guidance, and saved insight history.
+        </div>
+      )}
+      {!isPaid && (
+        <div className="upgrade-ribbon" role="note">
+          <p className="eyebrow">Premium locked</p>
+          <p style={{ margin: 0 }}>
+            Unlock AI explanations, richer affirmations, and cloud backup for your readings.
+          </p>
         </div>
       )}
       
       {data.guidance && <DailyGuidance guidance={data.guidance} scope={data.scope} />}
       
-      {data.sections && data.sections.length > 0 && <SectionGrid sections={data.sections} />}
+      {data.sections && data.sections.length > 0 && (
+        <SectionGrid
+          sections={data.sections}
+          scope={data.scope}
+          profileId={selectedProfile?.id || null}
+        />
+      )}
       <div className="action-buttons">
         <button
           onClick={handleAiExplain}
-          className="btn-secondary btn-wide"
+          className={`btn-secondary btn-wide ${!isPaid ? 'locked' : ''}`}
           disabled={aiLoading}
           aria-label="Explain this reading with AI"
           aria-busy={aiLoading}
         >
-          {aiLoading ? 'Thinking…' : '✨ Explain with AI'}
+          {aiLoading ? 'Thinking…' : isPaid ? '✨ Explain with AI' : '🔒 Premium AI Insight'}
         </button>
         <button
           onClick={() => downloadReadingPdf(data)}

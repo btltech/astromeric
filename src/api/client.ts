@@ -50,6 +50,31 @@ export interface AiExplainResponse {
   provider: string;
 }
 
+export interface SectionFeedbackPayload {
+  scope: string;
+  section: string;
+  vote: 'up' | 'down';
+  profile_id?: number;
+}
+
+export interface SaveReadingPayload {
+  profile_id: number;
+  scope: string;
+  content: unknown;
+  date?: string;
+}
+
+export class ApiError extends Error {
+  status: number;
+  detail: string;
+
+  constructor(status: number, detail: string) {
+    super(`API error ${status}: ${detail}`);
+    this.status = status;
+    this.detail = detail;
+  }
+}
+
 export async function apiFetch<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8001';
 
@@ -67,8 +92,15 @@ export async function apiFetch<T>(endpoint: string, options: RequestInit = {}): 
     headers: mergedHeaders,
   });
   if (!resp.ok) {
-    const text = await resp.text();
-    throw new Error(`API error ${resp.status}: ${text}`);
+    let detail = 'Request failed';
+    try {
+      const body = await resp.json();
+      detail = (body && (body.detail || body.error || JSON.stringify(body))) || detail;
+    } catch {
+      const text = await resp.text();
+      detail = text || detail;
+    }
+    throw new ApiError(resp.status, detail);
   }
   return resp.json() as Promise<T>;
 }
@@ -103,6 +135,26 @@ export function fetchAiExplanation(payload: AiExplainPayload, token?: string) {
     headers['Authorization'] = `Bearer ${token}`;
   }
   return apiFetch<AiExplainResponse>('/ai/explain', {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(payload),
+  });
+}
+
+export function sendSectionFeedback(payload: SectionFeedbackPayload, token?: string) {
+  const headers: Record<string, string> = {};
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  return apiFetch<{ status: string }>('/feedback/section', {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(payload),
+  });
+}
+
+export function saveReading(payload: SaveReadingPayload, token?: string) {
+  const headers: Record<string, string> = {};
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  return apiFetch<{ id: number; status?: string }>('/journal/reading', {
     method: 'POST',
     headers,
     body: JSON.stringify(payload),

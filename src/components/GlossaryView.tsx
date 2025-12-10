@@ -1,4 +1,5 @@
 import React from 'react';
+import { GlossarySkeleton } from './Skeleton';
 
 interface ZodiacInfo {
   symbol: string;
@@ -38,7 +39,7 @@ export function GlossaryView({
   hasMoreSigns,
   hasMoreNumbers,
 }: Props) {
-  if (!glossary) return <p className="loading-text">Loading glossary...</p>;
+  if (!glossary) return <GlossarySkeleton />;
 
   return (
     <div className="learn-content">

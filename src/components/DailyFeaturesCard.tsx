@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { fetchDailyFeatures, type DailyFeaturesResponse } from '../api/client';
+import { FeatureCardSkeleton } from './Skeleton';
 
 interface Props {
   birthDate: string;
@@ -42,12 +43,7 @@ export function DailyFeaturesCard({ birthDate, sunSign }: Props) {
   }, [birthDate, sunSign]);
 
   if (loading) {
-    return (
-      <div className="daily-features-card loading">
-        <div className="loading-spinner">✨</div>
-        <p>Consulting the cosmos...</p>
-      </div>
-    );
+    return <FeatureCardSkeleton />;
   }
 
   if (error || !features) {

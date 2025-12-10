@@ -4,12 +4,22 @@
  */
 import { useCallback } from 'react';
 import { useStore } from '../store/useStore';
-import { fetchForecast } from '../api/client';
+import { fetchForecast, saveReading } from '../api/client';
 import type { PredictionData, SavedProfile } from '../types';
 
 export function useReading() {
-  const { selectedScope, result, setSelectedScope, setResult, setLoading, setError, profiles, sessionProfile } =
-    useStore();
+  const {
+    selectedScope,
+    result,
+    setSelectedScope,
+    setResult,
+    setLoading,
+    setError,
+    profiles,
+    sessionProfile,
+    token,
+    allowCloudHistory,
+  } = useStore();
 
   const getPrediction = useCallback(
     async (profileId: number) => {
@@ -43,6 +53,21 @@ export function useReading() {
         };
 
         const data = await fetchForecast(payload, selectedScope);
+        // Persist reading only when the user opted in and the profile is saved (positive ID)
+        if (allowCloudHistory && profileId > 0) {
+          const date = (data as PredictionData).date || new Date().toISOString();
+          saveReading(
+            {
+              profile_id: profileId,
+              scope: selectedScope,
+              content: data,
+              date,
+            },
+            token || undefined
+          ).catch((err) => {
+            console.warn('Cloud history save failed (non-blocking):', err);
+          });
+        }
         setResult(data as unknown as PredictionData);
         return data;
       } catch (err) {
@@ -58,7 +83,7 @@ export function useReading() {
         setLoading(false);
       }
     },
-    [profiles, sessionProfile, selectedScope, setResult, setLoading, setError]
+    [allowCloudHistory, profiles, sessionProfile, selectedScope, setResult, setLoading, setError, token]
   );
 
   return {

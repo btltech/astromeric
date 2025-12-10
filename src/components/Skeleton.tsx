@@ -127,4 +127,37 @@ export const FormSkeleton: React.FC = () => (
   </div>
 );
 
+export const GlossarySkeleton: React.FC = () => (
+  <div className="glossary-skeleton">
+    <Skeleton variant="text" width="30%" height={22} />
+    <div className="glossary-skeleton-grid">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div key={i} className="glossary-skeleton-card">
+          <Skeleton variant="text" width="60%" height={18} />
+          <Skeleton variant="text" width="80%" height={14} />
+          <Skeleton variant="text" count={2} />
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
+export const FeatureCardSkeleton: React.FC = () => (
+  <div className="feature-card-skeleton">
+    <Skeleton variant="text" width="50%" height={22} />
+    <div className="feature-skeleton-grid">
+      {Array.from({ length: 5 }).map((_, i) => (
+        <div key={i} className="feature-skeleton-item">
+          <Skeleton variant="circular" width={36} height={36} />
+          <div style={{ flex: 1 }}>
+            <Skeleton variant="text" width="70%" height={14} />
+            <Skeleton variant="text" width="90%" height={12} />
+          </div>
+        </div>
+      ))}
+    </div>
+    <Skeleton variant="text" width="60%" height={16} />
+  </div>
+);
+
 export default Skeleton;

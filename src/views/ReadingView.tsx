@@ -6,6 +6,7 @@ import { FortuneForm } from '../components/FortuneForm';
 import { FortuneResult } from '../components/FortuneResult';
 import { ReadingSkeleton } from '../components/Skeleton';
 import { toast } from '../components/Toast';
+import { DailyReminderToggle } from '../components/DailyReminderToggle';
 
 const fadeIn = {
   initial: { opacity: 0, y: 20 },
@@ -15,18 +16,21 @@ const fadeIn = {
 };
 
 export function ReadingView() {
-  const { sessionProfile, createProfile } = useProfiles();
+  const { selectedProfile, createProfile } = useProfiles();
   const { selectedScope, result, setSelectedScope, setResult, getPrediction } = useReading();
-  const { loading } = useStore();
+  const { loading, allowCloudHistory, setAllowCloudHistory } = useStore();
 
   const handleGetPrediction = async () => {
-    if (sessionProfile) {
-      try {
-        await getPrediction(sessionProfile.id);
-        toast.success('Your cosmic reading is ready ✨');
-      } catch {
-        toast.error('Failed to generate reading. Please try again.');
-      }
+    if (!selectedProfile) {
+      toast.error('Create or select a profile first.');
+      return;
+    }
+
+    try {
+      await getPrediction(selectedProfile.id);
+      toast.success('Your cosmic reading is ready ✨');
+    } catch {
+      toast.error('Failed to generate reading. Please try again.');
     }
   };
 
@@ -50,17 +54,49 @@ export function ReadingView() {
   return (
     <AnimatePresence mode="wait">
       <motion.div {...fadeIn}>
+        <section className="hero" aria-label="Astromeric introduction">
+          <div className="hero-copy">
+            <p className="eyebrow">Astromeric</p>
+            <h1>Astrology and numerology that actually connect.</h1>
+            <p className="lede">Personalized charts, compatibility, and daily insights you can actually use.</p>
+          </div>
+        </section>
+
+        <DailyReminderToggle />
+
         {/* Session Profile Active - show scope selection */}
-        {sessionProfile ? (
+        {selectedProfile ? (
           <motion.div
             className="card"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            <h3 className="profile-highlight">✨ {sessionProfile.name}</h3>
+            <h3 className="profile-highlight">✨ {selectedProfile.name}</h3>
             <p className="profile-meta">
-              Born {sessionProfile.date_of_birth} • Session only (not saved)
+              Born {selectedProfile.date_of_birth} • {selectedProfile.id > 0 ? 'Saved to your account' : 'Session only (not saved)'}
             </p>
+            <div className="toggle-row" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.5rem' }}>
+              <label htmlFor="cloud-history" style={{ fontWeight: 600 }}>
+                Save readings to cloud
+              </label>
+              <button
+                id="cloud-history"
+                type="button"
+                className={`toggle ${allowCloudHistory ? 'on' : 'off'}`}
+                onClick={() => setAllowCloudHistory(!allowCloudHistory)}
+                disabled={selectedProfile.id < 1}
+                aria-pressed={allowCloudHistory}
+              >
+                <span className="toggle-knob" />
+              </button>
+              <span className="text-muted" style={{ fontSize: '0.9rem' }}>
+                {selectedProfile.id < 1
+                  ? 'Save a profile to enable cloud history'
+                  : allowCloudHistory
+                    ? 'Synced after each reading'
+                    : 'Off by default for privacy'}
+              </span>
+            </div>
             <h4>Select Reading Scope</h4>
             <div className="tabs" role="tablist">
               {(['daily', 'weekly', 'monthly'] as const).map((scope) => (
