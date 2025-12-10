@@ -1,0 +1,160 @@
+{
+  "nav": {
+    "reading": "✨ Lecture",
+    "numbers": "🔢 Nombres",
+    "tools": "🔮 Outils",
+    "learn": "📚 Apprendre",
+    "signIn": "Connexion",
+    "signOut": "Déconnexion"
+  },
+  "common": {
+    "loading": "Chargement...",
+    "error": "Erreur",
+    "submit": "Soumettre",
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "delete": "Supprimer",
+    "back": "Retour",
+    "next": "Suivant",
+    "close": "Fermer",
+    "consultingStars": "Consultation des étoiles...",
+    "skipToContent": "Passer au contenu principal"
+  },
+  "form": {
+    "title": "Entrez Vos Informations",
+    "fullName": "Nom Complet",
+    "fullNamePlaceholder": "ex. Marie Dupont",
+    "dateOfBirth": "Date de Naissance",
+    "timeOfBirth": "Heure de Naissance (Optionnel)",
+    "placeOfBirth": "Lieu de Naissance (Optionnel)",
+    "searchCity": "Rechercher une ville...",
+    "saveProfile": "Enregistrer mon profil pour les futures lectures",
+    "privacyNote": "Utilisé uniquement pour générer votre lecture — cochez la case pour enregistrer pour les visites futures.",
+    "getPrediction": "Obtenir la Prédiction du Jour",
+    "readingStars": "Lecture des Étoiles...",
+    "errors": {
+      "nameRequired": "Veuillez entrer votre nom complet.",
+      "dobRequired": "Veuillez fournir votre date de naissance.",
+      "dobFuture": "La date de naissance ne peut pas être dans le futur."
+    }
+  },
+  "profile": {
+    "selectOrCreate": "Sélectionner ou Créer un Profil",
+    "selectProfile": "Sélectionner un Profil",
+    "choose": "Choisir...",
+    "createNew": "Créer un Nouveau Profil",
+    "cancel": "Annuler"
+  },
+  "reading": {
+    "title": "Lecture {{scope}}",
+    "backToProfiles": "← Retour aux Profils",
+    "cosmicStones": "💎 Vos Pierres Cosmiques",
+    "crystals": "Cristaux {{sign}}",
+    "birthstone": "Pierre de Naissance",
+    "tldr": "Résumé:",
+    "premiumFeature": "✨ Fonctionnalité Premium",
+    "premiumAiMessage": "Les insights IA sont disponibles pour les membres premium. Passez à la version supérieure pour débloquer des explications cosmiques personnalisées, des conseils plus détaillés et un historique des insights sauvegardé.",
+    "premiumLocked": "Premium verrouillé",
+    "premiumUnlock": "Débloquez les explications IA, des affirmations plus riches et la sauvegarde cloud pour vos lectures.",
+    "aiAssist": "✨ Demander à l'IA Cosmique",
+    "downloadPdf": "📄 Télécharger PDF",
+    "aiExplaining": "Explication...",
+    "viewChart": "Voir le Thème Complet",
+    "startNewReading": "Nouvelle Lecture",
+    "energy": "Énergie"
+  },
+  "numerology": {
+    "title": "🔢 Votre Profil Numérologique",
+    "loading": "Chargement du profil numérologique...",
+    "lifePath": "Chemin de Vie",
+    "expression": "Expression",
+    "soulUrge": "Désir de l'Âme",
+    "personality": "Personnalité",
+    "maturity": "Maturité",
+    "personalYear": "Année Personnelle",
+    "personalMonth": "Mois Personnel",
+    "personalDay": "Jour Personnel",
+    "lifePinnacles": "Pinacles de Vie",
+    "lifeChallenges": "Défis de Vie",
+    "phase": "Phase {{number}}",
+    "challenge": "Défi {{number}}"
+  },
+  "compatibility": {
+    "title": "💕 Vérification de Compatibilité",
+    "subtitle": "Comparez votre alignement cosmique avec un autre profil",
+    "compareWith": "Comparer Avec",
+    "chooseProfile": "Choisir un profil...",
+    "calculate": "Calculer la Compatibilité",
+    "calculating": "Calcul en cours..."
+  },
+  "auth": {
+    "signIn": "🔑 Connexion",
+    "createAccount": "✨ Créer un Compte",
+    "signInSubtitle": "Connectez-vous pour accéder à vos profils cosmiques",
+    "createSubtitle": "Rejoignez-nous pour sauvegarder vos lectures et profils",
+    "email": "Email",
+    "emailPlaceholder": "votre@email.com",
+    "password": "Mot de Passe",
+    "confirmPassword": "Confirmer le Mot de Passe",
+    "noAccount": "Pas de compte?",
+    "hasAccount": "Déjà un compte?",
+    "register": "S'inscrire",
+    "signInButton": "Se Connecter",
+    "errors": {
+      "fillAllFields": "Veuillez remplir tous les champs",
+      "passwordsMismatch": "Les mots de passe ne correspondent pas"
+    }
+  },
+  "reminder": {
+    "title": "Rappel",
+    "description": "Petit rappel pour vérifier.",
+    "enableBrowser": "Activez les notifications du navigateur pour recevoir votre rappel quotidien de vibration.",
+    "pushScheduled": "Push programmé — cadence: {{cadence}}.",
+    "pushNotAvailable": "Rappel activé (push non disponible dans ce navigateur).",
+    "disabled": "Rappel quotidien désactivé.",
+    "cadence": {
+      "daily": "Quotidien",
+      "weekly": "Hebdomadaire"
+    }
+  },
+  "learn": {
+    "title": "📚 Centre d'Apprentissage Cosmique",
+    "subtitle": "Maîtrisez le langage des étoiles",
+    "astrology": "Astrologie",
+    "numerology": "Numérologie",
+    "duration": "{{minutes}} min",
+    "readMore": "Lire Plus",
+    "collapse": "Réduire"
+  },
+  "tools": {
+    "title": "🔮 Outils Cosmiques",
+    "subtitle": "Guidance divine à portée de main",
+    "tarot": {
+      "title": "🃏 Tarot du Jour",
+      "draw": "Tirer une Carte",
+      "drawing": "Tirage..."
+    },
+    "oracle": {
+      "title": "🔮 Oracle Oui/Non",
+      "askQuestion": "Posez votre question oui ou non...",
+      "ask": "Consulter l'Oracle",
+      "asking": "Consultation..."
+    },
+    "timing": {
+      "title": "⏰ Conseiller Temporel",
+      "subtitle": "Meilleurs moments pour vos activités"
+    },
+    "habits": {
+      "title": "✅ Habitudes Cosmiques",
+      "subtitle": "Alignez vos routines avec les étoiles"
+    }
+  },
+  "glossary": {
+    "title": "📖 Glossaire d'Astrologie",
+    "searchPlaceholder": "Rechercher des termes..."
+  },
+  "footer": {
+    "madeWith": "Fait avec ✨ énergie cosmique",
+    "copyright": "© {{year}} Astromeric"
+  }
+}

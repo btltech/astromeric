@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import type { SavedProfile, CompatibilityResult } from '../types';
 import { CompatibilityCard } from './CompatibilityCard';
 
@@ -21,19 +22,21 @@ export function CompatibilityView({
   loading,
   result,
 }: Props) {
+  const { t } = useTranslation();
+
   return (
     <div className="card">
-      <h2>💕 Compatibility Check</h2>
+      <h2>{t('compatibility.title')}</h2>
       <p className="section-subtitle">
-        Compare your cosmic alignment with another profile
+        {t('compatibility.subtitle')}
       </p>
       <div className="form-group">
-        <label>Compare With</label>
+        <label>{t('compatibility.compareWith')}</label>
         <select
           value={compareProfile || ''}
           onChange={(e) => onCompareSelect(Number(e.target.value))}
         >
-          <option value="">Choose a profile...</option>
+          <option value="">{t('compatibility.chooseProfile')}</option>
           {profiles
             .filter((p) => p.id !== selectedProfile)
             .map((p) => (
@@ -44,7 +47,7 @@ export function CompatibilityView({
         </select>
       </div>
       <button onClick={onCalculate} className="btn-primary" disabled={loading || !compareProfile}>
-        {loading ? 'Calculating...' : 'Calculate Compatibility'}
+        {loading ? t('compatibility.calculating') : t('compatibility.calculate')}
       </button>
 
       {result && <CompatibilityCard data={result} />}

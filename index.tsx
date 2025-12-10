@@ -1,6 +1,7 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './src/App';
+import './src/i18n'; // Initialize i18n
 import './styles.css';
 
 // Unregister any service worker during local development to avoid stale caches.

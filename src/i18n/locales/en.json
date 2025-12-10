@@ -1,0 +1,160 @@
+{
+  "nav": {
+    "reading": "✨ Reading",
+    "numbers": "🔢 Numbers",
+    "tools": "🔮 Tools",
+    "learn": "📚 Learn",
+    "signIn": "Sign In",
+    "signOut": "Sign Out"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "submit": "Submit",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "back": "Back",
+    "next": "Next",
+    "close": "Close",
+    "consultingStars": "Consulting the stars...",
+    "skipToContent": "Skip to main content"
+  },
+  "form": {
+    "title": "Enter Your Details",
+    "fullName": "Full Name",
+    "fullNamePlaceholder": "e.g. Jane Doe",
+    "dateOfBirth": "Date of Birth",
+    "timeOfBirth": "Time of Birth (Optional)",
+    "placeOfBirth": "Place of Birth (Optional)",
+    "searchCity": "Search city...",
+    "saveProfile": "Save my profile for future readings",
+    "privacyNote": "Used only to generate your reading — check the box to save for future visits.",
+    "getPrediction": "Get Today's Prediction",
+    "readingStars": "Reading the Stars...",
+    "errors": {
+      "nameRequired": "Please enter your full name.",
+      "dobRequired": "Please provide your date of birth.",
+      "dobFuture": "Date of birth cannot be in the future."
+    }
+  },
+  "profile": {
+    "selectOrCreate": "Select or Create Profile",
+    "selectProfile": "Select Profile",
+    "choose": "Choose...",
+    "createNew": "Create New Profile",
+    "cancel": "Cancel"
+  },
+  "reading": {
+    "title": "{{scope}} Reading",
+    "backToProfiles": "← Back to Profiles",
+    "cosmicStones": "💎 Your Cosmic Stones",
+    "crystals": "{{sign}} Crystals",
+    "birthstone": "Birthstone",
+    "tldr": "TL;DR:",
+    "premiumFeature": "✨ Premium Feature",
+    "premiumAiMessage": "AI insights are available for premium members. Upgrade to unlock personalized cosmic explanations, longer guidance, and saved insight history.",
+    "premiumLocked": "Premium locked",
+    "premiumUnlock": "Unlock AI explanations, richer affirmations, and cloud backup for your readings.",
+    "aiAssist": "✨ Ask the Cosmic AI",
+    "downloadPdf": "📄 Download PDF",
+    "aiExplaining": "Explaining...",
+    "viewChart": "View Full Chart",
+    "startNewReading": "Start New Reading",
+    "energy": "Energy"
+  },
+  "numerology": {
+    "title": "🔢 Your Numerology Profile",
+    "loading": "Loading numerology profile...",
+    "lifePath": "Life Path",
+    "expression": "Expression",
+    "soulUrge": "Soul Urge",
+    "personality": "Personality",
+    "maturity": "Maturity",
+    "personalYear": "Personal Year",
+    "personalMonth": "Personal Month",
+    "personalDay": "Personal Day",
+    "lifePinnacles": "Life Pinnacles",
+    "lifeChallenges": "Life Challenges",
+    "phase": "Phase {{number}}",
+    "challenge": "Challenge {{number}}"
+  },
+  "compatibility": {
+    "title": "💕 Compatibility Check",
+    "subtitle": "Compare your cosmic alignment with another profile",
+    "compareWith": "Compare With",
+    "chooseProfile": "Choose a profile...",
+    "calculate": "Calculate Compatibility",
+    "calculating": "Calculating..."
+  },
+  "auth": {
+    "signIn": "🔑 Sign In",
+    "createAccount": "✨ Create Account",
+    "signInSubtitle": "Sign in to access your cosmic profiles",
+    "createSubtitle": "Join to save your readings and profiles",
+    "email": "Email",
+    "emailPlaceholder": "your@email.com",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?",
+    "register": "Register",
+    "signInButton": "Sign In",
+    "errors": {
+      "fillAllFields": "Please fill in all fields",
+      "passwordsMismatch": "Passwords do not match"
+    }
+  },
+  "reminder": {
+    "title": "Reminder",
+    "description": "Tiny nudge to check in.",
+    "enableBrowser": "Enable browser notifications to receive your daily vibe reminder.",
+    "pushScheduled": "Push scheduled — cadence: {{cadence}}.",
+    "pushNotAvailable": "Reminder enabled (push not available in this browser).",
+    "disabled": "Daily reminder disabled.",
+    "cadence": {
+      "daily": "Daily",
+      "weekly": "Weekly"
+    }
+  },
+  "learn": {
+    "title": "📚 Cosmic Learning Center",
+    "subtitle": "Master the language of the stars",
+    "astrology": "Astrology",
+    "numerology": "Numerology",
+    "duration": "{{minutes}} min",
+    "readMore": "Read More",
+    "collapse": "Collapse"
+  },
+  "tools": {
+    "title": "🔮 Cosmic Tools",
+    "subtitle": "Divine guidance at your fingertips",
+    "tarot": {
+      "title": "🃏 Daily Tarot",
+      "draw": "Draw a Card",
+      "drawing": "Drawing..."
+    },
+    "oracle": {
+      "title": "🔮 Yes/No Oracle",
+      "askQuestion": "Ask your yes or no question...",
+      "ask": "Ask the Oracle",
+      "asking": "Consulting..."
+    },
+    "timing": {
+      "title": "⏰ Timing Advisor",
+      "subtitle": "Best times for your activities"
+    },
+    "habits": {
+      "title": "✅ Cosmic Habits",
+      "subtitle": "Align your routines with the stars"
+    }
+  },
+  "glossary": {
+    "title": "📖 Astrology Glossary",
+    "searchPlaceholder": "Search terms..."
+  },
+  "footer": {
+    "madeWith": "Made with ✨ cosmic energy",
+    "copyright": "© {{year}} Astromeric"
+  }
+}

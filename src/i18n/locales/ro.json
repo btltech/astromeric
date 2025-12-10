@@ -1,0 +1,160 @@
+{
+  "nav": {
+    "reading": "✨ Citire",
+    "numbers": "🔢 Numere",
+    "tools": "🔮 Instrumente",
+    "learn": "📚 Învață",
+    "signIn": "Conectare",
+    "signOut": "Deconectare"
+  },
+  "common": {
+    "loading": "Se încarcă...",
+    "error": "Eroare",
+    "submit": "Trimite",
+    "cancel": "Anulează",
+    "save": "Salvează",
+    "delete": "Șterge",
+    "back": "Înapoi",
+    "next": "Următorul",
+    "close": "Închide",
+    "consultingStars": "Consultăm stelele...",
+    "skipToContent": "Sari la conținutul principal"
+  },
+  "form": {
+    "title": "Introdu Datele Tale",
+    "fullName": "Nume Complet",
+    "fullNamePlaceholder": "ex. Maria Ionescu",
+    "dateOfBirth": "Data Nașterii",
+    "timeOfBirth": "Ora Nașterii (Opțional)",
+    "placeOfBirth": "Locul Nașterii (Opțional)",
+    "searchCity": "Caută orașul...",
+    "saveProfile": "Salvează profilul meu pentru citiri viitoare",
+    "privacyNote": "Folosit doar pentru a genera citirea ta — bifează caseta pentru a salva pentru vizite viitoare.",
+    "getPrediction": "Obține Predicția de Azi",
+    "readingStars": "Citim Stelele...",
+    "errors": {
+      "nameRequired": "Te rugăm să introduci numele complet.",
+      "dobRequired": "Te rugăm să furnizezi data nașterii.",
+      "dobFuture": "Data nașterii nu poate fi în viitor."
+    }
+  },
+  "profile": {
+    "selectOrCreate": "Selectează sau Creează Profil",
+    "selectProfile": "Selectează Profil",
+    "choose": "Alege...",
+    "createNew": "Creează Profil Nou",
+    "cancel": "Anulează"
+  },
+  "reading": {
+    "title": "Citire {{scope}}",
+    "backToProfiles": "← Înapoi la Profile",
+    "cosmicStones": "💎 Pietrele Tale Cosmice",
+    "crystals": "Cristale {{sign}}",
+    "birthstone": "Piatra Nașterii",
+    "tldr": "Pe scurt:",
+    "premiumFeature": "✨ Funcție Premium",
+    "premiumAiMessage": "Perspectivele AI sunt disponibile pentru membrii premium. Fă upgrade pentru a debloca explicații cosmice personalizate, ghidare mai detaliată și istoricul perspectivelor salvate.",
+    "premiumLocked": "Premium blocat",
+    "premiumUnlock": "Deblochează explicațiile AI, afirmații mai bogate și backup în cloud pentru citirile tale.",
+    "aiAssist": "✨ Întreabă AI-ul Cosmic",
+    "downloadPdf": "📄 Descarcă PDF",
+    "aiExplaining": "Explicăm...",
+    "viewChart": "Vezi Harta Completă",
+    "startNewReading": "Citire Nouă",
+    "energy": "Energie"
+  },
+  "numerology": {
+    "title": "🔢 Profilul Tău de Numerologie",
+    "loading": "Se încarcă profilul de numerologie...",
+    "lifePath": "Calea Vieții",
+    "expression": "Expresie",
+    "soulUrge": "Dorința Sufletului",
+    "personality": "Personalitate",
+    "maturity": "Maturitate",
+    "personalYear": "An Personal",
+    "personalMonth": "Lună Personală",
+    "personalDay": "Zi Personală",
+    "lifePinnacles": "Pinacole ale Vieții",
+    "lifeChallenges": "Provocări ale Vieții",
+    "phase": "Faza {{number}}",
+    "challenge": "Provocare {{number}}"
+  },
+  "compatibility": {
+    "title": "💕 Verificare Compatibilitate",
+    "subtitle": "Compară alinierea ta cosmică cu alt profil",
+    "compareWith": "Compară Cu",
+    "chooseProfile": "Alege un profil...",
+    "calculate": "Calculează Compatibilitatea",
+    "calculating": "Se calculează..."
+  },
+  "auth": {
+    "signIn": "🔑 Conectare",
+    "createAccount": "✨ Creează Cont",
+    "signInSubtitle": "Conectează-te pentru a accesa profilurile tale cosmice",
+    "createSubtitle": "Alătură-te pentru a salva citirile și profilurile tale",
+    "email": "Email",
+    "emailPlaceholder": "email@exemplu.ro",
+    "password": "Parolă",
+    "confirmPassword": "Confirmă Parola",
+    "noAccount": "Nu ai cont?",
+    "hasAccount": "Ai deja cont?",
+    "register": "Înregistrează-te",
+    "signInButton": "Conectează-te",
+    "errors": {
+      "fillAllFields": "Te rugăm să completezi toate câmpurile",
+      "passwordsMismatch": "Parolele nu se potrivesc"
+    }
+  },
+  "reminder": {
+    "title": "Memento",
+    "description": "Mic impuls să verifici.",
+    "enableBrowser": "Activează notificările browserului pentru a primi memento-ul zilnic de vibrație.",
+    "pushScheduled": "Push programat — cadență: {{cadence}}.",
+    "pushNotAvailable": "Memento activat (push nu este disponibil în acest browser).",
+    "disabled": "Memento zilnic dezactivat.",
+    "cadence": {
+      "daily": "Zilnic",
+      "weekly": "Săptămânal"
+    }
+  },
+  "learn": {
+    "title": "📚 Centru de Învățare Cosmică",
+    "subtitle": "Stăpânește limbajul stelelor",
+    "astrology": "Astrologie",
+    "numerology": "Numerologie",
+    "duration": "{{minutes}} min",
+    "readMore": "Citește Mai Mult",
+    "collapse": "Restrânge"
+  },
+  "tools": {
+    "title": "🔮 Instrumente Cosmice",
+    "subtitle": "Ghidare divină la îndemâna ta",
+    "tarot": {
+      "title": "🃏 Tarot Zilnic",
+      "draw": "Trage o Carte",
+      "drawing": "Se trage..."
+    },
+    "oracle": {
+      "title": "🔮 Oracol Da/Nu",
+      "askQuestion": "Pune întrebarea ta da sau nu...",
+      "ask": "Întreabă Oracolul",
+      "asking": "Se consultă..."
+    },
+    "timing": {
+      "title": "⏰ Consilier Temporal",
+      "subtitle": "Cele mai bune momente pentru activitățile tale"
+    },
+    "habits": {
+      "title": "✅ Obiceiuri Cosmice",
+      "subtitle": "Aliniază rutinele tale cu stelele"
+    }
+  },
+  "glossary": {
+    "title": "📖 Glosar de Astrologie",
+    "searchPlaceholder": "Caută termeni..."
+  },
+  "footer": {
+    "madeWith": "Făcut cu ✨ energie cosmică",
+    "copyright": "© {{year}} Astromeric"
+  }
+}

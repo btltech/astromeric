@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks';
 import { useStore } from '../store/useStore';
 
@@ -11,6 +12,7 @@ const fadeIn = {
 };
 
 export function AuthView() {
+  const { t } = useTranslation();
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -25,12 +27,12 @@ export function AuthView() {
     setLocalError('');
 
     if (!email || !password) {
-      setLocalError('Please fill in all fields');
+      setLocalError(t('auth.errors.fillAllFields'));
       return;
     }
 
     if (mode === 'register' && password !== confirmPassword) {
-      setLocalError('Passwords do not match');
+      setLocalError(t('auth.errors.passwordsMismatch'));
       return;
     }
 
@@ -47,29 +49,29 @@ export function AuthView() {
 
   return (
     <motion.div className="card" {...fadeIn}>
-      <h2>{mode === 'login' ? '🔑 Sign In' : '✨ Create Account'}</h2>
+      <h2>{mode === 'login' ? t('auth.signIn') : t('auth.createAccount')}</h2>
       <p className="section-subtitle mb-3">
         {mode === 'login'
-          ? 'Sign in to access your cosmic profiles'
-          : 'Join to save your readings and profiles'}
+          ? t('auth.signInSubtitle')
+          : t('auth.createSubtitle')}
       </p>
 
       <form onSubmit={handleSubmit}>
         <div className="form-group">
-          <label htmlFor="email">Email</label>
+          <label htmlFor="email">{t('auth.email')}</label>
           <input
             id="email"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="your@email.com"
+            placeholder={t('auth.emailPlaceholder')}
             autoComplete="email"
             aria-required="true"
           />
         </div>
 
         <div className="form-group">
-          <label htmlFor="password">Password</label>
+          <label htmlFor="password">{t('auth.password')}</label>
           <input
             id="password"
             type="password"
@@ -89,7 +91,7 @@ export function AuthView() {
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
             >
-              <label htmlFor="confirmPassword">Confirm Password</label>
+              <label htmlFor="confirmPassword">{t('auth.confirmPassword')}</label>
               <input
                 id="confirmPassword"
                 type="password"
@@ -120,13 +122,13 @@ export function AuthView() {
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
         >
-          {loading ? 'Please wait...' : mode === 'login' ? 'Sign In' : 'Create Account'}
+          {loading ? t('common.loading') : mode === 'login' ? t('auth.signInButton') : t('auth.createAccount')}
         </motion.button>
       </form>
 
       <div className="auth-toggle">
         <span className="text-muted">
-          {mode === 'login' ? "Don't have an account? " : 'Already have an account? '}
+          {mode === 'login' ? t('auth.noAccount') + ' ' : t('auth.hasAccount') + ' '}
         </span>
         <motion.button
           onClick={() => {
@@ -142,7 +144,7 @@ export function AuthView() {
           }}
           whileHover={{ scale: 1.05 }}
         >
-          {mode === 'login' ? 'Sign Up' : 'Sign In'}
+          {mode === 'login' ? t('auth.register') : t('auth.signInButton')}
         </motion.button>
       </div>
 

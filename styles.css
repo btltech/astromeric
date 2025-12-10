@@ -363,6 +363,25 @@
   font-style: italic;
 }
 
+/* Header actions wrapper */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+@media (max-width: 768px) {
+  .header-actions {
+    position: static;
+    transform: none;
+    margin-bottom: 0.5rem;
+  }
+}
+
 .card {
   background: var(--card-bg);
   backdrop-filter: blur(10px);
@@ -1483,6 +1502,107 @@ select option {
 
 .btn-logout:hover {
   background: rgba(191, 97, 106, 0.2);
+}
+
+/* Language Switcher */
+.language-switcher {
+  position: relative;
+  z-index: 100;
+}
+
+.language-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: rgba(20, 24, 35, 0.6);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  color: var(--text);
+  padding: 0.4rem 0.6rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-out);
+}
+
+.language-btn:hover {
+  background: rgba(139, 92, 246, 0.15);
+  border-color: var(--primary);
+}
+
+.lang-flag {
+  font-size: 1rem;
+}
+
+.lang-code {
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+.lang-chevron {
+  transition: transform var(--duration-fast) var(--ease-out);
+}
+
+.lang-chevron.open {
+  transform: rotate(180deg);
+}
+
+.language-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  background: var(--card-bg);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  list-style: none;
+  padding: 0.25rem;
+  margin: 0;
+  min-width: 140px;
+  animation: fadeInDown var(--duration-fast) var(--ease-out);
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.language-dropdown li {
+  margin: 0;
+}
+
+.language-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-out);
+  text-align: left;
+}
+
+.language-option:hover {
+  background: rgba(139, 92, 246, 0.15);
+}
+
+.language-option.active {
+  background: rgba(139, 92, 246, 0.25);
+  color: var(--primary);
+}
+
+.lang-name {
+  flex: 1;
 }
 
 /* Load more button container */

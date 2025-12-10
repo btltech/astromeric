@@ -1,7 +1,9 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, NavLink, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { CosmicBackground } from './components/CosmicBackground';
+import { LanguageSwitcher } from './components/LanguageSwitcher';
 import { useProfiles, useAuth } from './hooks';
 import { useStore } from './store/useStore';
 import { ToastContainer, useToasts } from './components/Toast';
@@ -19,6 +21,7 @@ const CosmicToolsView = React.lazy(() => import('./views/CosmicToolsView').then(
 // styles.css is imported at the root level (index.tsx)
 
 function NavBar() {
+  const { t } = useTranslation();
   const { sessionProfile } = useProfiles();
   const { isAuthenticated, user, logout } = useAuth();
   const [isOpen, setIsOpen] = React.useState(false);
@@ -31,20 +34,23 @@ function NavBar() {
         </div>
       </NavLink>
 
-      {isAuthenticated && user && (
-        <div className="user-bar">
-          <span className="user-email">{user.email}</span>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={logout}
-            className="btn-logout"
-            aria-label="Sign out"
-          >
-            Sign Out
-          </motion.button>
-        </div>
-      )}
+      <div className="header-actions">
+        <LanguageSwitcher />
+        {isAuthenticated && user && (
+          <div className="user-bar">
+            <span className="user-email">{user.email}</span>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={logout}
+              className="btn-logout"
+              aria-label={t('nav.signOut')}
+            >
+              {t('nav.signOut')}
+            </motion.button>
+          </div>
+        )}
+      </div>
 
       <button
         className="nav-toggle"
@@ -57,28 +63,28 @@ function NavBar() {
 
       <nav className={`main-nav ${isOpen ? 'open' : ''}`} role="navigation" aria-label="Main navigation">
         <NavLink to="/" className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`} onClick={() => setIsOpen(false)}>
-          ✨ Reading
+          {t('nav.reading')}
         </NavLink>
         <NavLink
           to="/numerology"
           className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}
           onClick={() => setIsOpen(false)}
         >
-          🔢 Numbers
+          {t('nav.numbers')}
         </NavLink>
         <NavLink
           to="/tools"
           className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}
           onClick={() => setIsOpen(false)}
         >
-          🔮 Tools
+          {t('nav.tools')}
         </NavLink>
         <NavLink to="/learn" className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`} onClick={() => setIsOpen(false)}>
-          📚 Learn
+          {t('nav.learn')}
         </NavLink>
         {!isAuthenticated && (
           <NavLink to="/auth" className={({ isActive }) => `nav-btn nav-btn-secondary ${isActive ? 'active' : ''}`} onClick={() => setIsOpen(false)}>
-            Sign In
+            {t('nav.signIn')}
           </NavLink>
         )}
       </nav>
@@ -129,6 +135,7 @@ function AnimatedRoutes() {
 }
 
 function LoadingOverlay({ forceVisible = false }: { forceVisible?: boolean }) {
+  const { t } = useTranslation();
   const { loading } = useStore();
   const isVisible = loading || forceVisible;
 
@@ -148,7 +155,7 @@ function LoadingOverlay({ forceVisible = false }: { forceVisible?: boolean }) {
             transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
             aria-hidden="true"
           />
-          <span>Consulting the stars...</span>
+          <span>{t('common.consultingStars')}</span>
         </motion.div>
       )}
     </AnimatePresence>
@@ -187,6 +194,7 @@ function ErrorBanner() {
 }
 
 function Layout() {
+  const { t } = useTranslation();
   const { result } = useStore();
   const { toasts, dismiss } = useToasts();
 
@@ -194,7 +202,7 @@ function Layout() {
     <div className="app-container">
       {/* Skip link for keyboard navigation */}
       <a href="#main-content" className="skip-link">
-        Skip to main content
+        {t('common.skipToContent')}
       </a>
       
       <CosmicBackground element={result?.element} />

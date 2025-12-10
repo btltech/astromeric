@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import type { NumerologyProfile } from '../types';
 
 interface Props {
@@ -6,33 +7,35 @@ interface Props {
 }
 
 export function NumerologyView({ profile }: Props) {
+  const { t } = useTranslation();
+
   return (
     <div className="card">
-      <h2>🔢 Your Numerology Profile</h2>
+      <h2>{t('numerology.title')}</h2>
       {profile ? (
         <div className="numerology-grid">
-          {renderCore('Life Path', profile.life_path.number, profile.life_path.meaning)}
-          {renderCore('Expression', profile.expression.number, profile.expression.meaning)}
-          {renderCore('Soul Urge', profile.soul_urge.number, profile.soul_urge.meaning)}
-          {renderCore('Personality', profile.personality.number, profile.personality.meaning)}
-          {renderCore('Maturity', profile.maturity.number, profile.maturity.meaning)}
+          {renderCore(t('numerology.lifePath'), profile.life_path.number, profile.life_path.meaning)}
+          {renderCore(t('numerology.expression'), profile.expression.number, profile.expression.meaning)}
+          {renderCore(t('numerology.soulUrge'), profile.soul_urge.number, profile.soul_urge.meaning)}
+          {renderCore(t('numerology.personality'), profile.personality.number, profile.personality.meaning)}
+          {renderCore(t('numerology.maturity'), profile.maturity.number, profile.maturity.meaning)}
           {renderCore(
-            'Personal Year',
+            t('numerology.personalYear'),
             profile.personal_year.number,
             profile.personal_year.meaning,
             true
           )}
           {renderCore(
-            'Personal Month',
+            t('numerology.personalMonth'),
             profile.personal_month.number,
             profile.personal_month.meaning
           )}
-          {renderCore('Personal Day', profile.personal_day.number, profile.personal_day.meaning)}
-          {profile.pinnacles?.length ? renderPinnacles(profile.pinnacles) : null}
-          {profile.challenges?.length ? renderChallenges(profile.challenges) : null}
+          {renderCore(t('numerology.personalDay'), profile.personal_day.number, profile.personal_day.meaning)}
+          {profile.pinnacles?.length ? renderPinnacles(profile.pinnacles, t) : null}
+          {profile.challenges?.length ? renderChallenges(profile.challenges, t) : null}
         </div>
       ) : (
-        <p className="loading-text">Loading numerology profile...</p>
+        <p className="loading-text">{t('numerology.loading')}</p>
       )}
     </div>
   );
@@ -48,15 +51,15 @@ function renderCore(title: string, value: number, text: string, highlight = fals
   );
 }
 
-function renderPinnacles(pinnacles: Array<{ number: number; meaning: string }>) {
+function renderPinnacles(pinnacles: Array<{ number: number; meaning: string }>, t: (key: string, options?: Record<string, unknown>) => string) {
   return (
     <div className="num-card wide">
-      <h4>Life Pinnacles</h4>
+      <h4>{t('numerology.lifePinnacles')}</h4>
       <div className="pinnacles-row">
         {pinnacles.map((p, i) => (
           <div key={i} className="pinnacle">
             <span className="pinnacle-num">{p.number}</span>
-            <span className="pinnacle-label">Phase {i + 1}</span>
+            <span className="pinnacle-label">{t('numerology.phase', { number: i + 1 })}</span>
           </div>
         ))}
       </div>
@@ -64,15 +67,15 @@ function renderPinnacles(pinnacles: Array<{ number: number; meaning: string }>) 
   );
 }
 
-function renderChallenges(challenges: Array<{ number: number; meaning: string }>) {
+function renderChallenges(challenges: Array<{ number: number; meaning: string }>, t: (key: string, options?: Record<string, unknown>) => string) {
   return (
     <div className="num-card wide">
-      <h4>Life Challenges</h4>
+      <h4>{t('numerology.lifeChallenges')}</h4>
       <div className="pinnacles-row">
         {challenges.map((c, i) => (
           <div key={i} className="pinnacle challenge">
             <span className="pinnacle-num">{c.number}</span>
-            <span className="pinnacle-label">Challenge {i + 1}</span>
+            <span className="pinnacle-label">{t('numerology.challenge', { number: i + 1 })}</span>
           </div>
         ))}
       </div>
