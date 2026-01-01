@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "build:analyze": "npm run build && open dist/stats.html",
+    "build:prod": "VITE_API_URL=https://astronumeric-backend-production.up.railway.app vite build",
     "lint": "eslint --ext .ts,.tsx .",
     "lint:ci": "eslint --ext .ts,.tsx --max-warnings 0 .",
     "lint:fix": "eslint --ext .ts,.tsx --fix .",
@@ -16,11 +16,11 @@
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:ui": "vitest --ui",
-    "deploy:frontend": "npm run build:prod && npx wrangler pages deploy dist --branch main",
+    "deploy:frontend": "npm run build:prod && npx wrangler pages deploy dist --branch main --compatibility-date 2024-01-01",
     "deploy:backend": "railway up",
     "deploy:backend:logs": "railway logs -f",
-    "deploy:healthcheck": "curl -sf https://astronumeric-backend-production.up.railway.app/health || (echo 'Backend health check failed!' && exit 1)",
-    "deploy:frontend:safe": "npm run deploy:healthcheck && npm run deploy:frontend",
+    "deploy:healthcheck": "curl -sf $VITE_API_URL/health || (echo 'Backend health check failed!' && exit 1)",
+    "deploy:frontend:safe": "npm run deploy:check-env && npm run deploy:healthcheck && npm run deploy:frontend",
     "deploy:all": "npm run deploy:backend && npm run deploy:frontend:safe",
     "deploy": "npm run deploy:frontend"
   },
