@@ -1,12 +1,12 @@
 {
-  "name": "astromeric",
+  "name": "astronumeric",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "build:prod": "VITE_API_URL=https://astromeric-backend-production.up.railway.app vite build",
+    "build:analyze": "npm run build && open dist/stats.html",
     "lint": "eslint --ext .ts,.tsx .",
     "lint:ci": "eslint --ext .ts,.tsx --max-warnings 0 .",
     "lint:fix": "eslint --ext .ts,.tsx --fix .",
@@ -16,7 +16,13 @@
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:ui": "vitest --ui",
-    "deploy": "npm run build:prod && npx wrangler pages deploy dist --project-name astromeric"
+    "deploy:frontend": "npm run build:prod && npx wrangler pages deploy dist --branch main",
+    "deploy:backend": "railway up",
+    "deploy:backend:logs": "railway logs -f",
+    "deploy:healthcheck": "curl -sf https://astronumeric-backend-production.up.railway.app/health || (echo 'Backend health check failed!' && exit 1)",
+    "deploy:frontend:safe": "npm run deploy:healthcheck && npm run deploy:frontend",
+    "deploy:all": "npm run deploy:backend && npm run deploy:frontend:safe",
+    "deploy": "npm run deploy:frontend"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.7",
@@ -48,6 +54,7 @@
     "eslint-plugin-react": "^7.33.2",
     "jsdom": "^27.2.0",
     "prettier": "^2.8.8",
+    "rollup-plugin-visualizer": "^5.12.0",
     "sharp": "^0.34.5",
     "terser": "^5.44.1",
     "typescript": "~5.8.2",

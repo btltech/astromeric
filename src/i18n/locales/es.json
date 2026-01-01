@@ -1,9 +1,18 @@
 {
+  "hero": {
+    "eyebrow": "AstroNumeric",
+    "title": "Astrología y numerología que realmente conectan.",
+    "subtitle": "Cartas personalizadas, compatibilidad e información diaria que realmente puedes usar.",
+    "benefit1": "✨ Horóscopo personal diario",
+    "benefit2": "🔢 Números de numerología",
+    "benefit3": "💕 Información de compatibilidad"
+  },
   "nav": {
     "reading": "✨ Lectura",
     "numbers": "🔢 Números",
     "tools": "🔮 Herramientas",
     "learn": "📚 Aprender",
+    "profile": "Perfil",
     "signIn": "Iniciar Sesión",
     "signOut": "Cerrar Sesión"
   },
@@ -25,11 +34,13 @@
     "fullName": "Nombre Completo",
     "fullNamePlaceholder": "ej. María García",
     "dateOfBirth": "Fecha de Nacimiento",
+    "dateOfBirthHint": "Se usa para calcular tu carta; no puede usarse para identificarte.",
     "timeOfBirth": "Hora de Nacimiento (Opcional)",
     "placeOfBirth": "Lugar de Nacimiento (Opcional)",
     "searchCity": "Buscar ciudad...",
     "saveProfile": "Guardar mi perfil para futuras lecturas",
-    "privacyNote": "Solo se usa para generar tu lectura — marca la casilla para guardar para futuras visitas.",
+    "saveProfileHint": "Guarda tus datos en este dispositivo para lecturas más rápidas",
+    "privacyNote": "Tus datos permanecen privados y nunca se comparten.",
     "getPrediction": "Obtener Predicción de Hoy",
     "readingStars": "Leyendo las Estrellas...",
     "errors": {
@@ -43,7 +54,18 @@
     "selectProfile": "Seleccionar Perfil",
     "choose": "Elegir...",
     "createNew": "Crear Nuevo Perfil",
-    "cancel": "Cancelar"
+    "cancel": "Cancelar",
+    "title": "Mi Perfil",
+    "premium": "Premium",
+    "birthDetails": "Detalles de Nacimiento",
+    "edit": "Editar",
+    "saveProfile": "Guardar Perfil",
+    "saved": "¡Perfil guardado con éxito!",
+    "quickActions": "Acciones Rápidas",
+    "errors": {
+      "requiredFields": "Por favor completa tu nombre y fecha de nacimiento.",
+      "saveFailed": "Error al guardar el perfil. Inténtalo de nuevo."
+    }
   },
   "reading": {
     "title": "Lectura {{scope}}",
@@ -66,6 +88,12 @@
   "numerology": {
     "title": "🔢 Tu Perfil de Numerología",
     "loading": "Cargando perfil de numerología...",
+    "gatingTitle": "Desbloquea Tus Números",
+    "gatingSubtitle": "Ingresa tus datos de nacimiento para descubrir tu perfil de numerología",
+    "gatingBenefit1": "Números de Camino de Vida y Expresión",
+    "gatingBenefit2": "Ciclos de Año Personal",
+    "gatingBenefit3": "Pináculos y Desafíos",
+    "goToReading": "Ir a Lectura →",
     "lifePath": "Camino de Vida",
     "expression": "Expresión",
     "soulUrge": "Deseo del Alma",
@@ -92,6 +120,7 @@
     "createAccount": "✨ Crear Cuenta",
     "signInSubtitle": "Inicia sesión para acceder a tus perfiles cósmicos",
     "createSubtitle": "Únete para guardar tus lecturas y perfiles",
+    "benefitText": "Inicia sesión para guardar perfiles y ver tu historial de lecturas.",
     "email": "Correo Electrónico",
     "emailPlaceholder": "tu@email.com",
     "password": "Contraseña",
@@ -100,6 +129,9 @@
     "hasAccount": "¿Ya tienes una cuenta?",
     "register": "Registrarse",
     "signInButton": "Iniciar Sesión",
+    "continueAsGuest": "Continuar como Invitado",
+    "guestNote": "Prueba todas las funciones sin una cuenta. Tus datos permanecen en este dispositivo.",
+    "welcomeBack": "¡Bienvenido de nuevo, {{email}}!",
     "errors": {
       "fillAllFields": "Por favor completa todos los campos",
       "passwordsMismatch": "Las contraseñas no coinciden"
@@ -129,6 +161,12 @@
   "tools": {
     "title": "🔮 Herramientas Cósmicas",
     "subtitle": "Guía divina al alcance de tus dedos",
+    "gatingTitle": "Desbloquea Herramientas Cósmicas",
+    "gatingSubtitle": "Ingresa tus datos de nacimiento una vez para acceder a herramientas personalizadas",
+    "gatingBenefit1": "Características cósmicas diarias y números de la suerte",
+    "gatingBenefit2": "Lecturas personalizadas de tarot y oráculo",
+    "gatingBenefit3": "Chat con guía cósmica IA",
+    "goToReading": "Ir a Lectura →",
     "tarot": {
       "title": "🃏 Tarot Diario",
       "draw": "Sacar una Carta",
@@ -155,6 +193,6 @@
   },
   "footer": {
     "madeWith": "Hecho con ✨ energía cósmica",
-    "copyright": "© {{year}} Astromeric"
+    "copyright": "© {{year}} AstroNumeric"
   }
 }

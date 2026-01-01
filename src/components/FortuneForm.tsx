@@ -50,7 +50,7 @@ export function FortuneForm({ onSubmit, isLoading }: Props) {
   };
 
   return (
-    <div className="card">
+    <div className="card form-card-compact">
       <h2 className="form-title">{t('form.title')}</h2>
       <form onSubmit={handleSubmit}>
         <div className="form-group">
@@ -67,30 +67,37 @@ export function FortuneForm({ onSubmit, isLoading }: Props) {
           />
           {errors.name && <div id="name-error" className="error-text" role="alert">{errors.name}</div>}
         </div>
-        <div className="form-group">
-          <label htmlFor="date_of_birth">{t('form.dateOfBirth')}</label>
-          <input
-            id="date_of_birth"
-            type="date"
-            required
-            value={formData.date_of_birth}
-            onChange={(e) => setFormData({ ...formData, date_of_birth: e.target.value })}
-            aria-invalid={!!errors.date_of_birth}
-            aria-describedby={errors.date_of_birth ? "dob-error" : undefined}
-          />
-          {errors.date_of_birth && <div id="dob-error" className="error-text" role="alert">{errors.date_of_birth}</div>}
+        <div className="form-row-2col">
+          <div className="form-group">
+            <label htmlFor="date_of_birth">{t('form.dateOfBirth')}</label>
+            <input
+              id="date_of_birth"
+              type="date"
+              required
+              value={formData.date_of_birth}
+              onChange={(e) => setFormData({ ...formData, date_of_birth: e.target.value })}
+              aria-invalid={!!errors.date_of_birth}
+              aria-describedby={errors.date_of_birth ? "dob-error" : "dob-hint"}
+            />
+            <span id="dob-hint" className="field-hint">{t('form.dateOfBirthHint')}</span>
+            {errors.date_of_birth && <div id="dob-error" className="error-text" role="alert">{errors.date_of_birth}</div>}
+          </div>
+          <div className="form-group">
+            <label htmlFor="time_of_birth">{t('form.timeOfBirth')} (recommended)</label>
+            <input
+              id="time_of_birth"
+              type="time"
+              value={formData.time_of_birth}
+              onChange={(e) => setFormData({ ...formData, time_of_birth: e.target.value })}
+              aria-describedby="tob-hint"
+            />
+            <span id="tob-hint" className="field-hint">
+              Birth time improves chart accuracy. Add location/timezone for best results.
+            </span>
+          </div>
         </div>
         <div className="form-group">
-          <label htmlFor="time_of_birth">{t('form.timeOfBirth')}</label>
-          <input
-            id="time_of_birth"
-            type="time"
-            value={formData.time_of_birth}
-            onChange={(e) => setFormData({ ...formData, time_of_birth: e.target.value })}
-          />
-        </div>
-        <div className="form-group">
-          <label htmlFor="place_of_birth">{t('form.placeOfBirth')}</label>
+          <label htmlFor="place_of_birth">{t('form.placeOfBirth')} (recommended)</label>
           <div id="place_of_birth">
             <LocationAutocomplete
               onSelect={handleLocationSelect}
@@ -98,6 +105,9 @@ export function FortuneForm({ onSubmit, isLoading }: Props) {
               initialValue={formData.place_of_birth}
             />
           </div>
+          <span id="pob-hint" className="field-hint">
+            Location/timezone improve accuracy and timing. You can still generate a reading without them.
+          </span>
           {formData.latitude && formData.longitude && (
             <div className="geo-indicator">
               📍 {formData.latitude.toFixed(4)}, {formData.longitude.toFixed(4)} •{' '}
@@ -105,17 +115,23 @@ export function FortuneForm({ onSubmit, isLoading }: Props) {
             </div>
           )}
         </div>
-        <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <input
-            type="checkbox"
-            id="saveProfile"
-            checked={formData.saveProfile || false}
-            onChange={(e) => setFormData({ ...formData, saveProfile: e.target.checked })}
-            className="save-checkbox"
-          />
-          <label htmlFor="saveProfile" style={{ margin: 0, cursor: 'pointer' }}>
-            {t('form.saveProfile')}
-          </label>
+        <div className="form-group save-profile-row">
+          <div className="save-profile-checkbox">
+            <input
+              type="checkbox"
+              id="saveProfile"
+              checked={formData.saveProfile || false}
+              onChange={(e) => setFormData({ ...formData, saveProfile: e.target.checked })}
+              className="save-checkbox"
+            />
+            <label htmlFor="saveProfile">
+              {t('form.saveProfile')}
+            </label>
+            <span className="info-tooltip" data-tooltip={t('form.saveProfileHint')}>ⓘ</span>
+          </div>
+          <span className="field-hint" id="saveprofile-hint">
+            {t('form.saveProfileHint')}
+          </span>
         </div>
         <div className="form-footer">
           <p className="privacy-note">

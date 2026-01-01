@@ -9,6 +9,7 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Tuple
 from zoneinfo import ZoneInfo
 
+from ..interpretation.translations import get_translation
 from .planetary_timing import (
     calculate_planetary_hours,
     get_current_planetary_hour,
@@ -162,6 +163,7 @@ def calculate_timing_score(
     longitude: float,
     timezone: str = "UTC",
     personal_day: Optional[int] = None,
+    lang: str = "en",
 ) -> Dict:
     """
     Calculate a timing score (0-100) for a specific activity on a given date.
@@ -236,7 +238,7 @@ def calculate_timing_score(
     scores["moon_sign"] = moon_sign_score
     
     # 4. Retrograde Check
-    retrogrades = detect_retrogrades(transit_chart)
+    retrogrades = detect_retrogrades(transit_chart, lang=lang)
     retrograde_planets = [r["planet"] for r in retrogrades]
     problematic_retrogrades = [p for p in retrograde_planets if p in profile["avoid_retrograde"]]
     
@@ -252,7 +254,7 @@ def calculate_timing_score(
     scores["retrograde"] = retrograde_score
     
     # 5. Void-of-Course Moon Check
-    voc = calculate_void_of_course_moon(transit_chart)
+    voc = calculate_void_of_course_moon(transit_chart, lang=lang)
     
     if voc["is_void"] and profile["avoid_voc_moon"]:
         voc_score = 20
@@ -329,6 +331,7 @@ def find_best_days(
     timezone: str = "UTC",
     days_ahead: int = 7,
     personal_day_cycle: Optional[int] = None,  # Personal Year number
+    lang: str = "en",
 ) -> List[Dict]:
     """
     Find the best days for an activity in the next N days.
@@ -358,6 +361,7 @@ def find_best_days(
             longitude,
             timezone,
             personal_day,
+            lang=lang,
         )
         
         score["weekday"] = check_date.strftime("%A")
@@ -376,6 +380,7 @@ def get_timing_advice(
     longitude: float,
     timezone: str = "UTC",
     personal_day: Optional[int] = None,
+    lang: str = "en",
 ) -> Dict:
     """
     Get timing advice for an activity, including today's score and best upcoming day.
@@ -384,13 +389,13 @@ def get_timing_advice(
     
     # Today's score
     today = calculate_timing_score(
-        activity, now, transit_chart, latitude, longitude, timezone, personal_day
+        activity, now, transit_chart, latitude, longitude, timezone, personal_day, lang=lang
     )
     today["weekday"] = now.strftime("%A")
     
     # Find best day in next 7 days
     upcoming = find_best_days(
-        activity, transit_chart, latitude, longitude, timezone, 7
+        activity, transit_chart, latitude, longitude, timezone, 7, lang=lang
     )
     
     # Best day
@@ -405,25 +410,37 @@ def get_timing_advice(
         "best_upcoming": best_day,
         "today_is_best": today_is_best,
         "all_days": upcoming[:5],  # Top 5 days
-        "advice": _generate_timing_advice(today, best_day, today_is_best),
+        "advice": _generate_timing_advice(today, best_day, today_is_best, lang=lang),
     }
 
 
-def _generate_timing_advice(today: Dict, best: Dict, is_best: bool) -> str:
+def _generate_timing_advice(today: Dict, best: Dict, is_best: bool, lang: str = "en") -> str:
     """Generate human-readable timing advice."""
     if is_best:
         if today["score"] >= 80:
-            return "Today is excellent for this activity! The cosmos align in your favor."
+            msg = get_translation(lang, "timing_advice_excellent")
+            return msg[0] if msg else "Today is excellent for this activity! The cosmos align in your favor."
         elif today["score"] >= 65:
-            return "Today is a good day for this. Proceed with confidence."
+            msg = get_translation(lang, "timing_advice_good")
+            return msg[0] if msg else "Today is a good day for this. Proceed with confidence."
         else:
-            return "Today is the best of the upcoming days, though timing could be better."
+            msg = get_translation(lang, "timing_advice_best_upcoming")
+            return msg[0] if msg else "Today is the best of the upcoming days, though timing could be better."
     else:
         if today["score"] >= 65:
+            msg = get_translation(lang, "timing_advice_better_upcoming")
+            if msg:
+                return msg[0].format(score=today['score'], best_day=best['weekday'], best_score=best['score'])
             return f"Today is good ({today['score']}), but {best['weekday']} scores even higher ({best['score']})."
         elif today["score"] >= 50:
+            msg = get_translation(lang, "timing_advice_wait")
+            if msg:
+                return msg[0].format(best_day=best['weekday'])
             return f"Consider waiting until {best['weekday']} for better cosmic support."
         else:
+            msg = get_translation(lang, "timing_advice_challenging")
+            if msg:
+                return msg[0].format(best_day=best['weekday'])
             return f"Today's timing is challenging. {best['weekday']} offers much better conditions."
 
 

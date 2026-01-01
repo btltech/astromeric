@@ -6,6 +6,7 @@ Concise meaning blocks for numerology types and numbers 1–9.
 from __future__ import annotations
 
 from typing import Dict
+from .translations import get_translation
 
 BASE_TYPES = {
     "life_path": {
@@ -152,14 +153,51 @@ def _merge_weights(base: Dict[str, float], extra: Dict[str, float]) -> Dict[str,
     return weights
 
 
-NUMEROLOGY_MEANINGS: Dict[str, Dict] = {}
-NUMEROLOGY_MEANINGS.update(BASE_TYPES)
+def get_numerology_meanings(lang: str = 'en') -> Dict[str, Dict]:
+    """Build numerology meanings for a specific language."""
+    meanings = {}
+    
+    # Get translations
+    base_trans = get_translation(lang, 'numerology_base') if lang != 'en' else None
+    traits_trans = get_translation(lang, 'number_traits') if lang != 'en' else None
+    
+    # Add base types (life_path, etc.) - these are usually just keys in the final dict?
+    # Wait, the original code updates NUMEROLOGY_MEANINGS with BASE_TYPES first.
+    # But BASE_TYPES values have "text", "tags", "weights".
+    
+    # We need to translate BASE_TYPES values first
+    translated_base_types = {}
+    for key, val in BASE_TYPES.items():
+        new_val = val.copy()
+        if base_trans and key in base_trans:
+            new_val['text'] = base_trans[key]
+        translated_base_types[key] = new_val
+        
+    meanings.update(translated_base_types)
 
-for tkey, tdata in BASE_TYPES.items():
-    for number, ndata in NUMBER_TRAITS.items():
-        key = f"{tkey}_{number}"
-        # Concise text with keyword and short description
-        text = f"{ndata['keyword']}: {ndata['short']}. {ndata['action']}."
-        tags = tdata["tags"] + ndata["tags"]
-        weights = _merge_weights(tdata["weights"], ndata["weights"])
-        NUMEROLOGY_MEANINGS[key] = {"text": text, "tags": tags, "weights": weights}
+    for tkey, tdata in BASE_TYPES.items():
+        for number, ndata in NUMBER_TRAITS.items():
+            key = f"{tkey}_{number}"
+            
+            # Get trait data (translated or original)
+            trait_keyword = ndata['keyword']
+            trait_short = ndata['short']
+            trait_action = ndata['action']
+            
+            if traits_trans and number in traits_trans:
+                t_data = traits_trans[number]
+                trait_keyword = t_data['keyword']
+                trait_short = t_data['short']
+                trait_action = t_data['action']
+            
+            # Concise text with keyword and short description
+            text = f"{trait_keyword}: {trait_short}. {trait_action}."
+            
+            tags = tdata["tags"] + ndata["tags"]
+            weights = _merge_weights(tdata["weights"], ndata["weights"])
+            meanings[key] = {"text": text, "tags": tags, "weights": weights}
+            
+    return meanings
+
+# Pre-build English meanings dict
+NUMEROLOGY_MEANINGS = get_numerology_meanings('en')

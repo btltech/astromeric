@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks';
 import { useStore } from '../store/useStore';
+import { toast } from '../components/Toast';
 
 const fadeIn = {
   initial: { opacity: 0, y: 20 },
@@ -13,14 +15,23 @@ const fadeIn = {
 
 export function AuthView() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [localError, setLocalError] = useState('');
 
-  const { login, register } = useAuth();
-  const { loading, error } = useStore();
+  const { login, register, isAuthenticated } = useAuth();
+  const { loading, error, user } = useStore();
+
+  // Redirect to profile if already authenticated
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      toast.success(t('auth.welcomeBack', { email: user.email }));
+      navigate('/profile');
+    }
+  }, [isAuthenticated, user, navigate, t]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,6 +53,7 @@ export function AuthView() {
       } else {
         await register(email, password);
       }
+      // Navigation will happen via useEffect when isAuthenticated changes
     } catch {
       // Error is handled in the hook and stored in useStore
     }
@@ -55,6 +67,10 @@ export function AuthView() {
           ? t('auth.signInSubtitle')
           : t('auth.createSubtitle')}
       </p>
+
+      <div className="auth-benefit">
+        {t('auth.benefitText')}
+      </div>
 
       <form onSubmit={handleSubmit}>
         <div className="form-group">
@@ -148,10 +164,17 @@ export function AuthView() {
         </motion.button>
       </div>
 
-      <div style={{ textAlign: 'center', marginTop: '1rem' }}>
-        <span style={{ color: '#666', fontSize: '0.85rem' }}>
-          Or continue as guest (limited features)
-        </span>
+      <div className="guest-section">
+        <div className="divider-text"><span>or</span></div>
+        <motion.a
+          href="/"
+          className="btn-secondary guest-btn"
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+        >
+          {t('auth.continueAsGuest')}
+        </motion.a>
+        <p className="guest-note">{t('auth.guestNote')}</p>
       </div>
     </motion.div>
   );

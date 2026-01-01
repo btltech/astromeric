@@ -63,26 +63,27 @@ class RuleEngine:
         transit_aspects: Optional[List[Aspect]] = None,
         synastry_aspects: Optional[List[Aspect]] = None,
         numerology: Optional[Dict] = None,
+        lang: str = "en",
     ) -> RuleResult:
         factors: List[Factor] = []
-        factors.extend(self._natal_sign_factors(chart, query_type))
-        factors.extend(self._natal_house_factors(chart, query_type))
-        factors.extend(self._aspect_factors(chart.aspects, "natal"))
+        factors.extend(self._natal_sign_factors(chart, query_type, lang))
+        factors.extend(self._natal_house_factors(chart, query_type, lang))
+        factors.extend(self._aspect_factors(chart.aspects, "natal", lang))
 
         if transit_aspects:
-            factors.extend(self._aspect_factors(transit_aspects, "transit"))
+            factors.extend(self._aspect_factors(transit_aspects, "transit", lang))
         if synastry_aspects:
-            factors.extend(self._aspect_factors(synastry_aspects, "synastry"))
+            factors.extend(self._aspect_factors(synastry_aspects, "synastry", lang))
         if numerology:
-            factors.extend(self._numerology_factors(numerology))
+            factors.extend(self._numerology_factors(numerology, lang))
 
         topic_scores = self._aggregate_scores(factors)
         return RuleResult(topic_scores=topic_scores, factors=factors)
 
-    def _natal_sign_factors(self, chart: Chart, query_type: str) -> List[Factor]:
+    def _natal_sign_factors(self, chart: Chart, query_type: str, lang: str = "en") -> List[Factor]:
         factors: List[Factor] = []
         for planet in chart.planets:
-            meaning = get_meaning_block(PLANET_SIGN_MEANINGS, planet.name, planet.sign)
+            meaning = get_meaning_block(PLANET_SIGN_MEANINGS, planet.name, planet.sign, lang=lang, context="planet_sign")
             if meaning:
                 score = self._base_score(meaning.weights, query_type)
                 factors.append(
@@ -97,12 +98,12 @@ class RuleEngine:
                 )
         return factors
 
-    def _natal_house_factors(self, chart: Chart, query_type: str) -> List[Factor]:
+    def _natal_house_factors(self, chart: Chart, query_type: str, lang: str = "en") -> List[Factor]:
         factors: List[Factor] = []
         for planet in chart.planets:
             if planet.house:
                 meaning = get_meaning_block(
-                    PLANET_HOUSE_MEANINGS, planet.name, planet.house
+                    PLANET_HOUSE_MEANINGS, planet.name, planet.house, lang=lang, context="planet_house"
                 )
                 if meaning:
                     score = self._base_score(meaning.weights, query_type)
@@ -119,11 +120,11 @@ class RuleEngine:
         return factors
 
     def _aspect_factors(
-        self, aspects: List[Aspect], aspect_origin: str
+        self, aspects: List[Aspect], aspect_origin: str, lang: str = "en"
     ) -> List[Factor]:
         factors: List[Factor] = []
         for asp in aspects:
-            meaning = ASPECT_MEANINGS.get(asp.aspect_type)
+            meaning = get_meaning_block(ASPECT_MEANINGS, asp.aspect_type, lang=lang, context="aspect")
             if not meaning:
                 continue
             # Tight orb means stronger weight
@@ -151,10 +152,10 @@ class RuleEngine:
             )
         return factors
 
-    def _numerology_factors(self, numerology: Dict) -> List[Factor]:
+    def _numerology_factors(self, numerology: Dict, lang: str = "en") -> List[Factor]:
         factors: List[Factor] = []
         for key, data in numerology.items():
-            meaning = NUMEROLOGY_MEANINGS.get(key)
+            meaning = get_meaning_block(NUMEROLOGY_MEANINGS, key, lang=lang, context="numerology_type")
             if not meaning:
                 continue
             number = data.get("number")

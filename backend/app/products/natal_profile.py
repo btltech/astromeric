@@ -13,15 +13,15 @@ from ..numerology_engine import build_numerology
 from ..rule_engine import RuleEngine
 
 
-def build_natal_profile(profile: Dict) -> Dict:
+def build_natal_profile(profile: Dict, lang: str = "en") -> Dict:
     chart = build_natal_chart(profile)
     numerology = build_numerology(
         profile["name"], profile["date_of_birth"], datetime.now(timezone.utc)
     )
     engine = RuleEngine()
-    general = engine.evaluate("natal_general", chart, numerology=numerology)
-    love = engine.evaluate("natal_love", chart, numerology=numerology)
-    career = engine.evaluate("natal_career", chart, numerology=numerology)
+    general = engine.evaluate("natal_general", chart, numerology=numerology, lang=lang)
+    love = engine.evaluate("natal_love", chart, numerology=numerology, lang=lang)
+    career = engine.evaluate("natal_career", chart, numerology=numerology, lang=lang)
     return {
         "metadata": chart["metadata"],
         "sections": [

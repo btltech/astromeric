@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 from typing import List, Dict, Any, Optional, Literal
 from collections import defaultdict
 import json
+from app.interpretation.translations import get_translation
 
 
 # Outcome types for tracking prediction accuracy
@@ -95,18 +96,22 @@ def record_outcome(
 
 
 def calculate_accuracy_stats(
-    readings: List[Dict[str, Any]]
+    readings: List[Dict[str, Any]],
+    lang: str = "en"
 ) -> Dict[str, Any]:
     """
     Calculate prediction accuracy statistics from a list of readings with feedback.
     
     Args:
         readings: List of reading dicts with 'feedback' and optionally 'scope' fields
+        lang: Language code for localized messages
         
     Returns:
         Dict with accuracy statistics
     """
     if not readings:
+        msg_trans = get_translation(lang, "journal_no_readings")
+        message = msg_trans[0] if msg_trans else "No readings to analyze yet. Keep logging your experiences!"
         return {
             "total_readings": 0,
             "rated_readings": 0,
@@ -115,7 +120,7 @@ def calculate_accuracy_stats(
             "by_scope": {},
             "trend": "neutral",
             "trend_emoji": "➖",
-            "message": "No readings to analyze yet. Keep logging your experiences!"
+            "message": message
         }
     
     total = len(readings)
@@ -195,15 +200,17 @@ def calculate_accuracy_stats(
     
     # Generate message based on accuracy
     if accuracy_rate >= 75:
-        message = "Excellent! Your readings have been highly accurate. Trust the cosmic guidance."
+        msg_trans = get_translation(lang, "journal_accuracy_excellent")
+        message = msg_trans[0] if msg_trans else "Excellent! Your readings have been highly accurate. Trust the cosmic guidance."
     elif accuracy_rate >= 50:
-        message = "Good alignment! Your readings are resonating well with your experiences."
+        msg_trans = get_translation(lang, "journal_accuracy_good")
+        message = msg_trans[0] if msg_trans else "Good alignment! Your readings are resonating well with your experiences."
     elif accuracy_rate >= 25:
-        message = "Some hits, some misses. Consider how you interpret the guidance."
-    elif rated > 0:
-        message = "Challenging period. Remember, readings show potential, not destiny."
+        msg_trans = get_translation(lang, "journal_accuracy_mixed")
+        message = msg_trans[0] if msg_trans else "Mixed results. Some predictions are hitting the mark, others are missing."
     else:
-        message = "Start rating your readings to track accuracy over time!"
+        msg_trans = get_translation(lang, "journal_accuracy_low")
+        message = msg_trans[0] if msg_trans else "Low resonance currently. Consider checking your birth time or trying different reading types."
     
     return {
         "total_readings": total,

@@ -9,6 +9,7 @@ from ...interpretation.planet_sign_meanings import (
     SIGN_FLAVORS,
     get_planet_sign_text,
 )
+from ...interpretation.translations import get_translation
 
 
 @dataclass
@@ -23,13 +24,44 @@ class MeaningBlock:
         return data
 
 
-def get_meaning_block(blocks: Dict, *keys) -> Optional[MeaningBlock]:
+def get_meaning_block(blocks: Dict, *keys, lang: str = "en", context: str = None) -> Optional[MeaningBlock]:
     current = blocks
     for key in keys:
         if isinstance(current, dict):
             current = current.get(key)
         else:
             return None
+            
+    if not current or lang == "en":
+        return current
+        
+    # Localization logic
+    if context == "planet_sign" and len(keys) == 2:
+        planet, sign = keys
+        text = get_planet_sign_text(planet, sign, lang)
+        return MeaningBlock(text=text, tags=current.tags, weights=current.weights)
+        
+    elif context == "planet_house" and len(keys) == 2:
+        planet, house = keys
+        key = f"{planet}_house_{house}"
+        text = get_translation(lang, "planet_house_meanings", key)
+        if text:
+             return MeaningBlock(text=text, tags=current.tags, weights=current.weights)
+             
+    elif context == "aspect" and len(keys) == 1:
+        aspect_type = keys[0]
+        key = f"aspect_{aspect_type}"
+        text = get_translation(lang, "aspect_meanings", key)
+        if text:
+             return MeaningBlock(text=text, tags=current.tags, weights=current.weights)
+             
+    elif context == "numerology_type" and len(keys) == 1:
+        num_type = keys[0]
+        key = f"numerology_type_{num_type}"
+        text = get_translation(lang, "numerology_types", key)
+        if text:
+             return MeaningBlock(text=text, tags=current.tags, weights=current.weights)
+             
     return current
 
 

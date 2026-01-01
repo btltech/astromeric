@@ -1,6 +1,6 @@
 # AstroNumerology – One-Stop Astrology + Numerology Platform
 
-[View on GitHub](https://github.com/btltech/astromeric)
+[View on GitHub](https://github.com/btltech/astronumeric)
 
 ## Quick Start
 

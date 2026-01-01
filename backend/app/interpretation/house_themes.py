@@ -3,7 +3,9 @@ house_themes.py
 House theme meanings with topic weights.
 """
 
-HOUSE_THEMES = {
+from .translations import get_translation
+
+HOUSE_THEMES_DATA = {
     1: {
         "text": "Self & identity—your presence and personal brand.",
         "tags": ["self", "identity"],
@@ -60,8 +62,26 @@ HOUSE_THEMES = {
         "weights": {"general": 0.3},
     },
     12: {
-        "text": "Spirituality & solitude—the unconscious, transcendence.",
-        "tags": ["inner", "transcendence"],
-        "weights": {"spiritual": 0.4, "emotional": 0.2},
+        "text": "Spirituality & closure—the unconscious and hidden realms.",
+        "tags": ["spirituality", "closure"],
+        "weights": {"spiritual": 0.6},
     },
 }
+
+def get_house_themes(lang: str = 'en') -> dict:
+    """Build house themes for a specific language."""
+    themes = {}
+    
+    # Get translations
+    house_trans = get_translation(lang, 'house_themes') if lang != 'en' else None
+    
+    for house, data in HOUSE_THEMES_DATA.items():
+        new_data = data.copy()
+        if house_trans and house in house_trans:
+            new_data['text'] = house_trans[house]
+        themes[house] = new_data
+        
+    return themes
+
+# Pre-build English themes dict
+HOUSE_THEMES = get_house_themes('en')

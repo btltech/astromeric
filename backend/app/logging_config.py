@@ -86,7 +86,7 @@ def setup_logging(
         level = os.getenv("LOG_LEVEL", "INFO")
     
     # Create root logger
-    logger = logging.getLogger("astromeric")
+    logger = logging.getLogger("astronumeric")
     logger.setLevel(getattr(logging, level.upper()))
     logger.handlers.clear()
     

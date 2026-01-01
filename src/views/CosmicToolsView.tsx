@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { DailyFeaturesCard } from '../components/DailyFeaturesCard';
 import { TarotCard } from '../components/TarotCard';
 import { OracleYesNo } from '../components/OracleYesNo';
@@ -15,11 +16,31 @@ interface Props {
 type ExpandedTool = 'daily' | 'tarot' | 'oracle' | 'guide' | null;
 
 export function CosmicToolsView({ birthDate, sunSign, moonSign, risingSign }: Props) {
+  const { t } = useTranslation();
   const [expandedTool, setExpandedTool] = useState<ExpandedTool>(null);
 
   const toggleTool = (tool: ExpandedTool) => {
     setExpandedTool(expandedTool === tool ? null : tool);
   };
+
+  // Show gating panel if no birth date
+  if (!birthDate) {
+    return (
+      <div className="gating-panel">
+        <div className="gating-icon">🔮</div>
+        <h2 className="gating-title">{t('tools.gatingTitle')}</h2>
+        <p className="gating-subtitle">{t('tools.gatingSubtitle')}</p>
+        <ul className="gating-benefits">
+          <li>✓ {t('tools.gatingBenefit1')}</li>
+          <li>✓ {t('tools.gatingBenefit2')}</li>
+          <li>✓ {t('tools.gatingBenefit3')}</li>
+        </ul>
+        <Link to="/" className="btn-primary gating-cta">
+          {t('tools.goToReading')}
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="cosmic-tools-view redesigned">

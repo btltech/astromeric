@@ -2,7 +2,7 @@
 // const fetch = require('node-fetch'); // Built-in in Node 18+
 
 async function test() {
-  const baseUrl = 'https://astromeric-backend-production.up.railway.app';
+  const baseUrl = 'https://astronumeric-backend-production.up.railway.app';
   const endpoint = '/learn/modules';
   
   try {

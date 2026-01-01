@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 from typing import Dict, Optional
+from app.interpretation.translations import get_translation
 
 from ..charts.engine import ChartEngine
 from ..interpretation import (
@@ -74,8 +75,9 @@ def build_forecast(
     numerology = {**numerology_core, **numerology_cycles}
 
     query_type = f"{scope}_forecast"
+    lang = profile.language
     result = rule_engine.evaluate(
-        query_type, natal_chart, transit_aspects=transit_aspects, numerology=numerology
+        query_type, natal_chart, transit_aspects=transit_aspects, numerology=numerology, lang=lang
     )
 
     seed = hashlib.md5(
@@ -87,7 +89,7 @@ def build_forecast(
         "scope": scope,
         "date": anchor_date,
         "summary": _summarise(result, scope),
-        "sections": _build_sections(result, numerology, transit_aspects, seed),
+        "sections": _build_sections(result, numerology, transit_aspects, seed, lang),
         "natal_chart": {
             "planets": [p.__dict__ for p in natal_chart.planets],
             "houses": [h.__dict__ for h in natal_chart.houses],
@@ -105,20 +107,20 @@ def build_forecast(
 
 
 def _build_sections(
-    result: RuleResult, numerology: Dict, transit_aspects: list, seed: str
+    result: RuleResult, numerology: Dict, transit_aspects: list, seed: str, lang: str = "en"
 ) -> list:
     return [
-        _build_topic_section("Overview", result, "general"),
+        _build_topic_section("Overview", result, "general", affirmation_key="overview", lang=lang),
         _build_topic_section(
-            "Love & Relationships", result, "love", affirmation_key="love"
+            "Love & Relationships", result, "love", affirmation_key="love", lang=lang
         ),
-        _build_topic_section("Work & Money", result, "career", affirmation_key="work"),
+        _build_topic_section("Work & Money", result, "career", affirmation_key="work", lang=lang),
         _build_topic_section(
-            "Emotional / Spiritual", result, "emotional", affirmation_key="emotional"
+            "Emotional / Spiritual", result, "emotional", affirmation_key="emotional", lang=lang
         ),
-        _standout_transit_section(transit_aspects),
-        _numerology_overlay_section(numerology),
-        _actions_section(seed),
+        _standout_transit_section(transit_aspects, lang=lang),
+        _numerology_overlay_section(numerology, lang=lang),
+        _actions_section(seed, lang=lang),
     ]
 
 
@@ -138,25 +140,48 @@ def _top_factors(result: RuleResult, topic: str, limit: int = 3):
 
 
 def _build_topic_section(
-    title: str, result: RuleResult, topic: str, affirmation_key: str = "overview"
+    title: str, result: RuleResult, topic: str, affirmation_key: str = "overview", lang: str = "en"
 ) -> Dict:
     factors = _top_factors(result, topic)
-    explanations = [_format_factor(f) for f in factors if f]
+    explanations = [_format_factor(f, lang) for f in factors if f]
     rating = _normalize_rating(result.topic_scores.get(topic, 0))
+    
+    # Localize title
+    title_key_map = {
+        "Overview": "overview",
+        "Love & Relationships": "love",
+        "Work & Money": "career",
+        "Emotional / Spiritual": "emotional"
+    }
+    title_key = f"section_title_{title_key_map.get(title, 'overview')}"
+    localized_title = get_translation(lang, "forecast_sections", title_key)
+    if not localized_title:
+        localized_title = title
+        
+    # Localize affirmation
+    affirmation_text = AFFIRMATIONS.get(affirmation_key, AFFIRMATIONS["overview"])
+    localized_affirmation = get_translation(lang, "affirmations", f"affirmation_{affirmation_key}")
+    if not localized_affirmation:
+        localized_affirmation = affirmation_text
+
     return {
-        "title": title,
+        "title": localized_title,
         "rating": rating,
         "highlights": explanations,
-        "affirmation": AFFIRMATIONS.get(affirmation_key, AFFIRMATIONS["overview"]),
+        "affirmation": localized_affirmation,
     }
 
 
-def _format_factor(factor) -> str:
+def _format_factor(factor, lang: str = "en") -> str:
     """Format a factor into a concise, readable highlight."""
     kind = factor.context.get("kind")
     
     if kind in ["transit", "synastry"]:
-        template = ASPECT_TEMPLATES.get(factor.label.split()[1], "{a}-{b} alignment.")
+        template_key = factor.label.split()[1]
+        template = ASPECT_TEMPLATES.get(template_key, "{a}-{b} alignment.")
+        if lang != "en":
+            template = get_translation(lang, "aspect_templates", f"template_{template_key}") or template
+            
         parts = factor.label.split()
         a, b = parts[0], parts[-1]
         return template.format(a=a, b=b)
@@ -166,6 +191,13 @@ def _format_factor(factor) -> str:
         house_name = HOUSE_BLURBS.get(house, f"house {house}")
         planet = factor.label.split()[0]
         tone = PLANET_TONES.get(planet, "energy")
+        
+        if lang != "en":
+            house_name = get_translation(lang, "house_blurbs", f"house_{house}") or house_name
+            tone = get_translation(lang, "planet_tones", f"tone_{planet}") or tone
+            template = get_translation(lang, "forecast_templates", "planet_house_focus") or "{tone} focused on {house_name}."
+            return template.format(tone=tone.title(), house_name=house_name.lower())
+            
         return f"{tone.title()} focused on {house_name.lower()}."
     
     if kind == "planet_sign":
@@ -179,47 +211,96 @@ def _format_factor(factor) -> str:
     return factor.meaning.text if factor.meaning else factor.label
 
 
-def _standout_transit_section(transit_aspects: list) -> Dict:
+def _standout_transit_section(transit_aspects: list, lang: str = "en") -> Dict:
+    title = "Standout Transit"
+    if lang != "en":
+        title = get_translation(lang, "forecast_sections", "section_title_standout") or title
+
     if not transit_aspects:
+        msg = "Quiet sky—no standout transit today."
+        if lang != "en":
+            msg = get_translation(lang, "forecast_messages", "quiet_sky") or msg
         return {
-            "title": "Standout Transit",
-            "highlights": ["Quiet sky—no standout transit today."],
+            "title": title,
+            "highlights": [msg],
             "rating": 3,
         }
     strongest = sorted(transit_aspects, key=lambda a: a.strength_score, reverse=True)[0]
     template = ASPECT_TEMPLATES.get(
         strongest.aspect_type, "A key alignment shapes the day."
     )
+    if lang != "en":
+        template = get_translation(lang, "aspect_templates", f"template_{strongest.aspect_type}") or template
+        
     text = template.format(a=strongest.planet_a, b=strongest.planet_b)
     why = f"{text} (orb {strongest.orb:.2f}°, score {strongest.strength_score:.2f})."
     return {
-        "title": "Standout Transit",
+        "title": title,
         "highlights": [why],
         "rating": _normalize_rating(strongest.strength_score * 5),
     }
 
 
-def _numerology_overlay_section(numerology: Dict) -> Dict:
+def _numerology_overlay_section(numerology: Dict, lang: str = "en") -> Dict:
     highlights = []
     py = numerology.get("personal_year", {}).get("number")
     pm = numerology.get("personal_month", {}).get("number")
     pd = numerology.get("personal_day", {}).get("number")
-    if py and py in NUMEROLOGY_OVERLAYS["personal_year"]:
-        highlights.append(NUMEROLOGY_OVERLAYS["personal_year"][py])
-    if pm and pm in NUMEROLOGY_OVERLAYS["personal_month"]:
-        highlights.append(NUMEROLOGY_OVERLAYS["personal_month"][pm])
-    if pd and pd in NUMEROLOGY_OVERLAYS["personal_day"]:
-        highlights.append(NUMEROLOGY_OVERLAYS["personal_day"][pd])
+    
+    def get_overlay(category, num):
+        if lang == "en":
+            return NUMEROLOGY_OVERLAYS.get(category, {}).get(num)
+        key = f"{category}_{num}"
+        return get_translation(lang, "numerology_overlays", key) or NUMEROLOGY_OVERLAYS.get(category, {}).get(num)
+
+    if py:
+        text = get_overlay("personal_year", py)
+        if text: highlights.append(text)
+    if pm:
+        text = get_overlay("personal_month", pm)
+        if text: highlights.append(text)
+    if pd:
+        text = get_overlay("personal_day", pd)
+        if text: highlights.append(text)
+        
     if not highlights:
-        highlights.append("No cycle overlays today—steady as she goes.")
-    return {"title": "Personal Year Overlay", "highlights": highlights, "rating": 4}
+        msg = "No cycle overlays today—steady as she goes."
+        if lang != "en":
+            msg = get_translation(lang, "forecast_messages", "no_overlays") or msg
+        highlights.append(msg)
+        
+    title = "Personal Year Overlay"
+    if lang != "en":
+        title = get_translation(lang, "forecast_sections", "section_title_numerology") or title
+        
+    return {"title": title, "highlights": highlights, "rating": 4}
 
 
-def _actions_section(seed: str) -> Dict:
-    action = _deterministic_pick(seed + "action", ACTIONS)
+def _actions_section(seed: str, lang: str = "en") -> Dict:
+    # Localize ACTIONS pool
+    actions_pool = ACTIONS
+    if lang != "en":
+        # Assuming ACTIONS is a list, we need to fetch localized list or iterate
+        # Similar to fusion.py get_localized_pool
+        localized_pool = []
+        for i, item in enumerate(ACTIONS):
+            key = f"action_{i}"
+            translated = get_translation(lang, "forecast_actions", key)
+            localized_pool.append(translated if translated else item)
+        actions_pool = localized_pool
+
+    action = _deterministic_pick(seed + "action", actions_pool)
+    
     affirmation = AFFIRMATIONS.get("overview")
+    if lang != "en":
+        affirmation = get_translation(lang, "affirmations", "affirmation_overview") or affirmation
+        
+    title = "Actions & Advice"
+    if lang != "en":
+        title = get_translation(lang, "forecast_sections", "section_title_actions") or title
+        
     return {
-        "title": "Actions & Advice",
+        "title": title,
         "highlights": [action],
         "affirmation": affirmation,
         "rating": 4,

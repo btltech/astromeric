@@ -417,7 +417,7 @@ export function LearnView() {
       const newCompleted = new Set(completedLessons);
       newCompleted.add(id);
       setCompletedLessons(newCompleted);
-      localStorage.setItem('astromeric_completedLessons', JSON.stringify([...newCompleted]));
+      localStorage.setItem('astronumeric_completedLessons', JSON.stringify([...newCompleted]));
     }
   };
 

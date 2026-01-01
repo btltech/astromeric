@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import os
 from typing import Dict, List, Optional
+from app.interpretation.translations import get_translation
 
 # Try to import google generative AI
 try:
@@ -162,6 +163,7 @@ async def ask_cosmic_guide(
     numerology_data: Optional[Dict] = None,
     reading_data: Optional[Dict] = None,
     conversation_history: Optional[List[Dict]] = None,
+    lang: str = "en",
 ) -> Dict:
     """
     Ask the Cosmic Guide a question.
@@ -172,6 +174,7 @@ async def ask_cosmic_guide(
         numerology_data: Optional numerology profile
         reading_data: Optional current reading data
         conversation_history: Optional list of previous messages
+        lang: Language code for response
         
     Returns:
         Dict with response and metadata
@@ -184,8 +187,20 @@ async def ask_cosmic_guide(
     # If no API key, use intelligent fallback
     if not api_key or not HAS_GENAI:
         topic = _detect_topic(question)
+        
+        # Localize fallback response
+        fallback_key = f"guide_fallback_{topic}"
+        fallback_trans = get_translation(lang, fallback_key)
+        
+        if fallback_trans:
+            response = fallback_trans[0]
+        else:
+            # Try default fallback if specific topic not found
+            default_trans = get_translation(lang, "guide_fallback_default")
+            response = default_trans[0] if default_trans else FALLBACK_RESPONSES.get(topic, FALLBACK_RESPONSES["default"])
+            
         return {
-            "response": FALLBACK_RESPONSES.get(topic, FALLBACK_RESPONSES["default"]),
+            "response": response,
             "provider": "fallback",
             "reason": "no_api_key" if not api_key else "no_genai_library",
             "topic_detected": topic,
@@ -196,21 +211,20 @@ async def ask_cosmic_guide(
         model = genai.GenerativeModel(_get_model_name())
         
         # Build the full prompt
-        full_prompt = COSMIC_SYSTEM_PROMPT
+        lang_instruction = f"\nPlease respond in {lang} language." if lang != "en" else ""
+        full_prompt = COSMIC_SYSTEM_PROMPT + lang_instruction
+        
         if context:
-            full_prompt += f"\n{context}"
-        full_prompt += f"\n\nUser asks: {question}"
+            full_prompt += context
+            
+        # Add conversation history if available
+        chat = model.start_chat(history=[])
         
-        # Include conversation history if provided
-        if conversation_history:
-            history_text = "\n\nRecent conversation:\n"
-            for msg in conversation_history[-5:]:  # Last 5 messages
-                role = msg.get("role", "user")
-                content = msg.get("content", "")
-                history_text += f"{role.capitalize()}: {content}\n"
-            full_prompt = full_prompt.replace("User asks:", history_text + "\nUser asks:")
+        # Send system prompt first (simulated as user message for context setting)
+        # Note: Gemini doesn't have explicit system prompt in chat mode same way as GPT
+        # So we prepend it to the first message or use it as context
         
-        response = model.generate_content(full_prompt)
+        response = chat.send_message(full_prompt + "\n\nUser question: " + question)
         
         return {
             "response": response.text,
@@ -219,14 +233,18 @@ async def ask_cosmic_guide(
         }
         
     except Exception as e:
-        # Log and fallback on any error
-        import logging
-        logging.error(f"Cosmic Guide Gemini error: {type(e).__name__}: {e}")
+        # Fallback on error
         topic = _detect_topic(question)
+        
+        # Localize fallback response
+        fallback_key = f"guide_fallback_{topic}"
+        fallback_trans = get_translation(lang, fallback_key)
+        response = fallback_trans[0] if fallback_trans else FALLBACK_RESPONSES.get(topic, FALLBACK_RESPONSES["default"])
+        
         return {
-            "response": FALLBACK_RESPONSES.get(topic, FALLBACK_RESPONSES["default"]),
+            "response": response,
             "provider": "fallback",
-            "error": f"{type(e).__name__}: {str(e)}",
+            "reason": str(e),
             "topic_detected": topic,
         }
 

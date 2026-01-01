@@ -7,7 +7,7 @@ Supports habit creation, logging, and lunar-aware analytics.
 from datetime import datetime, timedelta
 from typing import Dict, List, Any, Optional, Literal
 from collections import defaultdict
-
+from ..interpretation.translations import get_translation
 
 # Moon phase recommendations for habits
 LUNAR_HABIT_GUIDANCE = {
@@ -261,7 +261,8 @@ def create_habit(
     category: str,
     frequency: Literal["daily", "weekly", "lunar_cycle"] = "daily",
     target_count: int = 1,
-    description: str = ""
+    description: str = "",
+    lang: str = "en"
 ) -> Dict[str, Any]:
     """
     Create a new habit definition.
@@ -272,11 +273,16 @@ def create_habit(
         frequency: How often (daily, weekly, or per lunar cycle)
         target_count: Target completions per period
         description: Optional description
+        lang: Language code
         
     Returns:
         Habit definition dict
     """
-    cat_info = HABIT_CATEGORIES.get(category, HABIT_CATEGORIES["health"])
+    cat_info = HABIT_CATEGORIES.get(category, HABIT_CATEGORIES["health"]).copy()
+    
+    if lang != "en":
+        cat_name_trans = get_translation(lang, f"habit_cat_{category}_name")
+        if cat_name_trans: cat_info["name"] = cat_name_trans[0]
     
     return {
         "id": None,  # To be set by database
@@ -501,7 +507,8 @@ def get_habit_streak(
 
 def get_lunar_habit_recommendations(
     moon_phase: str,
-    existing_habits: List[Dict[str, Any]] = None
+    existing_habits: List[Dict[str, Any]] = None,
+    lang: str = "en"
 ) -> Dict[str, Any]:
     """
     Get habit recommendations based on current moon phase.
@@ -509,24 +516,48 @@ def get_lunar_habit_recommendations(
     Args:
         moon_phase: Current moon phase key
         existing_habits: User's existing habits to personalize
+        lang: Language code
         
     Returns:
         Dict with recommendations
     """
-    phase_info = LUNAR_HABIT_GUIDANCE.get(moon_phase, {})
+    phase_info = LUNAR_HABIT_GUIDANCE.get(moon_phase, {}).copy()
+    
+    if lang != "en":
+        # Localize phase info
+        theme_trans = get_translation(lang, f"habit_phase_{moon_phase}_theme")
+        if theme_trans: phase_info["theme"] = theme_trans[0]
+        
+        best_trans = get_translation(lang, f"habit_phase_{moon_phase}_best")
+        if best_trans: phase_info["best_for"] = best_trans
+        
+        avoid_trans = get_translation(lang, f"habit_phase_{moon_phase}_avoid")
+        if avoid_trans: phase_info["avoid"] = avoid_trans
+        
     ideal_categories = phase_info.get("ideal_habits", [])
     
     # Find matching categories
     recommended = []
     for cat_key in ideal_categories:
         if cat_key in HABIT_CATEGORIES:
-            cat = HABIT_CATEGORIES[cat_key]
+            cat = HABIT_CATEGORIES[cat_key].copy()
+            
+            if lang != "en":
+                cat_name_trans = get_translation(lang, f"habit_cat_{cat_key}_name")
+                if cat_name_trans: cat["name"] = cat_name_trans[0]
+                
+                cat_desc_trans = get_translation(lang, f"habit_cat_{cat_key}_desc")
+                if cat_desc_trans: cat["description"] = cat_desc_trans[0]
+            
+            why_trans = get_translation(lang, "habit_why_aligned")
+            why = why_trans[0].format(theme=phase_info.get('theme', 'this phase')) if why_trans else f"Aligned with {phase_info.get('theme', 'this phase')} energy"
+            
             recommended.append({
                 "category": cat_key,
                 "name": cat["name"],
                 "emoji": cat["emoji"],
                 "description": cat["description"],
-                "why": f"Aligned with {phase_info.get('theme', 'this phase')} energy"
+                "why": why
             })
     
     # Check existing habits alignment
@@ -535,10 +566,13 @@ def get_lunar_habit_recommendations(
         for habit in existing_habits:
             cat = habit.get("category", "")
             if cat in ideal_categories:
+                msg_trans = get_translation(lang, "habit_msg_great_time")
+                msg = msg_trans[0] if msg_trans else "Great time to focus on this habit!"
+                
                 aligned_existing.append({
                     "habit_name": habit.get("name"),
                     "category": cat,
-                    "message": "Great time to focus on this habit!"
+                    "message": msg
                 })
     
     return {

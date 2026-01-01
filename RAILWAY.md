@@ -34,10 +34,14 @@ Set these in Railway dashboard:
 | Variable | Value | Required |
 |----------|-------|----------|
 | `ALLOW_ORIGINS` | `https://your-frontend.vercel.app,https://your-domain.com` | Recommended |
+| `ALLOW_ORIGIN_REGEX` | `https?://(.*\\.astronumeric\\.pages\\.dev|your-domain\\.com)(:\\d+)?` | Optional |
+| `JWT_SECRET_KEY` | `openssl rand -hex 32` | Yes |
 | `REDIS_URL` | Redis connection URL | Optional (for caching) |
 | `FUSION_CACHE_TTL` | `3600` | Optional |
 | `LOG_LEVEL` | `info` | Optional |
 | `EPHEMERIS_PATH` | `/app/ephemeris` | Automatic |
+
+Note: The backend will fail to start on Railway if `JWT_SECRET_KEY` is not set, to prevent deploying with an insecure default secret.
 
 ## Add Database & Redis
 
@@ -69,10 +73,10 @@ Use this URL as `VITE_API_URL` in your frontend deployment.
 
 ```bash
 # Build Docker image locally
-docker build -f backend/Dockerfile -t astromeric-backend .
+docker build -f backend/Dockerfile -t astronumeric-backend .
 
 # Run locally
-docker run -p 8000:8000 -e PORT=8000 astromeric-backend
+docker run -p 8000:8000 -e PORT=8000 astronumeric-backend
 
 # Test
 curl http://localhost:8000/health
@@ -92,12 +96,13 @@ railway restart
 
 ### Deploy Specific Version
 ```bash
-railway up --service astromeric-backend
+railway up --service astronumeric-backend
 ```
 
 ## Production Checklist
 
 - [ ] Set `ALLOW_ORIGINS` to your actual frontend domain
+- [ ] If using a custom domain or wildcard subdomains, set `ALLOW_ORIGIN_REGEX` (or list every origin in `ALLOW_ORIGINS`)
 - [ ] Add Redis for caching (improves performance)
 - [ ] Enable HTTPS (Railway does this automatically)
 - [ ] Set up monitoring/alerts in Railway dashboard

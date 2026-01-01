@@ -1,9 +1,18 @@
 {
+  "hero": {
+    "eyebrow": "AstroNumeric",
+    "title": "Astrology and numerology that actually connect.",
+    "subtitle": "Personalized charts, compatibility, and daily insights you can actually use.",
+    "benefit1": "✨ Daily personal horoscope",
+    "benefit2": "🔢 Numerology numbers",
+    "benefit3": "💕 Compatibility insights"
+  },
   "nav": {
     "reading": "✨ Reading",
     "numbers": "🔢 Numbers",
     "tools": "🔮 Tools",
     "learn": "📚 Learn",
+    "profile": "Profile",
     "signIn": "Sign In",
     "signOut": "Sign Out"
   },
@@ -25,11 +34,13 @@
     "fullName": "Full Name",
     "fullNamePlaceholder": "e.g. Jane Doe",
     "dateOfBirth": "Date of Birth",
+    "dateOfBirthHint": "Used to calculate your chart; can't be used to identify you.",
     "timeOfBirth": "Time of Birth (Optional)",
     "placeOfBirth": "Place of Birth (Optional)",
     "searchCity": "Search city...",
     "saveProfile": "Save my profile for future readings",
-    "privacyNote": "Used only to generate your reading — check the box to save for future visits.",
+    "saveProfileHint": "Stores your details on this device for faster readings",
+    "privacyNote": "Your data stays private and is never shared.",
     "getPrediction": "Get Today's Prediction",
     "readingStars": "Reading the Stars...",
     "errors": {
@@ -43,7 +54,18 @@
     "selectProfile": "Select Profile",
     "choose": "Choose...",
     "createNew": "Create New Profile",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "title": "My Profile",
+    "premium": "Premium",
+    "birthDetails": "Birth Details",
+    "edit": "Edit",
+    "saveProfile": "Save Profile",
+    "saved": "Profile saved successfully!",
+    "quickActions": "Quick Actions",
+    "errors": {
+      "requiredFields": "Please fill in your name and date of birth.",
+      "saveFailed": "Failed to save profile. Please try again."
+    }
   },
   "reading": {
     "title": "{{scope}} Reading",
@@ -66,6 +88,12 @@
   "numerology": {
     "title": "🔢 Your Numerology Profile",
     "loading": "Loading numerology profile...",
+    "gatingTitle": "Unlock Your Numbers",
+    "gatingSubtitle": "Enter your birth details to discover your numerology profile",
+    "gatingBenefit1": "Life Path & Expression numbers",
+    "gatingBenefit2": "Personal Year cycles",
+    "gatingBenefit3": "Pinnacles & Challenges",
+    "goToReading": "Go to Reading →",
     "lifePath": "Life Path",
     "expression": "Expression",
     "soulUrge": "Soul Urge",
@@ -92,6 +120,7 @@
     "createAccount": "✨ Create Account",
     "signInSubtitle": "Sign in to access your cosmic profiles",
     "createSubtitle": "Join to save your readings and profiles",
+    "benefitText": "Sign in to save profiles and see your reading history.",
     "email": "Email",
     "emailPlaceholder": "your@email.com",
     "password": "Password",
@@ -100,6 +129,9 @@
     "hasAccount": "Already have an account?",
     "register": "Register",
     "signInButton": "Sign In",
+    "continueAsGuest": "Continue as Guest",
+    "guestNote": "Try all features without an account. Your data stays on this device.",
+    "welcomeBack": "Welcome back, {{email}}!",
     "errors": {
       "fillAllFields": "Please fill in all fields",
       "passwordsMismatch": "Passwords do not match"
@@ -129,6 +161,12 @@
   "tools": {
     "title": "🔮 Cosmic Tools",
     "subtitle": "Divine guidance at your fingertips",
+    "gatingTitle": "Unlock Cosmic Tools",
+    "gatingSubtitle": "Enter your birth details once to access personalized tools",
+    "gatingBenefit1": "Daily cosmic features & lucky numbers",
+    "gatingBenefit2": "Personalized tarot & oracle readings",
+    "gatingBenefit3": "AI cosmic guide chat",
+    "goToReading": "Go to Reading →",
     "tarot": {
       "title": "🃏 Daily Tarot",
       "draw": "Draw a Card",
@@ -155,6 +193,6 @@
   },
   "footer": {
     "madeWith": "Made with ✨ cosmic energy",
-    "copyright": "© {{year}} Astromeric"
+    "copyright": "© {{year}} AstroNumeric"
   }
 }

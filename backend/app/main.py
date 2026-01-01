@@ -36,7 +36,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field, field_validator
 from sqlalchemy.orm import Session
 
-from .middleware import rate_limit_middleware
+from .middleware import rate_limit_middleware, security_headers_middleware
 
 # Configure logging
 logging.basicConfig(
@@ -147,6 +147,9 @@ app = api  # alias for uvicorn import style
 # Add custom rate limiting middleware (60 req/min with burst support)
 app.middleware("http")(rate_limit_middleware)
 
+# Add security headers middleware
+app.middleware("http")(security_headers_middleware)
+
 # Allow configurable CORS via env; default open for dev
 allow_origins_env = os.getenv("ALLOW_ORIGINS", "")
 if allow_origins_env:
@@ -154,8 +157,12 @@ if allow_origins_env:
 else:
     allow_origins = []
 
-# Always allow localhost, local network IPs, and all astromeric.pages.dev subdomains
-allow_origin_regex = r"https?://(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.(1[6-9]|2\d|3[0-1])\.\d+\.\d+|.*\.astromeric\.pages\.dev|astromeric\.pages\.dev)(:\d+)?"
+# Always allow localhost, local network IPs, and known frontend origins.
+# You can override/extend this in production via ALLOW_ORIGIN_REGEX.
+allow_origin_regex = os.getenv(
+    "ALLOW_ORIGIN_REGEX",
+    r"https?://(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.(1[6-9]|2\d|3[0-1])\.\d+\.\d+|.*\.astronumeric\.pages\.dev|.*\.astromeric\.pages\.dev|astronumeric\.pages\.dev|astromeric\.pages\.dev|astronumeric\.com|www\.astronumeric\.com)(:\d+)?",
+)
 
 api.add_middleware(
     CORSMiddleware,
@@ -246,29 +253,35 @@ class ProfilePayload(BaseModel):
 
 class DailyRequest(BaseModel):
     profile: ProfilePayload
+    lang: Optional[str] = "en"
 
 
 class WeeklyRequest(BaseModel):
     profile: ProfilePayload
+    lang: Optional[str] = "en"
 
 
 class MonthlyRequest(BaseModel):
     profile: ProfilePayload
+    lang: Optional[str] = "en"
 
 
 class ForecastRequest(BaseModel):
     profile: Optional[ProfilePayload] = None
     profile_id: Optional[int] = None
     scope: str = Field("daily", pattern=r"^(daily|weekly|monthly)$")
+    lang: Optional[str] = "en"
 
 
 class NatalRequest(BaseModel):
     profile: ProfilePayload
+    lang: Optional[str] = "en"
 
 
 class CompatibilityRequest(BaseModel):
     person_a: ProfilePayload
     person_b: ProfilePayload
+    lang: Optional[str] = "en"
 
 
 class CreateProfileRequest(BaseModel):
@@ -319,6 +332,7 @@ def get_db():
 
 
 @api.post("/auth/register", response_model=Token)
+@rate_limit(requests_per_minute=3)  # Prevent spam registrations
 def register(user_data: UserCreate, db: Session = Depends(get_db)):
     """Register a new user."""
     existing_user = get_user_by_email(db, user_data.email)
@@ -341,6 +355,7 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
 
 
 @api.post("/auth/login", response_model=Token)
+@rate_limit(requests_per_minute=5)  # Prevent brute force attacks
 def login(user_data: UserLogin, db: Session = Depends(get_db)):
     """Authenticate a user and return a token."""
     user = authenticate_user(db, user_data.email, user_data.password)
@@ -367,6 +382,21 @@ def login(user_data: UserLogin, db: Session = Depends(get_db)):
 def get_me(current_user: User = Depends(get_current_user)):
     """Get current user info."""
     return {"id": current_user.id, "email": current_user.email, "is_paid": current_user.is_paid}
+
+
+@api.post("/auth/activate-premium")
+def activate_premium(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Activate premium for site owner only."""
+    admin_emails = os.getenv("ADMIN_EMAILS", "").split(",")
+    if not admin_emails or current_user.email not in admin_emails:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    # Re-fetch the user from this session to ensure it's attached
+    user = db.query(User).filter(User.id == current_user.id).first()
+    user.is_paid = True
+    db.commit()
+    db.refresh(user)
+    return {"success": True, "is_paid": user.is_paid}
 
 
 # ========== AI ENDPOINTS ==========
@@ -499,21 +529,21 @@ def create_profile(
 def daily_reading(req: DailyRequest):
     """Get a daily astrological and numerological reading."""
     profile = _profile_to_dict(req.profile)
-    return build_forecast(profile, scope="daily")
+    return build_forecast(profile, scope="daily", lang=req.lang)
 
 
 @api.post("/weekly-reading", tags=["Readings"])
 def weekly_reading(req: WeeklyRequest):
     """Get a weekly astrological and numerological reading."""
     profile = _profile_to_dict(req.profile)
-    return build_forecast(profile, scope="weekly")
+    return build_forecast(profile, scope="weekly", lang=req.lang)
 
 
 @api.post("/monthly-reading", tags=["Readings"])
 def monthly_reading(req: MonthlyRequest):
     """Get a monthly astrological and numerological reading."""
     profile = _profile_to_dict(req.profile)
-    return build_forecast(profile, scope="monthly")
+    return build_forecast(profile, scope="monthly", lang=req.lang)
 
 
 @api.post("/forecast", tags=["Readings"])
@@ -537,7 +567,7 @@ def generic_forecast(
         profile = _db_profile_to_dict(profile_obj)
     else:
         raise HTTPException(status_code=400, detail="Profile data is required")
-    return build_forecast(profile, scope=req.scope)
+    return build_forecast(profile, scope=req.scope, lang=req.lang)
 
 
 @api.post("/feedback/section", tags=["Feedback"])
@@ -574,7 +604,7 @@ def submit_section_feedback(
 def natal_profile(req: NatalRequest):
     """Get a complete natal profile including chart and interpretations."""
     profile = _profile_to_dict(req.profile)
-    return build_natal_profile(profile)
+    return build_natal_profile(profile, lang=req.lang)
 
 
 @api.post("/compatibility", tags=["Readings"])
@@ -582,7 +612,7 @@ def compatibility(req: CompatibilityRequest):
     """Get compatibility analysis between two people."""
     a = _profile_to_dict(req.person_a)
     b = _profile_to_dict(req.person_b)
-    return build_compatibility(a, b)
+    return build_compatibility(a, b, lang=req.lang)
 
 
 # ========== YEAR-AHEAD FORECAST ==========

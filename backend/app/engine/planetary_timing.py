@@ -8,6 +8,8 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Tuple
 from zoneinfo import ZoneInfo
 
+from ..interpretation.translations import get_translation
+
 # Chaldean order of planets (traditional planetary hours sequence)
 CHALDEAN_ORDER = ["Saturn", "Jupiter", "Mars", "Sun", "Venus", "Mercury", "Moon"]
 
@@ -273,7 +275,7 @@ def get_power_hours(
     return power_hours
 
 
-def detect_retrogrades(transit_chart: Dict) -> List[Dict]:
+def detect_retrogrades(transit_chart: Dict, lang: str = "en") -> List[Dict]:
     """
     Detect retrograde planets from transit chart data.
     Returns list of retrograde planet info with personalized impacts.
@@ -286,30 +288,53 @@ def detect_retrogrades(transit_chart: Dict) -> List[Dict]:
             name = planet["name"]
             impact_data = RETROGRADE_IMPACTS.get(name, {})
             
+            # Localize general impact
+            general_key = f"retro_{name.lower()}_general"
+            general_trans = get_translation(lang, general_key)
+            general_impact = general_trans[0] if general_trans else impact_data.get("general", f"{name} energy turned inward")
+            
+            # Localize avoid/embrace
+            avoid_key = f"retro_{name.lower()}_avoid"
+            embrace_key = f"retro_{name.lower()}_embrace"
+            
+            avoid_trans = get_translation(lang, avoid_key)
+            embrace_trans = get_translation(lang, embrace_key)
+            
+            activities_avoid = avoid_trans if avoid_trans else impact_data.get("activities_avoid", [])
+            activities_embrace = embrace_trans if embrace_trans else impact_data.get("activities_embrace", [])
+            
             retrograde_info = {
                 "planet": name,
                 "sign": planet.get("sign", "Unknown"),
                 "degree": planet.get("degree", 0),
-                "general_impact": impact_data.get("general", f"{name} energy turned inward"),
-                "activities_avoid": impact_data.get("activities_avoid", []),
-                "activities_embrace": impact_data.get("activities_embrace", []),
+                "general_impact": general_impact,
+                "activities_avoid": activities_avoid,
+                "activities_embrace": activities_embrace,
             }
             
             # Add house-specific impact if available
             house = planet.get("house")
-            if house and "houses" in impact_data:
-                retrograde_info["house_impact"] = impact_data["houses"].get(
-                    house, 
-                    f"{name} retrograde affects house {house} themes"
-                )
-                retrograde_info["house"] = house
+            if house:
+                house_impact = None
+                # Try translation first
+                house_key = f"retro_{name.lower()}_house_{house}"
+                house_trans = get_translation(lang, house_key)
+                
+                if house_trans:
+                    house_impact = house_trans[0]
+                elif "houses" in impact_data:
+                    house_impact = impact_data["houses"].get(house)
+                
+                if house_impact:
+                    retrograde_info["house_impact"] = house_impact
+                    retrograde_info["house"] = house
             
             retrogrades.append(retrograde_info)
     
     return retrogrades
 
 
-def calculate_void_of_course_moon(transit_chart: Dict) -> Dict:
+def calculate_void_of_course_moon(transit_chart: Dict, lang: str = "en") -> Dict:
     """
     Calculate if the Moon is void-of-course (VOC).
     Moon is VOC when it makes no major applying aspects before leaving its current sign.
@@ -377,13 +402,23 @@ def calculate_void_of_course_moon(transit_chart: Dict) -> Dict:
     next_sign = ZODIAC_ORDER[next_sign_index]
     
     if is_void:
-        advice = (
-            f"Moon is void-of-course in late {moon_sign}. "
-            f"Avoid starting new projects, signing contracts, or making major decisions. "
-            f"Good for: routine tasks, rest, meditation, finishing existing work."
-        )
+        advice_key = "voc_advice_void"
+        advice_trans = get_translation(lang, advice_key)
+        if advice_trans:
+            advice = advice_trans[0].format(sign=moon_sign)
+        else:
+            advice = (
+                f"Moon is void-of-course in late {moon_sign}. "
+                f"Avoid starting new projects, signing contracts, or making major decisions. "
+                f"Good for: routine tasks, rest, meditation, finishing existing work."
+            )
     else:
-        advice = f"Moon is active in {moon_sign} with applying aspects."
+        advice_key = "voc_advice_active"
+        advice_trans = get_translation(lang, advice_key)
+        if advice_trans:
+            advice = advice_trans[0].format(sign=moon_sign)
+        else:
+            advice = f"Moon is active in {moon_sign} with applying aspects."
     
     return {
         "is_void": is_void,

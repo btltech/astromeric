@@ -1,5 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useNumerology, useProfiles } from '../hooks';
 import { useStore } from '../store/useStore';
 import { ApiError, fetchAiExplanation } from '../api/client';
@@ -59,6 +61,7 @@ const staggerItem = {
 };
 
 export function NumerologyView() {
+  const { t } = useTranslation();
   const { selectedProfile } = useProfiles();
   const { numerologyProfile, fetchNumerologyFromProfile, fetchNumerologyProfile } = useNumerology();
   const { loading, user, token } = useStore();
@@ -134,10 +137,32 @@ export function NumerologyView() {
 
   if (!selectedProfile) {
     return (
-      <motion.div className="card" {...fadeIn}>
-        <p className="empty-state">
-          Please enter your birth details first from the Reading tab.
-        </p>
+      <motion.div className="gating-panel" {...fadeIn}>
+        <div className="gating-icon">🔢</div>
+        <h2 className="gating-title">{t('numerology.gatingTitle')}</h2>
+        <p className="gating-subtitle">{t('numerology.gatingSubtitle')}</p>
+        <ul className="gating-benefits">
+          <li>✓ {t('numerology.gatingBenefit1')}</li>
+          <li>✓ {t('numerology.gatingBenefit2')}</li>
+          <li>✓ {t('numerology.gatingBenefit3')}</li>
+        </ul>
+        <Link to="/" className="btn-primary gating-cta">
+          {t('numerology.goToReading')}
+        </Link>
+        <div className="gating-preview">
+          <div className="preview-card">
+            <span className="preview-number">7</span>
+            <span className="preview-label">{t('numerology.lifePath')}</span>
+          </div>
+          <div className="preview-card">
+            <span className="preview-number">3</span>
+            <span className="preview-label">{t('numerology.expression')}</span>
+          </div>
+          <div className="preview-card">
+            <span className="preview-number">5</span>
+            <span className="preview-label">{t('numerology.personalYear')}</span>
+          </div>
+        </div>
       </motion.div>
     );
   }

@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { useProfiles, useReading } from '../hooks';
 import { useStore } from '../store/useStore';
 import { FortuneForm } from '../components/FortuneForm';
@@ -16,9 +17,10 @@ const fadeIn = {
 };
 
 export function ReadingView() {
+  const { t } = useTranslation();
   const { selectedProfile, createProfile } = useProfiles();
   const { selectedScope, result, setSelectedScope, setResult, getPrediction } = useReading();
-  const { loading, allowCloudHistory, setAllowCloudHistory } = useStore();
+  const { loading, allowCloudHistory, setAllowCloudHistory, token } = useStore();
 
   const handleGetPrediction = async () => {
     if (!selectedProfile) {
@@ -29,15 +31,16 @@ export function ReadingView() {
     try {
       await getPrediction(selectedProfile.id);
       toast.success('Your cosmic reading is ready ✨');
-    } catch {
-      toast.error('Failed to generate reading. Please try again.');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to generate reading. Please try again.';
+      toast.error(message);
     }
   };
 
   // Show skeleton while loading
   if (loading && !result) {
     return (
-      <motion.div {...fadeIn}>
+      <motion.div className="page" {...fadeIn}>
         <ReadingSkeleton />
       </motion.div>
     );
@@ -45,7 +48,7 @@ export function ReadingView() {
 
   if (result) {
     return (
-      <motion.div {...fadeIn}>
+      <motion.div className="page" {...fadeIn}>
         <FortuneResult data={result} onReset={() => setResult(null)} />
       </motion.div>
     );
@@ -53,12 +56,17 @@ export function ReadingView() {
 
   return (
     <AnimatePresence mode="wait">
-      <motion.div {...fadeIn}>
-        <section className="hero" aria-label="Astromeric introduction">
+      <motion.div className="page" {...fadeIn}>
+        <section className="hero hero-compact" aria-label={t('hero.eyebrow')}>
           <div className="hero-copy">
-            <p className="eyebrow">Astromeric</p>
-            <h1>Astrology and numerology that actually connect.</h1>
-            <p className="lede">Personalized charts, compatibility, and daily insights you can actually use.</p>
+            <p className="eyebrow">{t('hero.eyebrow')}</p>
+            <h1>{t('hero.title')}</h1>
+            <p className="lede">{t('hero.subtitle')}</p>
+            <ul className="hero-benefits">
+              <li>{t('hero.benefit1')}</li>
+              <li>{t('hero.benefit2')}</li>
+              <li>{t('hero.benefit3')}</li>
+            </ul>
           </div>
         </section>
 
@@ -73,10 +81,10 @@ export function ReadingView() {
           >
             <h3 className="profile-highlight">✨ {selectedProfile.name}</h3>
             <p className="profile-meta">
-              Born {selectedProfile.date_of_birth} • {selectedProfile.id > 0 ? 'Saved to your account' : 'Session only (not saved)'}
+              Born {selectedProfile.date_of_birth} • {selectedProfile.id > 0 ? 'Saved profile' : 'Session profile (not saved)'}
             </p>
-            <div className="toggle-row" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.5rem' }}>
-              <label htmlFor="cloud-history" style={{ fontWeight: 600 }}>
+            <div className="toggle-row toggle-row--mt">
+              <label htmlFor="cloud-history" className="toggle-label">
                 Save readings to cloud
               </label>
               <button
@@ -89,12 +97,14 @@ export function ReadingView() {
               >
                 <span className="toggle-knob" />
               </button>
-              <span className="text-muted" style={{ fontSize: '0.9rem' }}>
-                {selectedProfile.id < 1
-                  ? 'Save a profile to enable cloud history'
-                  : allowCloudHistory
-                    ? 'Synced after each reading'
-                    : 'Off by default for privacy'}
+              <span className="text-muted toggle-hint">
+                {!token
+                  ? 'Sign in to sync readings'
+                  : selectedProfile.id < 1
+                    ? 'Save a profile to enable cloud history'
+                    : allowCloudHistory
+                      ? 'Synced after each reading'
+                      : 'Off by default for privacy'}
               </span>
             </div>
             <h4>Select Reading Scope</h4>

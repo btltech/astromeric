@@ -2,7 +2,7 @@ User-agent: *
 Allow: /
 
 # Sitemap
-Sitemap: https://astromeric.com/sitemap.xml
+Sitemap: https://astronumeric.com/sitemap.xml
 
 # Crawl-delay for polite crawling
 Crawl-delay: 1

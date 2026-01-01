@@ -3,6 +3,7 @@ Tests for Habit Tracker with Lunar Cycles Engine and API.
 """
 import pytest
 from datetime import datetime, timedelta
+from unittest.mock import patch, MagicMock
 
 from backend.app.engine.habit_tracker import (
     LUNAR_HABIT_GUIDANCE,
@@ -686,3 +687,34 @@ class TestEdgeCases:
         result = get_today_habit_forecast(habits, "new_moon")
         
         assert result["summary"]["total_habits"] == 1
+
+
+# =============================================================================
+# Test Localization
+# =============================================================================
+
+class TestHabitTrackerLocalization:
+    """Tests for localized habit tracker functions."""
+    
+    def test_create_habit_localized(self):
+        with patch("backend.app.engine.habit_tracker.get_translation") as mock_trans:
+            mock_trans.return_value = ["Salud y Nutricion"]
+            habit = create_habit("My Habit", "health", lang="es")
+            assert habit["category_name"] == "Salud y Nutricion"
+            
+    def test_get_lunar_habit_recommendations_localized(self):
+        with patch("backend.app.engine.habit_tracker.get_translation") as mock_trans:
+            def side_effect(lang, key):
+                if key == "habit_phase_new_moon_theme": return ["Nuevos Comienzos"]
+                if key == "habit_cat_meditation_name": return ["Meditacion"]
+                if key == "habit_why_aligned": return ["Alineado con {theme}"]
+                return None
+            mock_trans.side_effect = side_effect
+            
+            recs = get_lunar_habit_recommendations("new_moon", lang="es")
+            assert recs["phase_info"]["theme"] == "Nuevos Comienzos"
+            
+            med_rec = next((r for r in recs["recommended_categories"] if r["category"] == "meditation"), None)
+            assert med_rec
+            assert med_rec["name"] == "Meditacion"
+            assert "Alineado con Nuevos Comienzos" in med_rec["why"]

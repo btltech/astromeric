@@ -3,6 +3,7 @@ import json
 import os
 from functools import lru_cache
 from typing import Any, Dict, List
+from app.interpretation.translations import get_translation
 
 try:
     import redis
@@ -272,6 +273,19 @@ def _pick_unique(pool: List[Any], seed: str, count: int, label: str) -> List[Any
     return chosen
 
 
+def get_localized_pool(pool_name: str, default_pool: List[str], lang: str) -> List[str]:
+    """Get localized pool content."""
+    if lang == "en":
+        return default_pool
+    
+    localized_pool = []
+    for i, item in enumerate(default_pool):
+        key = f"fusion_{pool_name}_{i}"
+        translated = get_translation(lang, "fusion_content", key)
+        localized_pool.append(translated if translated else item)
+    return localized_pool
+
+
 def fuse_prediction(
     name: str,
     dob: str,
@@ -279,10 +293,11 @@ def fuse_prediction(
     scope: str = "daily",
     time_of_birth: str = None,
     place_of_birth: str = None,
+    lang: str = "en",
 ) -> Dict[str, Any]:
     """Public fused prediction with optional Redis caching + in-memory LRU."""
     cache_client = _get_redis_client()
-    cache_key = _fusion_cache_key(name, dob, date, scope, time_of_birth, place_of_birth)
+    cache_key = _fusion_cache_key(name, dob, date, scope, time_of_birth, place_of_birth, lang)
     if cache_client:
         cached = cache_client.get(cache_key)
         if cached:
@@ -291,7 +306,7 @@ def fuse_prediction(
             except Exception:
                 cache_client.delete(cache_key)
 
-    result = _fuse_prediction(name, dob, date, scope, time_of_birth, place_of_birth)
+    result = _fuse_prediction(name, dob, date, scope, time_of_birth, place_of_birth, lang)
     if cache_client:
         cache_client.setex(cache_key, FUSION_CACHE_TTL, json.dumps(result))
     return result
@@ -305,14 +320,21 @@ def _fuse_prediction(
     scope: str,
     time_of_birth: str = None,
     place_of_birth: str = None,
+    lang: str = "en",
 ) -> Dict[str, Any]:
     """Internal fusion logic for scopes and tracks."""
     sign = get_zodiac_sign(dob)
     element = get_element(sign)
+    
+    # Localize element for display
+    element_display = element
+    if lang != "en":
+        element_display = get_translation(lang, "elements", element) or element
+
     life_path = calculate_life_path_number(dob)
     name_number = calculate_name_number(name)
-    sign_traits = get_sign_traits(sign)
-    life_data = get_life_path_data(life_path)
+    sign_traits = get_sign_traits(sign, lang=lang)
+    life_data = get_life_path_data(life_path, lang=lang)
 
     # Seed includes scope
     seed = (
@@ -321,16 +343,19 @@ def _fuse_prediction(
 
     # TL;DR summary
     scope_summaries = SCOPE_SUMMARIES.get(scope, SCOPE_SUMMARIES["daily"])
+    scope_summaries = get_localized_pool(f"scope_{scope}", scope_summaries, lang)
+    
     tldr_idx = generate_deterministic_index(seed + "tldr", len(scope_summaries))
     tldr = scope_summaries[tldr_idx].format(
-        sign=sign, life_path=life_path, element=element
+        sign=sign, life_path=life_path, element=element_display
     )
 
     # Tracks
     tracks = {}
     ratings = {}
     for track_name, track_data in TRACK_POOLS.items():
-        pools = track_data["pools"]
+        pools = get_localized_pool(f"track_{track_name}", track_data["pools"], lang)
+        
         traits_key = f"{track_name}_traits"
         if track_name in sign_traits:
             traits = sign_traits[track_name][
@@ -358,27 +383,35 @@ def _fuse_prediction(
     lucky_numbers = _pick_unique(LUCKY_NUMBERS_POOL, seed, num_count, "num")
     color_count = 1 + generate_deterministic_index(seed + "color_count", 3)
     lucky_colors = _pick_unique(LUCKY_COLORS_POOL, seed, color_count, "color")
-    theme_word = THEME_WORDS[
-        generate_deterministic_index(seed + "theme", len(THEME_WORDS))
+    
+    theme_words_pool = get_localized_pool("theme_words", THEME_WORDS, lang)
+    theme_word = theme_words_pool[
+        generate_deterministic_index(seed + "theme", len(theme_words_pool))
     ]
-    advice = ADVICE_POOLS[
-        generate_deterministic_index(seed + "advice", len(ADVICE_POOLS))
+    
+    advice_pool = get_localized_pool("advice", ADVICE_POOLS, lang)
+    advice = advice_pool[
+        generate_deterministic_index(seed + "advice", len(advice_pool))
     ]
 
     # Rising and place
     rising_sign = compute_rising_sign(time_of_birth) if time_of_birth else ""
     place_vibe = None
     if place_of_birth:
-        place_vibe = PLACE_VIBES[
-            generate_deterministic_index(seed + "place", len(PLACE_VIBES))
+        place_vibes_pool = get_localized_pool("place_vibes", PLACE_VIBES, lang)
+        place_vibe = place_vibes_pool[
+            generate_deterministic_index(seed + "place", len(place_vibes_pool))
         ]
 
     # Affirmation and daily action
-    affirmation = AFFIRMATION_POOLS[
-        generate_deterministic_index(seed + "affirmation", len(AFFIRMATION_POOLS))
+    affirmation_pool = get_localized_pool("affirmations", AFFIRMATION_POOLS, lang)
+    affirmation = affirmation_pool[
+        generate_deterministic_index(seed + "affirmation", len(affirmation_pool))
     ]
-    daily_action = DAILY_ACTIONS[
-        generate_deterministic_index(seed + "action", len(DAILY_ACTIONS))
+    
+    daily_actions_pool = get_localized_pool("daily_actions", DAILY_ACTIONS, lang)
+    daily_action = daily_actions_pool[
+        generate_deterministic_index(seed + "action", len(daily_actions_pool))
     ]
 
     return {
@@ -398,7 +431,7 @@ def _fuse_prediction(
         "life_path_meaning": life_data.get("meaning"),
         "life_path_advice": life_data.get("life_advice", advice),
         "name_number": name_number,
-        "element": element,
+        "element": element_display,
         "place_vibe": place_vibe,
     }
 
@@ -419,5 +452,6 @@ def _fusion_cache_key(
     scope: str,
     time_of_birth: str,
     place_of_birth: str,
+    lang: str = "en",
 ) -> str:
-    return f"fusion:{name}:{dob}:{date}:{scope}:{time_of_birth or ''}:{place_of_birth or ''}"
+    return f"fusion:{name}:{dob}:{date}:{scope}:{time_of_birth or ''}:{place_of_birth or ''}:{lang}"

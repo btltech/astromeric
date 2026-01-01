@@ -9,6 +9,8 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Tuple
 from zoneinfo import ZoneInfo
 
+from ..interpretation.translations import get_translation
+
 # Zodiac signs in order
 ZODIAC_ORDER = [
     "Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo",
@@ -209,9 +211,20 @@ def build_monthly_forecast(
     year: int,
     natal_chart: Dict,
     personal_year: int,
+    lang: str = "en",
 ) -> Dict:
     """Build forecast for a specific month."""
     month_theme = MONTHLY_THEMES.get(month, {})
+    
+    # Localize month theme
+    focus_key = f"month_{month}_focus"
+    focus_trans = get_translation(lang, focus_key)
+    focus = focus_trans[0] if focus_trans else month_theme.get("focus", "")
+    
+    season_key = f"month_{month}_season" # Assuming we might want to translate this
+    season = month_theme.get("season", "") # Keep English for now if no key
+    
+    element = month_theme.get("element", "")
     
     # Get eclipses this month
     month_str = f"{year}-{month:02d}"
@@ -235,15 +248,16 @@ def build_monthly_forecast(
             highlights.append(f"{ing['planet']} enters {ing['sign']} on {ing['date']}")
     
     # Add numerology insight
-    highlights.append(f"Personal Month {personal_month}: {_get_personal_month_focus(personal_month)}")
+    pm_focus = _get_personal_month_focus(personal_month, lang=lang)
+    highlights.append(f"Personal Month {personal_month}: {pm_focus}")
     
     return {
         "month": month,
         "month_name": MONTH_NAMES[month - 1],
         "year": year,
-        "season": month_theme.get("season", ""),
-        "focus": month_theme.get("focus", ""),
-        "element": month_theme.get("element", ""),
+        "season": season,
+        "focus": focus,
+        "element": element,
         "personal_month": personal_month,
         "eclipses": month_eclipses,
         "ingresses": month_ingresses,
@@ -251,8 +265,13 @@ def build_monthly_forecast(
     }
 
 
-def _get_personal_month_focus(num: int) -> str:
+def _get_personal_month_focus(num: int, lang: str = "en") -> str:
     """Get focus description for personal month number."""
+    key = f"pm_{num}_focus"
+    trans = get_translation(lang, key)
+    if trans:
+        return trans[0]
+        
     focuses = {
         1: "Initiative and new starts",
         2: "Patience and cooperation",
@@ -271,6 +290,7 @@ def build_year_ahead_forecast(
     profile: Dict,
     natal_chart: Dict,
     year: Optional[int] = None,
+    lang: str = "en",
 ) -> Dict:
     """
     Build comprehensive year-ahead forecast.
@@ -308,7 +328,7 @@ def build_year_ahead_forecast(
     # Build monthly forecasts
     monthly_forecasts = []
     for month in range(1, 13):
-        monthly = build_monthly_forecast(month, year, natal_chart, personal_year)
+        monthly = build_monthly_forecast(month, year, natal_chart, personal_year, lang=lang)
         monthly_forecasts.append(monthly)
     
     # Generate key themes
@@ -318,21 +338,27 @@ def build_year_ahead_forecast(
         eclipse_impacts, 
         year_ingresses,
         natal_chart,
+        lang=lang,
     )
     
     # Generate advice
-    advice = _generate_year_advice(personal_year, eclipse_impacts)
+    advice = _generate_year_advice(personal_year, eclipse_impacts, lang=lang)
+    
+    # Localize Universal Year Theme
+    univ_theme_key = f"univ_year_{universal_year}_theme"
+    univ_theme_trans = get_translation(lang, univ_theme_key)
+    univ_theme = univ_theme_trans[0] if univ_theme_trans else UNIVERSAL_YEAR_THEMES.get(universal_year, "Transition")
     
     return {
         "year": year,
         "personal_year": {
             "number": personal_year,
-            "theme": _get_personal_year_theme(personal_year),
-            "description": _get_personal_year_description(personal_year),
+            "theme": _get_personal_year_theme(personal_year, lang=lang),
+            "description": _get_personal_year_description(personal_year, lang=lang),
         },
         "universal_year": {
             "number": universal_year,
-            "theme": UNIVERSAL_YEAR_THEMES.get(universal_year, "Transition"),
+            "theme": univ_theme,
         },
         "solar_return": {
             "date": solar_return_date.strftime("%Y-%m-%d"),
@@ -349,8 +375,13 @@ def build_year_ahead_forecast(
     }
 
 
-def _get_personal_year_theme(num: int) -> str:
+def _get_personal_year_theme(num: int, lang: str = "en") -> str:
     """Get theme for personal year."""
+    key = f"py_{num}_theme"
+    trans = get_translation(lang, key)
+    if trans:
+        return trans[0]
+        
     themes = {
         1: "New Beginnings",
         2: "Partnership",
@@ -368,8 +399,13 @@ def _get_personal_year_theme(num: int) -> str:
     return themes.get(num, "Transition")
 
 
-def _get_personal_year_description(num: int) -> str:
+def _get_personal_year_description(num: int, lang: str = "en") -> str:
     """Get detailed description for personal year."""
+    key = f"py_{num}_desc"
+    trans = get_translation(lang, key)
+    if trans:
+        return trans[0]
+        
     descriptions = {
         1: "This is your year of new beginnings. Plant seeds for the future, take initiative, and don't be afraid to lead. Independence is key.",
         2: "Focus on relationships, patience, and diplomacy. Partnerships flourish when you give them attention. Avoid rushing.",
@@ -393,51 +429,92 @@ def _generate_key_themes(
     eclipse_impacts: List[Dict],
     ingresses: List[Dict],
     natal_chart: Dict,
+    lang: str = "en",
 ) -> List[str]:
     """Generate key themes for the year."""
     themes = []
     
     # Personal year theme
-    themes.append(f"Personal Year {personal_year}: {_get_personal_year_theme(personal_year)}")
+    py_theme = _get_personal_year_theme(personal_year, lang=lang)
+    py_template = get_translation(lang, "key_theme_py")
+    if py_template:
+        themes.append(py_template[0].format(year=personal_year, theme=py_theme))
+    else:
+        themes.append(f"Personal Year {personal_year}: {py_theme}")
     
     # Eclipse themes
     if eclipse_impacts:
-        themes.append(f"{len(eclipse_impacts)} eclipses activate your chart - significant shifts ahead")
+        eclipse_template = get_translation(lang, "key_theme_eclipses")
+        if eclipse_template:
+            themes.append(eclipse_template[0].format(count=len(eclipse_impacts)))
+        else:
+            themes.append(f"{len(eclipse_impacts)} eclipses activate your chart - significant shifts ahead")
     
     # Major ingress themes
     for ing in ingresses:
-        themes.append(f"{ing['planet']} in {ing['sign']}: {ing['impact']}")
+        ingress_template = get_translation(lang, "key_theme_ingress")
+        if ingress_template:
+             themes.append(ingress_template[0].format(planet=ing['planet'], sign=ing['sign'], impact=ing['impact']))
+        else:
+            themes.append(f"{ing['planet']} in {ing['sign']}: {ing['impact']}")
     
     # Universal year context
-    themes.append(f"Universal Year {universal_year}: Collective focus on {UNIVERSAL_YEAR_THEMES.get(universal_year, 'evolution')}")
+    uy_theme_key = f"univ_year_{universal_year}_theme"
+    uy_theme_trans = get_translation(lang, uy_theme_key)
+    uy_theme = uy_theme_trans[0] if uy_theme_trans else UNIVERSAL_YEAR_THEMES.get(universal_year, 'evolution')
+    
+    uy_template = get_translation(lang, "key_theme_uy")
+    if uy_template:
+        themes.append(uy_template[0].format(year=universal_year, theme=uy_theme))
+    else:
+        themes.append(f"Universal Year {universal_year}: Collective focus on {uy_theme}")
     
     return themes[:6]  # Limit to 6 themes
 
 
-def _generate_year_advice(personal_year: int, eclipse_impacts: List[Dict]) -> List[str]:
+def _generate_year_advice(personal_year: int, eclipse_impacts: List[Dict], lang: str = "en") -> List[str]:
     """Generate advice for the year."""
     advice = []
     
     # Personal year advice
-    py_advice = {
-        1: "Take bold action on new ideas",
-        2: "Practice patience in partnerships",
-        3: "Share your creativity with the world",
-        4: "Focus on building lasting structures",
-        5: "Stay adaptable to changing circumstances",
-        6: "Prioritize home and family harmony",
-        7: "Dedicate time to inner exploration",
-        8: "Pursue ambitious financial goals",
-        9: "Complete unfinished business gracefully",
-    }
-    advice.append(py_advice.get(personal_year, "Trust your personal journey"))
+    py_key = f"advice_py_{personal_year}"
+    py_trans = get_translation(lang, py_key)
+    
+    if py_trans:
+        advice.append(py_trans[0])
+    else:
+        py_advice = {
+            1: "Take bold action on new ideas",
+            2: "Practice patience in partnerships",
+            3: "Share your creativity with the world",
+            4: "Focus on building lasting structures",
+            5: "Stay adaptable to changing circumstances",
+            6: "Prioritize home and family harmony",
+            7: "Dedicate time to inner exploration",
+            8: "Pursue ambitious financial goals",
+            9: "Complete unfinished business gracefully",
+        }
+        advice.append(py_advice.get(personal_year, "Trust your personal journey"))
     
     # Eclipse-based advice
     if eclipse_impacts:
-        advice.append("Pay attention to eclipse windows - they bring pivotal moments")
+        ecl_trans = get_translation(lang, "advice_eclipses")
+        if ecl_trans:
+            advice.append(ecl_trans[0])
+        else:
+            advice.append("Pay attention to eclipse windows - they bring pivotal moments")
     
     # General wisdom
-    advice.append("Track Moon phases for optimal timing")
-    advice.append("Review during retrograde periods, launch during direct motion")
+    moon_trans = get_translation(lang, "advice_moon")
+    if moon_trans:
+        advice.append(moon_trans[0])
+    else:
+        advice.append("Track Moon phases for optimal timing")
+        
+    retro_trans = get_translation(lang, "advice_retro")
+    if retro_trans:
+        advice.append(retro_trans[0])
+    else:
+        advice.append("Review during retrograde periods, launch during direct motion")
     
     return advice

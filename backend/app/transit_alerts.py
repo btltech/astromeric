@@ -376,7 +376,7 @@ def send_transit_email(
         }
 
     if not smtp_config.get("user") or not smtp_config.get("password"):
-        print("SMTP not configured, skipping email")
+        logger.warning("SMTP not configured, skipping email")
         return False
 
     subject, html_body = format_transit_email(transit_data)
@@ -403,5 +403,5 @@ def send_transit_email(
             server.sendmail(smtp_config["from_email"], to_email, msg.as_string())
         return True
     except Exception as e:
-        print(f"Failed to send email: {e}")
+        logger.error(f"Failed to send email: {e}")
         return False

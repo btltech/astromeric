@@ -4,7 +4,7 @@
  */
 import { useCallback } from 'react';
 import { useStore } from '../store/useStore';
-import { fetchForecast, saveReading } from '../api/client';
+import { ApiError, fetchForecast, saveReading } from '../api/client';
 import type { PredictionData, SavedProfile } from '../types';
 
 export function useReading() {
@@ -40,15 +40,23 @@ export function useReading() {
       setError('');
 
       try {
+        const hasCoordinates =
+          typeof profile.latitude === 'number' &&
+          typeof profile.longitude === 'number' &&
+          profile.latitude !== null &&
+          profile.longitude !== null;
+
         const payload = {
           name: profile.name,
           date_of_birth: profile.date_of_birth,
           time_of_birth: profile.time_of_birth || undefined,
-          location: {
-            latitude: profile.latitude || 0,
-            longitude: profile.longitude || 0,
-            timezone: profile.timezone || 'UTC',
-          },
+          location: hasCoordinates
+            ? {
+                latitude: profile.latitude as number,
+                longitude: profile.longitude as number,
+                timezone: profile.timezone || 'UTC',
+              }
+            : undefined,
           house_system: profile.house_system || 'Placidus',
         };
 
@@ -72,11 +80,21 @@ export function useReading() {
         return data;
       } catch (err) {
         console.error('Prediction error:', err);
-        const message = err instanceof Error ? err.message : 'Failed to get reading';
-        if (message.includes('Failed to fetch') || message.includes('NetworkError') || message.includes('TypeError')) {
-          setError('Connection lost. Please check your network and try again.');
+        if (err instanceof ApiError) {
+          setError(err.detail || err.message);
         } else {
-          setError(message);
+          const message = err instanceof Error ? err.message : 'Failed to get reading';
+          // Browser fetch failures usually surface as TypeError("Failed to fetch")
+          const isNetworkFailure =
+            err instanceof TypeError ||
+            message.includes('Failed to fetch') ||
+            message.includes('NetworkError');
+
+          setError(
+            isNetworkFailure
+              ? 'Connection lost. Please check your network and try again.'
+              : message
+          );
         }
         throw err; // Re-throw so the calling code knows it failed
       } finally {

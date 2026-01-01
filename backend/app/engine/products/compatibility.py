@@ -8,6 +8,7 @@ from ..rules import RuleEngine, RuleResult
 from .natal import _build_numerology, _section_from_result
 from .types import ProfileInput
 from .utils import build_chart_request
+from app.interpretation.translations import get_translation
 
 
 def _compat_summary(result: RuleResult) -> Dict:
@@ -30,6 +31,7 @@ def build_compatibility_report(
     relationship_type: str = "romantic",
     chart_engine: Optional[ChartEngine] = None,
     rule_engine: Optional[RuleEngine] = None,
+    lang: str = "en",
 ) -> Dict:
     chart_engine = chart_engine or ChartEngine()
     rule_engine = rule_engine or RuleEngine()
@@ -45,10 +47,15 @@ def build_compatibility_report(
         person_a.date_of_birth,
         person_b.name,
         person_b.date_of_birth,
+        lang=lang,
     )
 
     query = f"compatibility_{relationship_type}"
-    result = rule_engine.evaluate(query, chart_a, synastry_aspects=synastry)
+    result = rule_engine.evaluate(query, chart_a, synastry_aspects=synastry, lang=lang)
+
+    # Localize section title
+    rd_trans = get_translation(lang, "compatibility_sections", "relationship_dynamics")
+    rd_title = rd_trans[0] if rd_trans else "Relationship dynamics"
 
     return {
         "relationship_type": relationship_type,
@@ -67,7 +74,7 @@ def build_compatibility_report(
         "synastry_aspects": [a.__dict__ for a in synastry],
         "summary": _compat_summary(result),
         "sections": [
-            _section_from_result("Relationship dynamics", result, limit=6),
+            _section_from_result(rd_title, result, limit=6),
         ],
         "numerology": {
             "person_a": numerology_a,

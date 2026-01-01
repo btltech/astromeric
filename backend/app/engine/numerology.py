@@ -1,4 +1,5 @@
 from typing import Dict
+from app.interpretation.translations import get_translation
 
 from .constants import LETTER_VALUES, reduce_number
 
@@ -70,12 +71,33 @@ def calculate_name_number(name: str) -> int:
     return reduce_number(total)
 
 
-def get_life_path_data(number: int) -> Dict[str, any]:
+def get_life_path_data(number: int, lang: str = "en") -> Dict[str, any]:
     """Get meaning and advice pool for Life Path number."""
-    return LIFE_PATH_DATA.get(
+    base_data = LIFE_PATH_DATA.get(
         number,
         {
             "meaning": "Unknown path",
             "advice": ["Seek guidance", "Explore possibilities"],
         },
     )
+    
+    if lang == "en":
+        return base_data
+        
+    # Localize meaning
+    meaning_key = f"numerology_life_path_{number}_meaning"
+    meaning = get_translation(lang, "numerology_life_path", meaning_key)
+    if not meaning:
+        meaning = base_data["meaning"]
+        
+    # Localize advice
+    advice = []
+    for i, item in enumerate(base_data["advice"]):
+        advice_key = f"numerology_life_path_{number}_advice_{i}"
+        translated_item = get_translation(lang, "numerology_life_path", advice_key)
+        advice.append(translated_item if translated_item else item)
+        
+    return {
+        "meaning": meaning,
+        "advice": advice
+    }

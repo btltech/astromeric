@@ -1,6 +1,7 @@
 """Glossary and learning content for astrology and numerology."""
 
 from typing import Dict, List
+from ..interpretation.translations import get_translation
 
 ZODIAC_GLOSSARY = {
     "Aries": {
@@ -204,41 +205,84 @@ ELEMENTS_GLOSSARY = {
 }
 
 
-def get_sign_info(sign: str) -> Dict:
+def get_sign_info(sign: str, lang: str = "en") -> Dict:
     """Get full information about a zodiac sign."""
-    return ZODIAC_GLOSSARY.get(sign, {})
+    data = ZODIAC_GLOSSARY.get(sign, {}).copy()
+    if not data:
+        return {}
+        
+    if lang != "en":
+        desc_trans = get_translation(lang, f"glossary_zodiac_{sign.lower()}_desc")
+        if desc_trans:
+            data["description"] = desc_trans[0]
+            
+        traits_trans = get_translation(lang, f"glossary_zodiac_{sign.lower()}_traits")
+        if traits_trans:
+            data["traits"] = traits_trans
+            
+    return data
 
 
-def get_number_explanation(number_type: str) -> Dict:
+def get_number_explanation(number_type: str, lang: str = "en") -> Dict:
     """Get explanation of a numerology number type."""
-    return NUMEROLOGY_GLOSSARY.get(number_type, {})
+    data = NUMEROLOGY_GLOSSARY.get(number_type, {}).copy()
+    if not data:
+        return {}
+        
+    if lang != "en":
+        meaning_trans = get_translation(lang, f"glossary_num_{number_type.lower()}_meaning")
+        if meaning_trans:
+            data["meaning"] = meaning_trans[0]
+            
+    return data
 
 
-def get_master_number_info(number: int) -> Dict:
+def get_master_number_info(number: int, lang: str = "en") -> Dict:
     """Get information about a master number."""
-    return MASTER_NUMBERS.get(number, {})
+    data = MASTER_NUMBERS.get(number, {}).copy()
+    if not data:
+        return {}
+        
+    if lang != "en":
+        desc_trans = get_translation(lang, f"glossary_master_{number}_desc")
+        if desc_trans:
+            data["description"] = desc_trans[0]
+            
+    return data
 
 
-def get_element_info(element: str) -> Dict:
+def get_element_info(element: str, lang: str = "en") -> Dict:
     """Get information about an element."""
-    return ELEMENTS_GLOSSARY.get(element, {})
+    data = ELEMENTS_GLOSSARY.get(element, {}).copy()
+    if not data:
+        return {}
+        
+    if lang != "en":
+        desc_trans = get_translation(lang, f"glossary_element_{element.lower()}_desc")
+        if desc_trans:
+            data["description"] = desc_trans[0]
+            
+    return data
 
 
-def search_glossary(query: str) -> List[Dict]:
+def search_glossary(query: str, lang: str = "en") -> List[Dict]:
     """Search all glossaries for a term."""
     results = []
     query = query.lower()
 
     for sign, data in ZODIAC_GLOSSARY.items():
         if query in sign.lower() or query in data.get("description", "").lower():
-            results.append({"type": "zodiac", "key": sign, "data": data})
+            info = get_sign_info(sign, lang)
+            results.append({"type": "zodiac", "key": sign, "data": info})
 
     for term, data in NUMEROLOGY_GLOSSARY.items():
         if query in term.lower() or query in data.get("meaning", "").lower():
-            results.append({"type": "numerology", "key": term, "data": data})
+            info = get_number_explanation(term, lang)
+            results.append({"type": "numerology", "key": term, "data": info})
 
     for element, data in ELEMENTS_GLOSSARY.items():
         if query in element.lower() or query in data.get("description", "").lower():
-            results.append({"type": "element", "key": element, "data": data})
+            info = get_element_info(element, lang)
+            results.append({"type": "element", "key": element, "data": info})
 
     return results

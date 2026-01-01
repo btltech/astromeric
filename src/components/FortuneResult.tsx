@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import type { PredictionData } from '../types';
 import { SectionGrid } from './SectionGrid';
 import { DailyGuidance } from './DailyGuidance';
 import { ApiError, fetchAiExplanation } from '../api/client';
-import { downloadReadingPdf } from '../utils/pdfExport';
 import { useStore } from '../store/useStore';
 import { useProfiles } from '../hooks';
+import { toast } from './Toast';
 
 interface Props {
   data: PredictionData;
@@ -79,6 +79,94 @@ export function FortuneResult({ data, onReset }: Props) {
   const [aiInsight, setAiInsight] = useState<string | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [showUpgradeMessage, setShowUpgradeMessage] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
+
+  const keyTakeaways = useMemo(() => {
+    const factors = data.summary?.top_factors ?? [];
+    return factors.slice(0, 3);
+  }, [data.summary?.top_factors]);
+
+  const readingText = useMemo(() => {
+    const lines: string[] = [];
+    lines.push(`${data.scope?.toUpperCase?.() ?? 'READING'} — ${new Date(data.date || Date.now()).toLocaleDateString()}`);
+    if (headline) lines.push(`\nTL;DR: ${headline}`);
+
+    if (keyTakeaways.length) {
+      lines.push('\nKey takeaways:');
+      for (const factor of keyTakeaways) {
+        const parts = [factor.aspect, factor.impact].filter(Boolean).join(' — ');
+        const detail = factor.description ? `: ${factor.description}` : '';
+        lines.push(`- ${parts}${detail}`);
+      }
+    }
+
+    if (data.sections?.length) {
+      lines.push('\nDetails:');
+      for (const section of data.sections) {
+        lines.push(`\n${section.title}`);
+        for (const highlight of (section.highlights ?? []).slice(0, 5)) {
+          lines.push(`- ${highlight}`);
+        }
+      }
+    }
+
+    return lines.join('\n');
+  }, [data.date, data.scope, data.sections, headline, keyTakeaways]);
+
+  const journalPrompt = useMemo(() => {
+    const base = headline || data.theme || 'your reading';
+    return `Journal prompt: What is one concrete action you can take today to align with “${base}”?`;
+  }, [data.theme, headline]);
+
+  const handleCopyReading = async () => {
+    try {
+      await navigator.clipboard.writeText(readingText);
+      toast.success('Copied reading to clipboard.');
+    } catch (err) {
+      console.warn('Copy failed', err);
+      toast.error('Could not copy. Your browser may block clipboard access.');
+    }
+  };
+
+  const handleShareReading = async () => {
+    try {
+      const sharePayload = {
+        title: 'Astronumeric Reading',
+        text: readingText,
+      };
+      if (navigator.share) {
+        await navigator.share(sharePayload);
+        return;
+      }
+      await handleCopyReading();
+    } catch (err) {
+      // User cancel is not an error worth surfacing.
+      console.warn('Share failed', err);
+    }
+  };
+
+  const handleCopyJournalPrompt = async () => {
+    try {
+      await navigator.clipboard.writeText(journalPrompt);
+      toast.success('Copied journal prompt.');
+    } catch (err) {
+      console.warn('Copy prompt failed', err);
+      toast.error('Could not copy journal prompt.');
+    }
+  };
+
+  const handleDownloadPdf = async () => {
+    setPdfLoading(true);
+    try {
+      const mod = await import('../utils/pdfExport');
+      mod.downloadReadingPdf(data);
+    } catch (err) {
+      console.error('PDF export failed', err);
+      toast.error('PDF export failed. Please try again.');
+    } finally {
+      setPdfLoading(false);
+    }
+  };
 
   const handleAiExplain = async () => {
     // Check if user is paid
@@ -123,6 +211,7 @@ export function FortuneResult({ data, onReset }: Props) {
           onClick={onReset} 
           className="btn-link"
           aria-label="Go back to profiles"
+          type="button"
         >
           ← Back to Profiles
         </button>
@@ -179,6 +268,49 @@ export function FortuneResult({ data, onReset }: Props) {
           <strong>TL;DR:</strong> {headline}
         </div>
       )}
+
+      {(keyTakeaways.length > 0 || headline) && (
+        <div className="reading-summary">
+          {keyTakeaways.length > 0 && (
+            <>
+              <h3 className="reading-summary-title">Key takeaways</h3>
+              <ul className="reading-takeaways">
+                {keyTakeaways.map((factor, idx) => {
+                  const label = [factor.aspect, factor.impact].filter(Boolean).join(' — ');
+                  return (
+                    <li key={idx}>
+                      <strong>{label || 'Focus'}</strong>
+                      {factor.description ? ` — ${factor.description}` : ''}
+                    </li>
+                  );
+                })}
+              </ul>
+            </>
+          )}
+
+          <div className="reading-actions" role="group" aria-label="Next steps">
+            <button type="button" className="thumb-btn" onClick={handleCopyReading}>
+              Copy
+            </button>
+            <button type="button" className="thumb-btn" onClick={handleShareReading}>
+              Share
+            </button>
+            <button type="button" className="thumb-btn" onClick={handleCopyJournalPrompt}>
+              Journal prompt
+            </button>
+            <button
+              type="button"
+              className="thumb-btn"
+              onClick={handleDownloadPdf}
+              disabled={pdfLoading}
+              aria-busy={pdfLoading}
+            >
+              {pdfLoading ? 'Preparing PDF…' : 'Download PDF'}
+            </button>
+          </div>
+        </div>
+      )}
+
       {aiInsight && (
         <div className="tldr-box ai-insight">
           {aiInsight}
@@ -215,20 +347,15 @@ export function FortuneResult({ data, onReset }: Props) {
           disabled={aiLoading}
           aria-label="Explain this reading with AI"
           aria-busy={aiLoading}
+          type="button"
         >
           {aiLoading ? 'Thinking…' : isPaid ? '✨ Explain with AI' : '🔒 Premium AI Insight'}
-        </button>
-        <button
-          onClick={() => downloadReadingPdf(data)}
-          className="btn-secondary btn-wide"
-          aria-label="Download reading as PDF"
-        >
-          📄 Download PDF
         </button>
         <button 
           onClick={onReset} 
           className="btn-secondary"
           aria-label="Go back to profiles"
+          type="button"
         >
           Back to Profiles
         </button>

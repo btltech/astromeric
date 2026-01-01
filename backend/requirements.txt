@@ -5,12 +5,14 @@ python-multipart==0.0.6
 redis==5.0.1
 python-dotenv==1.2.1
 python-jose[cryptography]==3.3.0
-passlib==1.7.4
 argon2-cffi>=21.0.0
 flatlib==0.2.3
 sqlalchemy>=2.0.0
 email-validator>=2.0.0
-httpx>=0.25.0,<0.28.0
+# Starlette 0.27 TestClient still uses httpx's legacy `app=` shortcut.
+# httpx>=0.27 emits DeprecationWarnings for that shortcut.
+# Pin below 0.27 to keep tests warning-free without forcing a FastAPI/Starlette upgrade.
+httpx>=0.25.0,<0.27.0
 reportlab>=4.0.0
 google-generativeai>=0.8.0
 slowapi>=0.1.9

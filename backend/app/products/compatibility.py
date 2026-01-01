@@ -13,7 +13,7 @@ from ..numerology_engine import build_numerology
 from ..rule_engine import RuleEngine
 
 
-def build_compatibility(person_a: Dict, person_b: Dict) -> Dict:
+def build_compatibility(person_a: Dict, person_b: Dict, lang: str = "en") -> Dict:
     chart_a = build_natal_chart(person_a)
     chart_b = build_natal_chart(person_b)
     numerology_a = build_numerology(
@@ -29,6 +29,7 @@ def build_compatibility(person_a: Dict, person_b: Dict) -> Dict:
         numerology=None,
         comparison_chart=chart_b,
         synastry_priority=_synastry_priority_pairs(),
+        lang=lang,
     )
     strengths, challenges = _split_synastry_blocks(result["selected_blocks"])
     return {

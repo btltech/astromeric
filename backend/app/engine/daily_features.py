@@ -10,6 +10,7 @@ from __future__ import annotations
 import random
 from datetime import datetime, date
 from typing import Dict, List, Optional
+from app.interpretation.translations import get_translation
 
 # ========== LUCKY NUMBERS ==========
 
@@ -59,7 +60,7 @@ ELEMENT_COLORS = {
     },
 }
 
-def get_lucky_colors(element: str, reference_date: date) -> Dict:
+def get_lucky_colors(element: str, reference_date: date, lang: str = "en") -> Dict:
     """Get daily lucky colors based on element and date."""
     seed = hash(f"{element}-{reference_date.isoformat()}")
     random.seed(seed)
@@ -68,11 +69,17 @@ def get_lucky_colors(element: str, reference_date: date) -> Dict:
     primary = random.choice(colors["primary"])
     accent = random.choice(colors["accent"])
     
+    desc_trans = get_translation(lang, "lucky_color_desc")
+    if desc_trans:
+        description = desc_trans[0].format(primary=primary, accent=accent)
+    else:
+        description = f"Wear {primary} to amplify your energy, with touches of {accent} for balance."
+    
     return {
         "primary": primary,
         "primary_hex": colors["hex"].get(primary, "#4ECDC4"),
         "accent": accent,
-        "description": f"Wear {primary} to amplify your energy, with touches of {accent} for balance.",
+        "description": description,
     }
 
 
@@ -126,17 +133,35 @@ PLANET_DAY_RULERS = {
     6: "Sun",      # Sunday
 }
 
-def get_lucky_planet(reference_date: date, life_path: int) -> Dict:
+def get_lucky_planet(reference_date: date, life_path: int, lang: str = "en") -> Dict:
     """Get the day's ruling planet and its guidance."""
     day_ruler = PLANET_DAY_RULERS.get(reference_date.weekday(), "Sun")
     energy = PLANET_ENERGY.get(day_ruler, PLANET_ENERGY["Sun"])
     
+    # Localize
+    planet_key_base = f"planet_{day_ruler.lower()}"
+    
+    keywords_trans = get_translation(lang, f"{planet_key_base}_keywords")
+    keywords = keywords_trans if keywords_trans else energy["keywords"]
+    
+    activities_trans = get_translation(lang, f"{planet_key_base}_activities")
+    activities = activities_trans if activities_trans else energy["activities"]
+    
+    avoid_trans = get_translation(lang, f"{planet_key_base}_avoid")
+    avoid = avoid_trans if avoid_trans else energy["avoid"]
+    
+    msg_trans = get_translation(lang, f"{planet_key_base}_message")
+    if msg_trans:
+        message = msg_trans[0]
+    else:
+        message = f"{day_ruler} rules today. Embrace {keywords[0]} and {keywords[1]}."
+    
     return {
         "planet": day_ruler,
-        "keywords": energy["keywords"],
-        "best_for": energy["activities"],
-        "avoid": energy["avoid"],
-        "message": f"{day_ruler} rules today. Embrace {energy['keywords'][0]} and {energy['keywords'][1]}.",
+        "keywords": keywords,
+        "best_for": activities,
+        "avoid": avoid,
+        "message": message,
     }
 
 
@@ -179,6 +204,7 @@ def get_daily_affirmation(
     element: str,
     life_path: int,
     reference_date: date,
+    lang: str = "en",
 ) -> Dict:
     """Generate a personalized daily affirmation."""
     seed = hash(f"{element}-{life_path}-{reference_date.isoformat()}")
@@ -194,12 +220,20 @@ def get_daily_affirmation(
     else:
         category = random.choice(["peace", "growth"])
     
-    affirmation = random.choice(AFFIRMATION_TEMPLATES[category])
+    # Try to get localized affirmations
+    affirmations = get_translation(lang, f"affirmation_{category}")
+    if not affirmations:
+        affirmations = AFFIRMATION_TEMPLATES.get(category, AFFIRMATION_TEMPLATES["confidence"])
+        
+    affirmation = random.choice(affirmations)
+    
+    instr_trans = get_translation(lang, "affirmation_instruction")
+    instruction = instr_trans[0] if instr_trans else "Repeat this 3 times each morning, feeling the words as truth."
     
     return {
         "text": affirmation,
         "category": category,
-        "instruction": "Repeat this 3 times each morning, feeling the words as truth.",
+        "instruction": instruction,
     }
 
 
@@ -362,7 +396,7 @@ MAJOR_ARCANA = {
     },
 }
 
-def get_daily_tarot(reference_date: date, name: str) -> Dict:
+def get_daily_tarot(reference_date: date, name: str, lang: str = "en") -> Dict:
     """Draw a daily tarot card based on date and name."""
     seed = hash(f"{name}-{reference_date.isoformat()}")
     random.seed(seed)
@@ -372,33 +406,67 @@ def get_daily_tarot(reference_date: date, name: str) -> Dict:
     
     card = MAJOR_ARCANA[card_num]
     
+    # Localize card details
+    card_key_base = f"tarot_{card_num}"
+    
+    name_trans = get_translation(lang, f"{card_key_base}_name")
+    card_name = name_trans[0] if name_trans else card["name"]
+    
+    upright_trans = get_translation(lang, f"{card_key_base}_upright")
+    upright_msg = upright_trans[0] if upright_trans else card["upright"]
+    
+    reversed_trans = get_translation(lang, f"{card_key_base}_reversed")
+    reversed_msg = reversed_trans[0] if reversed_trans else card["reversed"]
+    
+    advice_trans = get_translation(lang, f"{card_key_base}_advice")
+    advice_msg = advice_trans[0] if advice_trans else card["advice"]
+    
+    # Keywords might be tricky if not translated individually, but let's assume we keep English or add a key
+    # For now, keeping English keywords as they are often universal or simple enough
+    
     return {
-        "card": card["name"],
+        "card": card_name,
         "card_number": card_num,
         "keywords": card["keywords"],
-        "message": card["reversed"] if is_reversed else card["upright"],
+        "message": reversed_msg if is_reversed else upright_msg,
         "reversed": is_reversed,
-        "daily_advice": card["advice"],
+        "daily_advice": advice_msg,
     }
 
 
 # ========== YES/NO ORACLE ==========
 
-def get_yes_no_oracle(question: str, reference_date: date) -> Dict:
+def get_yes_no_oracle(question: str, reference_date: date, lang: str = "en") -> Dict:
     """Cosmic yes/no oracle for decision-making."""
     seed = hash(f"{question}-{reference_date.isoformat()}")
     random.seed(seed)
     
-    answers = [
-        {"answer": "Yes", "confidence": "strong", "message": "The stars align in favor. Move forward with confidence."},
-        {"answer": "Yes", "confidence": "gentle", "message": "A soft yes. Proceed with awareness and intention."},
-        {"answer": "No", "confidence": "strong", "message": "The cosmos advises against this path right now."},
-        {"answer": "No", "confidence": "gentle", "message": "Not at this moment. Patience may change the answer."},
-        {"answer": "Wait", "confidence": "neutral", "message": "The timing isn't clear. Ask again when the moon shifts."},
-        {"answer": "Maybe", "confidence": "neutral", "message": "The outcome depends on your actions. You have power here."},
+    # Define base answers
+    base_answers = [
+        {"key": "yes_strong", "answer": "Yes", "confidence": "strong", "default": "The stars align in favor. Move forward with confidence."},
+        {"key": "yes_gentle", "answer": "Yes", "confidence": "gentle", "default": "A soft yes. Proceed with awareness and intention."},
+        {"key": "no_strong", "answer": "No", "confidence": "strong", "default": "The cosmos advises against this path right now."},
+        {"key": "no_gentle", "answer": "No", "confidence": "gentle", "default": "Not at this moment. Patience may change the answer."},
+        {"key": "wait", "answer": "Wait", "confidence": "neutral", "default": "The timing isn't clear. Ask again when the moon shifts."},
+        {"key": "maybe", "answer": "Maybe", "confidence": "neutral", "default": "The outcome depends on your actions. You have power here."},
     ]
     
-    return random.choice(answers)
+    selected = random.choice(base_answers)
+    
+    # Localize
+    msg_key = f"oracle_{selected['key']}_msg"
+    msg_trans = get_translation(lang, msg_key)
+    message = msg_trans[0] if msg_trans else selected["default"]
+    
+    ans_key = f"oracle_{selected['key']}_ans"
+    ans_trans = get_translation(lang, ans_key)
+    answer = ans_trans[0] if ans_trans else selected["answer"]
+    
+    return {
+        "answer": answer,
+        "confidence": selected["confidence"],
+        "message": message
+    }
 
 
 # ========== MANIFESTATION PROMPT ==========
@@ -423,20 +491,32 @@ MANIFESTATION_DESIRES = {
     9: ["completion", "humanitarian impact", "release", "universal love"],
 }
 
-def get_manifestation_prompt(life_path: int, personal_day: int, reference_date: date) -> Dict:
+def get_manifestation_prompt(life_path: int, personal_day: int, reference_date: date, lang: str = "en") -> Dict:
     """Generate a personalized manifestation prompt."""
     seed = hash(f"{life_path}-{personal_day}-{reference_date.isoformat()}")
     random.seed(seed)
     
-    desires = MANIFESTATION_DESIRES.get(life_path, MANIFESTATION_DESIRES[1])
+    # Get desires
+    desires_trans = get_translation(lang, f"manifestation_desires_{life_path}")
+    if desires_trans:
+        desires = desires_trans
+    else:
+        desires = MANIFESTATION_DESIRES.get(life_path, MANIFESTATION_DESIRES[1])
+    
     desire = random.choice(desires)
-    template = random.choice(MANIFESTATION_PROMPTS)
+    
+    # Get templates
+    prompts_trans = get_translation(lang, "manifestation_prompts")
+    if prompts_trans:
+        template = random.choice(prompts_trans)
+    else:
+        template = random.choice(MANIFESTATION_PROMPTS)
     
     return {
         "prompt": template.format(desire=desire),
         "focus": desire,
-        "practice": "Write this 3 times in present tense, feeling it as already true.",
-        "visualization": f"Close your eyes and picture yourself fully experiencing {desire}.",
+        "practice": get_translation(lang, "manifestation_practice")[0] if get_translation(lang, "manifestation_practice") else "Write this 3 times in present tense, feeling it as already true.",
+        "visualization": (get_translation(lang, "manifestation_viz")[0] if get_translation(lang, "manifestation_viz") else "Close your eyes and picture yourself fully experiencing {desire}.").format(desire=desire),
     }
 
 
@@ -480,6 +560,7 @@ def _calculate_mood_forecast(
     life_path: int,
     personal_day: int,
     reference_date: date,
+    lang: str = "en",
 ) -> Dict:
     """Generate daily mood forecast."""
     seed = hash(f"{element}-{life_path}-{personal_day}-{reference_date.isoformat()}")
@@ -499,6 +580,13 @@ def _calculate_mood_forecast(
     mood = random.choices(moods, weights=list(weights.values()))[0]
     forecast = MOOD_FORECASTS[mood]
     
+    # Localize
+    desc_trans = get_translation(lang, f"mood_{mood}_desc")
+    description = desc_trans[0] if desc_trans else forecast["description"]
+    
+    tips_trans = get_translation(lang, f"mood_{mood}_tips")
+    tips = tips_trans if tips_trans else forecast["tips"]
+    
     # Calculate mood score (1-10)
     base_score = random.randint(5, 8)
     modifier = 1 if personal_day in [3, 5, 6] else -1 if personal_day in [4, 7] else 0
@@ -508,8 +596,8 @@ def _calculate_mood_forecast(
         "mood": mood,
         "emoji": forecast["emoji"],
         "score": score,
-        "description": forecast["description"],
-        "tips": forecast["tips"],
+        "description": description,
+        "tips": tips,
         "peak_hours": f"{10 + (personal_day % 3)}am - {2 + (personal_day % 4)}pm",
     }
 
@@ -529,7 +617,7 @@ MERCURY_RETROGRADES = [
     ("2026-10-24", "2026-11-13"),
 ]
 
-def check_retrograde_alerts(reference_date: date) -> List[Dict]:
+def check_retrograde_alerts(reference_date: date, lang: str = "en") -> List[Dict]:
     """Check for active retrogrades and return alerts."""
     alerts = []
     date_str = reference_date.isoformat()
@@ -539,17 +627,26 @@ def check_retrograde_alerts(reference_date: date) -> List[Dict]:
             days_in = (reference_date - date.fromisoformat(start)).days
             days_left = (date.fromisoformat(end) - reference_date).days
             
+            msg_trans = get_translation(lang, "retro_mercury_msg")
+            if msg_trans:
+                message = msg_trans[0].format(days_in=days_in + 1, days_left=days_left)
+            else:
+                message = f"Mercury is retrograde! Day {days_in + 1}, {days_left} days remaining."
+            
+            advice_trans = get_translation(lang, "retro_mercury_advice")
+            advice = advice_trans if advice_trans else [
+                "Double-check all communications",
+                "Back up important files",
+                "Avoid signing contracts if possible",
+                "Reconnect with old friends",
+                "Review rather than start new projects",
+            ]
+            
             alerts.append({
                 "planet": "Mercury",
                 "status": "retrograde",
-                "message": f"Mercury is retrograde! Day {days_in + 1}, {days_left} days remaining.",
-                "advice": [
-                    "Double-check all communications",
-                    "Back up important files",
-                    "Avoid signing contracts if possible",
-                    "Reconnect with old friends",
-                    "Review rather than start new projects",
-                ],
+                "message": message,
+                "advice": advice,
             })
             break
     
@@ -565,6 +662,7 @@ def get_all_daily_features(
     life_path: int,
     personal_day: int,
     reference_date: Optional[date] = None,
+    lang: str = "en",
 ) -> Dict:
     """Get all daily features in one call."""
     if reference_date is None:
@@ -573,13 +671,13 @@ def get_all_daily_features(
     return {
         "date": reference_date.isoformat(),
         "lucky_numbers": calculate_lucky_numbers(dob, reference_date),
-        "lucky_colors": get_lucky_colors(element, reference_date),
-        "lucky_planet": get_lucky_planet(reference_date, life_path),
-        "affirmation": get_daily_affirmation(element, life_path, reference_date),
-        "tarot": get_daily_tarot(reference_date, name),
-        "manifestation": get_manifestation_prompt(life_path, personal_day, reference_date),
-        "mood_forecast": _calculate_mood_forecast(element, life_path, personal_day, reference_date),
-        "retrograde_alerts": check_retrograde_alerts(reference_date),
+        "lucky_colors": get_lucky_colors(element, reference_date, lang=lang),
+        "lucky_planet": get_lucky_planet(reference_date, life_path, lang=lang),
+        "affirmation": get_daily_affirmation(element, life_path, reference_date, lang=lang),
+        "tarot": get_daily_tarot(reference_date, name, lang=lang),
+        "manifestation": get_manifestation_prompt(life_path, personal_day, reference_date, lang=lang),
+        "mood_forecast": _calculate_mood_forecast(element, life_path, personal_day, reference_date, lang=lang),
+        "retrograde_alerts": check_retrograde_alerts(reference_date, lang=lang),
     }
 
 

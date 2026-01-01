@@ -1,9 +1,18 @@
 {
+  "hero": {
+    "eyebrow": "AstroNumeric",
+    "title": "Astrologie și numerologie care chiar se conectează.",
+    "subtitle": "Hărți personalizate, compatibilitate și informații zilnice pe care le poți folosi cu adevărat.",
+    "benefit1": "✨ Horoscop personal zilnic",
+    "benefit2": "🔢 Numere de numerologie",
+    "benefit3": "💕 Informații despre compatibilitate"
+  },
   "nav": {
     "reading": "✨ Citire",
     "numbers": "🔢 Numere",
     "tools": "🔮 Instrumente",
     "learn": "📚 Învață",
+    "profile": "Profil",
     "signIn": "Conectare",
     "signOut": "Deconectare"
   },
@@ -25,11 +34,13 @@
     "fullName": "Nume Complet",
     "fullNamePlaceholder": "ex. Maria Ionescu",
     "dateOfBirth": "Data Nașterii",
+    "dateOfBirthHint": "Folosit pentru a calcula harta ta; nu poate fi folosit pentru a te identifica.",
     "timeOfBirth": "Ora Nașterii (Opțional)",
     "placeOfBirth": "Locul Nașterii (Opțional)",
     "searchCity": "Caută orașul...",
     "saveProfile": "Salvează profilul meu pentru citiri viitoare",
-    "privacyNote": "Folosit doar pentru a genera citirea ta — bifează caseta pentru a salva pentru vizite viitoare.",
+    "saveProfileHint": "Stochează datele tale pe acest dispozitiv pentru citiri mai rapide",
+    "privacyNote": "Datele tale rămân private și nu sunt niciodată partajate.",
     "getPrediction": "Obține Predicția de Azi",
     "readingStars": "Citim Stelele...",
     "errors": {
@@ -43,7 +54,18 @@
     "selectProfile": "Selectează Profil",
     "choose": "Alege...",
     "createNew": "Creează Profil Nou",
-    "cancel": "Anulează"
+    "cancel": "Anulează",
+    "title": "Profilul Meu",
+    "premium": "Premium",
+    "birthDetails": "Detalii de Naștere",
+    "edit": "Editare",
+    "saveProfile": "Salvează Profilul",
+    "saved": "Profil salvat cu succes!",
+    "quickActions": "Acțiuni Rapide",
+    "errors": {
+      "requiredFields": "Te rugăm să completezi numele și data nașterii.",
+      "saveFailed": "Salvarea profilului a eșuat. Te rugăm să încerci din nou."
+    }
   },
   "reading": {
     "title": "Citire {{scope}}",
@@ -66,6 +88,12 @@
   "numerology": {
     "title": "🔢 Profilul Tău de Numerologie",
     "loading": "Se încarcă profilul de numerologie...",
+    "gatingTitle": "Deblochează-ți Numerele",
+    "gatingSubtitle": "Introdu datele tale de naștere pentru a descoperi profilul tău de numerologie",
+    "gatingBenefit1": "Numere de Cale a Vieții și Expresie",
+    "gatingBenefit2": "Cicluri de An Personal",
+    "gatingBenefit3": "Vârfuri și Provocări",
+    "goToReading": "Mergi la Citire →",
     "lifePath": "Calea Vieții",
     "expression": "Expresie",
     "soulUrge": "Dorința Sufletului",
@@ -92,6 +120,7 @@
     "createAccount": "✨ Creează Cont",
     "signInSubtitle": "Conectează-te pentru a accesa profilurile tale cosmice",
     "createSubtitle": "Alătură-te pentru a salva citirile și profilurile tale",
+    "benefitText": "Conectează-te pentru a salva profiluri și vedea istoricul citirilor.",
     "email": "Email",
     "emailPlaceholder": "email@exemplu.ro",
     "password": "Parolă",
@@ -100,6 +129,9 @@
     "hasAccount": "Ai deja cont?",
     "register": "Înregistrează-te",
     "signInButton": "Conectează-te",
+    "continueAsGuest": "Continuă ca Invitat",
+    "guestNote": "Încearcă toate funcțiile fără cont. Datele tale rămân pe acest dispozitiv.",
+    "welcomeBack": "Bine ai revenit, {{email}}!",
     "errors": {
       "fillAllFields": "Te rugăm să completezi toate câmpurile",
       "passwordsMismatch": "Parolele nu se potrivesc"
@@ -129,6 +161,12 @@
   "tools": {
     "title": "🔮 Instrumente Cosmice",
     "subtitle": "Ghidare divină la îndemâna ta",
+    "gatingTitle": "Deblochează Instrumentele Cosmice",
+    "gatingSubtitle": "Introdu detaliile de naștere o singură dată pentru a accesa instrumentele personalizate",
+    "gatingBenefit1": "Funcții cosmice zilnice și numere norocoase",
+    "gatingBenefit2": "Citiri personalizate de tarot și oracol",
+    "gatingBenefit3": "Chat cu ghid cosmic IA",
+    "goToReading": "Mergi la Citire →",
     "tarot": {
       "title": "🃏 Tarot Zilnic",
       "draw": "Trage o Carte",
@@ -155,6 +193,6 @@
   },
   "footer": {
     "madeWith": "Făcut cu ✨ energie cosmică",
-    "copyright": "© {{year}} Astromeric"
+    "copyright": "© {{year}} AstroNumeric"
   }
 }

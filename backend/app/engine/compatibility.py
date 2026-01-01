@@ -2,6 +2,7 @@
 
 from typing import Dict
 
+from ..interpretation.translations import get_translation
 from .astrology import get_element, get_zodiac_sign
 from .numerology import calculate_life_path_number
 from .numerology_extended import calculate_expression_number, calculate_soul_urge_number
@@ -142,17 +143,28 @@ RELATIONSHIP_TEXTS = {
 }
 
 
-def get_element_compat(e1: str, e2: str) -> Dict:
+def get_element_compat(e1: str, e2: str, lang: str = "en") -> Dict:
     """Get element compatibility data."""
     key = tuple(sorted([e1, e2]))
     if key[0] == key[1]:
         key = (e1, e2)
-    return ELEMENT_COMPAT.get(
+        
+    # Try translation first
+    trans_key = f"compat_element_{key[0].lower()}_{key[1].lower()}"
+    trans = get_translation(lang, trans_key)
+    
+    default_data = ELEMENT_COMPAT.get(
         key, {"score": 65, "desc": "Unique combination with growth potential."}
     )
+    
+    if trans:
+        # Assuming translation returns [desc]
+        return {"score": default_data["score"], "desc": trans[0]}
+        
+    return default_data
 
 
-def get_life_path_compat(lp1: int, lp2: int) -> Dict:
+def get_life_path_compat(lp1: int, lp2: int, lang: str = "en") -> Dict:
     """Get Life Path compatibility data."""
     # Reduce master numbers for lookup
     lp1_r = lp1 if lp1 <= 9 else (lp1 % 10 if lp1 not in [11, 22, 33] else lp1 - 10)
@@ -162,42 +174,71 @@ def get_life_path_compat(lp1: int, lp2: int) -> Dict:
     if key[0] == key[1]:
         key = (lp1_r, lp2_r)
 
-    default = {
+    default = LIFE_PATH_COMPAT.get(key, {
         "harmony": 70,
         "friction": "Different approaches",
         "advice": "Appreciate your differences.",
-    }
-    return LIFE_PATH_COMPAT.get(key, default)
+    })
+    
+    if lang != "en":
+        friction_key = f"compat_lp_{key[0]}_{key[1]}_friction"
+        advice_key = f"compat_lp_{key[0]}_{key[1]}_advice"
+        
+        friction = get_translation(lang, friction_key)
+        advice = get_translation(lang, advice_key)
+        
+        if friction:
+            default = default.copy()
+            default["friction"] = friction[0]
+        if advice:
+            if "friction" not in default: default = default.copy() # Ensure copy if not already
+            default["advice"] = advice[0]
+            
+    return default
 
 
-def calculate_astro_compatibility(dob1: str, dob2: str) -> Dict:
+def calculate_astro_compatibility(dob1: str, dob2: str, lang: str = "en") -> Dict:
     """Calculate astrology-based compatibility."""
     sign1 = get_zodiac_sign(dob1)
     sign2 = get_zodiac_sign(dob2)
     elem1 = get_element(sign1)
     elem2 = get_element(sign2)
 
-    compat = get_element_compat(elem1, elem2)
+    compat = get_element_compat(elem1, elem2, lang)
+
+    # Localize strengths
+    if lang != "en":
+        s1_key = "compat_strength_same_element" if elem1 == elem2 else "compat_strength_diff_element"
+        s1_trans = get_translation(lang, s1_key)
+        s1 = s1_trans[0].format(elem1=elem1, elem2=elem2, element=elem1) if s1_trans else (
+            f"Both share {elem1} qualities" if elem1 == elem2 else f"{elem1} and {elem2} can balance each other"
+        )
+        
+        s2_trans = get_translation(lang, "compat_strength_sign1")
+        s2 = s2_trans[0].format(sign=sign1) if s2_trans else f"{sign1} brings unique perspective"
+        
+        s3_trans = get_translation(lang, "compat_strength_sign2")
+        s3 = s3_trans[0].format(sign=sign2) if s3_trans else f"{sign2} offers complementary energy"
+    else:
+        s1 = (
+            f"Both share {elem1} qualities"
+            if elem1 == elem2
+            else f"{elem1} and {elem2} can balance each other"
+        )
+        s2 = f"{sign1} brings unique perspective"
+        s3 = f"{sign2} offers complementary energy"
 
     return {
         "person1": {"sign": sign1, "element": elem1},
         "person2": {"sign": sign2, "element": elem2},
         "score": compat["score"],
         "element_harmony": compat["desc"],
-        "strengths": [
-            (
-                f"Both share {elem1} qualities"
-                if elem1 == elem2
-                else f"{elem1} and {elem2} can balance each other"
-            ),
-            f"{sign1} brings unique perspective",
-            f"{sign2} offers complementary energy",
-        ],
+        "strengths": [s1, s2, s3],
     }
 
 
 def calculate_numerology_compatibility(
-    name1: str, dob1: str, name2: str, dob2: str
+    name1: str, dob1: str, name2: str, dob2: str, lang: str = "en"
 ) -> Dict:
     """Calculate numerology-based compatibility."""
     lp1 = calculate_life_path_number(dob1)
@@ -207,10 +248,13 @@ def calculate_numerology_compatibility(
     soul1 = calculate_soul_urge_number(name1)
     soul2 = calculate_soul_urge_number(name2)
 
-    lp_compat = get_life_path_compat(lp1, lp2)
+    lp_compat = get_life_path_compat(lp1, lp2, lang)
 
     # Soul Urge compatibility (emotional/heart connection)
     soul_match = 100 - abs(soul1 - soul2) * 10 if soul1 != soul2 else 95
+
+    summary_trans = get_translation(lang, "compat_num_summary")
+    summary = summary_trans[0].format(lp1=lp1, lp2=lp2, harmony=lp_compat['harmony']) if summary_trans else f"Life Paths {lp1} and {lp2} create a {lp_compat['harmony']}% harmony match."
 
     return {
         "person1": {"life_path": lp1, "expression": expr1, "soul_urge": soul1},
@@ -219,20 +263,30 @@ def calculate_numerology_compatibility(
         "potential_friction": lp_compat["friction"],
         "advice": lp_compat["advice"],
         "soul_connection": min(100, max(50, soul_match)),
-        "summary": f"Life Paths {lp1} and {lp2} create a {lp_compat['harmony']}% harmony match.",
+        "summary": summary,
     }
 
 
 def calculate_combined_compatibility(
-    name1: str, dob1: str, name2: str, dob2: str, relationship_type: str = "romantic"
+    name1: str, dob1: str, name2: str, dob2: str, relationship_type: str = "romantic", lang: str = "en"
 ) -> Dict:
     """Calculate full combined compatibility report."""
-    astro = calculate_astro_compatibility(dob1, dob2)
-    numerology = calculate_numerology_compatibility(name1, dob1, name2, dob2)
+    astro = calculate_astro_compatibility(dob1, dob2, lang)
+    numerology = calculate_numerology_compatibility(name1, dob1, name2, dob2, lang)
 
+    # Localize relationship context
     rel_context = RELATIONSHIP_TEXTS.get(
         relationship_type, RELATIONSHIP_TEXTS["romantic"]
     )
+    
+    frame = rel_context["frame"]
+    focus = rel_context["focus"]
+    
+    if lang != "en":
+        frame_trans = get_translation(lang, f"compat_rel_frame_{relationship_type}")
+        focus_trans = get_translation(lang, f"compat_rel_focus_{relationship_type}")
+        if frame_trans: frame = frame_trans[0]
+        if focus_trans: focus = focus_trans[0]
 
     # Combined score (weighted average)
     combined_score = int(
@@ -243,13 +297,27 @@ def calculate_combined_compatibility(
 
     # Generate advice based on relationship type
     if combined_score >= 85:
-        overall = f"Excellent {rel_context['frame']}! Natural harmony."
+        key = "compat_overall_excellent"
+        default = f"Excellent {frame}! Natural harmony."
     elif combined_score >= 70:
-        overall = f"Strong {rel_context['frame']} with room to grow."
+        key = "compat_overall_strong"
+        default = f"Strong {frame} with room to grow."
     elif combined_score >= 55:
-        overall = f"Workable {rel_context['frame']} requiring conscious effort."
+        key = "compat_overall_workable"
+        default = f"Workable {frame} requiring conscious effort."
     else:
-        overall = f"Challenging {rel_context['frame']}, but growth potential exists."
+        key = "compat_overall_challenging"
+        default = f"Challenging {frame}, but growth potential exists."
+        
+    overall_trans = get_translation(lang, key)
+    overall = overall_trans[0].format(frame=frame) if overall_trans else default
+
+    # Localize top advice
+    ta2_trans = get_translation(lang, "compat_advice_leverage")
+    ta2 = ta2_trans[0].format(e1=astro['person1']['element'], e2=astro['person2']['element']) if ta2_trans else f"Leverage your {astro['person1']['element']}-{astro['person2']['element']} dynamic"
+    
+    ta3_trans = get_translation(lang, "compat_advice_communicate")
+    ta3 = ta3_trans[0] if ta3_trans else "Communicate openly about differences"
 
     return {
         "relationship_type": relationship_type,
@@ -257,10 +325,10 @@ def calculate_combined_compatibility(
         "overall_assessment": overall,
         "astrology": astro,
         "numerology": numerology,
-        "focus_areas": rel_context["focus"],
+        "focus_areas": focus,
         "top_advice": [
             numerology["advice"],
-            f"Leverage your {astro['person1']['element']}-{astro['person2']['element']} dynamic",
-            "Communicate openly about differences",
+            ta2,
+            ta3,
         ],
     }

@@ -110,14 +110,14 @@ export function HabitTracker() {
   // Save habits to localStorage
   useEffect(() => {
     if (habits.length > 0) {
-      localStorage.setItem('astromeric_habits', JSON.stringify(habits));
+      localStorage.setItem('astronumeric_habits', JSON.stringify(habits));
     }
   }, [habits]);
 
   // Save completions to localStorage
   useEffect(() => {
     if (completions.length > 0) {
-      localStorage.setItem('astromeric_completions', JSON.stringify(completions));
+      localStorage.setItem('astronumeric_completions', JSON.stringify(completions));
     }
   }, [completions]);
 

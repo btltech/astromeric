@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Tuple
 from zoneinfo import ZoneInfo
 import math
+from app.interpretation.translations import get_translation
 
 # Moon phase constants
 LUNAR_CYCLE_DAYS = 29.530589  # Synodic month in days
@@ -397,6 +398,7 @@ def get_personalized_ritual(
     moon_sign: str,
     natal_chart: Optional[Dict] = None,
     personal_day: Optional[int] = None,
+    lang: str = "en",
 ) -> Dict:
     """
     Generate personalized ritual recommendations based on:
@@ -408,20 +410,47 @@ def get_personalized_ritual(
     phase_ritual = PHASE_RITUALS.get(phase_name, PHASE_RITUALS["New Moon"])
     sign_focus = SIGN_RITUAL_FOCUS.get(moon_sign, SIGN_RITUAL_FOCUS["Aries"])
     
+    # Localize Phase Ritual
+    phase_key_base = f"moon_phase_{phase_name.lower().replace(' ', '_')}"
+    
+    phase_theme_trans = get_translation(lang, f"{phase_key_base}_theme")
+    phase_theme = phase_theme_trans[0] if phase_theme_trans else phase_ritual['theme']
+    
+    phase_energy_trans = get_translation(lang, f"{phase_key_base}_energy")
+    phase_energy = phase_energy_trans[0] if phase_energy_trans else phase_ritual['energy']
+    
+    phase_affirmation_trans = get_translation(lang, f"{phase_key_base}_affirmation")
+    phase_affirmation = phase_affirmation_trans[0] if phase_affirmation_trans else phase_ritual['affirmation']
+
+    # Localize Sign Focus
+    sign_key_base = f"moon_sign_{moon_sign.lower()}"
+    
+    sign_theme_trans = get_translation(lang, f"{sign_key_base}_theme")
+    sign_theme = sign_theme_trans[0] if sign_theme_trans else sign_focus['theme']
+    
+    sign_focus_desc_trans = get_translation(lang, f"{sign_key_base}_focus")
+    sign_focus_desc = sign_focus_desc_trans[0] if sign_focus_desc_trans else sign_focus['focus']
+    
+    sign_element_trans = get_translation(lang, f"{sign_key_base}_element")
+    sign_element = sign_element_trans[0] if sign_element_trans else sign_focus['element_boost']
+    
+    sign_body_trans = get_translation(lang, f"{sign_key_base}_body")
+    sign_body = sign_body_trans[0] if sign_body_trans else sign_focus['body_area']
+
     # Combine phase and sign recommendations
     ritual = {
         "phase": phase_name,
         "moon_sign": moon_sign,
-        "theme": f"{phase_ritual['theme']} in {sign_focus['theme']}",
-        "energy": phase_ritual["energy"],
-        "sign_focus": sign_focus["focus"],
+        "theme": f"{phase_theme} in {sign_theme}",
+        "energy": phase_energy,
+        "sign_focus": sign_focus_desc,
         "activities": phase_ritual["activities"][:4],
         "avoid": phase_ritual["avoid"],
-        "element_boost": sign_focus["element_boost"],
-        "body_focus": sign_focus["body_area"],
+        "element_boost": sign_element,
+        "body_focus": sign_body,
         "crystals": phase_ritual["crystals"],
         "colors": phase_ritual["colors"],
-        "affirmation": phase_ritual["affirmation"],
+        "affirmation": phase_affirmation,
     }
     
     # Add personalized natal insights if available
@@ -433,24 +462,32 @@ def get_personalized_ritual(
         if natal_moon:
             natal_moon_sign = natal_moon.get("sign", "")
             if natal_moon_sign == moon_sign:
-                ritual["natal_insight"] = "🌙 Lunar Return: Moon returns to your natal sign - heightened emotional awareness"
+                insight_trans = get_translation(lang, "moon_insight_return")
+                ritual["natal_insight"] = insight_trans[0] if insight_trans else "🌙 Lunar Return: Moon returns to your natal sign - heightened emotional awareness"
             elif natal_moon_sign in ELEMENTS.get(_get_element(moon_sign), []):
-                ritual["natal_insight"] = f"Moon trines your natal Moon - harmonious emotional energy"
+                insight_trans = get_translation(lang, "moon_insight_trine")
+                ritual["natal_insight"] = insight_trans[0] if insight_trans else "Moon trines your natal Moon - harmonious emotional energy"
     
     # Add numerology insight if personal day provided
     if personal_day:
-        day_insights = {
-            1: "Amplify leadership in your ritual",
-            2: "Include a partner or focus on balance",
-            3: "Add creative expression to your practice",
-            4: "Structure your ritual carefully",
-            5: "Embrace spontaneity in your practice",
-            6: "Include family or loved ones",
-            7: "Deepen meditation and introspection",
-            8: "Focus on abundance and manifestation",
-            9: "Include release and forgiveness work",
-        }
-        ritual["numerology_insight"] = day_insights.get(personal_day, "Trust your intuition")
+        pd_key = f"moon_pd_{personal_day}"
+        pd_trans = get_translation(lang, pd_key)
+        
+        if pd_trans:
+             ritual["numerology_insight"] = pd_trans[0]
+        else:
+            day_insights = {
+                1: "Amplify leadership in your ritual",
+                2: "Include a partner or focus on balance",
+                3: "Add creative expression to your practice",
+                4: "Structure your ritual carefully",
+                5: "Embrace spontaneity in your practice",
+                6: "Include family or loved ones",
+                7: "Deepen meditation and introspection",
+                8: "Focus on abundance and manifestation",
+                9: "Include release and forgiveness work",
+            }
+            ritual["numerology_insight"] = day_insights.get(personal_day, "Trust your intuition")
     
     return ritual
 
@@ -466,6 +503,7 @@ def _get_element(sign: str) -> str:
 def get_moon_phase_summary(
     natal_chart: Optional[Dict] = None,
     numerology: Optional[Dict] = None,
+    lang: str = "en",
 ) -> Dict:
     """
     Get complete moon phase summary with rituals for current phase.
@@ -485,6 +523,7 @@ def get_moon_phase_summary(
         moon_sign,
         natal_chart,
         personal_day,
+        lang=lang,
     )
     
     return {

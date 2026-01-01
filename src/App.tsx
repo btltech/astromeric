@@ -16,6 +16,7 @@ const NumerologyView = React.lazy(() => import('./views/NumerologyView').then(m 
 const CompatibilityView = React.lazy(() => import('./views/CompatibilityView').then(m => ({ default: m.CompatibilityView })));
 const LearnView = React.lazy(() => import('./views/LearnView').then(m => ({ default: m.LearnView })));
 const AuthView = React.lazy(() => import('./views/AuthView').then(m => ({ default: m.AuthView })));
+const ProfileView = React.lazy(() => import('./views/ProfileView').then(m => ({ default: m.ProfileView })));
 const ChartViewPage = React.lazy(() => import('./views/ChartViewPage').then(m => ({ default: m.ChartViewPage })));
 const CosmicToolsView = React.lazy(() => import('./views/CosmicToolsView').then(m => ({ default: m.CosmicToolsView })));
 // styles.css is imported at the root level (index.tsx)
@@ -29,8 +30,8 @@ function NavBar() {
   return (
     <header>
       <NavLink to="/" className="logo-link">
-        <div className="logo" aria-label="Astromeric home">
-          ASTRO<span>MERIC</span>
+        <div className="logo" aria-label="AstroNumeric home">
+          ASTRO<span>NUMERIC</span>
         </div>
       </NavLink>
 
@@ -87,6 +88,11 @@ function NavBar() {
             {t('nav.signIn')}
           </NavLink>
         )}
+        {isAuthenticated && (
+          <NavLink to="/profile" className={({ isActive }) => `nav-btn nav-btn-profile ${isActive ? 'active' : ''}`} onClick={() => setIsOpen(false)}>
+            👤 {t('nav.profile')}
+          </NavLink>
+        )}
       </nav>
     </header>
   );
@@ -127,6 +133,7 @@ function AnimatedRoutes() {
             />
             <Route path="/learn" element={<LearnView />} />
             <Route path="/auth" element={<AuthView />} />
+            <Route path="/profile" element={<ProfileView />} />
           </Routes>
         </React.Suspense>
       </AnimatePresence>

@@ -27,7 +27,7 @@ export function PWAPrompt() {
             <div className="pwa-install-content">
               <div className="pwa-install-icon">✨</div>
               <div className="pwa-install-text">
-                <strong>Install Astromeric</strong>
+                <strong>Install AstroNumeric</strong>
                 <p>Add to home screen for the best experience</p>
               </div>
             </div>

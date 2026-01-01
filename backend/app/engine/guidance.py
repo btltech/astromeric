@@ -15,6 +15,7 @@ from .planetary_timing import (
     detect_retrogrades,
     calculate_void_of_course_moon,
 )
+from ..interpretation.translations import get_translation
 
 
 def get_daily_guidance(
@@ -25,6 +26,7 @@ def get_daily_guidance(
     latitude: Optional[float] = None,
     longitude: Optional[float] = None,
     timezone: str = "UTC",
+    lang: str = "en",
 ) -> Dict:
     """
     Generates comprehensive daily actionable guidance.
@@ -40,13 +42,13 @@ def get_daily_guidance(
     
     # 1. Numerology Guidance
     personal_day = numerology.get("cycles", {}).get("personal_day", {}).get("number")
-    num_guidance = _get_numerology_guidance(personal_day)
+    num_guidance = _get_numerology_guidance(personal_day, lang=lang)
     
     # 2. Astrology Guidance (Transits)
-    astro_guidance = _get_astrology_guidance(natal_chart, transit_chart)
+    astro_guidance = _get_astrology_guidance(natal_chart, transit_chart, lang=lang)
     
     # 3. Color Guidance
-    color_guidance = _get_color_guidance(personal_day)
+    color_guidance = _get_color_guidance(personal_day, lang=lang)
     
     # 4. Power Hour (real planetary hours calculation)
     power_hour = _calculate_power_hour(
@@ -54,12 +56,13 @@ def get_daily_guidance(
         transit_chart,
         latitude=latitude,
         longitude=longitude,
-        timezone=timezone
+        timezone=timezone,
+        lang=lang
     )
     
     # 5. Retrograde Alerts
     retrogrades = detect_retrogrades(transit_chart)
-    retrograde_warnings = _format_retrograde_warnings(retrogrades)
+    retrograde_warnings = _format_retrograde_warnings(retrogrades, lang)
     
     # 6. Void-of-Course Moon
     voc_moon = calculate_void_of_course_moon(transit_chart)
@@ -74,10 +77,12 @@ def get_daily_guidance(
     
     # Add VOC Moon warning to avoid if applicable
     if voc_moon.get("is_void"):
-        avoid_activities.append("Starting new projects")
-        avoid_activities.append("Making major decisions")
-        embrace_activities.append("Routine tasks")
-        embrace_activities.append("Meditation")
+        voc_avoid = get_translation(lang, "voc_avoid") if lang != "en" else ["Starting new projects", "Making major decisions"]
+        voc_embrace = get_translation(lang, "voc_embrace") if lang != "en" else ["Routine tasks", "Meditation"]
+        if voc_avoid:
+            avoid_activities.extend(voc_avoid)
+        if voc_embrace:
+            embrace_activities.extend(voc_embrace)
 
     return {
         "avoid": {
@@ -93,70 +98,62 @@ def get_daily_guidance(
         "retrogrades": retrograde_warnings,
         "void_of_course_moon": voc_moon,
         "current_planetary_hour": _get_current_hour_info(
-            latitude, longitude, timezone
+            latitude, longitude, timezone, lang
         ) if latitude and longitude else None,
     }
 
 
-def _get_numerology_guidance(day_number: int) -> Dict[str, List[str]]:
+def _get_numerology_guidance(day_number: int, lang: str = "en") -> Dict[str, List[str]]:
     """Returns avoid/embrace lists based on Personal Day Number."""
     if not day_number:
         return {"avoid": [], "embrace": []}
         
-    rules = {
-        1: {
-            "avoid": ["Hesitation", "Following the crowd", "Procrastination"],
-            "embrace": ["Taking the lead", "Starting fresh", "Bold action"]
-        },
-        2: {
-            "avoid": ["Conflict", "Isolation", "Rushing decisions"],
-            "embrace": ["Cooperation", "Patience", "Diplomacy"]
-        },
-        3: {
-            "avoid": ["Gossip", "Scattering energy", "Isolation"],
-            "embrace": ["Self-expression", "Socializing", "Creativity"]
-        },
-        4: {
-            "avoid": ["Laziness", "Shortcuts", "Disorganization"],
-            "embrace": ["Hard work", "Planning", "Details"]
-        },
-        5: {
-            "avoid": ["Rigidity", "Routine", "Long-term commitments"],
-            "embrace": ["Change", "Adventure", "Flexibility"]
-        },
-        6: {
-            "avoid": ["Neglect", "Selfishness", "Arguments at home"],
-            "embrace": ["Family time", "Service", "Harmony"]
-        },
-        7: {
-            "avoid": ["Noise", "Superficiality", "Crowds"],
-            "embrace": ["Meditation", "Research", "Solitude"]
-        },
-        8: {
-            "avoid": ["Overspending", "Power struggles", "Gambling"],
-            "embrace": ["Business", "Financial planning", "Ambition"]
-        },
-        9: {
-            "avoid": ["Holding grudges", "Starting new big projects", "Clutter"],
-            "embrace": ["Letting go", "Charity", "Finishing tasks"]
-        },
-        11: {
-            "avoid": ["Materialism", "Ignoring intuition"],
-            "embrace": ["Inspiration", "Spiritual practice"]
-        },
-        22: {
-            "avoid": ["Dreaming without doing", "Impracticality"],
-            "embrace": ["Building", "Large-scale planning"]
-        },
-        33: {
-            "avoid": ["Self-neglect", "Overgiving"],
-            "embrace": ["Teaching", "Healing others"]
-        },
-    }
-    return rules.get(day_number, {"avoid": [], "embrace": []})
+    # Use translation system if available, otherwise fallback to English defaults
+    avoid_key = f"num_{day_number}_avoid"
+    embrace_key = f"num_{day_number}_embrace"
+    
+    avoid = get_translation(lang, avoid_key)
+    embrace = get_translation(lang, embrace_key)
+    
+    # Fallback for English if translation returns empty (or if keys missing)
+    if not avoid and lang == "en":
+        defaults = {
+            1: ["Hesitation", "Following the crowd", "Procrastination"],
+            2: ["Conflict", "Isolation", "Rushing decisions"],
+            3: ["Gossip", "Scattering energy", "Isolation"],
+            4: ["Laziness", "Shortcuts", "Disorganization"],
+            5: ["Rigidity", "Routine", "Long-term commitments"],
+            6: ["Neglect", "Selfishness", "Arguments at home"],
+            7: ["Noise", "Superficiality", "Crowds"],
+            8: ["Overspending", "Power struggles", "Gambling"],
+            9: ["Holding grudges", "Starting new big projects", "Clutter"],
+            11: ["Materialism", "Ignoring intuition"],
+            22: ["Dreaming without doing", "Impracticality"],
+            33: ["Self-neglect", "Overgiving"],
+        }
+        avoid = defaults.get(day_number, [])
+
+    if not embrace and lang == "en":
+        defaults = {
+            1: ["Taking the lead", "Starting fresh", "Bold action"],
+            2: ["Cooperation", "Patience", "Diplomacy"],
+            3: ["Self-expression", "Socializing", "Creativity"],
+            4: ["Hard work", "Planning", "Details"],
+            5: ["Change", "Adventure", "Flexibility"],
+            6: ["Family time", "Service", "Harmony"],
+            7: ["Meditation", "Research", "Solitude"],
+            8: ["Business", "Financial planning", "Ambition"],
+            9: ["Letting go", "Charity", "Finishing tasks"],
+            11: ["Inspiration", "Spiritual practice"],
+            22: ["Building", "Large-scale planning"],
+            33: ["Teaching", "Healing others"],
+        }
+        embrace = defaults.get(day_number, [])
+        
+    return {"avoid": avoid or [], "embrace": embrace or []}
 
 
-def _get_astrology_guidance(natal: Dict, transit: Dict) -> Dict[str, List[str]]:
+def _get_astrology_guidance(natal: Dict, transit: Dict, lang: str = "en") -> Dict[str, List[str]]:
     """
     Analyzes transits to find specific warnings based on Moon sign
     and any challenging aspects.
@@ -171,31 +168,53 @@ def _get_astrology_guidance(natal: Dict, transit: Dict) -> Dict[str, List[str]]:
     
     if transit_moon:
         sign = transit_moon.get("sign", "")
+        element = ""
         if sign in ["Aries", "Leo", "Sagittarius"]:  # Fire Moons
-            avoid.append("Impulsive anger")
-            embrace.append("Physical activity")
+            element = "fire"
         elif sign in ["Taurus", "Virgo", "Capricorn"]:  # Earth Moons
-            avoid.append("Risky spending")
-            embrace.append("Practical tasks")
+            element = "earth"
         elif sign in ["Gemini", "Libra", "Aquarius"]:  # Air Moons
-            avoid.append("Miscommunication")
-            embrace.append("Socializing")
+            element = "air"
         elif sign in ["Cancer", "Scorpio", "Pisces"]:  # Water Moons
-            avoid.append("Suppressing emotions")
-            embrace.append("Self-care")
+            element = "water"
+            
+        if element:
+            avoid_key = f"moon_{element}_avoid"
+            embrace_key = f"moon_{element}_embrace"
+            
+            moon_avoid = get_translation(lang, avoid_key)
+            moon_embrace = get_translation(lang, embrace_key)
+            
+            if moon_avoid:
+                avoid.extend(moon_avoid)
+            elif lang == "en": # Fallback
+                if element == "fire": avoid.append("Impulsive anger")
+                elif element == "earth": avoid.append("Risky spending")
+                elif element == "air": avoid.append("Miscommunication")
+                elif element == "water": avoid.append("Suppressing emotions")
+                
+            if moon_embrace:
+                embrace.extend(moon_embrace)
+            elif lang == "en": # Fallback
+                if element == "fire": embrace.append("Physical activity")
+                elif element == "earth": embrace.append("Practical tasks")
+                elif element == "air": embrace.append("Socializing")
+                elif element == "water": embrace.append("Self-care")
     
     # Check for challenging aspects in transit
     aspects = transit.get("aspects", [])
     for aspect in aspects:
         if aspect.get("type") == "square":
-            avoid.append("Forcing outcomes")
+            msg = get_translation(lang, "aspect_square_avoid")
+            avoid.append(msg[0] if msg else "Forcing outcomes")
         if aspect.get("type") == "opposition":
-            embrace.append("Finding balance")
+            msg = get_translation(lang, "aspect_opposition_embrace")
+            embrace.append(msg[0] if msg else "Finding balance")
     
-    return {"avoid": avoid, "embrace": embrace}
+    return {"avoid": list(set(avoid)), "embrace": list(set(embrace))}
 
 
-def _get_color_guidance(day_number: int) -> Dict[str, List[Dict[str, str]]]:
+def _get_color_guidance(day_number: int, lang: str = "en") -> Dict[str, List[Dict[str, str]]]:
     """Returns lucky and avoid colors based on numerology with hex values."""
     # Color name to hex mapping for CSS compatibility
     COLOR_HEX = {
@@ -226,7 +245,10 @@ def _get_color_guidance(day_number: int) -> Dict[str, List[Dict[str, str]]]:
     }
     
     def to_color_obj(name: str) -> Dict[str, str]:
-        return {"name": name, "hex": COLOR_HEX.get(name, "#808080")}
+        key = f"color_{name.lower().replace(' ', '_')}"
+        trans = get_translation(lang, key)
+        display_name = trans[0] if trans else name
+        return {"name": display_name, "hex": COLOR_HEX.get(name, "#808080")}
     
     maps = {
         1: {"embrace": ["Red", "Gold"], "avoid": ["Black", "Grey"]},
@@ -262,6 +284,7 @@ def _calculate_power_hour(
     latitude: Optional[float] = None,
     longitude: Optional[float] = None,
     timezone: str = "UTC",
+    lang: str = "en",
 ) -> str:
     """
     Calculates the best 'Power Hour' for the day using planetary hours.
@@ -275,7 +298,8 @@ def _calculate_power_hour(
         longitude = location.get("lon")
     
     if latitude is None or longitude is None:
-        return "Check your location settings for accurate timing"
+        msg = get_translation(lang, "ph_location_error")
+        return msg[0] if msg else "Check your location settings for accurate timing"
     
     try:
         now = datetime.now(ZoneInfo(timezone))
@@ -288,24 +312,35 @@ def _calculate_power_hour(
         favorable_planets=["Sun", "Jupiter", "Venus"]
     )
     
+    hour_label = "hour" # Default
+    if lang != "en":
+        # Simple mapping for "hour" word if needed, or rely on full string translation
+        # For now, we'll keep the structure simple
+        pass
+
     # Find the next upcoming power hour
     for ph in power_hours:
         # Parse start time for comparison (simplified)
         if ph.get("is_day"):
-            return f"{ph['start']} - {ph['end']} ({ph['planet']} hour)"
+            planet_name = ph['planet']
+            # Ideally translate planet name here if we had a mapping
+            return f"{ph['start']} - {ph['end']} ({planet_name} {hour_label})"
     
     # Return first power hour if none upcoming
     if power_hours:
         first = power_hours[0]
-        return f"{first['start']} - {first['end']} ({first['planet']} hour)"
+        planet_name = first['planet']
+        return f"{first['start']} - {first['end']} ({planet_name} {hour_label})"
     
-    return "Sunrise - 7:00 AM (Sun hour)"
+    msg = get_translation(lang, "ph_sunrise")
+    return msg[0] if msg else "Sunrise - 7:00 AM (Sun hour)"
 
 
 def _get_current_hour_info(
     latitude: Optional[float],
     longitude: Optional[float],
     timezone: str,
+    lang: str = "en",
 ) -> Optional[Dict]:
     """Get information about the current planetary hour."""
     if latitude is None or longitude is None:
@@ -320,16 +355,24 @@ def _get_current_hour_info(
     
     # Add quality assessment
     planet = current_hour.get("planet", "")
-    if planet in ["Sun", "Jupiter", "Venus"]:
-        quality = "Favorable"
-        suggestion = "Good time for important actions"
-    elif planet in ["Saturn", "Mars"]:
-        quality = "Challenging"
-        suggestion = "Better for discipline and physical work"
-    else:
-        quality = "Neutral"
-        suggestion = "Proceed with awareness"
     
+    quality_key = "neutral"
+    suggestion_key = "neutral"
+    
+    if planet in ["Sun", "Jupiter", "Venus"]:
+        quality_key = "favorable"
+        suggestion_key = "favorable"
+    elif planet in ["Saturn", "Mars"]:
+        quality_key = "challenging"
+        suggestion_key = "challenging"
+        
+    # Get translations
+    quality_trans = get_translation(lang, f"ph_quality_{quality_key}")
+    suggestion_trans = get_translation(lang, f"ph_suggestion_{suggestion_key}")
+    
+    quality = quality_trans[0] if quality_trans else ("Favorable" if quality_key == "favorable" else "Challenging" if quality_key == "challenging" else "Neutral")
+    suggestion = suggestion_trans[0] if suggestion_trans else ("Good time for important actions" if suggestion_key == "favorable" else "Better for discipline and physical work" if suggestion_key == "challenging" else "Proceed with awareness")
+
     return {
         "planet": planet,
         "start": current_hour.get("start"),
@@ -339,13 +382,15 @@ def _get_current_hour_info(
     }
 
 
-def _format_retrograde_warnings(retrogrades: List[Dict]) -> List[Dict]:
+def _format_retrograde_warnings(retrogrades: List[Dict], lang: str = "en") -> List[Dict]:
     """Format retrograde information for frontend display."""
     if not retrogrades:
         return []
     
     formatted = []
     for retro in retrogrades:
+        # Here we would ideally translate the impact text if we had keys for it
+        # For now we pass through the generated text
         formatted.append({
             "planet": retro["planet"],
             "sign": retro.get("sign", "Unknown"),

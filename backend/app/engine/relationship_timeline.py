@@ -10,6 +10,7 @@ Provides timeline analysis for relationships including:
 from datetime import datetime, timedelta
 from typing import Dict, List, Any, Optional, Tuple
 from collections import defaultdict
+from app.interpretation.translations import get_translation
 
 
 # Venus and Mars sign changes for 2024-2025 (approximate dates)
@@ -211,12 +212,13 @@ def get_mars_transit(date: datetime) -> Optional[Dict[str, Any]]:
     return None
 
 
-def is_venus_retrograde(date: datetime) -> Dict[str, Any]:
+def is_venus_retrograde(date: datetime, lang: str = "en") -> Dict[str, Any]:
     """
     Check if Venus is retrograde on a date.
     
     Args:
         date: Date to check
+        lang: Language code
         
     Returns:
         Dict with retrograde status and details
@@ -229,19 +231,25 @@ def is_venus_retrograde(date: datetime) -> Dict[str, Any]:
             end_dt = datetime.strptime(retrograde["end"], "%Y-%m-%d")
             days_remaining = (end_dt - date).days
             
+            warning_trans = get_translation(lang, "venus_retro_warning")
+            warning = warning_trans[0] if warning_trans else "Venus retrograde is not ideal for starting new relationships or making major romantic decisions. Focus on reflection and reconnecting."
+            
             return {
                 "is_retrograde": True,
                 "sign": retrograde["sign"],
                 "start": retrograde["start"],
                 "end": retrograde["end"],
                 "days_remaining": max(0, days_remaining),
-                "warning": "Venus retrograde is not ideal for starting new relationships or making major romantic decisions. Focus on reflection and reconnecting.",
+                "warning": warning,
                 "emoji": "💔↩️"
             }
     
+    msg_trans = get_translation(lang, "venus_direct_msg")
+    message = msg_trans[0] if msg_trans else "Venus is direct - favorable for love and relationships"
+    
     return {
         "is_retrograde": False,
-        "message": "Venus is direct - favorable for love and relationships",
+        "message": message,
         "emoji": "💕✨"
     }
 
@@ -249,7 +257,8 @@ def is_venus_retrograde(date: datetime) -> Dict[str, Any]:
 def get_upcoming_relationship_dates(
     start_date: datetime,
     days_ahead: int = 90,
-    sun_sign: str = None
+    sun_sign: str = None,
+    lang: str = "en",
 ) -> List[Dict[str, Any]]:
     """
     Get upcoming important dates for relationships.
@@ -258,6 +267,7 @@ def get_upcoming_relationship_dates(
         start_date: Starting date
         days_ahead: How many days ahead to look
         sun_sign: Optional natal sun sign for personalized events
+        lang: Language code
         
     Returns:
         List of relationship events sorted by date
@@ -271,69 +281,111 @@ def get_upcoming_relationship_dates(
     for ingress in VENUS_INGRESSES_2024_2025:
         if start_str <= ingress["date"] <= end_str:
             is_personal = sun_sign and ingress["sign"] == sun_sign
+            
+            title_trans = get_translation(lang, "venus_ingress_title")
+            title = title_trans[0].format(sign=ingress['sign']) if title_trans else f"Venus enters {ingress['sign']}"
+            
+            desc_trans = get_translation(lang, "venus_ingress_desc")
+            desc_base = desc_trans[0].format(sign=ingress['sign']) if desc_trans else f"Love and attraction take on {ingress['sign']} qualities."
+            
+            if is_personal:
+                personal_trans = get_translation(lang, "venus_ingress_personal")
+                personal_msg = personal_trans[0] if personal_trans else "This is your sign - expect increased charm and romantic opportunities!"
+                description = f"{desc_base} {personal_msg}"
+            else:
+                general_trans = get_translation(lang, "venus_ingress_general")
+                general_msg = general_trans[0] if general_trans else "Good for relationships."
+                description = f"{desc_base} {general_msg}"
+            
             events.append({
                 "date": ingress["date"],
                 "type": "venus_ingress",
-                "title": f"Venus enters {ingress['sign']}",
+                "title": title,
                 "emoji": "💕",
                 "impact": "love_focus",
                 "is_personal": is_personal,
-                "description": f"Love and attraction take on {ingress['sign']} qualities. "
-                             f"{'This is your sign - expect increased charm and romantic opportunities!' if is_personal else 'Good for relationships.'}",
+                "description": description,
                 "rating": 5 if is_personal else 4
             })
     
     # Add Mars ingresses
     for ingress in MARS_INGRESSES_2024_2025:
         if start_str <= ingress["date"] <= end_str:
+            title_trans = get_translation(lang, "mars_ingress_title")
+            title = title_trans[0].format(sign=ingress['sign']) if title_trans else f"Mars enters {ingress['sign']}"
+            
+            desc_trans = get_translation(lang, "mars_ingress_desc")
+            description = desc_trans[0].format(sign=ingress['sign']) if desc_trans else f"Passion and desire express through {ingress['sign']} energy. Channel energy constructively."
+            
             events.append({
                 "date": ingress["date"],
                 "type": "mars_ingress",
-                "title": f"Mars enters {ingress['sign']}",
+                "title": title,
                 "emoji": "🔥",
                 "impact": "passion_focus",
                 "is_personal": False,
-                "description": f"Passion and desire express through {ingress['sign']} energy. "
-                             f"Channel energy constructively.",
+                "description": description,
                 "rating": 3
             })
     
     # Add Venus retrogrades
     for retrograde in VENUS_RETROGRADES:
         if start_str <= retrograde["start"] <= end_str:
+            title_trans = get_translation(lang, "venus_retro_start_title")
+            title = title_trans[0] if title_trans else "Venus Retrograde Begins"
+            
+            desc_trans = get_translation(lang, "venus_retro_start_desc")
+            description = desc_trans[0] if desc_trans else "Not ideal for starting new relationships. Past lovers may reappear. Reflect on love patterns."
+            
             events.append({
                 "date": retrograde["start"],
                 "type": "venus_retrograde_start",
-                "title": "Venus Retrograde Begins",
+                "title": title,
                 "emoji": "💔↩️",
                 "impact": "caution",
                 "is_personal": False,
-                "description": "Not ideal for starting new relationships. Past lovers may reappear. Reflect on love patterns.",
+                "description": description,
                 "rating": 2
             })
         if start_str <= retrograde["end"] <= end_str:
+            title_trans = get_translation(lang, "venus_retro_end_title")
+            title = title_trans[0] if title_trans else "Venus Retrograde Ends"
+            
+            desc_trans = get_translation(lang, "venus_retro_end_desc")
+            description = desc_trans[0] if desc_trans else "Venus goes direct! Love matters clarify and relationships can move forward."
+            
             events.append({
                 "date": retrograde["end"],
                 "type": "venus_retrograde_end",
-                "title": "Venus Retrograde Ends",
+                "title": title,
                 "emoji": "💕✨",
                 "impact": "positive",
                 "is_personal": False,
-                "description": "Venus goes direct! Love matters clarify and relationships can move forward.",
+                "description": description,
                 "rating": 5
             })
     
     # Add relationship eclipses
     for eclipse in RELATIONSHIP_ECLIPSES:
         if start_str <= eclipse["date"] <= end_str:
+            title_trans = get_translation(lang, "eclipse_title")
+            title = title_trans[0].format(type=eclipse['type'], sign=eclipse['sign']) if title_trans else f"{eclipse['type']} Eclipse in {eclipse['sign']}"
+            
+            desc_trans = get_translation(lang, "eclipse_desc")
+            desc_suffix = desc_trans[0] if desc_trans else "Major relationship shifts possible."
+            
+            # Eclipse impact is hardcoded in RELATIONSHIP_ECLIPSES, might need separate translation keys for each eclipse impact
+            # For now, we'll keep the impact string but append the localized suffix
+            description = f"{eclipse['impact']}. {desc_suffix}"
+            
             events.append({
                 "date": eclipse["date"],
                 "type": "eclipse",
-                "title": f"{eclipse['type']} Eclipse in {eclipse['sign']}",
+                "title": title,
                 "emoji": "🌑" if eclipse["type"] == "Solar" else "🌕",
                 "impact": "transformative",
                 "is_personal": sun_sign and eclipse["sign"] == sun_sign,
-                "description": eclipse["impact"] + ". Major relationship shifts possible.",
+                "description": description,
                 "rating": 4
             })
     
@@ -346,7 +398,8 @@ def get_upcoming_relationship_dates(
 def analyze_relationship_timing(
     date: datetime,
     person1_sign: str,
-    person2_sign: str = None
+    person2_sign: str = None,
+    lang: str = "en",
 ) -> Dict[str, Any]:
     """
     Analyze relationship timing for a date.
@@ -355,13 +408,14 @@ def analyze_relationship_timing(
         date: Date to analyze
         person1_sign: First person's sun sign
         person2_sign: Second person's sun sign (optional)
+        lang: Language code
         
     Returns:
         Dict with timing analysis
     """
     venus = get_venus_transit(date)
     mars = get_mars_transit(date)
-    venus_rx = is_venus_retrograde(date)
+    venus_rx = is_venus_retrograde(date, lang=lang)
     
     # Calculate timing score
     score = 50  # Base score
@@ -372,7 +426,11 @@ def analyze_relationship_timing(
     # Venus retrograde is a major factor
     if venus_rx.get("is_retrograde"):
         score -= 20
-        warnings.append("Venus retrograde - not ideal for new romantic beginnings")
+        
+        warn_trans = get_translation(lang, "rel_timing_venus_rx")
+        warning = warn_trans[0] if warn_trans else "Venus retrograde - not ideal for new romantic beginnings"
+        warnings.append(warning)
+        
         factors.append({"factor": "Venus Retrograde", "impact": -20, "emoji": "💔"})
     else:
         factors.append({"factor": "Venus Direct", "impact": 10, "emoji": "💕"})
@@ -386,8 +444,14 @@ def analyze_relationship_timing(
         # Check if Venus is in person's sign
         if venus_sign == person1_sign:
             score += 15
-            factors.append({"factor": f"Venus in your sign ({person1_sign})", "impact": 15, "emoji": "⭐"})
-            recommendations.append(f"Venus in {person1_sign} enhances your natural charm and attractiveness!")
+            
+            factor_trans = get_translation(lang, "rel_timing_venus_sign")
+            factor_msg = factor_trans[0].format(sign=person1_sign) if factor_trans else f"Venus in your sign ({person1_sign})"
+            factors.append({"factor": factor_msg, "impact": 15, "emoji": "⭐"})
+            
+            rec_trans = get_translation(lang, "rel_timing_venus_sign_rec")
+            rec_msg = rec_trans[0].format(sign=person1_sign) if rec_trans else f"Venus in {person1_sign} enhances your natural charm and attractiveness!"
+            recommendations.append(rec_msg)
         
         # Check element compatibility with Venus
         fire_signs = ["Aries", "Leo", "Sagittarius"]

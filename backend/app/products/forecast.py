@@ -14,7 +14,7 @@ from ..rule_engine import RuleEngine
 from ..engine.guidance import get_daily_guidance
 
 
-def build_forecast(profile: Dict, scope: str = "daily") -> Dict:
+def build_forecast(profile: Dict, scope: str = "daily", lang: str = "en") -> Dict:
     anchor = datetime.now(timezone.utc)
     natal = build_natal_chart(profile)
     transit = build_transit_chart(profile, anchor)
@@ -31,6 +31,7 @@ def build_forecast(profile: Dict, scope: str = "daily") -> Dict:
         comparison_chart=transit,
         transit_planet_filter=transit_filter,
         synastry_priority=synastry_priority,
+        lang=lang,
     )
 
     smoothed = _smooth_topic_scores(
@@ -53,6 +54,7 @@ def build_forecast(profile: Dict, scope: str = "daily") -> Dict:
         latitude=profile.get("latitude"),
         longitude=profile.get("longitude"),
         timezone=profile.get("timezone", "UTC"),
+        lang=lang,
     )
 
     return {

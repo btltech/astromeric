@@ -8,6 +8,7 @@ from sqlalchemy import (
     DateTime,
     Float,
     ForeignKey,
+    Index,
     Integer,
     String,
     Text,
@@ -23,7 +24,14 @@ if DATABASE_URL.startswith("sqlite"):
         DATABASE_URL, connect_args={"check_same_thread": False}, echo=False
     )
 else:
-    engine = create_engine(DATABASE_URL, echo=False)
+    # Production PostgreSQL with connection pooling
+    engine = create_engine(
+        DATABASE_URL,
+        pool_size=10,
+        max_overflow=20,
+        pool_pre_ping=True,  # Verify connections before use
+        echo=False
+    )
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
@@ -48,14 +56,14 @@ class User(Base):
 class Profile(Base):
     __tablename__ = "profiles"
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, nullable=False)
+    name = Column(String(100), nullable=False)  # Add length limit
     date_of_birth = Column(String, nullable=False)  # ISO format
     time_of_birth = Column(String, nullable=True)
-    place_of_birth = Column(String, nullable=True)
+    place_of_birth = Column(String(255), nullable=True)  # Add length limit
     latitude = Column(Float, nullable=True)
     longitude = Column(Float, nullable=True)
-    timezone = Column(String, default="UTC")
-    house_system = Column(String, default="Placidus")
+    timezone = Column(String(50), default="UTC")  # Add length limit
+    house_system = Column(String(20), default="Placidus")  # Add length limit
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     # User ownership (optional for guest users)
     user_id = Column(String, ForeignKey("users.id"), nullable=True)
@@ -65,13 +73,26 @@ class Profile(Base):
     favourites = relationship("Favourite", back_populates="profile")
     preferences = relationship("Preference", back_populates="profile")
 
-
-class Reading(Base):
-    __tablename__ = "readings"
-    id = Column(Integer, primary_key=True, index=True)
-    profile_id = Column(Integer, ForeignKey("profiles.id"), nullable=False)
-    scope = Column(String, nullable=False)  # daily, weekly, monthly
+    # Database indexes for performance
+    __table_args__ = (
+        Index('idx_profile_user_created', 'user_id', 'created_at'),
+        Index('idx_profile_date_of_birth', 'date_of_birth'),
+        Index('idx_profile_name', 'name'),
+    scope = Column(String(20), nullable=False)  # daily, weekly, monthly
     date = Column(String, nullable=False)  # ISO date for the reading
+    content = Column(Text, nullable=False)  # JSON string
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    feedback = Column(String(20), nullable=True)  # yes/no/neutral
+    journal = Column(Text, nullable=True)
+
+    profile = relationship("Profile", back_populates="readings")
+    favourites = relationship("Favourite", back_populates="reading")
+
+    # Database indexes for performance
+    __table_args__ = (
+        Index('idx_reading_profile_scope_date', 'profile_id', 'scope', 'date'),
+        Index('idx_reading_created_at', 'created_at'),
+    )g
     content = Column(Text, nullable=False)  # JSON string
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     feedback = Column(String, nullable=True)  # yes/no/neutral

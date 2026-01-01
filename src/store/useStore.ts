@@ -52,6 +52,14 @@ interface AppState {
   setError: (error: string) => void;
   setShowCreateForm: (show: boolean) => void;
 
+  // Theme
+  theme: 'default' | 'ocean' | 'midnight' | 'sage';
+  setTheme: (theme: 'default' | 'ocean' | 'midnight' | 'sage') => void;
+
+  // Tone preference
+  tonePreference: number; // 0 = Practical, 100 = Mystical
+  setTonePreference: (tone: number) => void;
+
   // Reminders
   dailyReminderEnabled: boolean;
   setDailyReminder: (enabled: boolean) => void;
@@ -111,6 +119,22 @@ export const useStore = create<AppState>()(
       setError: (error) => set({ error }),
       setShowCreateForm: (show) => set({ showCreateForm: show }),
 
+      // Theme
+      theme: 'default',
+      setTheme: (theme) => {
+        // Apply theme to document
+        if (theme === 'default') {
+          document.documentElement.removeAttribute('data-theme');
+        } else {
+          document.documentElement.setAttribute('data-theme', theme);
+        }
+        set({ theme });
+      },
+
+      // Tone preference
+      tonePreference: 50,
+      setTonePreference: (tone) => set({ tonePreference: tone }),
+
       // Reminders
       dailyReminderEnabled: false,
       setDailyReminder: (enabled) => set({ dailyReminderEnabled: enabled }),
@@ -134,10 +158,18 @@ export const useStore = create<AppState>()(
         selectedScope: state.selectedScope,
         token: state.token,
         user: state.user,
+        theme: state.theme,
+        tonePreference: state.tonePreference,
         dailyReminderEnabled: state.dailyReminderEnabled,
         reminderCadence: state.reminderCadence,
         allowCloudHistory: state.allowCloudHistory,
       }),
+      onRehydrateStorage: () => (state) => {
+        // Reapply theme on page load
+        if (state?.theme && state.theme !== 'default') {
+          document.documentElement.setAttribute('data-theme', state.theme);
+        }
+      },
     }
   )
 );
