@@ -4,25 +4,28 @@ Provides habit tracking with lunar cycle alignment and analytics.
 """
 
 from typing import Any, Dict, List, Optional
-from pydantic import BaseModel, Field
+
 from fastapi import APIRouter, HTTPException, Query
+from pydantic import BaseModel, Field
 
 from ..engine.habit_tracker import (
     HABIT_CATEGORIES,
     LUNAR_HABIT_GUIDANCE,
-    calculate_lunar_alignment_score,
-    get_lunar_habit_recommendations,
-    create_habit,
-    log_habit_completion,
-    get_habit_streak,
     calculate_habit_analytics,
-    get_today_habit_forecast,
+    calculate_lunar_alignment_score,
+    create_habit,
+    get_habit_streak,
     get_lunar_cycle_report,
+    get_lunar_habit_recommendations,
+    get_today_habit_forecast,
+    log_habit_completion,
 )
+
 
 # Request models
 class HabitCreateRequest(BaseModel):
     """Request to create a new habit."""
+
     name: str = Field(..., min_length=1, max_length=100)
     category: str = Field(..., description="Habit category key")
     frequency: str = Field(default="daily", pattern="^(daily|weekly|lunar_cycle)$")
@@ -32,28 +35,32 @@ class HabitCreateRequest(BaseModel):
 
 class HabitLogRequest(BaseModel):
     """Request to log a habit completion."""
+
     habit_id: int
     notes: Optional[str] = Field(default="", max_length=500)
 
 
 class HabitAnalyticsRequest(BaseModel):
     """Request for habit analytics."""
+
     habit_id: int
     period_days: int = Field(default=30, ge=7, le=365)
 
 
 class HabitForecastRequest(BaseModel):
     """Request for today's habit forecast."""
+
     habits: List[Dict[str, Any]]
     completions_today: Optional[List[int]] = None
-    
+
     model_config = {"extra": "allow"}
 
 
 class StreakRequest(BaseModel):
     """Request for streak calculation."""
+
     completions: List[Dict[str, Any]]
-    
+
     model_config = {"extra": "allow"}
 
 
@@ -68,14 +75,16 @@ def get_habit_categories():
     """
     categories = []
     for key, cat in HABIT_CATEGORIES.items():
-        categories.append({
-            "id": key,
-            "name": cat["name"],
-            "emoji": cat["emoji"],
-            "description": cat["description"],
-            "best_phases": cat["best_phases"],
-            "avoid_phases": cat["avoid_phases"]
-        })
+        categories.append(
+            {
+                "id": key,
+                "name": cat["name"],
+                "emoji": cat["emoji"],
+                "description": cat["description"],
+                "best_phases": cat["best_phases"],
+                "avoid_phases": cat["avoid_phases"],
+            }
+        )
     return {"categories": categories}
 
 
@@ -86,16 +95,18 @@ def get_lunar_guidance():
     """
     phases = []
     for key, phase in LUNAR_HABIT_GUIDANCE.items():
-        phases.append({
-            "id": key,
-            "name": phase["phase_name"],
-            "emoji": phase["emoji"],
-            "theme": phase["theme"],
-            "best_for": phase["best_for"],
-            "avoid": phase["avoid"],
-            "energy": phase["energy"],
-            "ideal_habits": phase["ideal_habits"]
-        })
+        phases.append(
+            {
+                "id": key,
+                "name": phase["phase_name"],
+                "emoji": phase["emoji"],
+                "theme": phase["theme"],
+                "best_for": phase["best_for"],
+                "avoid": phase["avoid"],
+                "energy": phase["energy"],
+                "ideal_habits": phase["ideal_habits"],
+            }
+        )
     return {"phases": phases}
 
 
@@ -107,10 +118,9 @@ def get_phase_guidance(phase: str):
     valid_phases = list(LUNAR_HABIT_GUIDANCE.keys())
     if phase not in valid_phases:
         raise HTTPException(
-            status_code=400,
-            detail=f"Invalid phase. Must be one of: {valid_phases}"
+            status_code=400, detail=f"Invalid phase. Must be one of: {valid_phases}"
         )
-    
+
     phase_info = LUNAR_HABIT_GUIDANCE[phase]
     return {
         "phase": phase,
@@ -121,14 +131,14 @@ def get_phase_guidance(phase: str):
         "best_for": phase_info["best_for"],
         "avoid": phase_info["avoid"],
         "ideal_habits": phase_info["ideal_habits"],
-        "power_modifier": phase_info["power_score_modifier"]
+        "power_modifier": phase_info["power_score_modifier"],
     }
 
 
 @router.post("/habits/alignment", tags=["Habits"])
 def check_habit_alignment(
     category: str = Query(..., description="Habit category key"),
-    moon_phase: str = Query(..., description="Moon phase key")
+    moon_phase: str = Query(..., description="Moon phase key"),
 ):
     """
     Check how well a habit category aligns with a moon phase.
@@ -137,21 +147,21 @@ def check_habit_alignment(
     if category not in HABIT_CATEGORIES:
         raise HTTPException(
             status_code=400,
-            detail=f"Invalid category. Must be one of: {list(HABIT_CATEGORIES.keys())}"
+            detail=f"Invalid category. Must be one of: {list(HABIT_CATEGORIES.keys())}",
         )
     if moon_phase not in LUNAR_HABIT_GUIDANCE:
         raise HTTPException(
             status_code=400,
-            detail=f"Invalid phase. Must be one of: {list(LUNAR_HABIT_GUIDANCE.keys())}"
+            detail=f"Invalid phase. Must be one of: {list(LUNAR_HABIT_GUIDANCE.keys())}",
         )
-    
+
     return calculate_lunar_alignment_score(category, moon_phase)
 
 
 @router.post("/habits/recommendations", tags=["Habits"])
 def get_recommendations(
     moon_phase: str = Query(..., description="Current moon phase key"),
-    existing_habits: Optional[List[Dict[str, Any]]] = None
+    existing_habits: Optional[List[Dict[str, Any]]] = None,
 ):
     """
     Get habit recommendations based on the current moon phase.
@@ -160,9 +170,9 @@ def get_recommendations(
     if moon_phase not in LUNAR_HABIT_GUIDANCE:
         raise HTTPException(
             status_code=400,
-            detail=f"Invalid phase. Must be one of: {list(LUNAR_HABIT_GUIDANCE.keys())}"
+            detail=f"Invalid phase. Must be one of: {list(LUNAR_HABIT_GUIDANCE.keys())}",
         )
-    
+
     return get_lunar_habit_recommendations(moon_phase, existing_habits)
 
 
@@ -175,42 +185,40 @@ def create_new_habit(req: HabitCreateRequest):
     if req.category not in HABIT_CATEGORIES:
         raise HTTPException(
             status_code=400,
-            detail=f"Invalid category. Must be one of: {list(HABIT_CATEGORIES.keys())}"
+            detail=f"Invalid category. Must be one of: {list(HABIT_CATEGORIES.keys())}",
         )
-    
+
     habit = create_habit(
         name=req.name,
         category=req.category,
         frequency=req.frequency,
         target_count=req.target_count,
-        description=req.description
+        description=req.description,
     )
-    
+
     return {"success": True, "habit": habit}
 
 
 @router.post("/habits/log", tags=["Habits"])
 def log_completion(
     req: HabitLogRequest,
-    moon_phase: Optional[str] = Query(default=None, description="Current moon phase")
+    moon_phase: Optional[str] = Query(default=None, description="Current moon phase"),
 ):
     """
     Log a habit completion.
     Returns the completion record.
     """
     completion = log_habit_completion(
-        habit_id=req.habit_id,
-        moon_phase=moon_phase,
-        notes=req.notes
+        habit_id=req.habit_id, moon_phase=moon_phase, notes=req.notes
     )
-    
+
     return {"success": True, "completion": completion}
 
 
 @router.post("/habits/streak", tags=["Habits"])
 def calculate_streak(
     req: StreakRequest,
-    frequency: str = Query(default="daily", pattern="^(daily|weekly|lunar_cycle)$")
+    frequency: str = Query(default="daily", pattern="^(daily|weekly|lunar_cycle)$"),
 ):
     """
     Calculate habit streak from a list of completions.
@@ -222,7 +230,7 @@ def calculate_streak(
 def get_analytics(
     habit: Dict[str, Any],
     completions: List[Dict[str, Any]],
-    period_days: int = Query(default=30, ge=7, le=365)
+    period_days: int = Query(default=30, ge=7, le=365),
 ):
     """
     Get detailed analytics for a habit over a period.
@@ -233,7 +241,7 @@ def get_analytics(
 @router.post("/habits/today", tags=["Habits"])
 def get_today_forecast(
     req: HabitForecastRequest,
-    moon_phase: str = Query(..., description="Current moon phase key")
+    moon_phase: str = Query(..., description="Current moon phase key"),
 ):
     """
     Get today's habit forecast with lunar alignment for each habit.
@@ -241,13 +249,13 @@ def get_today_forecast(
     if moon_phase not in LUNAR_HABIT_GUIDANCE:
         raise HTTPException(
             status_code=400,
-            detail=f"Invalid phase. Must be one of: {list(LUNAR_HABIT_GUIDANCE.keys())}"
+            detail=f"Invalid phase. Must be one of: {list(LUNAR_HABIT_GUIDANCE.keys())}",
         )
-    
+
     return get_today_habit_forecast(
         habits=req.habits,
         moon_phase=moon_phase,
-        completions_today=req.completions_today
+        completions_today=req.completions_today,
     )
 
 
@@ -255,7 +263,7 @@ def get_today_forecast(
 def get_lunar_report(
     habits: List[Dict[str, Any]],
     completions: List[Dict[str, Any]],
-    cycle_days: int = Query(default=29, ge=14, le=45)
+    cycle_days: int = Query(default=29, ge=14, le=45),
 ):
     """
     Generate a lunar cycle report for habits.

@@ -5,22 +5,25 @@ Provides timing advice, best days for activities, and available activities list.
 
 from datetime import datetime, timezone
 from typing import Optional
-from pydantic import BaseModel, Field
-from fastapi import APIRouter, HTTPException
 
-from ..engine.timing_advisor import (
-    find_best_days,
-    get_timing_advice,
-    get_available_activities,
-    ACTIVITY_PROFILES,
-)
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel, Field
+
 from ..chart_service import build_natal_chart
-from ..numerology_engine import build_numerology
+from ..engine.timing_advisor import (
+    ACTIVITY_PROFILES,
+    find_best_days,
+    get_available_activities,
+    get_timing_advice,
+)
 from ..models import SessionLocal
+from ..numerology_engine import build_numerology
+
 
 # Request models
 class ProfilePayload(BaseModel):
     """Profile data for calculations."""
+
     name: str
     date_of_birth: str
     time_of_birth: Optional[str] = None
@@ -31,15 +34,24 @@ class ProfilePayload(BaseModel):
 
 class TimingAdviceRequest(BaseModel):
     """Request model for timing advice."""
-    activity: str = Field(..., description="Activity type: business_meeting, travel, romance_date, signing_contracts, job_interview, starting_project, creative_work, medical_procedure, financial_decision, meditation_spiritual")
+
+    activity: str = Field(
+        ...,
+        description="Activity type: business_meeting, travel, romance_date, signing_contracts, job_interview, starting_project, creative_work, medical_procedure, financial_decision, meditation_spiritual",
+    )
     profile: Optional[ProfilePayload] = None
-    latitude: float = Field(40.7128, ge=-90, le=90, description="Location latitude for planetary hours")
-    longitude: float = Field(-74.006, ge=-180, le=180, description="Location longitude for planetary hours")
+    latitude: float = Field(
+        40.7128, ge=-90, le=90, description="Location latitude for planetary hours"
+    )
+    longitude: float = Field(
+        -74.006, ge=-180, le=180, description="Location longitude for planetary hours"
+    )
     tz: str = Field("UTC", description="Timezone for calculations")
 
 
 class BestDaysRequest(BaseModel):
     """Request model for finding best days."""
+
     activity: str = Field(..., description="Activity type")
     days_ahead: int = Field(7, ge=1, le=14, description="Days to look ahead")
     profile: Optional[ProfilePayload] = None
@@ -73,18 +85,18 @@ def get_timing_advice_endpoint(req: TimingAdviceRequest):
     if req.activity not in ACTIVITY_PROFILES:
         valid_activities = list(ACTIVITY_PROFILES.keys())
         raise HTTPException(
-            status_code=400, 
-            detail=f"Invalid activity. Valid options: {', '.join(valid_activities)}"
+            status_code=400,
+            detail=f"Invalid activity. Valid options: {', '.join(valid_activities)}",
         )
-    
+
     personal_day = None
     transit_chart = {}
-    
+
     if req.profile:
         profile_dict = _profile_to_dict(req.profile)
         natal_chart = build_natal_chart(profile_dict)
         transit_chart = natal_chart
-        
+
         # Get personal day from numerology
         numerology = build_numerology(
             profile_dict["name"],
@@ -94,7 +106,7 @@ def get_timing_advice_endpoint(req: TimingAdviceRequest):
         personal_day = numerology.get("personal_day")
     else:
         transit_chart = {"planets": []}
-    
+
     return get_timing_advice(
         activity=req.activity,
         transit_chart=transit_chart,
@@ -114,17 +126,17 @@ def find_best_days_endpoint(req: BestDaysRequest):
     if req.activity not in ACTIVITY_PROFILES:
         valid_activities = list(ACTIVITY_PROFILES.keys())
         raise HTTPException(
-            status_code=400, 
-            detail=f"Invalid activity. Valid options: {', '.join(valid_activities)}"
+            status_code=400,
+            detail=f"Invalid activity. Valid options: {', '.join(valid_activities)}",
         )
-    
+
     personal_year = None
     transit_chart = {}
-    
+
     if req.profile:
         profile_dict = _profile_to_dict(req.profile)
         transit_chart = build_natal_chart(profile_dict)
-        
+
         numerology = build_numerology(
             profile_dict["name"],
             profile_dict["date_of_birth"],
@@ -133,7 +145,7 @@ def find_best_days_endpoint(req: BestDaysRequest):
         personal_year = numerology.get("personal_year")
     else:
         transit_chart = {"planets": []}
-    
+
     return {
         "activity": req.activity,
         "activity_name": ACTIVITY_PROFILES[req.activity]["name"],
@@ -146,7 +158,7 @@ def find_best_days_endpoint(req: BestDaysRequest):
             timezone=req.tz,
             days_ahead=req.days_ahead,
             personal_day_cycle=personal_year,
-        )
+        ),
     }
 
 
@@ -155,6 +167,4 @@ def list_timing_activities():
     """
     Get list of supported activities with their descriptions and favorable conditions.
     """
-    return {
-        "activities": get_available_activities()
-    }
+    return {"activities": get_available_activities()}

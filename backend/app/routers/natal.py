@@ -3,20 +3,21 @@ API v2 - Natal Profile Endpoint
 Standardized request/response format with proper validation.
 """
 
-from fastapi import APIRouter, HTTPException, status, Depends, Request
-from pydantic import BaseModel
 from datetime import datetime, timezone
-from typing import Optional, Dict, Any, List
+from typing import Any, Dict, List, Optional
 
-from ..schemas import (
-    ApiResponse, ResponseStatus, NatalProfileRequest,
-    ProfilePayload
-)
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from pydantic import BaseModel
+
 from ..exceptions import (
-    StructuredLogger, AstroError, InvalidDateError,
-    InvalidCoordinatesError, EphemerisError
+    AstroError,
+    EphemerisError,
+    InvalidCoordinatesError,
+    InvalidDateError,
+    StructuredLogger,
 )
 from ..products import build_natal_profile
+from ..schemas import ApiResponse, NatalProfileRequest, ProfilePayload, ResponseStatus
 
 logger = StructuredLogger(__name__)
 router = APIRouter(prefix="/v2/profiles", tags=["Profiles"])
@@ -26,8 +27,10 @@ router = APIRouter(prefix="/v2/profiles", tags=["Profiles"])
 # STANDARDIZED RESPONSE MODELS FOR v2
 # ============================================================================
 
+
 class NatalChartData(BaseModel):
     """Natal chart calculation results."""
+
     sun_sign: str
     moon_sign: str
     rising_sign: str
@@ -38,6 +41,7 @@ class NatalChartData(BaseModel):
 
 class NatalProfileResponse(BaseModel):
     """Full natal profile response."""
+
     profile: ProfilePayload
     chart: NatalChartData
     interpretation: Dict[str, str]
@@ -48,6 +52,7 @@ class NatalProfileResponse(BaseModel):
 # ENDPOINTS
 # ============================================================================
 
+
 @router.post("/natal", response_model=ApiResponse[NatalProfileResponse])
 async def calculate_natal_profile(
     request: Request,
@@ -55,55 +60,54 @@ async def calculate_natal_profile(
 ) -> ApiResponse[NatalProfileResponse]:
     """
     Calculate natal profile with standardized response format.
-    
+
     ## Parameters
     - **profile**: User birth data (name, DOB, time, location)
     - **include_asteroids**: Include Chiron and other minor planets
     - **include_aspects**: Include planetary aspects
     - **orb**: Orb in degrees for aspect calculations (1-20)
-    
+
     ## Response
     Returns standardized API response with natal chart data and interpretation.
-    
+
     ## Errors
     - `INVALID_DATE`: Invalid date format or values
     - `INVALID_COORDINATES`: Invalid latitude/longitude
     - `EPHEMERIS_ERROR`: Ephemeris calculation failed
     """
     request_id = request.state.request_id
-    
+
     try:
         # Validate date format
         try:
             datetime.fromisoformat(req.profile.date_of_birth)
         except ValueError as e:
             raise InvalidDateError(
-                f"Invalid date format: {str(e)}",
-                value=req.profile.date_of_birth
+                f"Invalid date format: {str(e)}", value=req.profile.date_of_birth
             )
-        
+
         # Validate coordinates if provided
         if req.profile.latitude is not None or req.profile.longitude is not None:
             if req.profile.latitude is None or req.profile.longitude is None:
                 raise InvalidCoordinatesError(
                     "Both latitude and longitude must be provided together"
                 )
-        
+
         # Calculate natal profile
         logger.info(
             f"Calculating natal profile for {req.profile.name}",
             request_id=request_id,
             profile_name=req.profile.name,
         )
-        
+
         natal_data = build_natal_profile(req.profile)
-        
+
         logger.info(
             f"Natal profile calculated successfully",
             request_id=request_id,
             sun_sign=natal_data.get("sun_sign"),
         )
-        
+
         return ApiResponse(
             status=ResponseStatus.SUCCESS,
             data=NatalProfileResponse(
@@ -115,7 +119,7 @@ async def calculate_natal_profile(
             message="Natal profile calculated successfully",
             request_id=request_id,
         )
-        
+
     except AstroError as e:
         logger.error(
             e.message,
@@ -159,7 +163,7 @@ async def get_natal_profile(
     Requires user authentication.
     """
     request_id = request.state.request_id
-    
+
     # TODO: Implement database lookup when profiles are saved
     raise HTTPException(
         status_code=status.HTTP_501_NOT_IMPLEMENTED,

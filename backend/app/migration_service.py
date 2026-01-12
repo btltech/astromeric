@@ -4,9 +4,12 @@ Service for migrating anonymous readings to user account on signup
 """
 
 from datetime import datetime
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Optional
+
 from sqlalchemy.orm import Session
-from .models import User, Reading, Profile as DBProfile
+
+from .models import Profile as DBProfile
+from .models import Reading, User
 
 
 def migrate_anon_readings(
@@ -17,13 +20,13 @@ def migrate_anon_readings(
 ) -> Dict[str, Any]:
     """
     Migrate anonymous readings to user account.
-    
+
     Args:
         db: Database session
         user: The user account to migrate readings to
         anon_readings: List of anonymous reading dicts from localStorage
         primary_profile_id: Optional profile_id to associate with migrated readings
-    
+
     Returns:
         Migration summary with count of migrated readings
     """
@@ -36,7 +39,7 @@ def migrate_anon_readings(
             scope = anon_reading.get("scope", "daily")
             content = anon_reading.get("content", {})
             date_str = anon_reading.get("date")
-            
+
             # Parse date or use current date
             if date_str:
                 try:
@@ -58,10 +61,12 @@ def migrate_anon_readings(
             migrated_count += 1
 
         except Exception as e:
-            failed_readings.append({
-                "reading": anon_reading,
-                "error": str(e),
-            })
+            failed_readings.append(
+                {
+                    "reading": anon_reading,
+                    "error": str(e),
+                }
+            )
 
     # Commit all successful migrations
     if migrated_count > 0:
@@ -82,12 +87,12 @@ def sync_anon_profile_to_account(
 ) -> Optional[DBProfile]:
     """
     Create a user profile from anonymous profile data.
-    
+
     Args:
         db: Database session
         user: User to create profile for
         anon_profile: Anonymous profile dict
-    
+
     Returns:
         Created DBProfile or None if failed
     """

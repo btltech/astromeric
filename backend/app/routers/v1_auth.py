@@ -3,10 +3,12 @@ V1 Auth Router
 API v1 authentication endpoints (register, login, user management)
 """
 
-from fastapi import APIRouter, HTTPException, status, Depends
-from pydantic import BaseModel
-from typing import List, Dict, Any, Optional
+import os
 from datetime import timedelta
+from typing import Any, Dict, List, Optional
+
+from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from ..auth import (
@@ -18,13 +20,12 @@ from ..auth import (
     create_access_token,
     create_user,
     get_current_user,
-    get_user_by_email,
     get_current_user_optional,
+    get_user_by_email,
 )
-from ..models import SessionLocal, User
 from ..middleware import rate_limit
 from ..migration_service import migrate_anon_readings, sync_anon_profile_to_account
-import os
+from ..models import SessionLocal, User
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
@@ -40,6 +41,7 @@ def get_db():
 
 class MigrateReadingsRequest(BaseModel):
     """Request to migrate anonymous readings to account."""
+
     readings: List[Dict[str, Any]]
     profile: Optional[Dict[str, Any]] = None
 
@@ -94,16 +96,22 @@ def login(user_data: UserLogin, db: Session = Depends(get_db)):
 @router.get("/me")
 def get_me(current_user: User = Depends(get_current_user)):
     """Get current user info."""
-    return {"id": current_user.id, "email": current_user.email, "is_paid": current_user.is_paid}
+    return {
+        "id": current_user.id,
+        "email": current_user.email,
+        "is_paid": current_user.is_paid,
+    }
 
 
 @router.post("/activate-premium")
-def activate_premium(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+def activate_premium(
+    current_user: User = Depends(get_current_user), db: Session = Depends(get_db)
+):
     """Activate premium for site owner only."""
     admin_emails = os.getenv("ADMIN_EMAILS", "").split(",")
     if not admin_emails or current_user.email not in admin_emails:
         raise HTTPException(status_code=403, detail="Not authorized")
-    
+
     # Re-fetch the user from this session to ensure it's attached
     user = db.query(User).filter(User.id == current_user.id).first()
     user.is_paid = True
@@ -120,7 +128,7 @@ def migrate_anonymous_readings(
 ):
     """
     Migrate anonymous readings from localStorage to authenticated user account.
-    
+
     Called after user signs up with localStorage anon readings.
     """
     # Re-fetch user to ensure it's in this session
@@ -143,4 +151,3 @@ def migrate_anonymous_readings(
         "migrations": result,
         "profile_created": profile_id is not None,
     }
-

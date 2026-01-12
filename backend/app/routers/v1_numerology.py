@@ -5,17 +5,21 @@ Provides numerology calculations and profile analysis.
 
 from datetime import datetime, timezone
 from typing import Optional
-from pydantic import BaseModel, Field
+
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
-from ..numerology_engine import build_numerology
 from ..auth import get_current_user
-from ..models import SessionLocal, User, Profile as DBProfile
+from ..models import Profile as DBProfile
+from ..models import SessionLocal, User
+from ..numerology_engine import build_numerology
+
 
 # Request models
 class ProfilePayload(BaseModel):
     """Profile data for calculations."""
+
     name: str
     date_of_birth: str
     time_of_birth: Optional[str] = None
@@ -26,6 +30,7 @@ class ProfilePayload(BaseModel):
 
 class NumerologyRequest(BaseModel):
     """Request model for numerology profile - supports session-only profiles."""
+
     profile: ProfilePayload
 
 
@@ -62,7 +67,9 @@ def numerology_profile(
     if not profile:
         raise HTTPException(status_code=404, detail="Profile not found")
     if profile.user_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not authorized to view this profile")
+        raise HTTPException(
+            status_code=403, detail="Not authorized to view this profile"
+        )
 
     return build_numerology(
         profile.name,

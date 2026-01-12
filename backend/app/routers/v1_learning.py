@@ -3,8 +3,9 @@ V1 Learn/Learning Router
 API v1 learning endpoints (zodiac, numerology, courses, modules)
 """
 
-from fastapi import APIRouter, HTTPException, Query
 from typing import Optional
+
+from fastapi import APIRouter, HTTPException, Query
 
 router = APIRouter(tags=["Learn"])
 
@@ -16,7 +17,7 @@ def learn_zodiac(
 ):
     """Get zodiac glossary with optional pagination."""
     from ..engine.glossary import ZODIAC_GLOSSARY
-    
+
     items = list(ZODIAC_GLOSSARY.items())
     total = len(items)
 
@@ -42,7 +43,7 @@ def learn_numerology(
 ):
     """Get numerology glossary with optional pagination."""
     from ..engine.glossary import NUMEROLOGY_GLOSSARY
-    
+
     items = list(NUMEROLOGY_GLOSSARY.items())
     total = len(items)
 
@@ -65,42 +66,46 @@ def learn_numerology(
 def list_learning_modules():
     """List all available learning modules."""
     from ..engine.learning_content import (
-        MOON_SIGNS, RISING_SIGNS, ELEMENTS_AND_MODALITIES,
-        RETROGRADE_INFO, MINI_COURSES
+        ELEMENTS_AND_MODALITIES,
+        MINI_COURSES,
+        MOON_SIGNS,
+        RETROGRADE_INFO,
+        RISING_SIGNS,
     )
-    
+
     return {
         "modules": [
             {
                 "id": "moon_signs",
                 "title": "Moon Signs: Your Emotional Self",
                 "description": "Discover how your Moon sign shapes your inner world",
-                "item_count": len(MOON_SIGNS)
+                "item_count": len(MOON_SIGNS),
             },
             {
                 "id": "rising_signs",
                 "title": "Rising Signs: Your Cosmic Mask",
                 "description": "Learn how your Ascendant influences first impressions",
-                "item_count": len(RISING_SIGNS)
+                "item_count": len(RISING_SIGNS),
             },
             {
                 "id": "elements",
                 "title": "Elements & Modalities",
                 "description": "Fire, Earth, Air, Water and Cardinal, Fixed, Mutable",
-                "item_count": len(ELEMENTS_AND_MODALITIES.get("elements", {})) + len(ELEMENTS_AND_MODALITIES.get("modalities", {}))
+                "item_count": len(ELEMENTS_AND_MODALITIES.get("elements", {}))
+                + len(ELEMENTS_AND_MODALITIES.get("modalities", {})),
             },
             {
                 "id": "retrogrades",
                 "title": "Planetary Retrogrades",
                 "description": "What happens when planets appear to move backward",
-                "item_count": len(RETROGRADE_INFO)
+                "item_count": len(RETROGRADE_INFO),
             },
             {
                 "id": "courses",
                 "title": "Mini Courses",
                 "description": "Structured lessons for deeper learning",
-                "item_count": len(MINI_COURSES)
-            }
+                "item_count": len(MINI_COURSES),
+            },
         ]
     }
 
@@ -109,7 +114,7 @@ def list_learning_modules():
 def get_module_content(module_id: str):
     """Get full content for a learning module."""
     from ..engine.learning_content import get_learning_module
-    
+
     content = get_learning_module(module_id)
     if not content:
         raise HTTPException(status_code=404, detail="Module not found")
@@ -120,7 +125,7 @@ def get_module_content(module_id: str):
 def get_course_content(course_id: str):
     """Get a specific mini course with all lessons."""
     from ..engine.learning_content import MINI_COURSES
-    
+
     course = MINI_COURSES.get(course_id)
     if not course:
         raise HTTPException(status_code=404, detail="Course not found")
@@ -131,7 +136,7 @@ def get_course_content(course_id: str):
 def get_lesson_content(course_id: str, lesson_number: int):
     """Get a specific lesson from a mini course."""
     from ..engine.learning_content import get_lesson
-    
+
     lesson = get_lesson(course_id, lesson_number)
     if not lesson:
         raise HTTPException(status_code=404, detail="Lesson not found")

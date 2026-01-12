@@ -3,17 +3,14 @@ API v2 - Learning Content Endpoint
 Standardized request/response format for educational astrology content.
 """
 
-from fastapi import APIRouter, HTTPException, Request, Query
-from pydantic import BaseModel
 from datetime import datetime, timezone
-from typing import Optional, Dict, Any, List
+from typing import Any, Dict, List, Optional
 
-from ..schemas import (
-    ApiResponse, ResponseStatus, PaginatedResponse, PaginationParams
-)
-from ..exceptions import (
-    StructuredLogger, InvalidCoordinatesError
-)
+from fastapi import APIRouter, HTTPException, Query, Request
+from pydantic import BaseModel
+
+from ..exceptions import InvalidCoordinatesError, StructuredLogger
+from ..schemas import ApiResponse, PaginatedResponse, PaginationParams, ResponseStatus
 
 logger = StructuredLogger(__name__)
 router = APIRouter(prefix="/v2/learning", tags=["Learning"])
@@ -23,8 +20,10 @@ router = APIRouter(prefix="/v2/learning", tags=["Learning"])
 # STANDARDIZED RESPONSE MODELS FOR v2
 # ============================================================================
 
+
 class LearningModule(BaseModel):
     """Single learning module."""
+
     id: str
     title: str
     description: str
@@ -38,6 +37,7 @@ class LearningModule(BaseModel):
 
 class ZodiacGuidance(BaseModel):
     """Zodiac sign guidance."""
+
     sign: str
     date_range: str
     element: str
@@ -49,6 +49,7 @@ class ZodiacGuidance(BaseModel):
 
 class GlossaryEntry(BaseModel):
     """Learning glossary entry."""
+
     term: str
     definition: str
     category: str
@@ -60,6 +61,7 @@ class GlossaryEntry(BaseModel):
 # ENDPOINTS
 # ============================================================================
 
+
 @router.get("/modules", response_model=PaginatedResponse[LearningModule])
 async def list_learning_modules(
     request: Request,
@@ -69,18 +71,18 @@ async def list_learning_modules(
 ) -> PaginatedResponse[LearningModule]:
     """
     List available learning modules with pagination.
-    
+
     ## Parameters
     - **category**: Filter by category (astrology, numerology, tarot)
     - **difficulty**: Filter by difficulty level
     - **page**: Page number (default 1)
     - **page_size**: Items per page (default 10)
-    
+
     ## Response
     Returns paginated list of learning modules.
     """
     request_id = request.state.request_id
-    
+
     try:
         logger.info(
             "Listing learning modules",
@@ -88,7 +90,7 @@ async def list_learning_modules(
             category=category,
             difficulty=difficulty,
         )
-        
+
         # Mock data - integrate with actual database
         modules = [
             LearningModule(
@@ -112,19 +114,19 @@ async def list_learning_modules(
                 keywords=["natal chart", "birth chart", "interpretation"],
             ),
         ]
-        
+
         # Apply filters
         if category:
             modules = [m for m in modules if m.category == category]
         if difficulty:
             modules = [m for m in modules if m.difficulty == difficulty]
-        
+
         # Pagination
         page = params.page if params else 1
         page_size = params.page_size if params else 10
         start_idx = (page - 1) * page_size
-        paginated = modules[start_idx:start_idx + page_size]
-        
+        paginated = modules[start_idx : start_idx + page_size]
+
         return PaginatedResponse(
             data=paginated,
             page=page,
@@ -143,7 +145,7 @@ async def list_learning_modules(
             detail={
                 "code": "LISTING_ERROR",
                 "message": "Failed to list modules",
-            }
+            },
         )
 
 
@@ -154,22 +156,22 @@ async def get_learning_module(
 ) -> ApiResponse[LearningModule]:
     """
     Get a specific learning module by ID.
-    
+
     ## Parameters
     - **module_id**: Module identifier
-    
+
     ## Response
     Returns full module content and metadata.
     """
     request_id = request.state.request_id
-    
+
     try:
         logger.info(
             "Retrieving learning module",
             request_id=request_id,
             module_id=module_id,
         )
-        
+
         # Mock data
         module = LearningModule(
             id=module_id,
@@ -182,7 +184,7 @@ async def get_learning_module(
             keywords=["zodiac", "astrology"],
             related_modules=["mod_002", "mod_003"],
         )
-        
+
         return ApiResponse(
             status=ResponseStatus.SUCCESS,
             data=module,
@@ -200,7 +202,7 @@ async def get_learning_module(
             detail={
                 "code": "RETRIEVAL_ERROR",
                 "message": "Failed to retrieve module",
-            }
+            },
         )
 
 
@@ -211,24 +213,24 @@ async def get_zodiac_guidance(
 ) -> ApiResponse[ZodiacGuidance]:
     """
     Get guidance for a specific zodiac sign.
-    
+
     ## Parameters
     - **sign**: Zodiac sign name (aries, taurus, gemini, etc.)
-    
+
     ## Response
     Returns zodiac characteristics, compatibility, and current guidance.
     """
     request_id = request.state.request_id
-    
+
     try:
         sign_lower = sign.lower()
-        
+
         logger.info(
             "Retrieving zodiac guidance",
             request_id=request_id,
             sign=sign_lower,
         )
-        
+
         # Mock zodiac data
         zodiac_data = ZodiacGuidance(
             sign=sign_lower.capitalize(),
@@ -245,7 +247,7 @@ async def get_zodiac_guidance(
             },
             guidance="Channel your natural confidence toward new initiatives. Your courage is needed.",
         )
-        
+
         return ApiResponse(
             status=ResponseStatus.SUCCESS,
             data=zodiac_data,
@@ -263,7 +265,7 @@ async def get_zodiac_guidance(
             detail={
                 "code": "ZODIAC_ERROR",
                 "message": "Failed to retrieve zodiac guidance",
-            }
+            },
         )
 
 
@@ -275,16 +277,16 @@ async def list_glossary(
 ) -> PaginatedResponse[GlossaryEntry]:
     """
     List glossary terms with optional filtering.
-    
+
     ## Parameters
     - **search**: Search term (searches title and definition)
     - **category**: Filter by category
-    
+
     ## Response
     Returns paginated list of glossary entries.
     """
     request_id = request.state.request_id
-    
+
     try:
         logger.info(
             "Listing glossary",
@@ -292,7 +294,7 @@ async def list_glossary(
             search=search,
             category=category,
         )
-        
+
         # Mock glossary data
         entries = [
             GlossaryEntry(
@@ -310,14 +312,19 @@ async def list_glossary(
                 related_terms=["cusp", "ruler"],
             ),
         ]
-        
+
         # Apply filters
         if search:
             search_lower = search.lower()
-            entries = [e for e in entries if search_lower in e.term.lower() or search_lower in e.definition.lower()]
+            entries = [
+                e
+                for e in entries
+                if search_lower in e.term.lower()
+                or search_lower in e.definition.lower()
+            ]
         if category:
             entries = [e for e in entries if e.category == category]
-        
+
         return PaginatedResponse(
             data=entries,
             page=1,
@@ -336,5 +343,5 @@ async def list_glossary(
             detail={
                 "code": "GLOSSARY_ERROR",
                 "message": "Failed to list glossary",
-            }
+            },
         )

@@ -3,13 +3,15 @@ V1 Profiles Router
 API v1 profile endpoints (CRUD operations for saved profiles)
 """
 
-from fastapi import APIRouter, HTTPException, Depends
-from pydantic import BaseModel, Field
 from typing import Optional
+
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
-from ..models import SessionLocal, User, Profile as DBProfile
 from ..auth import get_current_user, get_current_user_optional
+from ..models import Profile as DBProfile
+from ..models import SessionLocal, User
 from ..validators import validate_profile_data
 
 router = APIRouter(prefix="/profiles", tags=["Profiles"])
@@ -26,6 +28,7 @@ def get_db():
 
 class CreateProfileRequest(BaseModel):
     """Request to create a new profile."""
+
     name: str = Field(..., min_length=1, max_length=100)
     date_of_birth: str = Field(..., pattern=r"\d{4}-\d{2}-\d{2}")
     time_of_birth: Optional[str] = Field(None)
@@ -60,7 +63,9 @@ def get_profiles(
     if current_user:
         return [
             _db_profile_to_dict(p)
-            for p in db.query(DBProfile).filter(DBProfile.user_id == current_user.id).all()
+            for p in db.query(DBProfile)
+            .filter(DBProfile.user_id == current_user.id)
+            .all()
         ]
     return []
 
@@ -118,11 +123,15 @@ def get_profile(
     profile = db.query(DBProfile).filter(DBProfile.id == profile_id).first()
     if not profile:
         raise HTTPException(status_code=404, detail="Profile not found")
-    
+
     # Allow viewing if owned by user or is public
-    if profile.user_id and profile.user_id != (current_user.id if current_user else None):
-        raise HTTPException(status_code=403, detail="Not authorized to view this profile")
-    
+    if profile.user_id and profile.user_id != (
+        current_user.id if current_user else None
+    ):
+        raise HTTPException(
+            status_code=403, detail="Not authorized to view this profile"
+        )
+
     return _db_profile_to_dict(profile)
 
 
@@ -137,10 +146,12 @@ def update_profile(
     profile = db.query(DBProfile).filter(DBProfile.id == profile_id).first()
     if not profile:
         raise HTTPException(status_code=404, detail="Profile not found")
-    
+
     if profile.user_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not authorized to update this profile")
-    
+        raise HTTPException(
+            status_code=403, detail="Not authorized to update this profile"
+        )
+
     # Validate incoming data
     validated = validate_profile_data(
         {
@@ -179,10 +190,12 @@ def delete_profile(
     profile = db.query(DBProfile).filter(DBProfile.id == profile_id).first()
     if not profile:
         raise HTTPException(status_code=404, detail="Profile not found")
-    
+
     if profile.user_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not authorized to delete this profile")
-    
+        raise HTTPException(
+            status_code=403, detail="Not authorized to delete this profile"
+        )
+
     db.delete(profile)
     db.commit()
 

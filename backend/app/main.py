@@ -2051,51 +2051,9 @@ def debug_ephemeris():
 @api.get("/health", tags=["System"])
 def health():
     """Health check endpoint with system status."""
-    redis_url = os.getenv("REDIS_URL")
-    redis_status = "disabled" if not redis_url else "disconnected"
-    if redis_url:
-        try:
-            from .engine.fusion import _get_redis_client
-
-            redis_client = _get_redis_client()
-            if redis_client and redis_client.ping():
-                redis_status = "connected"
-        except Exception:
-            redis_status = "error"
-
-    # Get cache stats
-    cache_stats = get_chart_cache().get_stats()
-    
-    # Check Gemini AI status
-    gemini_status = "disabled"
-    gemini_api_key = os.getenv("GEMINI_API_KEY")
-    try:
-        import google.generativeai as genai
-        if gemini_api_key:
-            gemini_status = "configured"
-        else:
-            gemini_status = "no_api_key"
-    except ImportError:
-        gemini_status = "not_installed"
-
+    # Simple health check that responds quickly
     return {
         "status": "ok",
-        "ephemeris_path": EPHEMERIS_PATH,
-        "flatlib_available": bool(HAS_FLATLIB),
-        "redis_status": redis_status,
-        "gemini_status": gemini_status,
-        "cache": cache_stats,
-        "features": {
-            "pdf_export": True,
-            "transit_alerts": True,
-            "geocoding": True,
-            "synastry": True,
-            "daily_features": True,
-            "cosmic_guide": True,
-            "learning": True,
-            "tarot": True,
-            "oracle": True,
-        },
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }
 

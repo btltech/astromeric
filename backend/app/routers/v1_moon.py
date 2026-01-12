@@ -5,17 +5,23 @@ API v1 moon phase and ritual endpoints
 
 from datetime import datetime, timezone
 from typing import Optional
-from pydantic import BaseModel
-from fastapi import APIRouter, Query
 
-from ..engine.moon_phases import calculate_moon_phase, get_upcoming_moon_events, get_moon_phase_summary
+from fastapi import APIRouter, Query
+from pydantic import BaseModel
+
 from ..chart_service import build_natal_chart
+from ..engine.moon_phases import (
+    calculate_moon_phase,
+    get_moon_phase_summary,
+    get_upcoming_moon_events,
+)
 from ..numerology_engine import build_numerology
 
 
 # Request models
 class ProfilePayload(BaseModel):
     """Profile data for calculations."""
+
     name: str
     date_of_birth: str
     time_of_birth: Optional[str] = None
@@ -26,6 +32,7 @@ class ProfilePayload(BaseModel):
 
 class MoonRitualRequest(BaseModel):
     """Request model for personalized Moon ritual."""
+
     profile: Optional[ProfilePayload] = None
 
 
@@ -65,7 +72,7 @@ def moon_ritual(req: MoonRitualRequest = None):
     """
     natal_chart = None
     numerology = None
-    
+
     if req and req.profile:
         profile = _profile_to_dict(req.profile)
         natal_chart = build_natal_chart(profile)
@@ -74,5 +81,5 @@ def moon_ritual(req: MoonRitualRequest = None):
             profile["date_of_birth"],
             datetime.now(timezone.utc),
         )
-    
+
     return get_moon_phase_summary(natal_chart, numerology)

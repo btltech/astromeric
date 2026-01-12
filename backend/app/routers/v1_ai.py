@@ -4,8 +4,9 @@ Provides AI-powered explanations for astrological readings.
 """
 
 from typing import Optional
-from pydantic import BaseModel, Field
+
 from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel, Field
 
 from ..ai_service import explain_with_gemini, fallback_summary
 from ..auth import get_current_user
@@ -45,7 +46,7 @@ def explain_reading(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="AI insights require a premium subscription. Upgrade to unlock this feature.",
         )
-    
+
     sections = [section.model_dump() for section in payload.sections]
     summary = explain_with_gemini(
         payload.scope,

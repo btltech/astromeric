@@ -3,17 +3,14 @@ API v2 - Habit Tracking Endpoint
 Standardized request/response format for habit tracking and journaling.
 """
 
+from datetime import datetime, timezone
+from typing import Any, Dict, List, Optional
+
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
-from datetime import datetime, timezone
-from typing import Optional, Dict, Any, List
 
-from ..schemas import (
-    ApiResponse, ResponseStatus
-)
-from ..exceptions import (
-    StructuredLogger, InvalidDateError
-)
+from ..exceptions import InvalidDateError, StructuredLogger
+from ..schemas import ApiResponse, ResponseStatus
 
 logger = StructuredLogger(__name__)
 router = APIRouter(prefix="/v2/habits", tags=["Habits"])
@@ -23,8 +20,10 @@ router = APIRouter(prefix="/v2/habits", tags=["Habits"])
 # STANDARDIZED RESPONSE MODELS FOR v2
 # ============================================================================
 
+
 class HabitEntry(BaseModel):
     """Single habit tracking entry."""
+
     id: str
     habit_name: str
     category: str
@@ -36,6 +35,7 @@ class HabitEntry(BaseModel):
 
 class HabitSummary(BaseModel):
     """Habit tracking summary."""
+
     habit_id: str
     habit_name: str
     total_days: int
@@ -48,6 +48,7 @@ class HabitSummary(BaseModel):
 
 class HabitResponse(BaseModel):
     """Complete habit with entries and summary."""
+
     id: str
     name: str
     description: str
@@ -61,6 +62,7 @@ class HabitResponse(BaseModel):
 # ENDPOINTS
 # ============================================================================
 
+
 @router.post("/create", response_model=ApiResponse[HabitResponse])
 async def create_habit(
     request: Request,
@@ -70,28 +72,28 @@ async def create_habit(
 ) -> ApiResponse[HabitResponse]:
     """
     Create a new habit to track.
-    
+
     ## Parameters
     - **name**: Habit name
     - **category**: Category (health, meditation, learning, exercise, etc.)
     - **description**: Optional description
-    
+
     ## Response
     Returns newly created habit with metadata.
     """
     request_id = request.state.request_id
-    
+
     try:
         if not name or len(name.strip()) == 0:
             raise ValueError("Habit name cannot be empty")
-        
+
         logger.info(
             "Creating habit",
             request_id=request_id,
             habit_name=name,
             category=category,
         )
-        
+
         # Create habit
         habit = HabitResponse(
             id="habit_001",
@@ -110,7 +112,7 @@ async def create_habit(
                 completion_rate=0.0,
             ),
         )
-        
+
         return ApiResponse(
             status=ResponseStatus.SUCCESS,
             data=habit,
@@ -124,7 +126,7 @@ async def create_habit(
             detail={
                 "code": "INVALID_HABIT",
                 "message": str(e),
-            }
+            },
         )
     except Exception as e:
         logger.error(
@@ -137,7 +139,7 @@ async def create_habit(
             detail={
                 "code": "HABIT_ERROR",
                 "message": "Failed to create habit",
-            }
+            },
         )
 
 
@@ -150,17 +152,17 @@ async def log_habit_entry(
 ) -> ApiResponse[HabitEntry]:
     """
     Log a habit completion entry.
-    
+
     ## Parameters
     - **habit_id**: Habit identifier
     - **completed**: Whether habit was completed
     - **notes**: Optional notes about the entry
-    
+
     ## Response
     Returns the logged entry with streak information.
     """
     request_id = request.state.request_id
-    
+
     try:
         logger.info(
             "Logging habit entry",
@@ -168,7 +170,7 @@ async def log_habit_entry(
             habit_id=habit_id,
             completed=completed,
         )
-        
+
         entry = HabitEntry(
             id="entry_001",
             habit_name="Example Habit",
@@ -178,7 +180,7 @@ async def log_habit_entry(
             notes=notes,
             streak_days=1 if completed else 0,
         )
-        
+
         return ApiResponse(
             status=ResponseStatus.SUCCESS,
             data=entry,
@@ -196,7 +198,7 @@ async def log_habit_entry(
             detail={
                 "code": "LOGGING_ERROR",
                 "message": "Failed to log habit entry",
-            }
+            },
         )
 
 
@@ -207,22 +209,22 @@ async def get_habit_summary(
 ) -> ApiResponse[HabitSummary]:
     """
     Get summary statistics for a habit.
-    
+
     ## Parameters
     - **habit_id**: Habit identifier
-    
+
     ## Response
     Returns completion rate, streak info, and historical data.
     """
     request_id = request.state.request_id
-    
+
     try:
         logger.info(
             "Retrieving habit summary",
             request_id=request_id,
             habit_id=habit_id,
         )
-        
+
         summary = HabitSummary(
             habit_id=habit_id,
             habit_name="Example Habit",
@@ -233,7 +235,7 @@ async def get_habit_summary(
             completion_rate=0.80,
             last_completed=datetime.now(timezone.utc),
         )
-        
+
         return ApiResponse(
             status=ResponseStatus.SUCCESS,
             data=summary,
@@ -251,5 +253,5 @@ async def get_habit_summary(
             detail={
                 "code": "SUMMARY_ERROR",
                 "message": "Failed to retrieve habit summary",
-            }
+            },
         )

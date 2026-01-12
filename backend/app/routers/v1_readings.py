@@ -3,18 +3,20 @@ V1 Readings Router
 API v1 reading endpoints (daily, weekly, monthly, forecasts, natal, compatibility)
 """
 
-from fastapi import APIRouter, HTTPException, Depends, Query, status
-from pydantic import BaseModel, Field
 from datetime import datetime
 from typing import Optional
+
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
-from ..schemas import ProfilePayload
-from ..models import SessionLocal, User, Profile as DBProfile, SectionFeedback
 from ..auth import get_current_user, get_current_user_optional
-from ..products import build_forecast, build_natal_profile, build_compatibility
 from ..chart_service import build_natal_chart
 from ..engine.year_ahead import build_year_ahead_forecast
+from ..models import Profile as DBProfile
+from ..models import SectionFeedback, SessionLocal, User
+from ..products import build_compatibility, build_forecast, build_natal_profile
+from ..schemas import ProfilePayload
 
 router = APIRouter(tags=["Readings"])
 
@@ -57,26 +59,31 @@ def _db_profile_to_dict(profile: DBProfile):
 
 # ========== REQUEST MODELS ==========
 
+
 class DailyRequest(BaseModel):
     """Request for daily reading."""
+
     profile: ProfilePayload
     lang: str = "en"
 
 
 class WeeklyRequest(BaseModel):
     """Request for weekly reading."""
+
     profile: ProfilePayload
     lang: str = "en"
 
 
 class MonthlyRequest(BaseModel):
     """Request for monthly reading."""
+
     profile: ProfilePayload
     lang: str = "en"
 
 
 class ForecastRequest(BaseModel):
     """Request for generic forecast."""
+
     profile: Optional[ProfilePayload] = None
     profile_id: Optional[int] = None
     scope: str = "daily"
@@ -85,6 +92,7 @@ class ForecastRequest(BaseModel):
 
 class SectionFeedbackRequest(BaseModel):
     """Request for section feedback."""
+
     profile_id: Optional[int] = None
     scope: str
     section: str
@@ -93,12 +101,14 @@ class SectionFeedbackRequest(BaseModel):
 
 class NatalRequest(BaseModel):
     """Request for natal profile."""
+
     profile: ProfilePayload
     lang: str = "en"
 
 
 class CompatibilityRequest(BaseModel):
     """Request for compatibility analysis."""
+
     person_a: ProfilePayload
     person_b: ProfilePayload
     lang: str = "en"
@@ -106,11 +116,13 @@ class CompatibilityRequest(BaseModel):
 
 class YearAheadRequest(BaseModel):
     """Request for year-ahead forecast."""
+
     profile: ProfilePayload
     year: Optional[int] = Field(None, description="Year for forecast")
 
 
 # ========== ENDPOINTS ==========
+
 
 @router.post("/daily-reading")
 def daily_reading(req: DailyRequest):
@@ -149,7 +161,9 @@ def generic_forecast(
         if not profile_obj:
             raise HTTPException(status_code=404, detail="Profile not found")
         if profile_obj.user_id != current_user.id:
-            raise HTTPException(status_code=403, detail="Not authorized to access this profile")
+            raise HTTPException(
+                status_code=403, detail="Not authorized to access this profile"
+            )
         profile = _db_profile_to_dict(profile_obj)
     else:
         raise HTTPException(status_code=400, detail="Profile data is required")
@@ -207,5 +221,5 @@ def year_ahead_forecast(req: YearAheadRequest):
     profile = _profile_to_dict(req.profile)
     natal = build_natal_chart(profile)
     year = req.year or datetime.now().year
-    
+
     return build_year_ahead_forecast(profile, natal, year)
