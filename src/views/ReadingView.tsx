@@ -1,13 +1,14 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
-import { useProfiles, useReading } from '../hooks';
+import { useProfiles, useReading, useAnonReadings } from '../hooks';
 import { useStore } from '../store/useStore';
 import { FortuneForm } from '../components/FortuneForm';
 import { FortuneResult } from '../components/FortuneResult';
 import { ReadingSkeleton } from '../components/Skeleton';
+import { SaveReadingsPrompt } from '../components/SaveReadingsPrompt';
 import { toast } from '../components/Toast';
-import { DailyReminderToggle } from '../components/DailyReminderToggle';
+import { addAnonReading } from '../utils/anonReadingStorage';
 
 const fadeIn = {
   initial: { opacity: 0, y: 20 },
@@ -21,6 +22,7 @@ export function ReadingView() {
   const { selectedProfile, createProfile } = useProfiles();
   const { selectedScope, result, setSelectedScope, setResult, getPrediction } = useReading();
   const { loading, allowCloudHistory, setAllowCloudHistory, token } = useStore();
+  const { shouldShowUpsellModal, closeUpsell, saveReading: saveAnonReading } = useAnonReadings();
 
   const handleGetPrediction = async () => {
     if (!selectedProfile) {
@@ -29,7 +31,23 @@ export function ReadingView() {
     }
 
     try {
-      await getPrediction(selectedProfile.id);
+      const data = await getPrediction(selectedProfile.id);
+      
+      // Save to anon storage if not authenticated
+      if (!token && data) {
+        saveAnonReading({
+          scope: selectedScope as 'daily' | 'weekly' | 'monthly' | 'forecast' | 'compatibility' | 'natal' | 'year-ahead',
+          date: new Date().toISOString().split('T')[0],
+          profile: {
+            name: selectedProfile.name,
+            date_of_birth: selectedProfile.date_of_birth,
+            time_of_birth: selectedProfile.time_of_birth,
+            timezone: selectedProfile.timezone,
+          },
+          content: data,
+        });
+      }
+      
       toast.success('Your cosmic reading is ready ✨');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to generate reading. Please try again.';
@@ -50,6 +68,7 @@ export function ReadingView() {
     return (
       <motion.div className="page" {...fadeIn}>
         <FortuneResult data={result} onReset={() => setResult(null)} />
+        <SaveReadingsPrompt isOpen={shouldShowUpsellModal} onClose={closeUpsell} />
       </motion.div>
     );
   }
@@ -69,8 +88,6 @@ export function ReadingView() {
             </ul>
           </div>
         </section>
-
-        <DailyReminderToggle />
 
         {/* Session Profile Active - show scope selection */}
         {selectedProfile ? (
