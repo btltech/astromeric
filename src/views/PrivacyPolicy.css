@@ -1,0 +1,319 @@
+/* Privacy & Cookie Policy Styles - WCAG 2.1 AA Compliant */
+
+.privacy-policy-container,
+.cookie-policy-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: 'Manrope', -apple-system, BlinkMacSystemFont, sans-serif;
+  line-height: 1.6;
+}
+
+/* Header Section */
+.policy-header {
+  border-bottom: 3px solid var(--primary);
+  padding-bottom: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.policy-header h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem 0;
+  color: var(--primary);
+  line-height: 1.2;
+}
+
+.last-updated {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  margin: 0;
+  font-style: italic;
+}
+
+/* Table of Contents */
+.policy-toc {
+  background: var(--bg-secondary);
+  border-left: 4px solid var(--accent);
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  margin-bottom: 2rem;
+}
+
+.policy-toc h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0 0 1rem 0;
+  color: var(--text-primary);
+}
+
+.policy-toc ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  columns: 1;
+  column-gap: 2rem;
+}
+
+.policy-toc li {
+  margin-bottom: 0.75rem;
+}
+
+.policy-toc a {
+  color: var(--primary);
+  text-decoration: none;
+  font-weight: 500;
+  border-bottom: 1px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.policy-toc a:hover {
+  border-bottom-color: var(--primary);
+  text-decoration: underline;
+}
+
+.policy-toc a:focus {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: 0.25rem;
+}
+
+/* Content Section */
+.policy-content {
+  margin-bottom: 3rem;
+}
+
+.policy-content section {
+  margin-bottom: 2rem;
+  scroll-margin-top: 2rem;
+}
+
+.policy-content h2 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin: 2rem 0 1rem 0;
+  color: var(--primary);
+  line-height: 1.3;
+  border-top: 2px solid var(--border-color);
+  padding-top: 1rem;
+}
+
+.policy-content h2:first-child {
+  border-top: none;
+  padding-top: 0;
+  margin-top: 0;
+}
+
+.policy-content h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 1.5rem 0 0.75rem 0;
+  color: var(--text-primary);
+  line-height: 1.4;
+}
+
+.policy-content p {
+  font-size: 1rem;
+  line-height: 1.6;
+  margin: 1rem 0;
+  color: var(--text-primary);
+}
+
+.policy-content ul {
+  margin: 1rem 0;
+  padding-left: 1.5rem;
+  list-style-position: outside;
+}
+
+.policy-content li {
+  margin-bottom: 0.75rem;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--text-primary);
+}
+
+.policy-content strong {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* Links */
+.policy-content a {
+  color: var(--primary);
+  text-decoration: underline;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.policy-content a:hover {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.policy-content a:focus {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: 0.25rem;
+}
+
+/* Cookie Table */
+.cookie-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5rem 0;
+  background: var(--bg-secondary);
+  border-radius: 0.5rem;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.cookie-table thead {
+  background: var(--primary);
+  color: white;
+}
+
+.cookie-table thead th {
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
+  font-size: 1rem;
+  line-height: 1.4;
+}
+
+.cookie-table tbody tr {
+  border-bottom: 1px solid var(--border-color);
+  transition: background-color 0.2s ease;
+}
+
+.cookie-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.cookie-table tbody tr:hover {
+  background: var(--bg-tertiary);
+}
+
+.cookie-table tbody td {
+  padding: 0.875rem 1rem;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: var(--text-primary);
+}
+
+.cookie-table tbody td:first-child {
+  font-weight: 500;
+  color: var(--primary);
+}
+
+/* Footer */
+.policy-footer,
+.policy-contact {
+  background: var(--bg-secondary);
+  border-left: 4px solid var(--accent);
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  margin-top: 2rem;
+}
+
+.policy-footer p,
+.policy-contact p {
+  margin: 0;
+  font-size: 0.9375rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.policy-contact p {
+  color: var(--text-primary);
+}
+
+.policy-contact a {
+  color: var(--primary);
+  font-weight: 600;
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.policy-contact a:hover {
+  border-bottom-color: var(--primary);
+  text-decoration: underline;
+}
+
+/* Accessibility: Print Styles */
+@media print {
+  .policy-toc {
+    display: none;
+  }
+
+  .policy-header {
+    page-break-after: avoid;
+  }
+
+  .policy-content section {
+    page-break-inside: avoid;
+  }
+
+  .policy-content h2 {
+    page-break-after: avoid;
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .privacy-policy-container,
+  .cookie-policy-container {
+    padding: 1.5rem 1rem;
+  }
+
+  .policy-header h1 {
+    font-size: 2rem;
+  }
+
+  .policy-content h2 {
+    font-size: 1.5rem;
+  }
+
+  .policy-content h3 {
+    font-size: 1.125rem;
+  }
+
+  .policy-toc ul {
+    columns: 1;
+  }
+
+  .cookie-table {
+    font-size: 0.875rem;
+  }
+
+  .cookie-table thead th,
+  .cookie-table tbody td {
+    padding: 0.75rem 0.5rem;
+  }
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+  .policy-content {
+    --border-color: rgba(255, 255, 255, 0.1);
+  }
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .policy-content a,
+  .cookie-table tbody tr,
+  .policy-toc a {
+    transition: none;
+  }
+}
+
+/* Focus visible for accessibility */
+.policy-content a:focus-visible,
+.policy-toc a:focus-visible,
+.policy-contact a:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}

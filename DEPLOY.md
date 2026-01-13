@@ -56,7 +56,7 @@ REDIS_URL=<if using Redis for caching>
 
 1. Railway will automatically build and deploy
 2. Wait for the build to complete (2-3 minutes)
-3. Get your public URL from the **Settings** tab (e.g., `https://astronumeric-backend.up.railway.app`)
+3. Get your public URL from the **Settings** tab (e.g., `https://astromeric-backend.up.railway.app`)
 4. Test: `curl https://your-app.up.railway.app/health`
 
 ---

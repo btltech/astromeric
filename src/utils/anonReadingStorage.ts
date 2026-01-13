@@ -37,7 +37,7 @@ export function getAnonReadings(): AnonReading[] {
  */
 export function addAnonReading(reading: Omit<AnonReading, 'id' | 'timestamp'>): AnonReading {
   const readings = getAnonReadings();
-  
+
   const newReading: AnonReading = {
     ...reading,
     id: `reading_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,

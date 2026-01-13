@@ -50,6 +50,12 @@ export interface AiExplainResponse {
   provider: string;
 }
 
+export interface ApiResponse<T> {
+  status: 'success' | 'error';
+  data?: T;
+  message?: string;
+}
+
 export interface SectionFeedbackPayload {
   scope: string;
   section: string;
@@ -62,6 +68,25 @@ export interface SaveReadingPayload {
   scope: string;
   content: unknown;
   date?: string;
+}
+
+export interface CosmicGuideMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+export interface CosmicGuideRequest {
+  message: string;
+  sun_sign?: string;
+  moon_sign?: string;
+  rising_sign?: string;
+  history?: { role: string; content: string }[];
+}
+
+export interface CosmicGuideResponse {
+  response: string;
+  provider: string;
+  model?: string;
 }
 
 export class ApiError extends Error {
@@ -161,19 +186,29 @@ export function saveReading(payload: SaveReadingPayload, token?: string) {
   });
 }
 
+export function chatWithCosmicGuide(payload: CosmicGuideRequest, token?: string) {
+  const headers: Record<string, string> = {};
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  return apiFetch<CosmicGuideResponse>('/cosmic-guide/chat', {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(payload),
+  });
+}
+
 // ========== DAILY FEATURES API ==========
 
 export interface DailyFeaturesResponse {
   date: string;
   lucky_numbers: number[];
-  lucky_colors: { 
-    primary: string; 
-    primary_hex: string; 
+  lucky_colors: {
+    primary: string;
+    primary_hex: string;
     accent: string;
     description: string;
   };
-  lucky_planet: { 
-    planet: string; 
+  lucky_planet: {
+    planet: string;
     keywords: string[];
     best_for: string[];
     avoid: string[];
@@ -184,7 +219,7 @@ export interface DailyFeaturesResponse {
     category: string;
     instruction: string;
   };
-  tarot: { 
+  tarot: {
     card: string;
     card_number: number;
     keywords: string[];
@@ -278,36 +313,6 @@ export function fetchMoodForecast(sunSign: string, moonSign?: string) {
   return apiFetch<MoodForecastResponse>('/forecast/mood', {
     method: 'POST',
     body: JSON.stringify({ sun_sign: sunSign, moon_sign: moonSign }),
-  });
-}
-
-// ========== COSMIC GUIDE CHAT API ==========
-
-export interface ChatMessage {
-  role: 'user' | 'assistant';
-  content: string;
-}
-
-export interface CosmicGuideResponse {
-  response: string;
-}
-
-export function chatWithCosmicGuide(
-  message: string,
-  sunSign?: string,
-  moonSign?: string,
-  risingSign?: string,
-  history?: ChatMessage[]
-) {
-  return apiFetch<CosmicGuideResponse>('/cosmic-guide/chat', {
-    method: 'POST',
-    body: JSON.stringify({
-      message,
-      sun_sign: sunSign,
-      moon_sign: moonSign,
-      rising_sign: risingSign,
-      history,
-    }),
   });
 }
 
@@ -482,16 +487,13 @@ export interface AccountabilityReportRequest {
  * Requires authentication
  */
 export function addJournalEntry(request: JournalEntryRequest, token: string) {
-  return apiFetch<{ success: boolean; message: string; entry: JournalEntry }>(
-    '/journal/entry',
-    {
-      method: 'POST',
-      body: JSON.stringify(request),
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }
-  );
+  return apiFetch<{ success: boolean; message: string; entry: JournalEntry }>('/journal/entry', {
+    method: 'POST',
+    body: JSON.stringify(request),
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
 }
 
 /**
@@ -515,12 +517,7 @@ export function recordOutcome(request: OutcomeRequest, token: string) {
  * Get readings for journaling view with pagination
  * Requires authentication
  */
-export function fetchJournalReadings(
-  profileId: number,
-  token: string,
-  limit = 20,
-  offset = 0
-) {
+export function fetchJournalReadings(profileId: number, token: string, limit = 20, offset = 0) {
   return apiFetch<JournalReadingsResponse>(
     `/journal/readings/${profileId}?limit=${limit}&offset=${offset}`,
     {
@@ -583,10 +580,7 @@ export function fetchJournalPatterns(profileId: number, token: string) {
  * Generate comprehensive accountability report
  * Requires authentication
  */
-export function fetchAccountabilityReport(
-  request: AccountabilityReportRequest,
-  token: string
-) {
+export function fetchAccountabilityReport(request: AccountabilityReportRequest, token: string) {
   return apiFetch<AccountabilityReportResponse>('/journal/report', {
     method: 'POST',
     body: JSON.stringify(request),
@@ -647,10 +641,7 @@ export function fetchRelationshipTiming(date?: string) {
 /**
  * Get best relationship days ahead
  */
-export function fetchBestRelationshipDays(
-  days_ahead: number = 30,
-  min_score: number = 70
-) {
+export function fetchBestRelationshipDays(days_ahead: number = 30, min_score: number = 70) {
   const params = new URLSearchParams({
     days_ahead: days_ahead.toString(),
     min_score: min_score.toString(),
@@ -665,10 +656,9 @@ export function fetchBestRelationshipDays(
  * Get upcoming relationship events
  */
 export function fetchRelationshipEvents(days_ahead: number = 60) {
-  return apiFetch<{ events: RelationshipDate[] }>(
-    `/relationship/events?days_ahead=${days_ahead}`,
-    { method: 'GET' }
-  );
+  return apiFetch<{ events: RelationshipDate[] }>(`/relationship/events?days_ahead=${days_ahead}`, {
+    method: 'GET',
+  });
 }
 
 /**
@@ -716,10 +706,9 @@ export function fetchHabitCategories() {
  * Get lunar guidance for habits
  */
 export function fetchLunarHabitGuidance() {
-  return apiFetch<{ phases: Record<string, LunarHabitGuidance> }>(
-    '/habits/lunar-guidance',
-    { method: 'GET' }
-  );
+  return apiFetch<{ phases: Record<string, LunarHabitGuidance> }>('/habits/lunar-guidance', {
+    method: 'GET',
+  });
 }
 
 /**
@@ -763,23 +752,16 @@ export interface CreateHabitRequest {
  * Create a new habit
  */
 export function createHabit(request: CreateHabitRequest, moon_phase: string) {
-  return apiFetch<{ success: boolean; habit: Habit }>(
-    `/habits/create?moon_phase=${moon_phase}`,
-    {
-      method: 'POST',
-      body: JSON.stringify(request),
-    }
-  );
+  return apiFetch<{ success: boolean; habit: Habit }>(`/habits/create?moon_phase=${moon_phase}`, {
+    method: 'POST',
+    body: JSON.stringify(request),
+  });
 }
 
 /**
  * Log habit completion
  */
-export function logHabitCompletion(
-  habit_id: number,
-  moon_phase: string,
-  notes?: string
-) {
+export function logHabitCompletion(habit_id: number, moon_phase: string, notes?: string) {
   return apiFetch<{ success: boolean; completion: HabitCompletion }>(
     `/habits/log?moon_phase=${moon_phase}`,
     {
@@ -824,11 +806,33 @@ export function fetchLunarCycleReport(
   completions: HabitCompletion[],
   cycle_days: number = 29
 ) {
-  return apiFetch<LunarCycleReport>(
-    `/habits/lunar-report?cycle_days=${cycle_days}`,
-    {
-      method: 'POST',
-      body: JSON.stringify({ habits, completions }),
-    }
-  );
+  return apiFetch<LunarCycleReport>(`/habits/lunar-report?cycle_days=${cycle_days}`, {
+    method: 'POST',
+    body: JSON.stringify({ habits, completions }),
+  });
+}
+
+// ========== V2 DAILY FEATURES API ==========
+
+export interface ForecastDay {
+  date: string;
+  score: number;
+  vibe: string;
+  icon: string;
+  recommendation: string;
+}
+
+export interface WeeklyForecastResponse {
+  days: ForecastDay[];
+}
+
+export async function fetchWeeklyForecast(profile: ProfilePayload): Promise<WeeklyForecastResponse> {
+  const result = await apiFetch<ApiResponse<WeeklyForecastResponse>>('/v2/daily/forecast', {
+    method: 'POST',
+    body: JSON.stringify(profile),
+  });
+  if (result.status === 'success' && result.data) {
+    return result.data;
+  }
+  throw new Error(result.message || 'Failed to fetch weekly forecast');
 }

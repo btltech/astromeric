@@ -26,9 +26,7 @@ export function RelationshipTimeline() {
   const [phases, setPhases] = useState<RelationshipPhase[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedDate, setSelectedDate] = useState<string>(
-    new Date().toISOString().split('T')[0]
-  );
+  const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
 
   // Load initial data
   useEffect(() => {
@@ -129,9 +127,7 @@ export function RelationshipTimeline() {
     <div className="relationship-timeline">
       <header className="timeline-header">
         <h2>💕 Relationship Timeline</h2>
-        <p className="subtitle">
-          Venus & Mars transits guide your heart's journey
-        </p>
+        <p className="subtitle">Venus & Mars transits guide your heart's journey</p>
       </header>
 
       {/* Venus Status Banner */}
@@ -141,14 +137,10 @@ export function RelationshipTimeline() {
         >
           <span className="venus-emoji">{venusStatus.emoji}</span>
           <div className="venus-info">
-            <strong>
-              Venus {venusStatus.is_retrograde ? 'Retrograde' : 'Direct'}
-            </strong>
+            <strong>Venus {venusStatus.is_retrograde ? 'Retrograde' : 'Direct'}</strong>
             <p>{venusStatus.advice}</p>
             {venusStatus.is_retrograde && venusStatus.days_remaining && (
-              <span className="days-remaining">
-                {venusStatus.days_remaining} days remaining
-              </span>
+              <span className="days-remaining">{venusStatus.days_remaining} days remaining</span>
             )}
           </div>
         </div>
@@ -231,9 +223,7 @@ export function RelationshipTimeline() {
                   <span className="glyph">{timeline.venus_current.glyph}</span>
                   <h4>Venus in {timeline.venus_current.sign}</h4>
                   <p className="meaning">{timeline.venus_current.meaning}</p>
-                  <p className="love-theme">
-                    💖 {timeline.venus_current.love_theme}
-                  </p>
+                  <p className="love-theme">💖 {timeline.venus_current.love_theme}</p>
                 </div>
                 <div className="transit-card mars">
                   <span className="glyph">{timeline.mars_current.glyph}</span>
@@ -293,10 +283,7 @@ export function RelationshipTimeline() {
                 >
                   <span className="score-emoji">{getScoreEmoji(timing.score)}</span>
                   <span className="score-value">{timing.score}</span>
-                  <span
-                    className="score-rating"
-                    style={{ color: getRatingColor(timing.rating) }}
-                  >
+                  <span className="score-rating" style={{ color: getRatingColor(timing.rating) }}>
                     {timing.rating}
                   </span>
                 </div>

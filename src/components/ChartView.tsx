@@ -37,8 +37,16 @@ const PLANET_INFO: Record<string, { symbol: string; meaning: string; rules: stri
   Mercury: { symbol: '☿', meaning: 'Communication, thinking, learning', rules: 'Gemini, Virgo' },
   Venus: { symbol: '♀', meaning: 'Love, beauty, values, pleasure', rules: 'Taurus, Libra' },
   Mars: { symbol: '♂', meaning: 'Action, desire, energy, courage', rules: 'Aries, Scorpio' },
-  Jupiter: { symbol: '♃', meaning: 'Growth, luck, wisdom, expansion', rules: 'Sagittarius, Pisces' },
-  Saturn: { symbol: '♄', meaning: 'Discipline, structure, limitations', rules: 'Capricorn, Aquarius' },
+  Jupiter: {
+    symbol: '♃',
+    meaning: 'Growth, luck, wisdom, expansion',
+    rules: 'Sagittarius, Pisces',
+  },
+  Saturn: {
+    symbol: '♄',
+    meaning: 'Discipline, structure, limitations',
+    rules: 'Capricorn, Aquarius',
+  },
   Uranus: { symbol: '♅', meaning: 'Innovation, rebellion, sudden change', rules: 'Aquarius' },
   Neptune: { symbol: '♆', meaning: 'Dreams, intuition, spirituality', rules: 'Pisces' },
   Pluto: { symbol: '♇', meaning: 'Transformation, power, rebirth', rules: 'Scorpio' },
@@ -73,7 +81,9 @@ const getPersonalityTraits = (chartData: ChartData) => {
     traits.push({
       category: 'Core Self',
       trait: `${sign} Energy`,
-      description: `Your fundamental nature is ${signData?.element?.toLowerCase() || 'dynamic'} and ${signData?.modality?.toLowerCase() || 'adaptable'}.`,
+      description: `Your fundamental nature is ${
+        signData?.element?.toLowerCase() || 'dynamic'
+      } and ${signData?.modality?.toLowerCase() || 'adaptable'}.`,
     });
   }
 
@@ -83,7 +93,9 @@ const getPersonalityTraits = (chartData: ChartData) => {
     traits.push({
       category: 'Emotional Style',
       trait: `${sign} Moon`,
-      description: `You process emotions through ${sign} energy, seeking ${getEmotionalNeed(sign)}.`,
+      description: `You process emotions through ${sign} energy, seeking ${getEmotionalNeed(
+        sign
+      )}.`,
     });
   }
 
@@ -321,7 +333,7 @@ export function ChartView({ profile, onExportPDF }: Props) {
       {/* Big Three */}
       <div className="big-three-grid">
         {chartData.planets.Sun && (
-          <div 
+          <div
             className="big-three-card sun"
             onMouseEnter={() => setActiveTooltip('Sun')}
             onMouseLeave={() => setActiveTooltip(null)}
@@ -329,18 +341,16 @@ export function ChartView({ profile, onExportPDF }: Props) {
             <span className="planet-symbol">☉</span>
             <div className="placement-info">
               <span className="placement-label">Sun Sign</span>
-              <span className="placement-sign">{SIGN_INFO[chartData.planets.Sun.sign]?.emoji} {chartData.planets.Sun.sign}</span>
+              <span className="placement-sign">
+                {SIGN_INFO[chartData.planets.Sun.sign]?.emoji} {chartData.planets.Sun.sign}
+              </span>
               <span className="placement-degree">{chartData.planets.Sun.degree.toFixed(1)}°</span>
             </div>
-            {activeTooltip === 'Sun' && (
-              <div className="tooltip">
-                {PLANET_INFO.Sun.meaning}
-              </div>
-            )}
+            {activeTooltip === 'Sun' && <div className="tooltip">{PLANET_INFO.Sun.meaning}</div>}
           </div>
         )}
         {chartData.planets.Moon && (
-          <div 
+          <div
             className="big-three-card moon"
             onMouseEnter={() => setActiveTooltip('Moon')}
             onMouseLeave={() => setActiveTooltip(null)}
@@ -348,18 +358,16 @@ export function ChartView({ profile, onExportPDF }: Props) {
             <span className="planet-symbol">☽</span>
             <div className="placement-info">
               <span className="placement-label">Moon Sign</span>
-              <span className="placement-sign">{SIGN_INFO[chartData.planets.Moon.sign]?.emoji} {chartData.planets.Moon.sign}</span>
+              <span className="placement-sign">
+                {SIGN_INFO[chartData.planets.Moon.sign]?.emoji} {chartData.planets.Moon.sign}
+              </span>
               <span className="placement-degree">{chartData.planets.Moon.degree.toFixed(1)}°</span>
             </div>
-            {activeTooltip === 'Moon' && (
-              <div className="tooltip">
-                {PLANET_INFO.Moon.meaning}
-              </div>
-            )}
+            {activeTooltip === 'Moon' && <div className="tooltip">{PLANET_INFO.Moon.meaning}</div>}
           </div>
         )}
         {chartData.ascendant && (
-          <div 
+          <div
             className="big-three-card rising"
             onMouseEnter={() => setActiveTooltip('Ascendant')}
             onMouseLeave={() => setActiveTooltip(null)}
@@ -367,13 +375,13 @@ export function ChartView({ profile, onExportPDF }: Props) {
             <span className="planet-symbol">↑</span>
             <div className="placement-info">
               <span className="placement-label">Rising Sign</span>
-              <span className="placement-sign">{SIGN_INFO[chartData.ascendant.sign]?.emoji} {chartData.ascendant.sign}</span>
+              <span className="placement-sign">
+                {SIGN_INFO[chartData.ascendant.sign]?.emoji} {chartData.ascendant.sign}
+              </span>
               <span className="placement-degree">{chartData.ascendant.degree.toFixed(1)}°</span>
             </div>
             {activeTooltip === 'Ascendant' && (
-              <div className="tooltip">
-                {PLANET_INFO.Ascendant.meaning}
-              </div>
+              <div className="tooltip">{PLANET_INFO.Ascendant.meaning}</div>
             )}
           </div>
         )}
@@ -386,19 +394,19 @@ export function ChartView({ profile, onExportPDF }: Props) {
 
       {/* Tab Navigation */}
       <div className="chart-tabs">
-        <button 
+        <button
           className={`chart-tab ${activeTab === 'placements' ? 'active' : ''}`}
           onClick={() => setActiveTab('placements')}
         >
           🪐 All Placements
         </button>
-        <button 
+        <button
           className={`chart-tab ${activeTab === 'traits' ? 'active' : ''}`}
           onClick={() => setActiveTab('traits')}
         >
           ✨ Personality Traits
         </button>
-        <button 
+        <button
           className={`chart-tab ${activeTab === 'elements' ? 'active' : ''}`}
           onClick={() => setActiveTab('elements')}
         >
@@ -414,8 +422,8 @@ export function ChartView({ profile, onExportPDF }: Props) {
               const info = PLANET_INFO[name];
               const signInfo = SIGN_INFO[data.sign];
               return (
-                <div 
-                  key={name} 
+                <div
+                  key={name}
                   className="placement-card"
                   onMouseEnter={() => setActiveTooltip(name)}
                   onMouseLeave={() => setActiveTooltip(null)}
@@ -469,8 +477,8 @@ export function ChartView({ profile, onExportPDF }: Props) {
                     {element}
                   </span>
                   <div className="element-bar">
-                    <div 
-                      className="element-bar-fill" 
+                    <div
+                      className="element-bar-fill"
                       data-element={element.toLowerCase()}
                       style={{ width: `${(count / 10) * 100}%` }}
                     />
@@ -484,22 +492,31 @@ export function ChartView({ profile, onExportPDF }: Props) {
                 if (count >= 4) {
                   return (
                     <p key={element} className="element-note strong">
-                      <strong>{element} Dominant ({count})</strong>: 
+                      <strong>
+                        {element} Dominant ({count})
+                      </strong>
+                      :
                       {element === 'Fire' && ' You are passionate, energetic, and action-oriented.'}
                       {element === 'Earth' && ' You are practical, grounded, and security-focused.'}
-                      {element === 'Air' && ' You are intellectual, communicative, and socially adept.'}
-                      {element === 'Water' && ' You are emotional, intuitive, and deeply sensitive.'}
+                      {element === 'Air' &&
+                        ' You are intellectual, communicative, and socially adept.'}
+                      {element === 'Water' &&
+                        ' You are emotional, intuitive, and deeply sensitive.'}
                     </p>
                   );
                 }
                 if (count <= 1) {
                   return (
                     <p key={element} className="element-note weak">
-                      <strong>{element} Lacking ({count})</strong>: 
-                      {element === 'Fire' && ' May struggle with motivation and self-assertion.'}
-                      {element === 'Earth' && ' May need to work on practical matters and stability.'}
+                      <strong>
+                        {element} Lacking ({count})
+                      </strong>
+                      :{element === 'Fire' && ' May struggle with motivation and self-assertion.'}
+                      {element === 'Earth' &&
+                        ' May need to work on practical matters and stability.'}
                       {element === 'Air' && ' May need to develop communication and objectivity.'}
-                      {element === 'Water' && ' May need to connect more with emotions and intuition.'}
+                      {element === 'Water' &&
+                        ' May need to connect more with emotions and intuition.'}
                     </p>
                   );
                 }

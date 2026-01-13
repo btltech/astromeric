@@ -21,25 +21,41 @@ interface CompatibilityCardProps {
 
 // Sign emojis
 const SIGN_EMOJI: Record<string, string> = {
-  Aries: '♈', Taurus: '♉', Gemini: '♊', Cancer: '♋',
-  Leo: '♌', Virgo: '♍', Libra: '♎', Scorpio: '♏',
-  Sagittarius: '♐', Capricorn: '♑', Aquarius: '♒', Pisces: '♓',
+  Aries: '♈',
+  Taurus: '♉',
+  Gemini: '♊',
+  Cancer: '♋',
+  Leo: '♌',
+  Virgo: '♍',
+  Libra: '♎',
+  Scorpio: '♏',
+  Sagittarius: '♐',
+  Capricorn: '♑',
+  Aquarius: '♒',
+  Pisces: '♓',
 };
 
-export function ShareableDailyCard({ sunSign, moonSign, dailyMessage, luckyNumber, luckyColor, date = new Date() }: DailyVibeCardProps) {
+export function ShareableDailyCard({
+  sunSign,
+  moonSign,
+  dailyMessage,
+  luckyNumber,
+  luckyColor,
+  date = new Date(),
+}: DailyVibeCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [downloading, setDownloading] = useState(false);
 
   const handleDownload = async () => {
     if (!cardRef.current) return;
     setDownloading(true);
-    
+
     try {
-      const dataUrl = await toPng(cardRef.current, { 
+      const dataUrl = await toPng(cardRef.current, {
         quality: 0.95,
         pixelRatio: 2,
       });
-      
+
       const link = document.createElement('a');
       link.download = `astronumeric-daily-${date.toISOString().split('T')[0]}.png`;
       link.href = dataUrl;
@@ -53,12 +69,12 @@ export function ShareableDailyCard({ sunSign, moonSign, dailyMessage, luckyNumbe
 
   const handleShare = async () => {
     if (!cardRef.current) return;
-    
+
     try {
       const dataUrl = await toPng(cardRef.current, { quality: 0.95, pixelRatio: 2 });
       const blob = await (await fetch(dataUrl)).blob();
       const file = new File([blob], 'astronumeric-daily.png', { type: 'image/png' });
-      
+
       if (navigator.share) {
         await navigator.share({
           title: 'My Daily Cosmic Vibe',
@@ -73,67 +89,57 @@ export function ShareableDailyCard({ sunSign, moonSign, dailyMessage, luckyNumbe
     }
   };
 
-  const formattedDate = date.toLocaleDateString('en-US', { 
-    weekday: 'long', 
-    month: 'long', 
-    day: 'numeric' 
+  const formattedDate = date.toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
   });
 
   return (
     <div className="shareable-card-wrapper">
       <div ref={cardRef} className="shareable-daily-card">
         <div className="card-bg-pattern" />
-        
+
         <div className="card-header">
           <span className="card-logo">✨ ASTRONUMERIC</span>
           <span className="card-date">{formattedDate}</span>
         </div>
-        
+
         <div className="card-sign-display">
           <span className="sign-emoji">{SIGN_EMOJI[sunSign] || '⭐'}</span>
           <span className="sign-name">{sunSign}</span>
           {moonSign && <span className="moon-info">🌙 Moon in {moonSign}</span>}
         </div>
-        
+
         <div className="card-message">
           <p>"{dailyMessage}"</p>
         </div>
-        
+
         <div className="card-lucky-items">
           <div className="lucky-item">
             <span className="lucky-icon">🔢</span>
             <span className="lucky-value">{luckyNumber}</span>
           </div>
           <div className="lucky-item">
-            <span 
-              className="lucky-color-swatch" 
-              style={{ backgroundColor: luckyColor.hex }}
-            />
+            <span className="lucky-color-swatch" style={{ backgroundColor: luckyColor.hex }} />
             <span className="lucky-value">{luckyColor.name}</span>
           </div>
         </div>
-        
+
         <div className="card-footer">
           <span>astronumeric.com</span>
         </div>
       </div>
-      
+
       <div className="share-actions">
-        <button 
-          className="share-btn download"
-          onClick={handleDownload}
-          disabled={downloading}
-        >
+        <button className="share-btn download" onClick={handleDownload} disabled={downloading}>
           {downloading ? '⏳' : '📥'} Download
         </button>
-        <button 
-          className="share-btn share"
-          onClick={handleShare}
-        >
+        <button className="share-btn share" onClick={handleShare}>
           📤 Share
         </button>
       </div>
-      
+
       <style>{`
         .shareable-card-wrapper {
           display: flex;
@@ -306,20 +312,27 @@ export function ShareableDailyCard({ sunSign, moonSign, dailyMessage, luckyNumbe
   );
 }
 
-export function ShareableCompatCard({ personA, personB, score, sunSignA, sunSignB, headline }: CompatibilityCardProps) {
+export function ShareableCompatCard({
+  personA,
+  personB,
+  score,
+  sunSignA,
+  sunSignB,
+  headline,
+}: CompatibilityCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [downloading, setDownloading] = useState(false);
 
   const handleDownload = async () => {
     if (!cardRef.current) return;
     setDownloading(true);
-    
+
     try {
-      const dataUrl = await toPng(cardRef.current, { 
+      const dataUrl = await toPng(cardRef.current, {
         quality: 0.95,
         pixelRatio: 2,
       });
-      
+
       const link = document.createElement('a');
       link.download = `astronumeric-compatibility-${personA}-${personB}.png`;
       link.href = dataUrl;
@@ -342,46 +355,44 @@ export function ShareableCompatCard({ personA, personB, score, sunSignA, sunSign
     <div className="shareable-card-wrapper">
       <div ref={cardRef} className="shareable-compat-card">
         <div className="card-bg-pattern" />
-        
+
         <div className="card-header">
           <span className="card-logo">💕 ASTRONUMERIC</span>
         </div>
-        
+
         <div className="compat-display">
           <div className="person-circle">
             <span className="person-sign">{SIGN_EMOJI[sunSignA] || '⭐'}</span>
             <span className="person-name">{personA}</span>
           </div>
-          
+
           <div className="score-circle" style={{ borderColor: getScoreColor() }}>
-            <span className="score-value" style={{ color: getScoreColor() }}>{score}%</span>
+            <span className="score-value" style={{ color: getScoreColor() }}>
+              {score}%
+            </span>
           </div>
-          
+
           <div className="person-circle">
             <span className="person-sign">{SIGN_EMOJI[sunSignB] || '⭐'}</span>
             <span className="person-name">{personB}</span>
           </div>
         </div>
-        
+
         <div className="compat-headline">
           <p>"{headline}"</p>
         </div>
-        
+
         <div className="card-footer">
           <span>astronumeric.com</span>
         </div>
       </div>
-      
+
       <div className="share-actions">
-        <button 
-          className="share-btn download"
-          onClick={handleDownload}
-          disabled={downloading}
-        >
+        <button className="share-btn download" onClick={handleDownload} disabled={downloading}>
           {downloading ? '⏳' : '📥'} Download
         </button>
       </div>
-      
+
       <style>{`
         .shareable-compat-card {
           width: 400px;

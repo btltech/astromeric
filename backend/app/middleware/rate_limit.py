@@ -81,8 +81,8 @@ async def rate_limit_middleware(request: Request, call_next):
     FastAPI middleware for rate limiting.
     Add to app with: app.middleware("http")(rate_limit_middleware)
     """
-    # Skip rate limiting for health checks
-    if request.url.path in ["/health", "/", "/docs", "/openapi.json"]:
+    # Skip rate limiting for OPTIONS (preflight) and health checks
+    if request.method == "OPTIONS" or request.url.path in ["/health", "/", "/docs", "/openapi.json"]:
         return await call_next(request)
     
     allowed, headers = default_limiter.is_allowed(request)

@@ -32,15 +32,13 @@ export function CollapsibleSection({
         <div className="collapsible-title">
           {icon && <span className="collapsible-icon">{icon}</span>}
           <span className="collapsible-text">{title}</span>
-          {badge !== undefined && (
-            <span className="collapsible-badge">{badge}</span>
-          )}
+          {badge !== undefined && <span className="collapsible-badge">{badge}</span>}
         </div>
-        
+
         {progress !== undefined && (
           <div className="collapsible-progress">
-            <div 
-              className="collapsible-progress-bar" 
+            <div
+              className="collapsible-progress-bar"
               style={{ width: `${progress}%` }}
               role="progressbar"
               aria-valuenow={progress}
@@ -49,12 +47,10 @@ export function CollapsibleSection({
             />
           </div>
         )}
-        
-        <span className={`collapsible-chevron ${isExpanded ? 'rotated' : ''}`}>
-          ▾
-        </span>
+
+        <span className={`collapsible-chevron ${isExpanded ? 'rotated' : ''}`}>▾</span>
       </button>
-      
+
       <AnimatePresence initial={false}>
         {isExpanded && (
           <motion.div
@@ -65,9 +61,7 @@ export function CollapsibleSection({
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
           >
-            <div className="collapsible-inner">
-              {children}
-            </div>
+            <div className="collapsible-inner">{children}</div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -144,25 +138,18 @@ export function AccordionItem({
         <div className="collapsible-title">
           {icon && <span className="collapsible-icon">{icon}</span>}
           <span className="collapsible-text">{title}</span>
-          {badge !== undefined && (
-            <span className="collapsible-badge">{badge}</span>
-          )}
+          {badge !== undefined && <span className="collapsible-badge">{badge}</span>}
         </div>
-        
+
         {progress !== undefined && (
           <div className="collapsible-progress">
-            <div 
-              className="collapsible-progress-bar" 
-              style={{ width: `${progress}%` }}
-            />
+            <div className="collapsible-progress-bar" style={{ width: `${progress}%` }} />
           </div>
         )}
-        
-        <span className={`collapsible-chevron ${expanded ? 'rotated' : ''}`}>
-          ▾
-        </span>
+
+        <span className={`collapsible-chevron ${expanded ? 'rotated' : ''}`}>▾</span>
       </button>
-      
+
       <AnimatePresence initial={false}>
         {expanded && (
           <motion.div
@@ -173,9 +160,7 @@ export function AccordionItem({
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
           >
-            <div className="collapsible-inner">
-              {children}
-            </div>
+            <div className="collapsible-inner">{children}</div>
           </motion.div>
         )}
       </AnimatePresence>

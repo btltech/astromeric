@@ -14,10 +14,26 @@ export function NumerologyView({ profile }: Props) {
       <h2>{t('numerology.title')}</h2>
       {profile ? (
         <div className="numerology-grid">
-          {renderCore(t('numerology.lifePath'), profile.life_path.number, profile.life_path.meaning)}
-          {renderCore(t('numerology.expression'), profile.expression.number, profile.expression.meaning)}
-          {renderCore(t('numerology.soulUrge'), profile.soul_urge.number, profile.soul_urge.meaning)}
-          {renderCore(t('numerology.personality'), profile.personality.number, profile.personality.meaning)}
+          {renderCore(
+            t('numerology.lifePath'),
+            profile.life_path.number,
+            profile.life_path.meaning
+          )}
+          {renderCore(
+            t('numerology.expression'),
+            profile.expression.number,
+            profile.expression.meaning
+          )}
+          {renderCore(
+            t('numerology.soulUrge'),
+            profile.soul_urge.number,
+            profile.soul_urge.meaning
+          )}
+          {renderCore(
+            t('numerology.personality'),
+            profile.personality.number,
+            profile.personality.meaning
+          )}
           {renderCore(t('numerology.maturity'), profile.maturity.number, profile.maturity.meaning)}
           {renderCore(
             t('numerology.personalYear'),
@@ -30,7 +46,11 @@ export function NumerologyView({ profile }: Props) {
             profile.personal_month.number,
             profile.personal_month.meaning
           )}
-          {renderCore(t('numerology.personalDay'), profile.personal_day.number, profile.personal_day.meaning)}
+          {renderCore(
+            t('numerology.personalDay'),
+            profile.personal_day.number,
+            profile.personal_day.meaning
+          )}
           {profile.pinnacles?.length ? renderPinnacles(profile.pinnacles, t) : null}
           {profile.challenges?.length ? renderChallenges(profile.challenges, t) : null}
         </div>
@@ -51,7 +71,10 @@ function renderCore(title: string, value: number, text: string, highlight = fals
   );
 }
 
-function renderPinnacles(pinnacles: Array<{ number: number; meaning: string }>, t: (key: string, options?: Record<string, unknown>) => string) {
+function renderPinnacles(
+  pinnacles: Array<{ number: number; meaning: string }>,
+  t: (key: string, options?: Record<string, unknown>) => string
+) {
   return (
     <div className="num-card wide">
       <h4>{t('numerology.lifePinnacles')}</h4>
@@ -67,7 +90,10 @@ function renderPinnacles(pinnacles: Array<{ number: number; meaning: string }>, 
   );
 }
 
-function renderChallenges(challenges: Array<{ number: number; meaning: string }>, t: (key: string, options?: Record<string, unknown>) => string) {
+function renderChallenges(
+  challenges: Array<{ number: number; meaning: string }>,
+  t: (key: string, options?: Record<string, unknown>) => string
+) {
   return (
     <div className="num-card wide">
       <h4>{t('numerology.lifeChallenges')}</h4>

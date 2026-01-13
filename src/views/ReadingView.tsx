@@ -8,6 +8,8 @@ import { FortuneResult } from '../components/FortuneResult';
 import { ReadingSkeleton } from '../components/Skeleton';
 import { toast } from '../components/Toast';
 import { DailyReminderToggle } from '../components/DailyReminderToggle';
+import { DailyStreak } from '../components/DailyStreak';
+import { WeeklyVibe } from '../components/WeeklyVibe';
 
 const fadeIn = {
   initial: { opacity: 0, y: 20 },
@@ -20,7 +22,11 @@ export function ReadingView() {
   const { t } = useTranslation();
   const { selectedProfile, createProfile } = useProfiles();
   const { selectedScope, result, setSelectedScope, setResult, getPrediction } = useReading();
-  const { loading, allowCloudHistory, setAllowCloudHistory, token } = useStore();
+  const { loading, allowCloudHistory, setAllowCloudHistory, token, updateStreak } = useStore();
+
+  React.useEffect(() => {
+    updateStreak();
+  }, [updateStreak]);
 
   const handleGetPrediction = async () => {
     if (!selectedProfile) {
@@ -32,7 +38,8 @@ export function ReadingView() {
       await getPrediction(selectedProfile.id);
       toast.success('Your cosmic reading is ready ✨');
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to generate reading. Please try again.';
+      const message =
+        err instanceof Error ? err.message : 'Failed to generate reading. Please try again.';
       toast.error(message);
     }
   };
@@ -49,6 +56,19 @@ export function ReadingView() {
   if (result) {
     return (
       <motion.div className="page" {...fadeIn}>
+        <DailyStreak />
+        {selectedProfile && (
+          <WeeklyVibe
+            profile={{
+              name: selectedProfile.name,
+              date_of_birth: selectedProfile.date_of_birth,
+              time_of_birth: selectedProfile.time_of_birth || undefined,
+              latitude: selectedProfile.latitude as number,
+              longitude: selectedProfile.longitude as number,
+              timezone: selectedProfile.timezone || 'UTC',
+            }}
+          />
+        )}
         <FortuneResult data={result} onReset={() => setResult(null)} />
       </motion.div>
     );
@@ -57,6 +77,7 @@ export function ReadingView() {
   return (
     <AnimatePresence mode="wait">
       <motion.div className="page" {...fadeIn}>
+        <DailyStreak />
         <section className="hero hero-compact" aria-label={t('hero.eyebrow')}>
           <div className="hero-copy">
             <p className="eyebrow">{t('hero.eyebrow')}</p>
@@ -70,6 +91,19 @@ export function ReadingView() {
           </div>
         </section>
 
+        {selectedProfile && (
+          <WeeklyVibe
+            profile={{
+              name: selectedProfile.name,
+              date_of_birth: selectedProfile.date_of_birth,
+              time_of_birth: selectedProfile.time_of_birth || undefined,
+              latitude: selectedProfile.latitude as number,
+              longitude: selectedProfile.longitude as number,
+              timezone: selectedProfile.timezone || 'UTC',
+            }}
+          />
+        )}
+
         <DailyReminderToggle />
 
         {/* Session Profile Active - show scope selection */}
@@ -81,7 +115,8 @@ export function ReadingView() {
           >
             <h3 className="profile-highlight">✨ {selectedProfile.name}</h3>
             <p className="profile-meta">
-              Born {selectedProfile.date_of_birth} • {selectedProfile.id > 0 ? 'Saved profile' : 'Session profile (not saved)'}
+              Born {selectedProfile.date_of_birth} •{' '}
+              {selectedProfile.id > 0 ? 'Saved profile' : 'Session profile (not saved)'}
             </p>
             <div className="toggle-row toggle-row--mt">
               <label htmlFor="cloud-history" className="toggle-label">
@@ -101,10 +136,10 @@ export function ReadingView() {
                 {!token
                   ? 'Sign in to sync readings'
                   : selectedProfile.id < 1
-                    ? 'Save a profile to enable cloud history'
-                    : allowCloudHistory
-                      ? 'Synced after each reading'
-                      : 'Off by default for privacy'}
+                  ? 'Save a profile to enable cloud history'
+                  : allowCloudHistory
+                  ? 'Synced after each reading'
+                  : 'Off by default for privacy'}
               </span>
             </div>
             <h4>Select Reading Scope</h4>
@@ -142,6 +177,7 @@ export function ReadingView() {
               await createProfile(data);
             }}
             isLoading={loading}
+            showSaveOption={!!token}
           />
         )}
       </motion.div>

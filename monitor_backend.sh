@@ -11,7 +11,7 @@ while true; do
     echo "Attempt $ATTEMPT - $(date)"
 
     # Test health endpoint
-    RESPONSE=$(curl -s -w "HTTPSTATUS:%{http_code}" https://astronumeric-backend-production.up.railway.app/health)
+    RESPONSE=$(curl -s -w "HTTPSTATUS:%{http_code}" https://astromeric-backend-production.up.railway.app/health)
     HTTP_CODE=$(echo $RESPONSE | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
 
     if [ "$HTTP_CODE" = "200" ]; then
@@ -22,7 +22,7 @@ while true; do
         echo ""
         echo "Your app URLs:"
         echo "  Frontend: https://82ed7ad6.astromeric.pages.dev"
-        echo "  Backend:  https://astronumeric-backend-production.up.railway.app"
+        echo "  Backend:  https://astromeric-backend-production.up.railway.app"
         echo ""
         echo "🚀 Ready for production!"
         exit 0

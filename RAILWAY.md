@@ -73,10 +73,10 @@ Use this URL as `VITE_API_URL` in your frontend deployment.
 
 ```bash
 # Build Docker image locally
-docker build -f backend/Dockerfile -t astronumeric-backend .
+docker build -f backend/Dockerfile -t astromeric-backend .
 
 # Run locally
-docker run -p 8000:8000 -e PORT=8000 astronumeric-backend
+docker run -p 8000:8000 -e PORT=8000 astromeric-backend
 
 # Test
 curl http://localhost:8000/health
@@ -96,7 +96,7 @@ railway restart
 
 ### Deploy Specific Version
 ```bash
-railway up --service astronumeric-backend
+railway up --service astromeric-backend
 ```
 
 ## Production Checklist

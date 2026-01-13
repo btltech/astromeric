@@ -28,7 +28,7 @@ export function ProfileView() {
   const navigate = useNavigate();
   const { user, token } = useStore();
   const { profiles, selectedProfile, createProfile, fetchProfiles } = useProfiles();
-  
+
   const [formData, setFormData] = useState<ProfileFormData>({
     name: '',
     date_of_birth: '',
@@ -72,7 +72,7 @@ export function ProfileView() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.name || !formData.date_of_birth) {
       toast.error(t('profile.errors.requiredFields'));
       return;
@@ -112,15 +112,11 @@ export function ProfileView() {
       {/* Account Info Card */}
       <div className="card profile-card">
         <div className="profile-header">
-          <div className="profile-avatar">
-            {user.email.charAt(0).toUpperCase()}
-          </div>
+          <div className="profile-avatar">{user.email.charAt(0).toUpperCase()}</div>
           <div className="profile-info">
             <h2>{t('profile.title')}</h2>
             <p className="profile-email">{user.email}</p>
-            {user.is_paid && (
-              <span className="premium-badge">✨ {t('profile.premium')}</span>
-            )}
+            {user.is_paid && <span className="premium-badge">✨ {t('profile.premium')}</span>}
           </div>
         </div>
       </div>
@@ -130,16 +126,13 @@ export function ProfileView() {
         <div className="card-header-row">
           <h3>{t('profile.birthDetails')}</h3>
           {hasProfile && !editMode && (
-            <button 
-              className="btn-secondary btn-sm btn-inline"
-              onClick={() => setEditMode(true)}
-            >
+            <button className="btn-secondary btn-sm btn-inline" onClick={() => setEditMode(true)}>
               {t('profile.edit')}
             </button>
           )}
         </div>
 
-        {(!hasProfile || editMode) ? (
+        {!hasProfile || editMode ? (
           <form onSubmit={handleSubmit} className="profile-form">
             <div className="form-group">
               <label htmlFor="name">{t('form.fullName')} *</label>
@@ -188,19 +181,15 @@ export function ProfileView() {
 
             <div className="form-actions">
               {editMode && (
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   className="btn-secondary btn-inline"
                   onClick={() => setEditMode(false)}
                 >
                   {t('common.cancel')}
                 </button>
               )}
-              <button 
-                type="submit" 
-                className="btn-primary btn-inline"
-                disabled={saving}
-              >
+              <button type="submit" className="btn-primary btn-inline" disabled={saving}>
                 {saving ? t('common.loading') : t('profile.saveProfile')}
               </button>
             </div>
@@ -231,22 +220,13 @@ export function ProfileView() {
       <div className="card">
         <h3>{t('profile.quickActions')}</h3>
         <div className="quick-actions">
-          <button 
-            className="btn-primary"
-            onClick={() => navigate('/')}
-          >
+          <button className="btn-primary" onClick={() => navigate('/')}>
             ✨ {t('nav.reading')}
           </button>
-          <button 
-            className="btn-secondary"
-            onClick={() => navigate('/numerology')}
-          >
+          <button className="btn-secondary" onClick={() => navigate('/numerology')}>
             🔢 {t('nav.numbers')}
           </button>
-          <button 
-            className="btn-secondary"
-            onClick={() => navigate('/tools')}
-          >
+          <button className="btn-secondary" onClick={() => navigate('/tools')}>
             🔮 {t('nav.tools')}
           </button>
         </div>

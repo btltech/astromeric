@@ -48,6 +48,11 @@ class User(Base):
     is_active = Column(Boolean, default=True)
     is_paid = Column(Boolean, default=False)  # Premium subscription status
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    
+    # Notification preferences
+    alert_mercury_retrograde = Column(Boolean, default=True)  # Receive retrograde alerts
+    alert_frequency = Column(String(20), default="every_retrograde")  # "every_retrograde", "once_per_year", "weekly_digest", "none"
+    last_retrograde_alert = Column(DateTime, nullable=True)  # Timestamp of last alert sent
 
     # Relationship to profiles
     profiles = relationship("Profile", back_populates="owner")
@@ -78,6 +83,13 @@ class Profile(Base):
         Index('idx_profile_user_created', 'user_id', 'created_at'),
         Index('idx_profile_date_of_birth', 'date_of_birth'),
         Index('idx_profile_name', 'name'),
+    )
+
+
+class Reading(Base):
+    __tablename__ = "readings"
+    id = Column(Integer, primary_key=True, index=True)
+    profile_id = Column(Integer, ForeignKey("profiles.id"), nullable=False)
     scope = Column(String(20), nullable=False)  # daily, weekly, monthly
     date = Column(String, nullable=False)  # ISO date for the reading
     content = Column(Text, nullable=False)  # JSON string
@@ -92,14 +104,7 @@ class Profile(Base):
     __table_args__ = (
         Index('idx_reading_profile_scope_date', 'profile_id', 'scope', 'date'),
         Index('idx_reading_created_at', 'created_at'),
-    )g
-    content = Column(Text, nullable=False)  # JSON string
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
-    feedback = Column(String, nullable=True)  # yes/no/neutral
-    journal = Column(Text, nullable=True)
-
-    profile = relationship("Profile", back_populates="readings")
-    favourites = relationship("Favourite", back_populates="reading")
+    )
 
 
 class Favourite(Base):

@@ -18,6 +18,16 @@ if (typeof window !== 'undefined' && _meta.env?.DEV && 'serviceWorker' in naviga
 }
 
 const root = createRoot(document.getElementById('root')!);
+
+// Register service worker in production
+if (typeof window !== 'undefined' && !_meta.env?.DEV && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch((err) => {
+      console.warn('SW registration failed: ', err);
+    });
+  });
+}
+
 root.render(
   <React.StrictMode>
     <App />

@@ -30,10 +30,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
           <div className="error-content">
             <h2>Something went wrong in the cosmos...</h2>
             <p>We encountered an unexpected error. Please try refreshing the page.</p>
-            <button 
-              className="btn-primary"
-              onClick={() => window.location.reload()}
-            >
+            <button className="btn-primary" onClick={() => window.location.reload()}>
               Refresh Page
             </button>
             {process.env.NODE_ENV === 'development' && (

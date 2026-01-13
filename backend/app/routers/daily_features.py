@@ -9,6 +9,7 @@ from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
+from ..engine.timing_advisor import ACTIVITY_PROFILES, get_timing_advice
 from ..exceptions import InvalidDateError, StructuredLogger
 from ..schemas import ApiResponse, ProfilePayload, ResponseStatus
 
@@ -76,6 +77,22 @@ class SimplifiedDailyData(BaseModel):
     advice: str
     lucky_numbers: List[int]
     generated_at: datetime
+
+
+class ForecastDay(BaseModel):
+    """Single day forecast in a weekly view."""
+
+    date: datetime
+    score: int
+    vibe: str
+    icon: str
+    recommendation: str
+
+
+class WeeklyForecast(BaseModel):
+    """7-day forecast data."""
+
+    days: List[ForecastDay]
 
 
 # ============================================================================
@@ -350,3 +367,116 @@ async def get_daily_reading(
                 "message": "Failed to generate daily reading",
             },
         )
+
+
+@router.post("/forecast", response_model=ApiResponse[WeeklyForecast])
+async def get_weekly_vibe_forecast(
+    request: Request,
+    profile: ProfilePayload,
+) -> ApiResponse[WeeklyForecast]:
+    """
+    Get a 7-day vibe forecast based on the user's profile.
+    Calculates real timing scores for each day based on transits and planetary positions.
+    """
+    request_id = request.state.request_id
+
+    try:
+        from datetime import timedelta
+        from ..chart_service import build_transit_chart
+        from ..engine.timing_advisor import calculate_timing_score
+        
+        logger.info(
+            "Generating weekly vibe forecast",
+            request_id=request_id,
+            profile_name=profile.name,
+        )
+
+        days_forecast = []
+        today = datetime.now(timezone.utc)
+
+        # Profile to engine dict for chart calculations
+        profile_dict = {
+            "name": profile.name,
+            "date_of_birth": profile.date_of_birth,
+            "time_of_birth": profile.time_of_birth or "12:00",
+            "latitude": profile.latitude or 40.7128,
+            "longitude": profile.longitude or -74.006,
+        }
+
+        # Vibe mapping based on timing scores
+        def score_to_vibe(score: int) -> tuple[str, str]:
+            """Convert score to vibe name and emoji."""
+            if score >= 80:
+                return ("Powerful", "🌟")
+            elif score >= 65:
+                return ("Favorable", "✨")
+            elif score >= 50:
+                return ("Balanced", "⚖️")
+            elif score >= 35:
+                return ("Challenging", "⚡")
+            else:
+                return ("Reflective", "🌙")
+
+        for i in range(7):
+            forecast_date = today + timedelta(days=i)
+            
+            try:
+                # Build transit chart for this day
+                transit_chart = build_transit_chart(profile_dict, forecast_date)
+                
+                # Calculate score for a balanced activity (general vibe)
+                # Using "business_meeting" as a neutral activity that reflects overall timing
+                timing_result = calculate_timing_score(
+                    activity="business_meeting",
+                    date=forecast_date,
+                    transit_chart=transit_chart,
+                    latitude=profile.latitude or 40.7128,
+                    longitude=profile.longitude or -74.006,
+                    timezone=profile.timezone or "UTC",
+                )
+                
+                score = timing_result.get("score", 50)
+                vibe_name, vibe_icon = score_to_vibe(score)
+                
+                # Get recommendation from timing advisor
+                recommendation = timing_result.get("rating", "Neutral day")
+                
+                days_forecast.append(
+                    ForecastDay(
+                        date=forecast_date,
+                        score=score,
+                        vibe=vibe_name,
+                        icon=vibe_icon,
+                        recommendation=recommendation,
+                    )
+                )
+            except Exception as day_error:
+                logger.warning(
+                    f"Failed to calculate vibe for day {i}",
+                    request_id=request_id,
+                    error=str(day_error),
+                )
+                # Fallback to neutral day
+                days_forecast.append(
+                    ForecastDay(
+                        date=forecast_date,
+                        score=50,
+                        vibe="Balanced",
+                        icon="⚖️",
+                        recommendation="Neutral day",
+                    )
+                )
+
+        return ApiResponse(
+            status=ResponseStatus.SUCCESS,
+            data=WeeklyForecast(days=days_forecast),
+            message="Weekly vibe forecast generated",
+            request_id=request_id,
+        )
+    except Exception as e:
+        logger.error(
+            f"Forecast generation error: {str(e)}",
+            request_id=request_id,
+            error_type=type(e).__name__,
+        )
+        raise HTTPException(status_code=500, detail={"code": "FORECAST_ERROR", "message": str(e)})

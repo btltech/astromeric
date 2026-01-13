@@ -4,6 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { CosmicBackground } from './components/CosmicBackground';
 import { LanguageSwitcher } from './components/LanguageSwitcher';
+import { CookieConsent } from './components/CookieConsent';
+import { Footer } from './components/Footer';
 import { useProfiles, useAuth } from './hooks';
 import { useStore } from './store/useStore';
 import { ToastContainer, useToasts } from './components/Toast';
@@ -11,14 +13,45 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { PWAPrompt } from './components/PWAPrompt';
 
 // Lazy load views for code splitting
-const ReadingView = React.lazy(() => import('./views/ReadingView').then(m => ({ default: m.ReadingView })));
-const NumerologyView = React.lazy(() => import('./views/NumerologyView').then(m => ({ default: m.NumerologyView })));
-const CompatibilityView = React.lazy(() => import('./views/CompatibilityView').then(m => ({ default: m.CompatibilityView })));
-const LearnView = React.lazy(() => import('./views/LearnView').then(m => ({ default: m.LearnView })));
-const AuthView = React.lazy(() => import('./views/AuthView').then(m => ({ default: m.AuthView })));
-const ProfileView = React.lazy(() => import('./views/ProfileView').then(m => ({ default: m.ProfileView })));
-const ChartViewPage = React.lazy(() => import('./views/ChartViewPage').then(m => ({ default: m.ChartViewPage })));
-const CosmicToolsView = React.lazy(() => import('./views/CosmicToolsView').then(m => ({ default: m.CosmicToolsView })));
+const ReadingView = React.lazy(() =>
+  import('./views/ReadingView').then((m) => ({ default: m.ReadingView }))
+);
+const NumerologyView = React.lazy(() =>
+  import('./views/NumerologyView').then((m) => ({ default: m.NumerologyView }))
+);
+const CompatibilityView = React.lazy(() =>
+  import('./views/CompatibilityView').then((m) => ({ default: m.CompatibilityView }))
+);
+const LearnView = React.lazy(() =>
+  import('./views/LearnView').then((m) => ({ default: m.LearnView }))
+);
+const AuthView = React.lazy(() =>
+  import('./views/AuthView').then((m) => ({ default: m.AuthView }))
+);
+const ProfileView = React.lazy(() =>
+  import('./views/ProfileView').then((m) => ({ default: m.ProfileView }))
+);
+const ChartViewPage = React.lazy(() =>
+  import('./views/ChartViewPage').then((m) => ({ default: m.ChartViewPage }))
+);
+const CosmicToolsView = React.lazy(() =>
+  import('./views/CosmicToolsView').then((m) => ({ default: m.CosmicToolsView }))
+);
+const ComparisonView = React.lazy(() =>
+  import('./views/ComparisonView').then((m) => ({ default: m.ComparisonView }))
+);
+const PrivacyPolicy = React.lazy(() =>
+  import('./views/PrivacyPolicy').then((m) => ({ default: m.PrivacyPolicy }))
+);
+const CookiePolicy = React.lazy(() =>
+  import('./views/CookiePolicy').then((m) => ({ default: m.CookiePolicy }))
+);
+const AboutView = React.lazy(() =>
+  import('./views/AboutView').then((m) => ({ default: m.AboutView }))
+);
+const NotFoundView = React.lazy(() =>
+  import('./views/NotFoundView')
+);
 // styles.css is imported at the root level (index.tsx)
 
 function NavBar() {
@@ -62,8 +95,16 @@ function NavBar() {
         {isOpen ? '✕' : '☰'}
       </button>
 
-      <nav className={`main-nav ${isOpen ? 'open' : ''}`} role="navigation" aria-label="Main navigation">
-        <NavLink to="/" className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`} onClick={() => setIsOpen(false)}>
+      <nav
+        className={`main-nav ${isOpen ? 'open' : ''}`}
+        role="navigation"
+        aria-label="Main navigation"
+      >
+        <NavLink
+          to="/"
+          className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}
+          onClick={() => setIsOpen(false)}
+        >
           {t('nav.reading')}
         </NavLink>
         <NavLink
@@ -80,16 +121,35 @@ function NavBar() {
         >
           {t('nav.tools')}
         </NavLink>
-        <NavLink to="/learn" className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`} onClick={() => setIsOpen(false)}>
+        <NavLink
+          to="/learn"
+          className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}
+          onClick={() => setIsOpen(false)}
+        >
           {t('nav.learn')}
         </NavLink>
+        <NavLink
+          to="/about"
+          className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}
+          onClick={() => setIsOpen(false)}
+        >
+          ℹ️ About
+        </NavLink>
         {!isAuthenticated && (
-          <NavLink to="/auth" className={({ isActive }) => `nav-btn nav-btn-secondary ${isActive ? 'active' : ''}`} onClick={() => setIsOpen(false)}>
+          <NavLink
+            to="/auth"
+            className={({ isActive }) => `nav-btn nav-btn-secondary ${isActive ? 'active' : ''}`}
+            onClick={() => setIsOpen(false)}
+          >
             {t('nav.signIn')}
           </NavLink>
         )}
         {isAuthenticated && (
-          <NavLink to="/profile" className={({ isActive }) => `nav-btn nav-btn-profile ${isActive ? 'active' : ''}`} onClick={() => setIsOpen(false)}>
+          <NavLink
+            to="/profile"
+            className={({ isActive }) => `nav-btn nav-btn-profile ${isActive ? 'active' : ''}`}
+            onClick={() => setIsOpen(false)}
+          >
             👤 {t('nav.profile')}
           </NavLink>
         )}
@@ -108,8 +168,9 @@ function AnimatedRoutes() {
   const sunSign = chartData?.planets?.find((p: { name: string }) => p.name === 'Sun')?.sign;
   const moonSign = chartData?.planets?.find((p: { name: string }) => p.name === 'Moon')?.sign;
   // Rising sign may be in ascendant or in planets array depending on backend
-  const risingSign = (result?.charts?.natal as { ascendant?: { sign?: string } })?.ascendant?.sign 
-    || chartData?.planets?.find((p: { name: string }) => p.name === 'Ascendant')?.sign;
+  const risingSign =
+    (result?.charts?.natal as { ascendant?: { sign?: string } })?.ascendant?.sign ||
+    chartData?.planets?.find((p: { name: string }) => p.name === 'Ascendant')?.sign;
   const birthDate = sessionProfile?.date_of_birth;
 
   return (
@@ -121,19 +182,25 @@ function AnimatedRoutes() {
             <Route path="/numerology" element={<NumerologyView />} />
             <Route path="/compatibility" element={<CompatibilityView />} />
             <Route path="/chart" element={<ChartViewPage />} />
-            <Route path="/tools" 
+            <Route path="/compare" element={<ComparisonView />} />
+            <Route
+              path="/tools"
               element={
-                <CosmicToolsView 
+                <CosmicToolsView
                   birthDate={birthDate}
                   sunSign={sunSign}
                   moonSign={moonSign}
                   risingSign={risingSign}
                 />
-              } 
+              }
             />
             <Route path="/learn" element={<LearnView />} />
             <Route path="/auth" element={<AuthView />} />
             <Route path="/profile" element={<ProfileView />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/cookie-policy" element={<CookiePolicy />} />
+            <Route path="/about" element={<AboutView />} />
+            <Route path="*" element={<NotFoundView />} />
           </Routes>
         </React.Suspense>
       </AnimatePresence>
@@ -211,7 +278,7 @@ function Layout() {
       <a href="#main-content" className="skip-link">
         {t('common.skipToContent')}
       </a>
-      
+
       <CosmicBackground element={result?.element} />
 
       <div className="content-wrapper">
@@ -220,11 +287,13 @@ function Layout() {
         <main id="main-content" tabIndex={-1}>
           <AnimatedRoutes />
         </main>
+        <Footer />
       </div>
 
       <LoadingOverlay />
       <ToastContainer toasts={toasts} onDismiss={dismiss} />
       <PWAPrompt />
+      <CookieConsent />
     </div>
   );
 }

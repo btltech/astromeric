@@ -16,7 +16,7 @@ export function useMigrateReadings() {
   const migrateReadings = useCallback(async (profileData?: any) => {
     try {
       const anonReadings = getReadingsForMigration();
-      
+
       if (anonReadings.length === 0) {
         return { success: true, migratedCount: 0 };
       }

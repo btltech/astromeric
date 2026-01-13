@@ -45,26 +45,26 @@ function getStreak(): number {
 function updateStreak(resonates: boolean) {
   const streakData = localStorage.getItem(STREAK_KEY);
   let count = 0;
-  
+
   if (streakData) {
     const parsed = JSON.parse(streakData);
     count = parsed.count || 0;
   }
-  
+
   if (resonates) {
     count += 1;
   } else {
     count = 0; // Reset streak on negative feedback
   }
-  
+
   localStorage.setItem(STREAK_KEY, JSON.stringify({ count, lastUpdate: Date.now() }));
   return count;
 }
 
-export function FeedbackToggle({ 
-  sectionId, 
-  question = "Does this resonate?",
-  onFeedback 
+export function FeedbackToggle({
+  sectionId,
+  question = 'Does this resonate?',
+  onFeedback,
 }: FeedbackToggleProps) {
   const [feedback, setFeedback] = useState<boolean | null>(null);
   const [streak, setStreak] = useState(0);
@@ -84,18 +84,18 @@ export function FeedbackToggle({
     saveFeedback(sectionId, resonates);
     const newStreak = updateStreak(resonates);
     setStreak(newStreak);
-    
+
     // Show thanks briefly
     setShowThanks(true);
     setTimeout(() => setShowThanks(false), 2000);
-    
+
     onFeedback?.(sectionId, resonates);
   };
 
   return (
     <div className="feedback-toggle">
       <span className="feedback-question">{question}</span>
-      
+
       <div className="feedback-buttons">
         <button
           className={`feedback-btn ${feedback === true ? 'selected positive' : ''}`}
@@ -114,7 +114,7 @@ export function FeedbackToggle({
           👎
         </button>
       </div>
-      
+
       <AnimatePresence>
         {showThanks && (
           <motion.span
@@ -136,12 +136,12 @@ export function AccuracyStreak() {
 
   useEffect(() => {
     setStreak(getStreak());
-    
+
     // Listen for storage changes
     const handleStorage = () => {
       setStreak(getStreak());
     };
-    
+
     window.addEventListener('storage', handleStorage);
     return () => window.removeEventListener('storage', handleStorage);
   }, []);
@@ -156,7 +156,7 @@ export function AccuracyStreak() {
   };
 
   return (
-    <motion.div 
+    <motion.div
       className="accuracy-streak"
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
@@ -175,7 +175,7 @@ export function useReadingFeedback() {
   const [sectionFeedback, setSectionFeedback] = useState<Record<string, boolean>>({});
 
   const recordFeedback = (sectionId: string, resonates: boolean) => {
-    setSectionFeedback(prev => ({ ...prev, [sectionId]: resonates }));
+    setSectionFeedback((prev) => ({ ...prev, [sectionId]: resonates }));
     saveFeedback(sectionId, resonates);
   };
 

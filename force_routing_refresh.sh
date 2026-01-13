@@ -13,7 +13,7 @@ while [ $ATTEMPTS -lt $MAX_ATTEMPTS ]; do
     echo "Attempt $ATTEMPTS/$MAX_ATTEMPTS: $(date +%H:%M:%S)"
 
     # Make health check request
-    RESPONSE=$(curl -s -w "HTTPSTATUS:%{http_code}" https://astronumeric-backend-production.up.railway.app/health)
+    RESPONSE=$(curl -s -w "HTTPSTATUS:%{http_code}" https://astromeric-backend-production.up.railway.app/health)
     HTTP_CODE=$(echo $RESPONSE | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
 
     if [ "$HTTP_CODE" = "200" ]; then

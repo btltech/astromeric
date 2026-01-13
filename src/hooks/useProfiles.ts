@@ -32,7 +32,8 @@ export function useProfiles() {
   }, [token, setProfiles]);
 
   // Get the active profile (session or saved)
-  const selectedProfile = sessionProfile || profiles.find((p) => p.id === selectedProfileId) || null;
+  const selectedProfile =
+    sessionProfile || profiles.find((p) => p.id === selectedProfileId) || null;
 
   const fetchProfiles = useCallback(async () => {
     try {
@@ -108,12 +109,15 @@ export function useProfiles() {
   );
 
   // Clear session profile when switching to a saved profile
-  const selectProfile = useCallback((id: number | null) => {
-    if (id !== null && id > 0) {
-      setSessionProfile(null);
-    }
-    setSelectedProfileId(id);
-  }, [setSelectedProfileId, setSessionProfile]);
+  const selectProfile = useCallback(
+    (id: number | null) => {
+      if (id !== null && id > 0) {
+        setSessionProfile(null);
+      }
+      setSelectedProfileId(id);
+    },
+    [setSelectedProfileId, setSessionProfile]
+  );
 
   return {
     profiles,

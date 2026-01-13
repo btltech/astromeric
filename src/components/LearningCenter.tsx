@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  fetchLearningModules, 
-  fetchLearningModule, 
-  fetchCourse, 
+import {
+  fetchLearningModules,
+  fetchLearningModule,
+  fetchCourse,
   fetchLesson,
-  type LearningModule 
+  type LearningModule,
 } from '../api/client';
 
 interface CourseLesson {
@@ -20,7 +20,7 @@ interface Course {
   lessons: Record<string, CourseLesson>;
 }
 
-type ViewState = 
+type ViewState =
   | { type: 'modules' }
   | { type: 'module'; moduleId: string; data: Record<string, unknown> }
   | { type: 'course'; courseId: string; data: Course }
@@ -62,7 +62,7 @@ export function LearningCenter() {
   const openCourse = async (courseId: string) => {
     setLoading(true);
     try {
-      const data = await fetchCourse(courseId) as unknown as Course;
+      const data = (await fetchCourse(courseId)) as unknown as Course;
       setView({ type: 'course', courseId, data });
     } catch (err) {
       console.error('Failed to load course:', err);
@@ -74,7 +74,7 @@ export function LearningCenter() {
   const openLesson = async (courseId: string, lessonNumber: number) => {
     setLoading(true);
     try {
-      const data = await fetchLesson(courseId, lessonNumber) as unknown as CourseLesson;
+      const data = (await fetchLesson(courseId, lessonNumber)) as unknown as CourseLesson;
       setView({ type: 'lesson', courseId, lessonNumber, data });
     } catch (err) {
       console.error('Failed to load lesson:', err);
@@ -119,8 +119,8 @@ export function LearningCenter() {
 
         <div className="modules-grid">
           {modules.map((module) => (
-            <div 
-              key={module.id} 
+            <div
+              key={module.id}
               className="module-card"
               onClick={() => {
                 if (module.id === 'courses') {
@@ -173,9 +173,9 @@ export function LearningCenter() {
                 <h3 className="content-title">
                   {(item.symbol as string) || ''} {key}
                 </h3>
-                
+
                 {item.title && <h4 className="content-subtitle">{item.title as string}</h4>}
-                
+
                 {item.emotional_nature && (
                   <div className="content-section">
                     <span className="section-label">Emotional Nature</span>
@@ -256,17 +256,15 @@ export function LearningCenter() {
           {lessonKeys.map((key, index) => {
             const lesson = view.data.lessons[key];
             return (
-              <div 
-                key={key} 
+              <div
+                key={key}
                 className="lesson-item"
                 onClick={() => openLesson(view.courseId, index + 1)}
               >
                 <span className="lesson-number">{index + 1}</span>
                 <div className="lesson-info">
                   <h4 className="lesson-title">{lesson.title}</h4>
-                  <p className="lesson-preview">
-                    {lesson.content[0]?.substring(0, 80)}...
-                  </p>
+                  <p className="lesson-preview">{lesson.content[0]?.substring(0, 80)}...</p>
                 </div>
                 <span className="lesson-arrow">→</span>
               </div>
@@ -310,14 +308,14 @@ export function LearningCenter() {
 
         <div className="lesson-navigation">
           {view.lessonNumber > 1 && (
-            <button 
+            <button
               className="prev-lesson"
               onClick={() => openLesson(view.courseId, view.lessonNumber - 1)}
             >
               ← Previous Lesson
             </button>
           )}
-          <button 
+          <button
             className="next-lesson"
             onClick={() => openLesson(view.courseId, view.lessonNumber + 1)}
           >

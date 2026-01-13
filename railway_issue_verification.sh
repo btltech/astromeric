@@ -14,11 +14,11 @@ echo ""
 echo "🔍 EVIDENCE THAT EDGE NETWORK IS BROKEN:"
 echo "----------------------------------------"
 echo "HTTP Response Headers:"
-curl -s -I https://astronumeric-backend-production.up.railway.app/health | grep -E "HTTP|x-railway|x-request-id"
+curl -s -I https://astromeric-backend-production.up.railway.app/health | grep -E "HTTP|x-railway|x-request-id"
 echo ""
 
 echo "Response Body:"
-curl -s https://astronumeric-backend-production.up.railway.app/health
+curl -s https://astromeric-backend-production.up.railway.app/health
 echo ""
 
 echo "🔍 CONFIGURATION VERIFICATION:"

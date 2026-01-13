@@ -10,7 +10,13 @@ import { FortuneForm } from '../components/FortuneForm';
 
 // Mock LocationAutocomplete since it has external dependencies
 vi.mock('../components/LocationAutocomplete', () => ({
-  LocationAutocomplete: ({ onSelect, placeholder }: { onSelect: (loc: unknown) => void; placeholder: string }) => (
+  LocationAutocomplete: ({
+    onSelect,
+    placeholder,
+  }: {
+    onSelect: (loc: unknown) => void;
+    placeholder: string;
+  }) => (
     <input
       data-testid="location-autocomplete"
       placeholder={placeholder}
@@ -52,7 +58,7 @@ describe('FortuneForm', () => {
     // Fill date but leave name empty (simulate bypassing HTML5 validation)
     const nameInput = screen.getByLabelText(/full name/i);
     const dateInput = screen.getByLabelText(/date of birth/i);
-    
+
     // Type a space then delete to trigger validation without HTML5 required blocking
     await user.type(nameInput, ' ');
     await user.clear(nameInput);
@@ -73,7 +79,7 @@ describe('FortuneForm', () => {
 
     // Fill form with future date
     await user.type(screen.getByLabelText(/full name/i), 'John Doe');
-    
+
     // Set a future date (must clear first since date inputs can be tricky)
     const dateInput = screen.getByLabelText(/date of birth/i);
     await user.clear(dateInput);
@@ -235,8 +241,8 @@ describe('Toast System', () => {
     // Check icons exist within toast-icon spans
     const iconSpans = document.querySelectorAll('.toast-icon');
     expect(iconSpans.length).toBe(4);
-    
-    const iconTexts = Array.from(iconSpans).map(el => el.textContent);
+
+    const iconTexts = Array.from(iconSpans).map((el) => el.textContent);
     expect(iconTexts).toContain('✓');
     expect(iconTexts).toContain('✕');
     expect(iconTexts).toContain('ℹ');
@@ -252,7 +258,7 @@ describe('Toast System', () => {
     };
 
     render(<ToastContainer toasts={[testToast]} onDismiss={mockDismiss} />);
-    
+
     const closeButton = screen.getByLabelText('Dismiss notification');
     fireEvent.click(closeButton);
 

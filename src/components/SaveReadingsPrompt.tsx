@@ -34,7 +34,9 @@ export function SaveReadingsPrompt({ isOpen, onClose }: SaveReadingsPromptProps)
         exit={{ scale: 0.9, y: 20 }}
         onClick={(e) => e.stopPropagation()}
       >
-        <button className="modal-close" onClick={onClose} aria-label="Close">✕</button>
+        <button className="modal-close" onClick={onClose} aria-label="Close">
+          ✕
+        </button>
 
         <div className="modal-content">
           <motion.div
@@ -46,8 +48,13 @@ export function SaveReadingsPrompt({ isOpen, onClose }: SaveReadingsPromptProps)
           </motion.div>
 
           <h2>{t('upsell.title', 'Save Your Readings')}</h2>
-          
-          <p>{t('upsell.subtitle', 'You\'ve created 3 readings! Sign up to save them and get personalized insights.')}</p>
+
+          <p>
+            {t(
+              'upsell.subtitle',
+              "You've created 3 readings! Sign up to save them and get personalized insights."
+            )}
+          </p>
 
           <ul className="benefits">
             <li>💾 {t('upsell.benefit1', 'Save all your readings')}</li>
@@ -65,7 +72,9 @@ export function SaveReadingsPrompt({ isOpen, onClose }: SaveReadingsPromptProps)
             </button>
           </div>
 
-          <p className="modal-hint">{t('upsell.hint', 'You can always save your readings later')}</p>
+          <p className="modal-hint">
+            {t('upsell.hint', 'You can always save your readings later')}
+          </p>
         </div>
       </motion.div>
     </motion.div>

@@ -1,23 +1,63 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { motion, AnimatePresence } from 'framer-motion';
 import type { NewProfileForm } from '../types';
 import { LocationAutocomplete } from './LocationAutocomplete';
 
 interface Props {
   onSubmit: (data: NewProfileForm) => void;
   isLoading: boolean;
+  showSaveOption?: boolean;
 }
 
-export function FortuneForm({ onSubmit, isLoading }: Props) {
+const slideVariants = {
+  enter: (direction: number) => ({
+    x: direction > 0 ? 1000 : -1000,
+    opacity: 0,
+  }),
+  center: {
+    zIndex: 1,
+    x: 0,
+    opacity: 1,
+  },
+  exit: (direction: number) => ({
+    zIndex: 0,
+    x: direction < 0 ? 1000 : -1000,
+    opacity: 0,
+  }),
+};
+
+export function FortuneForm({ onSubmit, isLoading, showSaveOption = true }: Props) {
   const { t } = useTranslation();
+  const [step, setStep] = useState(1);
+  const [direction, setDirection] = useState(0);
   const [formData, setFormData] = useState<NewProfileForm>({
     name: '',
     date_of_birth: '',
     time_of_birth: '',
     place_of_birth: '',
-    saveProfile: false, // Default: do NOT save profile
+    saveProfile: false,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const nextStep = () => {
+    if (step === 1 && !formData.name.trim()) {
+      setErrors({ name: t('form.errors.nameRequired') });
+      return;
+    }
+    if (step === 2 && !formData.date_of_birth) {
+      setErrors({ date_of_birth: t('form.errors.dobRequired') });
+      return;
+    }
+    setErrors({});
+    setDirection(1);
+    setStep((v) => v + 1);
+  };
+
+  const prevStep = () => {
+    setDirection(-1);
+    setStep((v) => v - 1);
+  };
 
   const handleLocationSelect = (location: {
     name: string;
@@ -34,114 +74,142 @@ export function FortuneForm({ onSubmit, isLoading }: Props) {
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const newErrors: Record<string, string> = {};
-    if (!formData.name.trim()) newErrors.name = t('form.errors.nameRequired');
-    if (!formData.date_of_birth) newErrors.date_of_birth = t('form.errors.dobRequired');
-    else {
-      const dob = new Date(formData.date_of_birth);
-      const today = new Date();
-      if (dob > today) newErrors.date_of_birth = t('form.errors.dobFuture');
-    }
-    setErrors(newErrors);
-    if (Object.keys(newErrors).length) return;
+  const handleSubmit = (e?: React.FormEvent) => {
+    e?.preventDefault();
     onSubmit(formData);
   };
 
   return (
-    <div className="card form-card-compact">
-      <h2 className="form-title">{t('form.title')}</h2>
-      <form onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label htmlFor="name">{t('form.fullName')}</label>
-          <input
-            id="name"
-            type="text"
-            required
-            placeholder={t('form.fullNamePlaceholder')}
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            aria-invalid={!!errors.name}
-            aria-describedby={errors.name ? "name-error" : undefined}
+    <div className="card wizard-card">
+      <div className="wizard-progress">
+        {[1, 2, 3, 4].map((s) => (
+          <div
+            key={s}
+            className={`wizard-dot ${s === step ? 'active' : ''} ${s < step ? 'completed' : ''}`}
           />
-          {errors.name && <div id="name-error" className="error-text" role="alert">{errors.name}</div>}
-        </div>
-        <div className="form-row-2col">
-          <div className="form-group">
-            <label htmlFor="date_of_birth">{t('form.dateOfBirth')}</label>
-            <input
-              id="date_of_birth"
-              type="date"
-              required
-              value={formData.date_of_birth}
-              onChange={(e) => setFormData({ ...formData, date_of_birth: e.target.value })}
-              aria-invalid={!!errors.date_of_birth}
-              aria-describedby={errors.date_of_birth ? "dob-error" : "dob-hint"}
-            />
-            <span id="dob-hint" className="field-hint">{t('form.dateOfBirthHint')}</span>
-            {errors.date_of_birth && <div id="dob-error" className="error-text" role="alert">{errors.date_of_birth}</div>}
-          </div>
-          <div className="form-group">
-            <label htmlFor="time_of_birth">{t('form.timeOfBirth')} (recommended)</label>
-            <input
-              id="time_of_birth"
-              type="time"
-              value={formData.time_of_birth}
-              onChange={(e) => setFormData({ ...formData, time_of_birth: e.target.value })}
-              aria-describedby="tob-hint"
-            />
-            <span id="tob-hint" className="field-hint">
-              Birth time improves chart accuracy. Add location/timezone for best results.
-            </span>
-          </div>
-        </div>
-        <div className="form-group">
-          <label htmlFor="place_of_birth">{t('form.placeOfBirth')} (recommended)</label>
-          <div id="place_of_birth">
-            <LocationAutocomplete
-              onSelect={handleLocationSelect}
-              placeholder={t('form.searchCity')}
-              initialValue={formData.place_of_birth}
-            />
-          </div>
-          <span id="pob-hint" className="field-hint">
-            Location/timezone improve accuracy and timing. You can still generate a reading without them.
-          </span>
-          {formData.latitude && formData.longitude && (
-            <div className="geo-indicator">
-              📍 {formData.latitude.toFixed(4)}, {formData.longitude.toFixed(4)} •{' '}
-              {formData.timezone}
+        ))}
+      </div>
+
+      <AnimatePresence initial={false} custom={direction} mode="wait">
+        <motion.div
+          key={step}
+          custom={direction}
+          variants={slideVariants}
+          initial="enter"
+          animate="center"
+          exit="exit"
+          transition={{
+            x: { type: 'spring', stiffness: 300, damping: 30 },
+            opacity: { duration: 0.2 },
+          }}
+          className="wizard-content"
+        >
+          {step === 1 && (
+            <div className="step-container">
+              <h2>{t('wizard.step1.title', 'Welcome. What is your name?')}</h2>
+              <div className="form-group">
+                <input
+                  autoFocus
+                  type="text"
+                  placeholder={t('form.fullNamePlaceholder')}
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  onKeyDown={(e) => e.key === 'Enter' && nextStep()}
+                />
+                {errors.name && <p className="error-text">{errors.name}</p>}
+              </div>
             </div>
           )}
-        </div>
-        <div className="form-group save-profile-row">
-          <div className="save-profile-checkbox">
-            <input
-              type="checkbox"
-              id="saveProfile"
-              checked={formData.saveProfile || false}
-              onChange={(e) => setFormData({ ...formData, saveProfile: e.target.checked })}
-              className="save-checkbox"
-            />
-            <label htmlFor="saveProfile">
-              {t('form.saveProfile')}
-            </label>
-            <span className="info-tooltip" data-tooltip={t('form.saveProfileHint')}>ⓘ</span>
-          </div>
-          <span className="field-hint" id="saveprofile-hint">
-            {t('form.saveProfileHint')}
-          </span>
-        </div>
-        <div className="form-footer">
-          <p className="privacy-note">
-            {t('form.privacyNote')}
-          </p>
-          <button type="submit" className="btn-primary" disabled={isLoading}>
+
+          {step === 2 && (
+            <div className="step-container">
+              <h2>{t('wizard.step2.title', 'When were you born?')}</h2>
+              <div className="form-group">
+                <input
+                  type="date"
+                  value={formData.date_of_birth}
+                  onChange={(e) => setFormData({ ...formData, date_of_birth: e.target.value })}
+                  onKeyDown={(e) => e.key === 'Enter' && nextStep()}
+                />
+                {errors.date_of_birth && <p className="error-text">{errors.date_of_birth}</p>}
+              </div>
+              <div className="form-group">
+                <label>
+                  {t('form.timeOfBirth')} ({t('common.optional', 'optional')})
+                </label>
+                <input
+                  type="time"
+                  value={formData.time_of_birth}
+                  onChange={(e) => setFormData({ ...formData, time_of_birth: e.target.value })}
+                />
+              </div>
+            </div>
+          )}
+
+          {step === 3 && (
+            <div className="step-container">
+              <h2>{t('wizard.step3.title', 'Where were you born?')}</h2>
+              <div className="form-group">
+                <LocationAutocomplete
+                  onSelect={handleLocationSelect}
+                  placeholder={t('form.searchCity')}
+                  initialValue={formData.place_of_birth}
+                />
+                {formData.timezone && <p className="geo-indicator">📍 {formData.timezone}</p>}
+              </div>
+            </div>
+          )}
+
+          {step === 4 && (
+            <div className="step-container">
+              <h2>{t('wizard.step4.title', 'Ready for your destiny?')}</h2>
+              <p>{t('wizard.step4.text', 'Confirm your details and let the stars align.')}</p>
+              <div className="wizard-summary">
+                <p>
+                  <strong>{formData.name}</strong>
+                </p>
+                <p>
+                  {formData.date_of_birth} {formData.time_of_birth}
+                </p>
+                <p>{formData.place_of_birth}</p>
+              </div>
+              {showSaveOption && (
+                <div className="form-group save-profile-row">
+                  <input
+                    type="checkbox"
+                    id="saveProfile"
+                    checked={formData.saveProfile}
+                    onChange={(e) => setFormData({ ...formData, saveProfile: e.target.checked })}
+                  />
+                  <label htmlFor="saveProfile">{t('form.saveProfile')}</label>
+                </div>
+              )}
+            </div>
+          )}
+        </motion.div>
+      </AnimatePresence>
+
+      <div className="wizard-footer">
+        {step > 1 && (
+          <button className="btn-secondary" onClick={prevStep} disabled={isLoading}>
+            {t('common.back', 'Back')}
+          </button>
+        )}
+        {step < 4 ? (
+          <button className="btn-primary" onClick={nextStep} style={{ marginLeft: 'auto' }}>
+            {t('common.next', 'Next')}
+          </button>
+        ) : (
+          <button
+            className="btn-primary"
+            onClick={handleSubmit}
+            disabled={isLoading}
+            style={{ marginLeft: 'auto' }}
+          >
             {isLoading ? t('form.readingStars') : t('form.getPrediction')}
           </button>
-        </div>
-      </form>
+        )}
+      </div>
     </div>
   );
 }

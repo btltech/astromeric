@@ -1,0 +1,29 @@
+/* Cookie Policy specific styles (extends PrivacyPolicy.css) */
+@import './PrivacyPolicy.css';
+
+.policy-contact {
+  background: var(--accent);
+  background: linear-gradient(135deg, var(--accent), var(--primary));
+  color: white;
+}
+
+.policy-contact h2 {
+  color: white;
+  border-top-color: rgba(255, 255, 255, 0.2);
+}
+
+.policy-contact p {
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.policy-contact a {
+  color: white;
+  font-weight: 600;
+  text-decoration: underline;
+  border-bottom: 1px solid white;
+}
+
+.policy-contact a:hover {
+  opacity: 0.9;
+  text-decoration: none;
+}

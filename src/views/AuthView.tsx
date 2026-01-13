@@ -63,14 +63,10 @@ export function AuthView() {
     <motion.div className="card" {...fadeIn}>
       <h2>{mode === 'login' ? t('auth.signIn') : t('auth.createAccount')}</h2>
       <p className="section-subtitle mb-3">
-        {mode === 'login'
-          ? t('auth.signInSubtitle')
-          : t('auth.createSubtitle')}
+        {mode === 'login' ? t('auth.signInSubtitle') : t('auth.createSubtitle')}
       </p>
 
-      <div className="auth-benefit">
-        {t('auth.benefitText')}
-      </div>
+      <div className="auth-benefit">{t('auth.benefitText')}</div>
 
       <form onSubmit={handleSubmit}>
         <div className="form-group">
@@ -138,7 +134,11 @@ export function AuthView() {
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
         >
-          {loading ? t('common.loading') : mode === 'login' ? t('auth.signInButton') : t('auth.createAccount')}
+          {loading
+            ? t('common.loading')
+            : mode === 'login'
+            ? t('auth.signInButton')
+            : t('auth.createAccount')}
         </motion.button>
       </form>
 
@@ -165,7 +165,9 @@ export function AuthView() {
       </div>
 
       <div className="guest-section">
-        <div className="divider-text"><span>or</span></div>
+        <div className="divider-text">
+          <span>or</span>
+        </div>
         <motion.a
           href="/"
           className="btn-secondary guest-btn"

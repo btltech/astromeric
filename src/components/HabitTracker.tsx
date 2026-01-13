@@ -48,7 +48,9 @@ export function HabitTracker() {
   // Form state for creating habits
   const [newHabitName, setNewHabitName] = useState('');
   const [newHabitCategory, setNewHabitCategory] = useState('');
-  const [newHabitFrequency, setNewHabitFrequency] = useState<'daily' | 'weekly' | 'lunar_cycle'>('daily');
+  const [newHabitFrequency, setNewHabitFrequency] = useState<'daily' | 'weekly' | 'lunar_cycle'>(
+    'daily'
+  );
   const [newHabitDescription, setNewHabitDescription] = useState('');
   const [createSuccess, setCreateSuccess] = useState<string | null>(null);
 
@@ -73,14 +75,15 @@ export function HabitTracker() {
         }
 
         // Load demo habits from localStorage
-        const savedHabits = localStorage.getItem('astromeric_habits')
-          || localStorage.getItem('astronumeric_habits');
+        const savedHabits =
+          localStorage.getItem('astromeric_habits') || localStorage.getItem('astronumeric_habits');
         if (savedHabits) {
           setHabits(JSON.parse(savedHabits));
         }
 
-        const savedCompletions = localStorage.getItem('astromeric_completions')
-          || localStorage.getItem('astronumeric_completions');
+        const savedCompletions =
+          localStorage.getItem('astromeric_completions') ||
+          localStorage.getItem('astronumeric_completions');
         if (savedCompletions) {
           setCompletions(JSON.parse(savedCompletions));
         }
@@ -170,15 +173,11 @@ export function HabitTracker() {
 
   async function handleLogCompletion(habit: Habit) {
     const today = new Date().toISOString().split('T')[0];
-    const alreadyCompleted = completions.some(
-      (c) => c.habit_id === habit.id && c.date === today
-    );
+    const alreadyCompleted = completions.some((c) => c.habit_id === habit.id && c.date === today);
 
     if (alreadyCompleted) {
       // Remove completion
-      setCompletions((prev) =>
-        prev.filter((c) => !(c.habit_id === habit.id && c.date === today))
-      );
+      setCompletions((prev) => prev.filter((c) => !(c.habit_id === habit.id && c.date === today)));
     } else {
       // Add completion
       try {
@@ -408,9 +407,7 @@ export function HabitTracker() {
                 <span className="emoji">🌱</span>
                 <h3>No habits yet</h3>
                 <p>Create your first lunar-aligned habit to get started!</p>
-                <button onClick={() => setActiveTab('create')}>
-                  ➕ Create Habit
-                </button>
+                <button onClick={() => setActiveTab('create')}>➕ Create Habit</button>
               </div>
             ) : (
               <>
@@ -478,9 +475,7 @@ export function HabitTracker() {
               <div className="empty-state">
                 <span className="emoji">📋</span>
                 <h3>Your habit library is empty</h3>
-                <button onClick={() => setActiveTab('create')}>
-                  ➕ Create Your First Habit
-                </button>
+                <button onClick={() => setActiveTab('create')}>➕ Create Your First Habit</button>
               </div>
             ) : (
               <div className="habits-grid">
@@ -494,9 +489,7 @@ export function HabitTracker() {
                   return (
                     <div key={habit.id} className="habit-card">
                       <div className="card-header">
-                        <span className="category-emoji">
-                          {category?.emoji || '📌'}
-                        </span>
+                        <span className="category-emoji">{category?.emoji || '📌'}</span>
                         <button
                           className="delete-btn"
                           onClick={() => handleDeleteHabit(habit.id)}
@@ -507,16 +500,12 @@ export function HabitTracker() {
                       </div>
                       <h4>{habit.name}</h4>
                       <p className="category-name">{category?.name}</p>
-                      {habit.description && (
-                        <p className="description">{habit.description}</p>
-                      )}
+                      {habit.description && <p className="description">{habit.description}</p>}
                       <div className="habit-stats">
                         <span className="streak">
                           {streak.emoji} {streak.current} streak
                         </span>
-                        <span className="total">
-                          {totalCompletions} total
-                        </span>
+                        <span className="total">{totalCompletions} total</span>
                       </div>
                       <span className="frequency-badge">{habit.frequency}</span>
                     </div>
@@ -531,9 +520,7 @@ export function HabitTracker() {
         {activeTab === 'create' && (
           <div className="create-tab">
             <form onSubmit={handleCreateHabit} className="create-form">
-              {createSuccess && (
-                <div className="success-message">{createSuccess}</div>
-              )}
+              {createSuccess && <div className="success-message">{createSuccess}</div>}
 
               <div className="form-group">
                 <label htmlFor="habit-name">Habit Name</label>
@@ -569,9 +556,7 @@ export function HabitTracker() {
                   id="habit-frequency"
                   value={newHabitFrequency}
                   onChange={(e) =>
-                    setNewHabitFrequency(
-                      e.target.value as 'daily' | 'weekly' | 'lunar_cycle'
-                    )
+                    setNewHabitFrequency(e.target.value as 'daily' | 'weekly' | 'lunar_cycle')
                   }
                 >
                   <option value="daily">Daily</option>
@@ -609,9 +594,7 @@ export function HabitTracker() {
                     <span className="emoji">{cat.emoji}</span>
                     <h4>{cat.name}</h4>
                     <p>{cat.description}</p>
-                    <div className="best-phases">
-                      Best: {cat.best_phases.join(', ')}
-                    </div>
+                    <div className="best-phases">Best: {cat.best_phases.join(', ')}</div>
                   </div>
                 ))}
               </div>
@@ -654,9 +637,7 @@ export function HabitTracker() {
                   <h3>Completions by Moon Phase</h3>
                   <div className="phase-bars">
                     {MOON_PHASES.map((phase) => {
-                      const count = completions.filter(
-                        (c) => c.moon_phase === phase.key
-                      ).length;
+                      const count = completions.filter((c) => c.moon_phase === phase.key).length;
                       const maxCount = Math.max(
                         ...MOON_PHASES.map(
                           (p) => completions.filter((c) => c.moon_phase === p.key).length
@@ -669,10 +650,7 @@ export function HabitTracker() {
                         <div key={phase.key} className="phase-bar">
                           <span className="phase-emoji">{phase.emoji}</span>
                           <div className="bar-container">
-                            <div
-                              className="bar-fill"
-                              style={{ width: `${percentage}%` }}
-                            />
+                            <div className="bar-fill" style={{ width: `${percentage}%` }} />
                           </div>
                           <span className="count">{count}</span>
                         </div>

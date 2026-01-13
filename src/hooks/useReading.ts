@@ -91,9 +91,7 @@ export function useReading() {
             message.includes('NetworkError');
 
           setError(
-            isNetworkFailure
-              ? 'Connection lost. Please check your network and try again.'
-              : message
+            isNetworkFailure ? 'Connection lost. Please check your network and try again.' : message
           );
         }
         throw err; // Re-throw so the calling code knows it failed
@@ -101,7 +99,16 @@ export function useReading() {
         setLoading(false);
       }
     },
-    [allowCloudHistory, profiles, sessionProfile, selectedScope, setResult, setLoading, setError, token]
+    [
+      allowCloudHistory,
+      profiles,
+      sessionProfile,
+      selectedScope,
+      setResult,
+      setLoading,
+      setError,
+      token,
+    ]
   );
 
   return {

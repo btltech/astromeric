@@ -66,16 +66,10 @@ export function PWAPrompt() {
           >
             <span>🚀 A new version is available!</span>
             <div className="pwa-update-actions">
-              <button
-                className="pwa-update-dismiss"
-                onClick={() => setShowUpdateBanner(false)}
-              >
+              <button className="pwa-update-dismiss" onClick={() => setShowUpdateBanner(false)}>
                 Later
               </button>
-              <button
-                className="pwa-update-btn"
-                onClick={updateApp}
-              >
+              <button className="pwa-update-btn" onClick={updateApp}>
                 Update Now
               </button>
             </div>

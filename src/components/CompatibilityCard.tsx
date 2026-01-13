@@ -29,7 +29,8 @@ const getRedFlags = (data: CompatibilityResult): string[] => {
   const redFlags: string[] = [];
   const overallScore = Math.round(
     (Object.values(data.topic_scores).reduce((a, b) => a + b, 0) /
-      Object.values(data.topic_scores).length) * 10
+      Object.values(data.topic_scores).length) *
+      10
   );
 
   // Add red flags based on low scores
@@ -47,10 +48,18 @@ const getRedFlags = (data: CompatibilityResult): string[] => {
   }
 
   // Add specific element-based red flags
-  if (data.challenges.some(c => c.toLowerCase().includes('control') || c.toLowerCase().includes('power'))) {
+  if (
+    data.challenges.some(
+      (c) => c.toLowerCase().includes('control') || c.toLowerCase().includes('power')
+    )
+  ) {
     redFlags.push('Power dynamics may become an issue');
   }
-  if (data.challenges.some(c => c.toLowerCase().includes('trust') || c.toLowerCase().includes('jealous'))) {
+  if (
+    data.challenges.some(
+      (c) => c.toLowerCase().includes('trust') || c.toLowerCase().includes('jealous')
+    )
+  ) {
     redFlags.push('Trust issues may arise - prioritize transparency');
   }
 
@@ -74,7 +83,8 @@ export function CompatibilityCard({ data }: Props) {
   const [activeTab, setActiveTab] = useState<TabType>('overview');
 
   // Calculate overall score (0-100 scale)
-  const rawScore = Object.values(data.topic_scores).reduce((a, b) => a + b, 0) /
+  const rawScore =
+    Object.values(data.topic_scores).reduce((a, b) => a + b, 0) /
     Object.values(data.topic_scores).length;
   const overallScore = Math.min(Math.round(rawScore * 10), 100);
   const scoreColor = getScoreColor(overallScore);
@@ -90,8 +100,8 @@ export function CompatibilityCard({ data }: Props) {
           <span className="heart-icon">💕</span>
           <span className="person-name">{data.people[1].name}</span>
         </div>
-        
-        <div 
+
+        <div
           className="score-display"
           style={{ '--score-color': scoreColor } as React.CSSProperties}
         >
@@ -129,19 +139,19 @@ export function CompatibilityCard({ data }: Props) {
 
       {/* Tab Navigation */}
       <div className="compat-tabs">
-        <button 
+        <button
           className={`compat-tab ${activeTab === 'overview' ? 'active' : ''}`}
           onClick={() => setActiveTab('overview')}
         >
           Overview
         </button>
-        <button 
+        <button
           className={`compat-tab ${activeTab === 'details' ? 'active' : ''}`}
           onClick={() => setActiveTab('details')}
         >
           Detailed Scores
         </button>
-        <button 
+        <button
           className={`compat-tab ${activeTab === 'advice' ? 'active' : ''}`}
           onClick={() => setActiveTab('advice')}
         >
@@ -166,7 +176,8 @@ export function CompatibilityCard({ data }: Props) {
                 <span className="stat-emoji">🔢</span>
                 <span className="stat-label">Life Paths</span>
                 <span className="stat-value">
-                  {data.numerology.a.core_numbers.life_path.number} + {data.numerology.b.core_numbers.life_path.number}
+                  {data.numerology.a.core_numbers.life_path.number} +{' '}
+                  {data.numerology.b.core_numbers.life_path.number}
                 </span>
               </div>
             </div>
@@ -216,7 +227,7 @@ export function CompatibilityCard({ data }: Props) {
 
         {activeTab === 'details' && (
           <div className="detailed-scores">
-            {CATEGORIES.map(cat => {
+            {CATEGORIES.map((cat) => {
               const score = (data.topic_scores[cat.key] || 5) * 10;
               const catColor = getScoreColor(score);
               return (
@@ -224,19 +235,16 @@ export function CompatibilityCard({ data }: Props) {
                   <div className="category-header">
                     <span className="category-icon">{cat.icon}</span>
                     <span className="category-label">{cat.label}</span>
-                    <span 
-                      className="category-value"
-                      style={{ color: catColor }}
-                    >
+                    <span className="category-value" style={{ color: catColor }}>
                       {Math.round(score)}%
                     </span>
                   </div>
                   <div className="category-bar">
-                    <div 
+                    <div
                       className="category-fill"
-                      style={{ 
+                      style={{
                         width: `${score}%`,
-                        background: catColor
+                        background: catColor,
                       }}
                     />
                   </div>
@@ -288,7 +296,7 @@ export function CompatibilityCard({ data }: Props) {
             <div className="cosmic-timing">
               <h4>⏰ Best Times Together</h4>
               <p>
-                {overallScore >= 70 
+                {overallScore >= 70
                   ? 'Your connection flows naturally - any time together strengthens your bond.'
                   : 'Focus on quality over quantity. Plan intentional activities that play to your strengths.'}
               </p>
@@ -688,9 +696,18 @@ export function CompatibilityCard({ data }: Props) {
 // Helper function to get element from sign
 function getElement(sign: string): string {
   const elements: Record<string, string> = {
-    Aries: 'Fire', Taurus: 'Earth', Gemini: 'Air', Cancer: 'Water',
-    Leo: 'Fire', Virgo: 'Earth', Libra: 'Air', Scorpio: 'Water',
-    Sagittarius: 'Fire', Capricorn: 'Earth', Aquarius: 'Air', Pisces: 'Water',
+    Aries: 'Fire',
+    Taurus: 'Earth',
+    Gemini: 'Air',
+    Cancer: 'Water',
+    Leo: 'Fire',
+    Virgo: 'Earth',
+    Libra: 'Air',
+    Scorpio: 'Water',
+    Sagittarius: 'Fire',
+    Capricorn: 'Earth',
+    Aquarius: 'Air',
+    Pisces: 'Water',
   };
   return elements[sign] || 'Unknown';
 }
