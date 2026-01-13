@@ -24,6 +24,7 @@ export function ReadingView() {
   const { selectedProfile, createProfile } = useProfiles();
   const { selectedScope, result, setSelectedScope, setResult, getPrediction } = useReading();
   const { loading, allowCloudHistory, setAllowCloudHistory, token, updateStreak } = useStore();
+  const { shouldShowUpsellModal, closeUpsell, saveReading: saveAnonReading } = useAnonReadings();
 
   React.useEffect(() => {
     updateStreak();
@@ -37,11 +38,18 @@ export function ReadingView() {
 
     try {
       const data = await getPrediction(selectedProfile.id);
-      
+
       // Save to anon storage if not authenticated
       if (!token && data) {
         saveAnonReading({
-          scope: selectedScope as 'daily' | 'weekly' | 'monthly' | 'forecast' | 'compatibility' | 'natal' | 'year-ahead',
+          scope: selectedScope as
+            | 'daily'
+            | 'weekly'
+            | 'monthly'
+            | 'forecast'
+            | 'compatibility'
+            | 'natal'
+            | 'year-ahead',
           date: new Date().toISOString().split('T')[0],
           profile: {
             name: selectedProfile.name,
@@ -52,7 +60,7 @@ export function ReadingView() {
           content: data,
         });
       }
-      
+
       toast.success('Your cosmic reading is ready ✨');
     } catch (err) {
       const message =
