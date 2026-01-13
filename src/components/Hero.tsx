@@ -1,12 +1,9 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import './Hero.css';
 
 export function Hero() {
-  const { t } = useTranslation();
-
   return (
     <section className="hero">
       <motion.div
@@ -20,7 +17,8 @@ export function Hero() {
         </h1>
 
         <p className="hero-subtitle">
-          AI-powered astrology & numerology to unlock your celestial potential and navigate life's cosmic rhythms
+          AI-powered astrology & numerology to unlock your celestial potential and navigate
+          life&apos;s cosmic rhythms
         </p>
 
         <div className="hero-features">
@@ -69,9 +67,7 @@ export function Hero() {
           </Link>
         </motion.div>
 
-        <p className="hero-cta-text">
-          Free • No signup required • Instant results
-        </p>
+        <p className="hero-cta-text">Free • No signup required • Instant results</p>
       </motion.div>
 
       <motion.div

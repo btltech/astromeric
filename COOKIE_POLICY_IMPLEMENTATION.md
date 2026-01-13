@@ -13,6 +13,7 @@ This guide documents the implementation of GDPR/CCPA-compliant cookie policies a
 **Purpose**: Capture user consent for optional cookies on first visit
 
 **Features**:
+
 - Persistent storage in localStorage
 - Three cookie categories:
   - Essential (always enabled)
@@ -24,14 +25,16 @@ This guide documents the implementation of GDPR/CCPA-compliant cookie policies a
 - ARIA labels for accessibility
 
 **Usage**:
+
 ```tsx
 import { CookieConsent } from './components/CookieConsent';
 
 // Add to main layout (already done in App.tsx)
-<CookieConsent />
+<CookieConsent />;
 ```
 
 **Stored Data**:
+
 ```typescript
 // localStorage key: 'cookie-consent'
 {
@@ -42,6 +45,7 @@ import { CookieConsent } from './components/CookieConsent';
 ```
 
 **Integration with Analytics**:
+
 ```typescript
 // Check consent before loading analytics
 if (localStorage.getItem('cookie-consent')) {
@@ -59,6 +63,7 @@ if (localStorage.getItem('cookie-consent')) {
 **Purpose**: GDPR/CCPA-compliant privacy disclosure
 
 **Sections**:
+
 1. Introduction
 2. Information Collection
 3. How We Use Information
@@ -68,6 +73,7 @@ if (localStorage.getItem('cookie-consent')) {
 7. Contact Information
 
 **Compliance**:
+
 - ✅ GDPR Article 13/14 requirements
 - ✅ CCPA disclosure requirements
 - ✅ User rights clearly stated
@@ -84,6 +90,7 @@ if (localStorage.getItem('cookie-consent')) {
 **Purpose**: Detailed disclosure of all cookies and tracking technologies
 
 **Sections**:
+
 1. What Are Cookies?
 2. Cookies We Use (3 tables: Essential, Analytics, Marketing)
 3. Managing Cookies (browser settings, consent banner)
@@ -92,6 +99,7 @@ if (localStorage.getItem('cookie-consent')) {
 6. Contact Information
 
 **Features**:
+
 - Detailed cookie reference tables
 - Links to third-party privacy policies
 - Browser-specific instructions
@@ -108,15 +116,18 @@ if (localStorage.getItem('cookie-consent')) {
 ### 2.1 Cookie Consent Styling (`src/components/CookieConsent.css`)
 
 **Key Classes**:
+
 ```css
 .cookie-consent-overlay      /* Backdrop with blur */
+/* Backdrop with blur */
 .cookie-consent-modal        /* Modal container */
 .cookie-section              /* Individual cookie category */
 .cookie-toggle               /* Checkbox + label */
-.cookie-actions              /* Action buttons */
+.cookie-actions; /* Action buttons */
 ```
 
 **Accessibility Features**:
+
 - Minimum touch target size: 2.5rem × 2.5rem
 - Focus indicators: 2px solid color
 - Color contrast: 4.5:1 minimum (WCAG AA)
@@ -126,16 +137,19 @@ if (localStorage.getItem('cookie-consent')) {
 ### 2.2 Policy Pages Styling (`src/views/PrivacyPolicy.css`)
 
 **Key Classes**:
+
 ```css
 .privacy-policy-container    /* Page container */
+/* Page container */
 .policy-header               /* Title section */
 .policy-toc                  /* Table of contents */
 .policy-content              /* Main content area */
 .cookie-table                /* Data tables */
-.policy-footer               /* Footer section */
+.policy-footer; /* Footer section */
 ```
 
 **Features**:
+
 - Semantic heading hierarchy
 - Readable line-height (1.5-1.6)
 - Responsive columns for TOC
@@ -149,6 +163,7 @@ if (localStorage.getItem('cookie-consent')) {
 ### 3.1 Color Contrast
 
 **All themes tested and verified**:
+
 - Cosmic Violet: 7.2:1 (Primary on White) ✅ AAA
 - Ocean Depths: 8.4:1 (Primary on White) ✅ AAA
 - Midnight Coral: 5.9:1 (Primary on White) ✅ AA
@@ -157,6 +172,7 @@ if (localStorage.getItem('cookie-consent')) {
 ### 3.2 Typography
 
 **Font Sizes**:
+
 - H1: 2.5rem (40px) - Heading
 - H2: 1.75rem (28px) - Section title
 - H3: 1.25rem (20px) - Subsection
@@ -169,12 +185,14 @@ if (localStorage.getItem('cookie-consent')) {
 ### 3.3 Keyboard Navigation
 
 **Supported Keys**:
+
 - `Tab` / `Shift+Tab`: Navigate between elements
 - `Enter` / `Space`: Activate buttons
 - `Escape`: Close modals/cookie banner
 - `Arrow Keys`: Navigate menus/tabs
 
 **Implementation**:
+
 ```tsx
 <button
   onClick={handleAcceptAll}
@@ -188,6 +206,7 @@ if (localStorage.getItem('cookie-consent')) {
 ### 3.4 Screen Reader Support
 
 **ARIA Labels**:
+
 ```tsx
 // Action buttons
 aria-label="Accept all cookies"
@@ -204,14 +223,19 @@ aria-selected={current} // Active tab
 ```
 
 **Semantic HTML**:
+
 ```html
 <header>Navigation</header>
 <main id="main-content">Content</main>
 <footer>Footer</footer>
 
 <table>
-  <thead>Headers</thead>
-  <tbody>Data</tbody>
+  <thead>
+    Headers
+  </thead>
+  <tbody>
+    Data
+  </tbody>
 </table>
 
 <nav>Links</nav>
@@ -221,6 +245,7 @@ aria-selected={current} // Active tab
 ### 3.5 Motion & Animation
 
 **Reduced Motion Support**:
+
 ```css
 @media (prefers-reduced-motion: reduce) {
   .cookie-consent-modal {
@@ -235,6 +260,7 @@ aria-selected={current} // Active tab
 ### 3.6 Focus Indicators
 
 **Visible Focus**:
+
 ```css
 button:focus-visible {
   outline: 2px solid var(--primary);
@@ -257,6 +283,7 @@ a:focus-visible {
 ### Step 1: Import Components
 
 Already done in `src/App.tsx`:
+
 ```tsx
 import { CookieConsent } from './components/CookieConsent';
 import { PrivacyPolicy } from './views/PrivacyPolicy';
@@ -266,6 +293,7 @@ import { CookiePolicy } from './views/CookiePolicy';
 ### Step 2: Add Routes
 
 Already done in `App.tsx`:
+
 ```tsx
 <Route path="/privacy-policy" element={<PrivacyPolicy />} />
 <Route path="/cookie-policy" element={<CookiePolicy />} />
@@ -274,6 +302,7 @@ Already done in `App.tsx`:
 ### Step 3: Add Banner to Layout
 
 Already done in `App.tsx`:
+
 ```tsx
 <Layout>
   {/* ... other components */}
@@ -284,6 +313,7 @@ Already done in `App.tsx`:
 ### Step 4: Add Footer Links (Optional)
 
 Add links to your footer:
+
 ```tsx
 <footer>
   <a href="/privacy-policy">Privacy Policy</a>
@@ -333,22 +363,26 @@ Add links to your footer:
 ### 6.1 Manual Testing
 
 **Keyboard Navigation**:
+
 1. Press `Tab` to navigate through all interactive elements
 2. Verify focus indicators are visible (2px outline)
 3. Press `Enter/Space` to activate buttons
 4. Press `Escape` to close cookie banner
 
 **Color Contrast**:
+
 1. Use WebAIM Contrast Checker (https://webaim.org/resources/contrastchecker/)
 2. Verify all text meets 4.5:1 ratio
 3. Test with color blindness simulator
 
 **Screen Reader** (macOS):
+
 1. Enable VoiceOver: `Cmd + F5`
 2. Navigate with `VO + Arrow Keys`
 3. Read descriptions with `VO + U`
 
 **Mobile Testing**:
+
 1. Test on iPhone with VoiceOver
 2. Test on Android with TalkBack
 3. Verify touch targets are adequate (>44px)
@@ -356,11 +390,13 @@ Add links to your footer:
 ### 6.2 Automated Testing
 
 **Lighthouse Audit** (Chrome DevTools):
+
 1. Open DevTools → Lighthouse
 2. Run accessibility audit
 3. Verify score ≥ 90
 
 **axe DevTools** (Browser Extension):
+
 1. Install axe DevTools
 2. Run scan on each page
 3. Fix any violations
@@ -391,6 +427,7 @@ Add links to your footer:
 ### 8.1 Updating Cookie Definitions
 
 Edit `src/views/CookiePolicy.tsx`:
+
 ```tsx
 <table className="cookie-table">
   <thead>
@@ -413,6 +450,7 @@ Edit `src/views/CookiePolicy.tsx`:
 ### 8.2 Updating Privacy Policy
 
 Edit `src/views/PrivacyPolicy.tsx`:
+
 1. Update last-modified date
 2. Add new data categories to Section 2
 3. Update user rights if applicable
@@ -424,6 +462,7 @@ Edit `src/views/PrivacyPolicy.tsx`:
 2. Update `CookieConsent.tsx` if new category needed
 3. Update `CookiePolicy.tsx` with cookie details
 4. Implement conditional loading:
+
 ```typescript
 if (preferences.analytics) {
   loadNewAnalyticsTool();
@@ -437,6 +476,7 @@ if (preferences.analytics) {
 ### Issue: Cookie banner not showing on second visit
 
 **Solution**: Check localStorage. The banner only shows if `cookie-consent` key is absent:
+
 ```javascript
 localStorage.removeItem('cookie-consent'); // Reset consent
 ```
@@ -444,6 +484,7 @@ localStorage.removeItem('cookie-consent'); // Reset consent
 ### Issue: Focus not visible on buttons
 
 **Solution**: Ensure CSS includes:
+
 ```css
 button:focus-visible {
   outline: 2px solid var(--primary);
@@ -454,6 +495,7 @@ button:focus-visible {
 ### Issue: Screen reader not reading button labels
 
 **Solution**: Add `aria-label` to all buttons:
+
 ```tsx
 <button aria-label="Accept all cookies">Accept All</button>
 ```

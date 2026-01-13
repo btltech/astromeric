@@ -56,7 +56,9 @@ class APIStatus(BaseModel):
 # ============================================================================
 
 
-@router.api_route("/health", methods=["GET", "HEAD"], response_model=ApiResponse[HealthStatus])
+@router.api_route(
+    "/health", methods=["GET", "HEAD"], response_model=ApiResponse[HealthStatus]
+)
 async def health_check(request: Request) -> ApiResponse[HealthStatus]:
     """
     Check system health status.

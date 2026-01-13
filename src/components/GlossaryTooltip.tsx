@@ -42,8 +42,6 @@ export function GlossaryTooltip({
 
     // Determine horizontal position
     const tooltipWidth = 280;
-    const spaceRight = viewportWidth - rect.left;
-    const spaceLeft = rect.right;
 
     const newPosition: TooltipPosition = { transformOrigin: 'bottom center' };
 

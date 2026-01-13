@@ -86,7 +86,7 @@ python -m uvicorn backend.app.main:app --host 0.0.0.0 --port 8000 --reload
 1. Push repo to GitHub.
 2. Create new Railway service → Deploy from repo.
 3. Set start command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`.
-4. **Redis Setup**: 
+4. **Redis Setup**:
    - Add a Redis database to your Railway project
    - Copy the Redis URL from Railway dashboard
    - Set environment variables: `REDIS_URL` and `FUSION_CACHE_TTL=3600`

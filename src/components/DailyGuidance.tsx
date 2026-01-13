@@ -214,7 +214,7 @@ type GuidanceTab = 'embrace' | 'avoid';
 
 export function DailyGuidance({ guidance, scope = 'daily' }: Props) {
   const { avoid, embrace, retrogrades, void_of_course_moon, current_planetary_hour } = guidance;
-  const { title, period } = getScopeLabel(scope);
+  const { title } = getScopeLabel(scope);
   const [activeTab, setActiveTab] = useState<GuidanceTab>('embrace');
 
   // Count alerts for badge

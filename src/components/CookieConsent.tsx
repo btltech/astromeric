@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import './CookieConsent.css';
 
 export function CookieConsent() {
-  const { t } = useTranslation();
   const [isVisible, setIsVisible] = useState(false);
   const [preferences, setPreferences] = useState({
     essential: true, // Always required
@@ -65,7 +63,7 @@ export function CookieConsent() {
     // Google Analytics integration (placeholder)
     if (window.gtag) {
       window.gtag('consent', 'update', {
-        'analytics_storage': 'granted'
+        analytics_storage: 'granted',
       });
     }
   };

@@ -30,7 +30,7 @@ else:
         pool_size=10,
         max_overflow=20,
         pool_pre_ping=True,  # Verify connections before use
-        echo=False
+        echo=False,
     )
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
@@ -48,11 +48,17 @@ class User(Base):
     is_active = Column(Boolean, default=True)
     is_paid = Column(Boolean, default=False)  # Premium subscription status
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
-    
+
     # Notification preferences
-    alert_mercury_retrograde = Column(Boolean, default=True)  # Receive retrograde alerts
-    alert_frequency = Column(String(20), default="every_retrograde")  # "every_retrograde", "once_per_year", "weekly_digest", "none"
-    last_retrograde_alert = Column(DateTime, nullable=True)  # Timestamp of last alert sent
+    alert_mercury_retrograde = Column(
+        Boolean, default=True
+    )  # Receive retrograde alerts
+    alert_frequency = Column(
+        String(20), default="every_retrograde"
+    )  # "every_retrograde", "once_per_year", "weekly_digest", "none"
+    last_retrograde_alert = Column(
+        DateTime, nullable=True
+    )  # Timestamp of last alert sent
 
     # Relationship to profiles
     profiles = relationship("Profile", back_populates="owner")
@@ -80,9 +86,9 @@ class Profile(Base):
 
     # Database indexes for performance
     __table_args__ = (
-        Index('idx_profile_user_created', 'user_id', 'created_at'),
-        Index('idx_profile_date_of_birth', 'date_of_birth'),
-        Index('idx_profile_name', 'name'),
+        Index("idx_profile_user_created", "user_id", "created_at"),
+        Index("idx_profile_date_of_birth", "date_of_birth"),
+        Index("idx_profile_name", "name"),
     )
 
 
@@ -102,8 +108,8 @@ class Reading(Base):
 
     # Database indexes for performance
     __table_args__ = (
-        Index('idx_reading_profile_scope_date', 'profile_id', 'scope', 'date'),
-        Index('idx_reading_created_at', 'created_at'),
+        Index("idx_reading_profile_scope_date", "profile_id", "scope", "date"),
+        Index("idx_reading_created_at", "created_at"),
     )
 
 

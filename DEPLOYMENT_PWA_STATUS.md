@@ -6,10 +6,12 @@
 
 ## 📦 DEPLOYMENT STATUS
 
-### Backend (FastAPI on Railway) 
+### Backend (FastAPI on Railway)
+
 **Status**: ✅ **DEPLOYED**
 
 **Details**:
+
 - **Service**: astromeric-backend
 - **Platform**: Railway
 - **Environment**: Production
@@ -17,6 +19,7 @@
 - **Health Check**: `/health` endpoint
 
 **Configuration** (railway.json):
+
 - Builder: Dockerfile
 - Context: Root directory
 - Restart Policy: ON_FAILURE (max 5 retries)
@@ -25,6 +28,7 @@
 - Log Level: info
 
 **Environment Variables Set**:
+
 - ✅ `CSP_SCRIPT_SRC` - Content Security Policy scripts
 - ✅ `CSP_STYLE_SRC` - Content Security Policy styles
 - ✅ `CSP_FONT_SRC` - Content Security Policy fonts
@@ -32,10 +36,12 @@
 - ✅ `CSP_IMG_SRC` - Content Security Policy images
 
 **Latest Build**: Initiated with `railway up --detach`
+
 - Status: Building/Built
 - Project URL: https://railway.com/project/a6ce0043-3a3e-4339-99dd-f912f26c3b16
 
 **Backend API Endpoint**:
+
 ```
 https://astromeric-backend-production.up.railway.app
 ```
@@ -43,15 +49,18 @@ https://astromeric-backend-production.up.railway.app
 ---
 
 ### Frontend (React + Vite on Cloudflare Pages)
+
 **Status**: ✅ **CONFIGURED & READY TO DEPLOY**
 
 **Details**:
+
 - **Platform**: Cloudflare Pages
 - **Build Tool**: Vite
 - **Output Directory**: `dist`
 - **Framework**: React + TypeScript
 
 **Configuration** (wrangler.toml):
+
 ```toml
 name = "astromeric"
 pages_build_output_dir = "dist"
@@ -62,16 +71,19 @@ VITE_API_URL = "https://astromeric-backend-production.up.railway.app"
 ```
 
 **Deployment Method**:
+
 ```bash
 wrangler publish
 ```
 
 **Build Command**:
+
 ```bash
 npm run build
 ```
 
-**Status**: 
+**Status**:
+
 - ⏳ Ready for deployment (code built, not yet published to Cloudflare)
 - All environment variables configured
 - Backend API endpoint configured in wrangler.toml
@@ -80,10 +92,10 @@ npm run build
 
 ## 🌐 Current URLs
 
-| Service | URL | Status |
-|---------|-----|--------|
-| Backend API | https://astromeric-backend-production.up.railway.app | ✅ Live |
-| Frontend | (awaiting Cloudflare deployment) | ⏳ Ready |
+| Service           | URL                                                              | Status    |
+| ----------------- | ---------------------------------------------------------------- | --------- |
+| Backend API       | https://astromeric-backend-production.up.railway.app             | ✅ Live   |
+| Frontend          | (awaiting Cloudflare deployment)                                 | ⏳ Ready  |
 | Project Dashboard | https://railway.com/project/a6ce0043-3a3e-4339-99dd-f912f26c3b16 | ✅ Active |
 
 ---
@@ -93,6 +105,7 @@ npm run build
 ### ✅ Implementation Complete
 
 **Files**:
+
 - ✅ `public/manifest.json` (86 lines)
 - ✅ `public/sw.js` (Service Worker, 99 lines)
 - ✅ `public/offline.html`
@@ -103,6 +116,7 @@ npm run build
 ### 📋 PWA Features Implemented
 
 #### 1. **Web App Manifest** (manifest.json)
+
 ```json
 {
   "name": "Astronumeric",
@@ -121,10 +135,13 @@ npm run build
 **Status**: ✅ Fully configured with maskable icons
 
 #### 2. **Service Worker** (sw.js)
+
 **Caching Strategy**: Stale-While-Revalidate
 
 **Features Implemented**:
+
 - ✅ **Install Phase**: Pre-caches static assets
+
   - Root path `/`
   - index.html
   - manifest.json
@@ -133,16 +150,19 @@ npm run build
   - favicon.svg
 
 - ✅ **Activate Phase**: Cleans up old caches
+
   - Removes outdated cache versions
   - Activates immediately
 
 - ✅ **Fetch Phase**: Network-first with fallback
+
   - Serves cached content if available
   - Fetches fresh content from network
   - Updates cache with new responses
   - Falls back to offline.html if offline
 
-- ✅ **Push Notifications**: 
+- ✅ **Push Notifications**:
+
   - Listens for push events
   - Shows native notifications
   - Custom notification data
@@ -155,7 +175,9 @@ npm run build
 **Cache Name**: `astronumeric-cache-v1`
 
 #### 3. **Install Prompt** (PWAPrompt.tsx)
+
 **Features**:
+
 - ✅ Detects if app is installable
 - ✅ Shows "Add to Home Screen" prompt
 - ✅ Install button with async installation
@@ -164,13 +186,16 @@ npm run build
 - ✅ Smooth animations (Framer Motion)
 
 **UI Elements**:
+
 - ✨ Emoji icon
 - Strong title text
 - Subtext description
 - "Not now" / "Install" buttons
 
 #### 4. **Update Prompt** (PWAPrompt.tsx)
+
 **Features**:
+
 - ✅ Detects service worker updates
 - ✅ Shows update available banner
 - ✅ "Reload" button to apply update
@@ -178,7 +203,9 @@ npm run build
 - ✅ Non-intrusive toast style
 
 #### 5. **Offline Support** (sw.js + offline.html)
+
 **Features**:
+
 - ✅ Offline detection
 - ✅ Offline page fallback
 - ✅ Graceful error handling
@@ -186,7 +213,9 @@ npm run build
 - ✅ Offline HTML page
 
 #### 6. **Push Notification Integration**
+
 **Features**:
+
 - ✅ Push event listener
 - ✅ Custom notification titles & bodies
 - ✅ Icon and badge support
@@ -210,19 +239,20 @@ npm run build
 
 ### 📊 PWA Lighthouse Scores (Expected)
 
-| Metric | Score | Status |
-|--------|-------|--------|
-| PWA Installable | ✅ Yes | Ready |
-| Service Worker | ✅ Yes | Registered |
-| Offline Support | ✅ Yes | Implemented |
-| Icon Support | ✅ Yes | Multiple sizes |
-| Manifest | ✅ Valid | Configured |
+| Metric          | Score    | Status         |
+| --------------- | -------- | -------------- |
+| PWA Installable | ✅ Yes   | Ready          |
+| Service Worker  | ✅ Yes   | Registered     |
+| Offline Support | ✅ Yes   | Implemented    |
+| Icon Support    | ✅ Yes   | Multiple sizes |
+| Manifest        | ✅ Valid | Configured     |
 
 ---
 
 ## 🔧 NEXT STEPS TO COMPLETE DEPLOYMENT
 
 ### Step 1: Deploy Frontend to Cloudflare Pages
+
 ```bash
 cd /Users/mobolaji/Downloads/astromeric
 npm run build
@@ -232,6 +262,7 @@ wrangler publish
 **Expected**: ~5-10 minutes
 
 ### Step 2: Verify Both Services Are Running
+
 ```bash
 # Check backend
 curl https://astromeric-backend-production.up.railway.app/health
@@ -241,24 +272,29 @@ curl https://astromeric.pages.dev  # or your custom domain
 ```
 
 ### Step 3: Test PWA Features
+
 1. **Install on Android**:
+
    - Open app in Chrome
    - Tap menu → "Install app"
    - Confirm installation
 
 2. **Install on iOS** (PWA):
+
    - Open Safari
    - Tap Share → "Add to Home Screen"
    - Tap Add
    - Launch from home screen
 
 3. **Test Offline**:
+
    - Install app
    - Go offline (airplane mode)
    - Open app
    - Should display offline page if navigating to unknown routes
 
 4. **Test Updates**:
+
    - Push new service worker version
    - App should show update prompt
    - Click "Reload" to apply update
@@ -269,6 +305,7 @@ curl https://astromeric.pages.dev  # or your custom domain
    - Should show native OS notification
 
 ### Step 4: Test Cookie Consent (Already Implemented)
+
 - ✅ Cookie banner appears on first visit
 - ✅ Routes `/privacy-policy` and `/cookie-policy` work
 - ✅ Preferences save to localStorage
@@ -278,18 +315,21 @@ curl https://astromeric.pages.dev  # or your custom domain
 ## 📈 PERFORMANCE METRICS
 
 ### Backend (Railway)
+
 - **Cold Start**: ~5-10 seconds (first request)
 - **Warm Requests**: <100ms
 - **Health Check**: Every 60 seconds
 - **Restart Policy**: Automatic on failure
 
 ### Frontend (Expected on Cloudflare Pages)
+
 - **Build Time**: ~2-3 minutes
 - **Page Load**: <1 second (cached)
 - **Time to Interactive**: <2 seconds
 - **Cache**: Stale-While-Revalidate (background updates)
 
 ### Service Worker
+
 - **Install**: ~500ms-1s
 - **Activation**: <100ms
 - **Fetch intercept**: <50ms overhead
@@ -299,6 +339,7 @@ curl https://astromeric.pages.dev  # or your custom domain
 ## 🔐 SECURITY STATUS
 
 ### Backend (Railway)
+
 - ✅ Environment variables secured
 - ✅ CSP headers configured (5 directives)
 - ✅ HTTPS enforced
@@ -306,6 +347,7 @@ curl https://astromeric.pages.dev  # or your custom domain
 - ✅ Automatic restarts on failure
 
 ### Frontend (Cloudflare Pages)
+
 - ✅ HTTPS by default
 - ✅ DDoS protection
 - ✅ WAF (Web Application Firewall)
@@ -313,6 +355,7 @@ curl https://astromeric.pages.dev  # or your custom domain
 - ✅ Caching for static assets
 
 ### PWA
+
 - ✅ Service Worker signed by browser
 - ✅ Push notifications require user consent
 - ✅ Offline mode gracefully degrades
@@ -323,6 +366,7 @@ curl https://astromeric.pages.dev  # or your custom domain
 ## 📋 DEPLOYMENT CHECKLIST
 
 ### Pre-Deployment
+
 - [ ] Backend is running on Railway (✅ Done)
 - [ ] Frontend is built locally (`npm run build`)
 - [ ] Environment variables are set (✅ Done for backend)
@@ -330,6 +374,7 @@ curl https://astromeric.pages.dev  # or your custom domain
 - [ ] Cloudflare Pages project is created
 
 ### Deployment
+
 - [ ] Run `wrangler publish` to deploy frontend
 - [ ] Verify frontend loads at https://astromeric.pages.dev
 - [ ] Test API connectivity (backend ↔ frontend)
@@ -337,6 +382,7 @@ curl https://astromeric.pages.dev  # or your custom domain
 - [ ] Verify service worker registration
 
 ### Post-Deployment
+
 - [ ] Monitor Railway dashboard for errors
 - [ ] Check Cloudflare Pages build logs
 - [ ] Test from different devices (mobile, tablet, desktop)
@@ -380,12 +426,14 @@ STATUS:   🚀 READY FOR PRODUCTION
 ## 🎯 IMMEDIATE ACTION ITEMS
 
 **Priority 1 - Deploy Frontend**:
+
 ```bash
 npm run build          # Build React app
 wrangler publish       # Deploy to Cloudflare Pages
 ```
 
 **Priority 2 - Verify Deployment**:
+
 ```bash
 # Test backend health
 curl https://astromeric-backend-production.up.railway.app/health
@@ -395,12 +443,14 @@ curl https://astromeric.pages.dev
 ```
 
 **Priority 3 - Test PWA**:
+
 - Install app on Android/iOS
 - Test offline functionality
 - Send test push notification
 - Verify update detection works
 
 **Priority 4 - Monitor**:
+
 - Watch Railway logs for errors
 - Monitor Cloudflare analytics
 - Collect user feedback
@@ -411,16 +461,20 @@ curl https://astromeric.pages.dev
 ## 📞 SUPPORT
 
 **Backend Issues**: Check Railway dashboard
+
 - https://railway.com/project/a6ce0043-3a3e-4339-99dd-f912f26c3b16
 
 **Frontend Issues**: Check Cloudflare Pages
+
 - Dashboard: app.cloudflare.com → Pages → astromeric
 
 **PWA Issues**: Check browser console
+
 - Chrome DevTools → Application → Manifest & Service Workers
 - Look for registration errors or update status
 
 **API Connectivity**: Test with:
+
 ```bash
 curl -H "Accept: application/json" \
   https://astromeric-backend-production.up.railway.app/v2/health
@@ -431,4 +485,3 @@ curl -H "Accept: application/json" \
 **Last Updated**: January 13, 2026  
 **Status**: ✅ Production-Ready  
 **Next Step**: Deploy frontend to Cloudflare Pages
-

@@ -1,5 +1,4 @@
 import React, { useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { useStore } from '../store/useStore';
 
 export function DailyStreak() {
@@ -20,9 +19,9 @@ export function DailyStreak() {
       </div>
       <div className="streak-progress">
         {[...Array(7)].map((_, i) => (
-          <div 
-            key={i} 
-            className={`streak-dot ${i < (streakCount % 8) ? 'active' : ''}`}
+          <div
+            key={i}
+            className={`streak-dot ${i < streakCount % 8 ? 'active' : ''}`}
             title={`Day ${i + 1}`}
           />
         ))}

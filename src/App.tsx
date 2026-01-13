@@ -49,14 +49,11 @@ const CookiePolicy = React.lazy(() =>
 const AboutView = React.lazy(() =>
   import('./views/AboutView').then((m) => ({ default: m.AboutView }))
 );
-const NotFoundView = React.lazy(() =>
-  import('./views/NotFoundView')
-);
+const NotFoundView = React.lazy(() => import('./views/NotFoundView'));
 // styles.css is imported at the root level (index.tsx)
 
 function NavBar() {
   const { t } = useTranslation();
-  const { sessionProfile } = useProfiles();
   const { isAuthenticated, user, logout } = useAuth();
   const [isOpen, setIsOpen] = React.useState(false);
 

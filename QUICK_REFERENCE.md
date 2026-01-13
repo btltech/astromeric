@@ -3,6 +3,7 @@
 ## 📖 Using New Backend Patterns
 
 ### 1. Custom Exceptions
+
 ```python
 from app.exceptions import InvalidDateError, AuthenticationError, StructuredLogger
 
@@ -16,13 +17,14 @@ except InvalidDateError as e:
 ```
 
 ### 2. Structured Responses
+
 ```python
 from app.schemas import ApiResponse, ResponseStatus, NatalProfileRequest
 
 @router.post("/v2/natal", response_model=ApiResponse[NatalProfileData])
 async def calculate_natal(request: Request, req: NatalProfileRequest):
     request_id = request.state.request_id
-    
+
     try:
         # Do work
         return ApiResponse(
@@ -37,6 +39,7 @@ async def calculate_natal(request: Request, req: NatalProfileRequest):
 ```
 
 ### 3. Request ID Tracking
+
 ```python
 # Automatically added to every request
 # Access via: request.state.request_id
@@ -52,6 +55,7 @@ logger.info("User action", request_id=request_id, user=name)
 ## 📖 Using New Frontend Types
 
 ### 1. Import and Use API Types
+
 ```typescript
 import type {
   ApiResponse,
@@ -67,6 +71,7 @@ const daily: ApiResponse<DailyFeaturesData> = await fetchDailyFeatures(...);
 ```
 
 ### 2. Type-Safe Components
+
 ```typescript
 interface NatalChartProps {
   data: NatalProfileData;
@@ -84,6 +89,7 @@ export function NatalChart({ data, onClose }: NatalChartProps) {
 ```
 
 ### 3. Conditional 3D Rendering
+
 ```typescript
 import { lazy, Suspense } from 'react';
 
@@ -92,7 +98,7 @@ const CosmicBackground = lazy(() => import('./CosmicBackground'));
 
 function App() {
   const shouldRender3D = () => window.innerWidth > 1024;
-  
+
   return (
     <>
       {shouldRender3D() && (
@@ -110,6 +116,7 @@ function App() {
 ## 🧪 Running Tests
 
 ### E2E Tests
+
 ```bash
 # Run all tests in headless mode
 npm run test:e2e
@@ -122,6 +129,7 @@ npx cypress run --spec "cypress/e2e/critical-paths.cy.ts"
 ```
 
 ### Unit Tests (existing)
+
 ```bash
 npm run test           # Watch mode
 npm run test:run       # Run once
@@ -135,6 +143,7 @@ npm run test:coverage  # With coverage report
 ### Step-by-Step Template
 
 **1. Define request/response types** (in `backend/app/schemas.py`):
+
 ```python
 class MyFeatureRequest(BaseModel):
     """Request for my feature."""
@@ -150,6 +159,7 @@ class MyFeatureData(BaseModel):
 ```
 
 **2. Create router** (`backend/app/routers/myfeature.py`):
+
 ```python
 from fastapi import APIRouter, Request
 from ..schemas import ApiResponse, ResponseStatus, MyFeatureRequest
@@ -162,17 +172,17 @@ router = APIRouter(prefix="/v2/myfeature", tags=["My Feature"])
 async def calculate_feature(request: Request, req: MyFeatureRequest):
     """Calculate my feature with standardized format."""
     request_id = request.state.request_id
-    
+
     try:
         logger.info(
             "Calculating my feature",
             request_id=request_id,
             option1=req.option1,
         )
-        
+
         # Do calculation
         result = my_feature_function(req)
-        
+
         return ApiResponse(
             status=ResponseStatus.SUCCESS,
             data=MyFeatureData(
@@ -188,6 +198,7 @@ async def calculate_feature(request: Request, req: MyFeatureRequest):
 ```
 
 **3. Register in main.py**:
+
 ```python
 from .routers import myfeature
 
@@ -195,6 +206,7 @@ api.include_router(myfeature.router)
 ```
 
 **4. Add TypeScript types** (in `src/types/api.ts`):
+
 ```typescript
 export interface MyFeatureData {
   result: string;
@@ -204,6 +216,7 @@ export interface MyFeatureData {
 ```
 
 **5. Add API client** (in `src/api/client.ts`):
+
 ```typescript
 export function fetchMyFeature(request: MyFeatureRequest) {
   return apiFetch<ApiResponse<MyFeatureData>>('/v2/myfeature', {
@@ -214,6 +227,7 @@ export function fetchMyFeature(request: MyFeatureRequest) {
 ```
 
 **6. Use in component**:
+
 ```typescript
 import type { MyFeatureData } from '../types/api';
 import { fetchMyFeature } from '../api/client';
@@ -221,10 +235,10 @@ import { fetchMyFeature } from '../api/client';
 async function handleSubmit() {
   const response = await fetchMyFeature({
     profile: currentProfile,
-    option1: "value",
+    option1: 'value',
     option2: 50,
   });
-  
+
   if (response.status === 'success') {
     console.log(response.data.result);
   }
@@ -236,6 +250,7 @@ async function handleSubmit() {
 ## 🔐 Adding Auth to Endpoints
 
 ### Protect an Endpoint
+
 ```python
 from fastapi import Depends
 from app.auth import get_current_user
@@ -250,7 +265,7 @@ async def save_reading(
     """Protected endpoint - requires authentication."""
     # current_user is available
     # Can use current_user.id, current_user.email, etc.
-    
+
     return ApiResponse(
         status=ResponseStatus.SUCCESS,
         data={"saved": True, "user_id": current_user.id},
@@ -263,6 +278,7 @@ async def save_reading(
 ## 📊 Error Response Format
 
 ### Success Response
+
 ```json
 {
   "status": "success",
@@ -278,6 +294,7 @@ async def save_reading(
 ```
 
 ### Error Response
+
 ```json
 {
   "status": "error",
@@ -297,6 +314,7 @@ async def save_reading(
 ## 🐛 Debugging with Request IDs
 
 ### Trace a Request
+
 ```python
 # In logs, you'll see:
 # [req_abc123xyz] User called endpoint | profile_name=John
@@ -309,6 +327,7 @@ logger.info("Something", request_id=request_id, context="value")
 ```
 
 ### From Frontend
+
 ```typescript
 // Check response header for request ID
 const response = await fetch('/api/v2/natal', {...});
@@ -329,16 +348,18 @@ if (error) {
 ## 📈 Bundle Optimization Tips
 
 ### Lazy Load Expensive Features
+
 ```typescript
 const PdfExporter = lazy(() => import('./utils/pdfExport'));
 
 // Later in component:
 <Suspense fallback={<Loading />}>
   <PdfExporter data={chartData} />
-</Suspense>
+</Suspense>;
 ```
 
 ### Check Bundle Size
+
 ```bash
 # Build and check sizes
 npm run build:prod
@@ -354,6 +375,7 @@ npm run build:prod
 ## 🔍 Common Patterns
 
 ### Validation
+
 ```python
 # Before processing
 if not isinstance(req.latitude, float) or not -90 <= req.latitude <= 90:
@@ -361,6 +383,7 @@ if not isinstance(req.latitude, float) or not -90 <= req.latitude <= 90:
 ```
 
 ### Pagination
+
 ```python
 from app.schemas import PaginatedResponse, PaginationParams
 
@@ -371,6 +394,7 @@ async def list_items(params: PaginationParams = Depends()):
 ```
 
 ### Structured Error Logging
+
 ```python
 logger.error(
     "Chart calculation failed",

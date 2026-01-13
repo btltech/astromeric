@@ -8,16 +8,6 @@ interface Props {
   userName: string;
 }
 
-const PLANET_SYMBOLS: Record<string, string> = {
-  Sun: '☉',
-  Moon: '☽',
-  Mercury: '☿',
-  Venus: '♀',
-  Mars: '♂',
-  Jupiter: '♃',
-  Saturn: '♄',
-};
-
 export const CosmicCard: React.FC<Props> = ({ data, userName }) => {
   const cardRef = useRef<HTMLDivElement>(null);
 
@@ -34,7 +24,8 @@ export const CosmicCard: React.FC<Props> = ({ data, userName }) => {
     }
   };
 
-  const sunSign = data.sign || data.charts?.natal?.planets?.find((p) => p.name === 'Sun')?.sign || 'Star';
+  const sunSign =
+    data.sign || data.charts?.natal?.planets?.find((p) => p.name === 'Sun')?.sign || 'Star';
   const moonSign = data.charts?.natal?.planets?.find((p) => p.name === 'Moon')?.sign || 'Shadow';
   const dominantElement = data.charts?.natal?.element_distribution?.dominant || 'Aether';
 
@@ -45,7 +36,13 @@ export const CosmicCard: React.FC<Props> = ({ data, userName }) => {
         <div className="aura-content">
           <header>
             <span className="aura-brand">ASTROMERIC</span>
-            <span className="aura-date">{new Date().toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}</span>
+            <span className="aura-date">
+              {new Date().toLocaleDateString(undefined, {
+                month: 'long',
+                day: 'numeric',
+                year: 'numeric',
+              })}
+            </span>
           </header>
 
           <main>
@@ -67,7 +64,9 @@ export const CosmicCard: React.FC<Props> = ({ data, userName }) => {
                 <span className="stat-label">LUCKY NUMBERS</span>
                 <div className="stat-numbers">
                   {data.numerology?.lucky_numbers?.slice(0, 3).map((n: number) => (
-                    <span key={n} className="mini-hex">{n}</span>
+                    <span key={n} className="mini-hex">
+                      {n}
+                    </span>
                   ))}
                 </div>
               </div>
@@ -78,7 +77,7 @@ export const CosmicCard: React.FC<Props> = ({ data, userName }) => {
             </div>
 
             <div className="aura-quote">
-              <p>"{data.summary?.headline || data.advice?.slice(0, 100) + '...'}"</p>
+              <p>&quot;{data.summary?.headline || data.advice?.slice(0, 100) + '...'}&quot;</p>
             </div>
           </main>
 

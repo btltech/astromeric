@@ -10,6 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
+from ..auth import get_current_user
 from ..exceptions import (
     AstroError,
     EphemerisError,
@@ -17,10 +18,9 @@ from ..exceptions import (
     InvalidDateError,
     StructuredLogger,
 )
+from ..models import SessionLocal, User
 from ..products import build_natal_profile
 from ..schemas import ApiResponse, NatalProfileRequest, ProfilePayload, ResponseStatus
-from ..auth import get_current_user
-from ..models import SessionLocal, User
 
 logger = StructuredLogger(__name__)
 router = APIRouter(prefix="/v2/profiles", tags=["Profiles"])
@@ -174,35 +174,39 @@ async def get_natal_profile(
 ) -> ApiResponse[NatalProfileResponse]:
     """
     Retrieve a previously calculated natal profile.
-    
+
     ## Parameters
     - **profile_id**: The ID of the saved profile
-    
+
     ## Response
     Returns the natal chart data and interpretation for the profile.
-    
+
     ## Errors
     - `PROFILE_NOT_FOUND`: Profile doesn't exist or user doesn't own it
     - `UNAUTHORIZED`: User is not authenticated
     """
     request_id = request.state.request_id
-    
+
     try:
         from ..models import Profile as DBProfile
-        
+
         logger.info(
             f"Retrieving natal profile {profile_id}",
             request_id=request_id,
             profile_id=profile_id,
             user_id=current_user.id,
         )
-        
+
         # Get profile from database
-        db_profile = db.query(DBProfile).filter(
-            DBProfile.id == profile_id,
-            DBProfile.user_id == current_user.id  # Ensure user owns this profile
-        ).first()
-        
+        db_profile = (
+            db.query(DBProfile)
+            .filter(
+                DBProfile.id == profile_id,
+                DBProfile.user_id == current_user.id,  # Ensure user owns this profile
+            )
+            .first()
+        )
+
         if not db_profile:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -210,9 +214,9 @@ async def get_natal_profile(
                     "code": "PROFILE_NOT_FOUND",
                     "message": "Profile not found or you don't have access to it",
                     "field": "profile_id",
-                }
+                },
             )
-        
+
         # Convert DB profile to ProfilePayload
         profile_payload = ProfilePayload(
             name=db_profile.name,
@@ -223,16 +227,16 @@ async def get_natal_profile(
             timezone=db_profile.timezone,
             house_system=db_profile.house_system,
         )
-        
+
         # Calculate natal chart (same as POST /natal)
         natal_data = build_natal_profile(profile_payload)
-        
+
         logger.info(
             f"Natal profile {profile_id} retrieved successfully",
             request_id=request_id,
             sun_sign=natal_data.get("sun_sign"),
         )
-        
+
         return ApiResponse(
             status=ResponseStatus.SUCCESS,
             data=NatalProfileResponse(
@@ -244,7 +248,7 @@ async def get_natal_profile(
             message="Natal profile retrieved successfully",
             request_id=request_id,
         )
-        
+
     except HTTPException:
         raise
     except Exception as e:

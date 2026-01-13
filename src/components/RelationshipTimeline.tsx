@@ -127,7 +127,7 @@ export function RelationshipTimeline() {
     <div className="relationship-timeline">
       <header className="timeline-header">
         <h2>💕 Relationship Timeline</h2>
-        <p className="subtitle">Venus & Mars transits guide your heart's journey</p>
+        <p className="subtitle">Venus &amp; Mars transits guide your heart&apos;s journey</p>
       </header>
 
       {/* Venus Status Banner */}

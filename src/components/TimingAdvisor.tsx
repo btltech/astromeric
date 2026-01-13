@@ -192,7 +192,6 @@ export default function TimingAdvisor({
 
   const renderDayCard = (day: TimingDayResult, isToday = false) => {
     const colors = RATING_COLORS[day.rating] || RATING_COLORS.Moderate;
-    const activityIcon = ACTIVITY_ICONS[day.activity] || '📅';
 
     return (
       <div
@@ -286,7 +285,7 @@ export default function TimingAdvisor({
           className={`timing-tab ${viewMode === 'today' ? 'timing-tab--active' : ''}`}
           onClick={() => setViewMode('today')}
         >
-          Today's Analysis
+          Today&apos;s Analysis
         </button>
         <button
           className={`timing-tab ${viewMode === 'week' ? 'timing-tab--active' : ''}`}

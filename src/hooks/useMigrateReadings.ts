@@ -5,15 +5,19 @@
 
 import { useCallback } from 'react';
 import { apiFetch } from '../api/client';
-import { getReadingsForMigration, clearReadingsAfterMigration } from '../utils/anonReadingStorage';
+import {
+  getReadingsForMigration,
+  clearReadingsAfterMigration,
+  type AnonReading,
+} from '../utils/anonReadingStorage';
 
 interface MigrateReadingsRequest {
-  readings: any[];
-  profile?: any;
+  readings: AnonReading[];
+  profile?: Record<string, unknown>;
 }
 
 export function useMigrateReadings() {
-  const migrateReadings = useCallback(async (profileData?: any) => {
+  const migrateReadings = useCallback(async (profileData?: Record<string, unknown>) => {
     try {
       const anonReadings = getReadingsForMigration();
 

@@ -228,8 +228,8 @@ export function FortuneResult({ data, onReset }: Props) {
     setChatLoading(true);
 
     try {
-      const risingSign = data.charts?.natal?.houses?.find((h: any) => h.house === 1)?.sign;
-      const moonSign = data.charts?.natal?.planets?.find((p: any) => p.name === 'Moon')?.sign;
+      const risingSign = data.charts?.natal?.houses?.find((h) => h.house === 1)?.sign;
+      const moonSign = data.charts?.natal?.planets?.find((p) => p.name === 'Moon')?.sign;
 
       const response = await chatWithCosmicGuide(
         {

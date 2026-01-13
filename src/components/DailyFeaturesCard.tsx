@@ -86,7 +86,7 @@ export function DailyFeaturesCard({ birthDate, sunSign }: Props) {
         <div className="feature-item ruling-planet">
           <div className="feature-icon">{PLANET_SYMBOLS[features.lucky_planet.planet] || '🌟'}</div>
           <div className="feature-content">
-            <span className="feature-label">Today's Ruling Planet</span>
+            <span className="feature-label">Today&apos;s Ruling Planet</span>
             <span className="feature-value">{features.lucky_planet.planet}</span>
             <span className="feature-meaning">{features.lucky_planet.message}</span>
           </div>
@@ -118,7 +118,9 @@ export function DailyFeaturesCard({ birthDate, sunSign }: Props) {
       {/* Daily Affirmation */}
       <div className="daily-affirmation">
         <span className="affirmation-label">🌟 Daily Affirmation</span>
-        <blockquote className="affirmation-text">"{features.affirmation.text}"</blockquote>
+        <blockquote className="affirmation-text">
+          &quot;{features.affirmation.text}&quot;
+        </blockquote>
       </div>
 
       {/* Retrograde Alerts - only show if there are any */}

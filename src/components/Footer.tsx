@@ -1,10 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
 import './Footer.css';
 
 export function Footer() {
-  const { t } = useTranslation();
   const currentYear = new Date().getFullYear();
 
   return (
@@ -14,9 +12,30 @@ export function Footer() {
           <h3>Astromeric</h3>
           <p>AI-powered astrology & numerology for your cosmic blueprint</p>
           <div className="footer-socials">
-            <a href="https://twitter.com" aria-label="Twitter" target="_blank" rel="noopener noreferrer">𝕏</a>
-            <a href="https://instagram.com" aria-label="Instagram" target="_blank" rel="noopener noreferrer">📷</a>
-            <a href="https://facebook.com" aria-label="Facebook" target="_blank" rel="noopener noreferrer">f</a>
+            <a
+              href="https://twitter.com"
+              aria-label="Twitter"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              𝕏
+            </a>
+            <a
+              href="https://instagram.com"
+              aria-label="Instagram"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              📷
+            </a>
+            <a
+              href="https://facebook.com"
+              aria-label="Facebook"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              f
+            </a>
           </div>
         </div>
 
@@ -51,7 +70,9 @@ export function Footer() {
 
       <div className="footer-bottom">
         <p>&copy; {currentYear} Astromeric, Inc. All rights reserved.</p>
-        <p className="footer-tagline">Discover your cosmic blueprint through AI-powered astrology.</p>
+        <p className="footer-tagline">
+          Discover your cosmic blueprint through AI-powered astrology.
+        </p>
       </div>
     </footer>
   );

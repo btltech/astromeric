@@ -12,9 +12,10 @@ from typing import Dict, List
 # CONTENT SECURITY POLICY (CSP) CONFIGURATION
 # ============================================================================
 
+
 class CSPConfig:
     """Dynamic CSP builder from environment variables."""
-    
+
     # Defaults (most restrictive)
     DEFAULT_CSP = {
         "default-src": ["'self'"],
@@ -25,7 +26,7 @@ class CSPConfig:
         "connect-src": ["'self'"],
         "frame-ancestors": ["'none'"],
     }
-    
+
     # Environment-based overrides
     ENV_OVERRIDES = {
         "CSP_SCRIPT_SRC": "script-src",
@@ -34,12 +35,12 @@ class CSPConfig:
         "CSP_FONT_SRC": "font-src",
         "CSP_IMG_SRC": "img-src",
     }
-    
+
     @classmethod
     def build(cls) -> Dict[str, List[str]]:
         """Build CSP directives from defaults + env overrides."""
         csp = {k: v.copy() for k, v in cls.DEFAULT_CSP.items()}
-        
+
         # Apply environment overrides
         for env_var, directive in cls.ENV_OVERRIDES.items():
             env_value = os.getenv(env_var)
@@ -47,9 +48,9 @@ class CSPConfig:
                 # Parse space-separated URLs/values
                 values = [v.strip() for v in env_value.split() if v.strip()]
                 csp[directive] = values
-        
+
         return csp
-    
+
     @classmethod
     def to_header_string(cls) -> str:
         """Convert CSP dict to HTTP header string."""

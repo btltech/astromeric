@@ -1,10 +1,8 @@
 import React from 'react';
-import { useTranslation } from 'react-i18next';
 import { Helmet } from 'react-helmet';
 import './PrivacyPolicy.css';
 
 export function PrivacyPolicy() {
-  const { t } = useTranslation();
   const currentYear = new Date().getFullYear();
 
   return (
@@ -27,13 +25,27 @@ export function PrivacyPolicy() {
         <nav className="policy-toc">
           <h2>Quick Navigation</h2>
           <ul>
-            <li><a href="#introduction">Introduction</a></li>
-            <li><a href="#information-collection">Information Collection</a></li>
-            <li><a href="#information-use">How We Use Information</a></li>
-            <li><a href="#cookies">Cookies & Tracking</a></li>
-            <li><a href="#security">Data Security</a></li>
-            <li><a href="#rights">Your Rights</a></li>
-            <li><a href="#contact">Contact Us</a></li>
+            <li>
+              <a href="#introduction">Introduction</a>
+            </li>
+            <li>
+              <a href="#information-collection">Information Collection</a>
+            </li>
+            <li>
+              <a href="#information-use">How We Use Information</a>
+            </li>
+            <li>
+              <a href="#cookies">Cookies & Tracking</a>
+            </li>
+            <li>
+              <a href="#security">Data Security</a>
+            </li>
+            <li>
+              <a href="#rights">Your Rights</a>
+            </li>
+            <li>
+              <a href="#contact">Contact Us</a>
+            </li>
           </ul>
         </nav>
 
@@ -41,13 +53,14 @@ export function PrivacyPolicy() {
           <section id="introduction">
             <h2>1. Introduction</h2>
             <p>
-              Astromeric ("we," "us," "our," or "Company") is committed to protecting your privacy. This Privacy
-              Policy explains how we collect, use, disclose, and safeguard your information when you visit our
-              website astromeric.com and our applications.
+              Astromeric (&quot;we,&quot; &quot;us,&quot; &quot;our,&quot; or &quot;Company&quot;)
+              is committed to protecting your privacy. This Privacy Policy explains how we collect,
+              use, disclose, and safeguard your information when you visit our website
+              astromeric.com and our applications.
             </p>
             <p>
-              Please read this Privacy Policy carefully. If you do not agree with our policies and practices, please
-              do not use our services.
+              Please read this Privacy Policy carefully. If you do not agree with our policies and
+              practices, please do not use our services.
             </p>
           </section>
 
@@ -56,18 +69,39 @@ export function PrivacyPolicy() {
 
             <h3>2.1 Information You Provide</h3>
             <ul>
-              <li><strong>Account Information:</strong> Name, email address, date of birth, birth time, birth location</li>
-              <li><strong>Payment Information:</strong> Processed securely through third-party payment providers</li>
-              <li><strong>Communications:</strong> Messages, feedback, and support inquiries</li>
-              <li><strong>Profile Data:</strong> Saved charts, readings, and preferences</li>
+              <li>
+                <strong>Account Information:</strong> Name, email address, date of birth, birth
+                time, birth location
+              </li>
+              <li>
+                <strong>Payment Information:</strong> Processed securely through third-party payment
+                providers
+              </li>
+              <li>
+                <strong>Communications:</strong> Messages, feedback, and support inquiries
+              </li>
+              <li>
+                <strong>Profile Data:</strong> Saved charts, readings, and preferences
+              </li>
             </ul>
 
             <h3>2.2 Information Collected Automatically</h3>
             <ul>
-              <li><strong>Device Information:</strong> IP address, device type, operating system</li>
-              <li><strong>Usage Data:</strong> Pages visited, time spent, features used, clicks and interactions</li>
-              <li><strong>Location Data:</strong> Approximate location derived from IP address (if consent given)</li>
-              <li><strong>Cookies & Pixels:</strong> Persistent and session cookies, web beacons, local storage</li>
+              <li>
+                <strong>Device Information:</strong> IP address, device type, operating system
+              </li>
+              <li>
+                <strong>Usage Data:</strong> Pages visited, time spent, features used, clicks and
+                interactions
+              </li>
+              <li>
+                <strong>Location Data:</strong> Approximate location derived from IP address (if
+                consent given)
+              </li>
+              <li>
+                <strong>Cookies & Pixels:</strong> Persistent and session cookies, web beacons,
+                local storage
+              </li>
             </ul>
           </section>
 
@@ -92,20 +126,23 @@ export function PrivacyPolicy() {
             <p>We use three categories of cookies:</p>
             <ul>
               <li>
-                <strong>Essential Cookies:</strong> Required for site functionality (authentication, preferences)
+                <strong>Essential Cookies:</strong> Required for site functionality (authentication,
+                preferences)
               </li>
               <li>
-                <strong>Analytics Cookies:</strong> Help us understand user behavior (Google Analytics, Mixpanel)
+                <strong>Analytics Cookies:</strong> Help us understand user behavior (Google
+                Analytics, Mixpanel)
               </li>
               <li>
-                <strong>Marketing Cookies:</strong> Enable personalized advertising (Facebook Pixel, Google Ads)
+                <strong>Marketing Cookies:</strong> Enable personalized advertising (Facebook Pixel,
+                Google Ads)
               </li>
             </ul>
 
             <h3>4.2 Cookie Management</h3>
             <p>
-              You can manage cookie preferences through our cookie consent banner. You can also disable cookies in
-              your browser settings, though this may affect functionality.
+              You can manage cookie preferences through our cookie consent banner. You can also
+              disable cookies in your browser settings, though this may affect functionality.
             </p>
 
             <h3>4.3 Third-Party Pixels</h3>
@@ -119,9 +156,7 @@ export function PrivacyPolicy() {
 
           <section id="security">
             <h2>5. Data Security</h2>
-            <p>
-              We implement industry-standard security measures including:
-            </p>
+            <p>We implement industry-standard security measures including:</p>
             <ul>
               <li>HTTPS encryption for all data in transit</li>
               <li>AES-256 encryption for sensitive data at rest</li>
@@ -130,8 +165,8 @@ export function PrivacyPolicy() {
               <li>Secure password policies and two-factor authentication</li>
             </ul>
             <p>
-              However, no security system is completely impenetrable. We cannot guarantee absolute security of your
-              information.
+              However, no security system is completely impenetrable. We cannot guarantee absolute
+              security of your information.
             </p>
           </section>
 
@@ -143,7 +178,7 @@ export function PrivacyPolicy() {
             <ul>
               <li>Access your personal data</li>
               <li>Correct inaccurate data</li>
-              <li>Request deletion ("right to be forgotten")</li>
+              <li>Request deletion (&quot;right to be forgotten&quot;)</li>
               <li>Restrict processing of your data</li>
               <li>Receive your data in a portable format</li>
               <li>Object to processing</li>
@@ -163,26 +198,29 @@ export function PrivacyPolicy() {
             <h3>6.3 How to Exercise Your Rights</h3>
             <p>
               To exercise any of these rights, please contact us at{' '}
-              <a href="mailto:privacy@astromeric.com">privacy@astromeric.com</a> with "Privacy Request" in the
-              subject line. We will respond within 30 days.
+              <a href="mailto:privacy@astromeric.com">privacy@astromeric.com</a> with &quot;Privacy
+              Request&quot; in the subject line. We will respond within 30 days.
             </p>
           </section>
 
           <section id="contact">
             <h2>7. Contact Us</h2>
             <p>
-              If you have questions about this Privacy Policy or our privacy practices, please contact us:
+              If you have questions about this Privacy Policy or our privacy practices, please
+              contact us:
             </p>
             <ul>
-              <li>Email: <a href="mailto:privacy@astromeric.com">privacy@astromeric.com</a></li>
+              <li>
+                Email: <a href="mailto:privacy@astromeric.com">privacy@astromeric.com</a>
+              </li>
               <li>Address: Astromeric, Inc., Privacy Team</li>
             </ul>
           </section>
 
           <footer className="policy-footer">
             <p>
-              © {currentYear} Astromeric, Inc. All rights reserved. This policy is subject to change at any time.
-              We will notify you of significant changes via email.
+              © {currentYear} Astromeric, Inc. All rights reserved. This policy is subject to change
+              at any time. We will notify you of significant changes via email.
             </p>
           </footer>
         </article>

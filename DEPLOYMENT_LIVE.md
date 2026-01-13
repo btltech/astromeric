@@ -10,6 +10,7 @@
 ### ✅ Railway (Backend)
 
 **CSP Environment Variables Set:**
+
 ```
 CSP_SCRIPT_SRC = "'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com"
 CSP_STYLE_SRC = "'self' 'unsafe-inline' https://api.fontshare.com https://fonts.googleapis.com"
@@ -20,6 +21,7 @@ CSP_IMG_SRC = "'self' data: https:"
 
 **Build Status:** ✅ Uploaded and building  
 **Code Changes:**
+
 - `config.py` - CSP configuration system
 - `models.py` - User alert preferences
 - `middleware/security_headers.py` - Dynamic CSP headers
@@ -29,6 +31,7 @@ CSP_IMG_SRC = "'self' data: https:"
 - `alembic/versions/add_notification_prefs.py` - Database migration
 
 **Next Steps:**
+
 1. Wait for build to complete (check Railway dashboard)
 2. Migration runs automatically on startup
 3. Verify deployment with test requests
@@ -38,6 +41,7 @@ CSP_IMG_SRC = "'self' data: https:"
 ### ✅ Cloudflare Pages (Frontend)
 
 **Wrangler Configuration:** Already set in `wrangler.toml`
+
 ```toml
 [vars]
 VITE_API_URL = "https://astromeric-backend-production.up.railway.app"
@@ -52,6 +56,7 @@ VITE_API_URL = "https://astromeric-backend-production.up.railway.app"
 ## Verification Steps
 
 ### 1. Check Railway Deployment
+
 ```bash
 railway logs --follow
 # Watch for: "Application startup complete" and "Migration successful"
@@ -60,6 +65,7 @@ railway logs --follow
 ### 2. Test New Endpoints
 
 **Weekly Vibe Forecast (no auth required):**
+
 ```bash
 curl -X POST https://astromeric-backend-production.up.railway.app/v2/daily-features/forecast \
   -H "Content-Type: application/json" \
@@ -76,12 +82,14 @@ curl -X POST https://astromeric-backend-production.up.railway.app/v2/daily-featu
 ```
 
 **Notification Preferences (requires auth):**
+
 ```bash
 curl -X GET https://astromeric-backend-production.up.railway.app/v2/alerts/preferences \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
 **Verify CSP Headers:**
+
 ```bash
 curl -I https://astromeric-backend-production.up.railway.app/health
 # Look for: Content-Security-Policy header with CSP directives
@@ -127,12 +135,14 @@ railway logs --follow
 ## API Endpoints (Now Live)
 
 ### Weekly Vibe Forecast
+
 ```
 POST /v2/daily-features/forecast
 No authentication required
 ```
 
 ### Notification Preferences
+
 ```
 GET /v2/alerts/preferences
 POST /v2/alerts/preferences
@@ -140,12 +150,14 @@ Requires authentication (Bearer token)
 ```
 
 ### Retrieve Saved Profile
+
 ```
 GET /v2/profiles/natal/{profile_id}
 Requires authentication (Bearer token)
 ```
 
 ### Other Endpoints
+
 All existing endpoints remain unchanged and working.
 
 ---
@@ -155,12 +167,14 @@ All existing endpoints remain unchanged and working.
 If something breaks:
 
 1. **Revert code:**
+
    ```bash
    git revert HEAD~1
    railway up
    ```
 
 2. **Remove CSP variables:**
+
    ```bash
    railway variables --delete CSP_SCRIPT_SRC CSP_STYLE_SRC CSP_FONT_SRC CSP_CONNECT_SRC CSP_IMG_SRC
    ```
@@ -181,7 +195,7 @@ If something breaks:
 ✅ Code pushed and building  
 ✅ Database migration ready  
 ✅ All new endpoints documented  
-✅ All old endpoints still working  
+✅ All old endpoints still working
 
 **Status: LIVE** 🚀
 

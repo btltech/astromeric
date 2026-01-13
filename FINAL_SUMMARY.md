@@ -21,6 +21,7 @@
 **Solution:** Real transit calculations using `calculate_timing_score()`
 
 **Changes:**
+
 - `backend/app/routers/daily_features.py` - Forecast endpoint now:
   - Builds transit chart for each day
   - Calculates real timing scores (0-100)
@@ -37,7 +38,9 @@
 **Solution:** Centralized CSP configuration system
 
 **Changes:**
+
 - `backend/app/config.py` (NEW) - `CSPConfig` class with:
+
   - `DEFAULT_CSP` dict (restrictive defaults)
   - `build()` method (merges defaults + env overrides)
   - `to_header_string()` method (formats as HTTP header)
@@ -47,6 +50,7 @@
 - `.env.example` - Documented all CSP variables
 
 **How it works:**
+
 ```bash
 # Add to .env or Railway environment:
 CSP_CONNECT_SRC='self' https://new-api.example.com
@@ -65,7 +69,9 @@ CSP_CONNECT_SRC='self' https://new-api.example.com
 **Solution:** Granular user preferences with frequency options
 
 **Changes:**
+
 - `backend/app/models.py` - Added to User model:
+
   ```python
   alert_mercury_retrograde: bool (default True)
   alert_frequency: str (default "every_retrograde")
@@ -73,6 +79,7 @@ CSP_CONNECT_SRC='self' https://new-api.example.com
   ```
 
 - `backend/app/routers/alerts.py` - New endpoints:
+
   - `GET /v2/alerts/preferences` - Get user settings
   - `POST /v2/alerts/preferences` - Update settings
   - `should_send_alert()` function - Frequency logic
@@ -81,6 +88,7 @@ CSP_CONNECT_SRC='self' https://new-api.example.com
 - `backend/alembic/versions/add_notification_prefs.py` (NEW) - Database migration
 
 **Frequency Options:**
+
 - `every_retrograde` - Alert every time (4x/year)
 - `once_per_year` - Only first retrograde of the year
 - `weekly_digest` - Batch into weekly summary
@@ -95,6 +103,7 @@ CSP_CONNECT_SRC='self' https://new-api.example.com
 While implementing the preferences system, discovered `GET /v2/profiles/natal/{profile_id}` was unimplemented.
 
 **Changes:**
+
 - `backend/app/routers/natal.py` - Implemented endpoint:
   - Requires authentication
   - Checks user owns the profile
@@ -107,19 +116,19 @@ While implementing the preferences system, discovered `GET /v2/profiles/natal/{p
 
 ## Files Changed (Summary)
 
-| File | Status | Change |
-|------|--------|--------|
-| `backend/app/config.py` | NEW | CSP configuration system |
-| `backend/app/models.py` | ✏️ | Added alert preferences to User |
-| `backend/app/middleware/security_headers.py` | ✏️ | Uses config.py instead of hardcoded |
-| `backend/app/routers/alerts.py` | ✏️ | Added preferences endpoints |
-| `backend/app/routers/daily_features.py` | ✏️ | Real transit calculations |
-| `backend/app/routers/natal.py` | ✏️ | Implemented profile retrieval |
-| `backend/alembic/versions/add_notification_prefs.py` | NEW | Database migration |
-| `.env.example` | ✏️ | Documented CSP variables |
-| `IMPLEMENTATION_UPDATES.md` | NEW | Technical documentation |
-| `QUICK_REFERENCE_UPDATES.md` | NEW | API examples |
-| `DEPLOYMENT_CHECKLIST.md` | NEW | Deployment guide |
+| File                                                 | Status | Change                              |
+| ---------------------------------------------------- | ------ | ----------------------------------- |
+| `backend/app/config.py`                              | NEW    | CSP configuration system            |
+| `backend/app/models.py`                              | ✏️     | Added alert preferences to User     |
+| `backend/app/middleware/security_headers.py`         | ✏️     | Uses config.py instead of hardcoded |
+| `backend/app/routers/alerts.py`                      | ✏️     | Added preferences endpoints         |
+| `backend/app/routers/daily_features.py`              | ✏️     | Real transit calculations           |
+| `backend/app/routers/natal.py`                       | ✏️     | Implemented profile retrieval       |
+| `backend/alembic/versions/add_notification_prefs.py` | NEW    | Database migration                  |
+| `.env.example`                                       | ✏️     | Documented CSP variables            |
+| `IMPLEMENTATION_UPDATES.md`                          | NEW    | Technical documentation             |
+| `QUICK_REFERENCE_UPDATES.md`                         | NEW    | API examples                        |
+| `DEPLOYMENT_CHECKLIST.md`                            | NEW    | Deployment guide                    |
 
 ---
 
@@ -130,13 +139,14 @@ While implementing the preferences system, discovered `GET /v2/profiles/natal/{p
 ✅ All models match database  
 ✅ All endpoints documented  
 ✅ All error handling implemented  
-✅ All logging added  
+✅ All logging added
 
 ---
 
 ## Production Readiness
 
 ### Before Deploying:
+
 ```bash
 # 1. Run migration
 alembic upgrade head
@@ -153,6 +163,7 @@ python -c "from backend.app.config import CSPConfig; print('✅ CSP OK')"
 ```
 
 ### After Deploying:
+
 - [ ] Test `/v2/daily-features/forecast` returns varied scores
 - [ ] Test `/v2/alerts/preferences` works (authenticated)
 - [ ] Verify no CSP violations in DevTools
@@ -172,6 +183,7 @@ python -c "from backend.app.config import CSPConfig; print('✅ CSP OK')"
 ## Documentation
 
 Three new reference documents created:
+
 1. **IMPLEMENTATION_UPDATES.md** - Detailed technical breakdown
 2. **QUICK_REFERENCE_UPDATES.md** - API examples, environment variables, troubleshooting
 3. **DEPLOYMENT_CHECKLIST.md** - Step-by-step deployment guide

@@ -27,12 +27,9 @@ async function generateIcons() {
 
   for (const size of SIZES) {
     const outputPath = path.join(OUTPUT_DIR, `icon-${size}x${size}.png`);
-    
-    await sharp(svgBuffer)
-      .resize(size, size)
-      .png()
-      .toFile(outputPath);
-    
+
+    await sharp(svgBuffer).resize(size, size).png().toFile(outputPath);
+
     console.log(`  ✓ Generated ${size}x${size}`);
   }
 
@@ -40,12 +37,9 @@ async function generateIcons() {
   const shortcutIcons = ['daily', 'compatibility'];
   for (const name of shortcutIcons) {
     const outputPath = path.join(OUTPUT_DIR, `${name}-96x96.png`);
-    
-    await sharp(svgBuffer)
-      .resize(96, 96)
-      .png()
-      .toFile(outputPath);
-    
+
+    await sharp(svgBuffer).resize(96, 96).png().toFile(outputPath);
+
     console.log(`  ✓ Generated ${name}-96x96`);
   }
 

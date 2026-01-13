@@ -40,6 +40,7 @@ ALLOW_ORIGIN_REGEX=<optional; for wildcard/custom domains>
 Note: `JWT_SECRET_KEY` is mandatory in Railway. The backend will fail to start if it isn’t set (to avoid shipping with an insecure default secret).
 
 Optional variables:
+
 ```
 GEMINI_API_KEY=<your Gemini API key for AI explanations>
 GEMINI_MODEL=gemini-2.0-flash
@@ -174,22 +175,26 @@ After you have both URLs:
 ## Troubleshooting
 
 ### "Connection lost" error
+
 - Verify `VITE_API_URL` is set correctly in Cloudflare Pages
 - Check that `ALLOW_ORIGINS` in Railway includes your frontend URL
 - If you see browser console errors like "blocked by CORS policy" from a custom domain (e.g. `https://astronumeric.com`), add that exact origin to `ALLOW_ORIGINS` or update `ALLOW_ORIGIN_REGEX`
 - Ensure the backend is running (check Railway logs)
 
 ### Build fails on Railway
+
 - Check that `/backend` is set as the root directory
 - Verify `requirements.txt` is in the backend folder
 - Check Railway build logs for specific errors
 
 ### Build fails on Cloudflare
+
 - Ensure build command is `npm run build`
 - Ensure output directory is `dist`
 - Check that `package.json` exists in root
 
 ### Ephemeris errors
+
 - Verify `EPHEMERIS_PATH=/app/app/ephemeris` is set
 - The Dockerfile should copy ephemeris files automatically
 

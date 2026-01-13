@@ -103,7 +103,7 @@ export function Accordion({ children, allowMultiple = false }: AccordionProps) {
       {React.Children.map(children, (child) => {
         if (React.isValidElement<AccordionItemProps>(child)) {
           return React.cloneElement(child, {
-            // @ts-ignore - we're passing controlled props
+            // @ts-expect-error - we're passing controlled props
             isExpanded: openSections.has(child.props.id),
             onToggle: () => toggleSection(child.props.id),
           });
@@ -115,7 +115,7 @@ export function Accordion({ children, allowMultiple = false }: AccordionProps) {
 }
 
 export function AccordionItem({
-  id,
+  id: _id,
   title,
   icon,
   badge,

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import React from 'react';
 import { DailyGuidance } from '../components/DailyGuidance';
 import type { DailyGuidance as DailyGuidanceType } from '../types';
@@ -33,8 +33,8 @@ describe('DailyGuidance', () => {
   it('renders embrace section correctly', () => {
     render(<DailyGuidance guidance={mockGuidance} />);
 
-    // Check header
-    expect(screen.getByText('Embrace Today')).toBeInTheDocument();
+    // Check tab label
+    expect(screen.getByText('Embrace')).toBeInTheDocument();
 
     // Check activities
     expect(screen.getByText('Action')).toBeInTheDocument();
@@ -48,15 +48,16 @@ describe('DailyGuidance', () => {
     expect(screen.getByTitle('Gold')).toBeInTheDocument();
   });
 
-  it('renders avoid section correctly', () => {
+  it('renders avoid section correctly', async () => {
     render(<DailyGuidance guidance={mockGuidance} />);
 
-    // Check header
-    expect(screen.getByText('Avoid Today')).toBeInTheDocument();
+    // Switch to avoid tab
+    const avoidTab = screen.getByRole('tab', { name: /Avoid/i });
+    fireEvent.click(avoidTab);
 
     // Check activities
-    expect(screen.getByText('Procrastination')).toBeInTheDocument();
-    expect(screen.getByText('Conflict')).toBeInTheDocument();
+    expect(await screen.findByText('Procrastination')).toBeInTheDocument();
+    expect(await screen.findByText('Conflict')).toBeInTheDocument();
 
     // Check colors
     expect(screen.getByTitle('Black')).toBeInTheDocument();
@@ -78,8 +79,8 @@ describe('DailyGuidance', () => {
 
     render(<DailyGuidance guidance={emptyGuidance} />);
 
-    expect(screen.getByText('Embrace Today')).toBeInTheDocument();
-    expect(screen.getByText('Avoid Today')).toBeInTheDocument();
+    expect(screen.getByText('Embrace')).toBeInTheDocument();
+    expect(screen.getByText('Avoid')).toBeInTheDocument();
 
     // Should not find any list items or badges
     expect(screen.queryByTitle('Red')).not.toBeInTheDocument();
@@ -102,9 +103,14 @@ describe('DailyGuidance', () => {
 
     render(<DailyGuidance guidance={guidanceWithRetrogrades} />);
 
-    expect(screen.getByText(/Current Retrogrades/i)).toBeInTheDocument();
-    expect(screen.getByText(/Mercury/)).toBeInTheDocument();
+    expect(screen.getByText(/Cosmic Context/i)).toBeInTheDocument();
+    expect(screen.getByText(/Mercury Retrograde/)).toBeInTheDocument();
     expect(screen.getByText(/in Virgo/)).toBeInTheDocument();
+
+    // Need to expand card to see impact
+    const card = screen.getByRole('button', { name: /Mercury Retrograde/i });
+    fireEvent.click(card);
+
     expect(screen.getByText(/Communication delays/i)).toBeInTheDocument();
   });
 
@@ -124,6 +130,11 @@ describe('DailyGuidance', () => {
     render(<DailyGuidance guidance={guidanceWithVOC} />);
 
     expect(screen.getByText(/Void-of-Course Moon/i)).toBeInTheDocument();
+
+    // Need to expand card to see details
+    const card = screen.getByRole('button', { name: /Void-of-Course Moon/i });
+    fireEvent.click(card);
+
     expect(screen.getByText(/Scorpio/)).toBeInTheDocument();
     expect(screen.getByText(/Sagittarius/)).toBeInTheDocument();
   });
@@ -142,16 +153,21 @@ describe('DailyGuidance', () => {
 
     render(<DailyGuidance guidance={guidanceWithHour} />);
 
-    expect(screen.getByText(/Current Planetary Hour/i)).toBeInTheDocument();
     expect(screen.getByText(/Jupiter Hour/i)).toBeInTheDocument();
-    expect(screen.getByText('Favorable')).toBeInTheDocument();
     expect(screen.getByText('2:00 PM - 3:00 PM')).toBeInTheDocument();
+
+    // Need to expand to see quality and suggestion
+    const card = screen.getByRole('button', { name: /Jupiter Hour/i });
+    fireEvent.click(card);
+
+    expect(screen.getByText(/Favorable/i)).toBeInTheDocument();
+    expect(screen.getByText(/Good time for/i)).toBeInTheDocument();
   });
 
   it('does not display alerts row when no retrogrades and VOC is false', () => {
     render(<DailyGuidance guidance={mockGuidance} />);
 
-    expect(screen.queryByText(/Current Retrogrades/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Retrograde/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Void-of-Course Moon/i)).not.toBeInTheDocument();
   });
 
@@ -172,6 +188,10 @@ describe('DailyGuidance', () => {
 
     render(<DailyGuidance guidance={guidanceWithHouseImpact} />);
 
-    expect(screen.getByText(/For you: Partnership commitments/i)).toBeInTheDocument();
+    // Expand card
+    const card = screen.getByRole('button', { name: /Venus Retrograde/i });
+    fireEvent.click(card);
+
+    expect(screen.getByText(/Partnership commitments questioned/i)).toBeInTheDocument();
   });
 });

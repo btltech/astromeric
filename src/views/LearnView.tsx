@@ -514,7 +514,7 @@ export function LearnView() {
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
         >
-          🎉 Congratulations! You've completed all lessons! You're now a cosmic scholar.
+          🎉 Congratulations! You&apos;ve completed all lessons! You&apos;re now a cosmic scholar.
         </motion.div>
       )}
     </motion.div>

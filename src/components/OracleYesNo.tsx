@@ -112,7 +112,7 @@ export function OracleYesNo({ birthDate }: Props) {
         <div className="oracle-result">
           <div className="question-asked">
             <span className="label">You asked:</span>
-            <p>"{result.question}"</p>
+            <p>&quot;{result.question}&quot;</p>
           </div>
 
           <div
@@ -145,8 +145,8 @@ export function OracleYesNo({ birthDate }: Props) {
             <p>{result.timing}</p>
           </div>
 
-          <button className="ask-again-button" onClick={handleReset}>
-            <span>🔄</span> Ask Another Question
+          <button onClick={handleReset} className="reset-button">
+            Ask Another Question
           </button>
         </div>
       )}

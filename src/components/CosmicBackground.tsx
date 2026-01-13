@@ -1,7 +1,7 @@
 import React, { useMemo, useRef, useState, useEffect } from 'react';
 import * as THREE from 'three';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { Float, Sparkles, Stars, Text, Html } from '@react-three/drei';
+import { Float, Sparkles, Stars, Html } from '@react-three/drei';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -18,7 +18,7 @@ function Planet({ pos, isMobile }: { pos: PlanetPos; isMobile: boolean }) {
   const meshRef = useRef<THREE.Mesh>(null);
   const orbitalScale = 4.0; // Scale AU to Three.js units
 
-  useFrame((state) => {
+  useFrame((_state) => {
     if (meshRef.current) {
       // Gentle self-rotation
       meshRef.current.rotation.y += 0.01;

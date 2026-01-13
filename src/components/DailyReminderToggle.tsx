@@ -4,7 +4,7 @@ import { useStore } from '../store/useStore';
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 // Register service worker and schedule push subscription
-async function registerPushSubscription(cadence: string): Promise<boolean> {
+async function registerPushSubscription(_cadence: string): Promise<boolean> {
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
     return false;
   }
@@ -12,7 +12,7 @@ async function registerPushSubscription(cadence: string): Promise<boolean> {
     const registration = await navigator.serviceWorker.ready;
     // Check for existing subscription
     let subscription = await registration.pushManager.getSubscription();
-    
+
     // Fetch public key from backend
     const keyRes = await fetch(`${API_BASE}/v2/alerts/vapid-key`);
     const { public_key: vapidKey } = await keyRes.json();
@@ -23,7 +23,7 @@ async function registerPushSubscription(cadence: string): Promise<boolean> {
         applicationServerKey: vapidKey,
       });
     }
-    
+
     if (subscription) {
       // Send subscription to backend
       await fetch(`${API_BASE}/v2/alerts/subscribe`, {

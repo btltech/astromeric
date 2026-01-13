@@ -3,11 +3,8 @@ import { toast } from './Toast';
 import {
   fetchHabitCategories,
   fetchLunarHabitGuidance,
-  fetchHabitRecommendations,
-  fetchHabitAlignment,
   createHabit,
   logHabitCompletion,
-  fetchHabitStreak,
   fetchTodayHabitForecast,
 } from '../api/client';
 import type {
@@ -15,9 +12,7 @@ import type {
   LunarHabitGuidance,
   Habit,
   HabitCompletion,
-  HabitStreak,
   HabitForecast,
-  LunarAlignment,
 } from '../types';
 
 type TabType = 'today' | 'habits' | 'create' | 'insights';
@@ -202,13 +197,6 @@ export function HabitTracker() {
     setCompletions((prev) => prev.filter((c) => c.habit_id !== habitId));
   }
 
-  function getAlignmentColor(score: number): string {
-    if (score >= 80) return 'var(--color-success)';
-    if (score >= 60) return 'var(--color-info)';
-    if (score >= 40) return 'var(--color-warning)';
-    return 'var(--color-error)';
-  }
-
   function getStreakForHabit(habitId: number): { current: number; emoji: string } {
     const habitCompletions = completions
       .filter((c) => c.habit_id === habitId)
@@ -273,7 +261,7 @@ export function HabitTracker() {
     <div className="habit-tracker">
       <header className="tracker-header">
         <h2>🌙 Lunar Habit Tracker</h2>
-        <p className="subtitle">Align your habits with the Moon's energy</p>
+        <p className="subtitle">Align your habits with the Moon&apos;s energy</p>
       </header>
 
       {/* Moon Phase Selector */}

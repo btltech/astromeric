@@ -8,19 +8,22 @@
 ## What's Implemented
 
 ### 1. Weekly Vibe Scoring (Real Transits) ✅
+
 - **Endpoint:** `POST /v2/daily-features/forecast`
 - **Status:** Complete and tested
 - **What it does:** Returns 7-day forecast with real planetary transit scores (0-100)
 - **File:** `backend/app/routers/daily_features.py`
 
 ### 2. CSP Manager (Environment-Driven) ✅
+
 - **Status:** Complete and tested
 - **What it does:** Reads CSP directives from .env instead of hardcoding
-- **Files:** 
+- **Files:**
   - `backend/app/config.py` (NEW)
   - `backend/app/middleware/security_headers.py` (updated)
 
 ### 3. Notification Frequency Controls ✅
+
 - **Endpoints:**
   - `GET /v2/alerts/preferences` (get user settings)
   - `POST /v2/alerts/preferences` (update settings)
@@ -28,6 +31,7 @@
 - **Files:** `backend/app/routers/alerts.py`
 
 ### 4. Database Migration ✅
+
 - **File Created:** `backend/alembic/versions/add_notification_prefs.py`
 - **What it adds:** Three new User columns:
   - `alert_mercury_retrograde` (bool, default True)
@@ -36,6 +40,7 @@
 - **Status:** Ready to run
 
 ### 5. Natal Profile Retrieval ✅
+
 - **Endpoint:** `GET /v2/profiles/natal/{profile_id}`
 - **Status:** Complete and secure (user must own profile)
 - **What it does:** Retrieves a saved profile and recalculates natal chart
@@ -66,6 +71,7 @@ python -c "from backend.app.config import CSPConfig; print(CSPConfig.to_header_s
 ### ✅ Railway Deployment
 
 1. **Set environment variables:**
+
    ```
    CSP_SCRIPT_SRC='self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com
    CSP_STYLE_SRC='self' 'unsafe-inline' https://api.fontshare.com https://fonts.googleapis.com
@@ -85,24 +91,28 @@ python -c "from backend.app.config import CSPConfig; print(CSPConfig.to_header_s
 ## Testing Checklist
 
 ### Weekly Vibe Scoring
+
 - [ ] Call `/v2/daily-features/forecast` with a profile
 - [ ] Verify scores vary (not all 50)
 - [ ] Check Mercury retrograde days show low scores
 - [ ] Full moon days show higher scores
 
 ### CSP Configuration
+
 - [ ] No CSP violations in browser DevTools
 - [ ] Fontshare CSS loads without error
 - [ ] External APIs work (OpenAI, Nominatim)
 - [ ] Verify `CSP_CONNECT_SRC` is read from environment
 
 ### Notification Preferences
+
 - [ ] Authenticated user can call `GET /v2/alerts/preferences`
 - [ ] User can call `POST /v2/alerts/preferences` to update
 - [ ] Different frequency options save correctly
 - [ ] Unauthenticated user gets 401 error
 
 ### Natal Profile Retrieval
+
 - [ ] User can retrieve their own saved profile
 - [ ] `GET /v2/profiles/natal/{profile_id}` recalculates chart
 - [ ] User cannot access another user's profile (403 error)
@@ -138,19 +148,19 @@ QUICK_REFERENCE_UPDATES.md ............ NEW (API examples)
 
 ### New Endpoints
 
-| Method | Path | Auth | Purpose |
-|--------|------|------|---------|
-| POST | `/v2/daily-features/forecast` | No | Get 7-day vibe forecast |
-| GET | `/v2/alerts/preferences` | Yes | Get notification settings |
-| POST | `/v2/alerts/preferences` | Yes | Update notification settings |
-| GET | `/v2/profiles/natal/{id}` | Yes | Retrieve saved profile |
+| Method | Path                          | Auth | Purpose                      |
+| ------ | ----------------------------- | ---- | ---------------------------- |
+| POST   | `/v2/daily-features/forecast` | No   | Get 7-day vibe forecast      |
+| GET    | `/v2/alerts/preferences`      | Yes  | Get notification settings    |
+| POST   | `/v2/alerts/preferences`      | Yes  | Update notification settings |
+| GET    | `/v2/profiles/natal/{id}`     | Yes  | Retrieve saved profile       |
 
 ### Modified Endpoints
 
-| Method | Path | Change |
-|--------|------|--------|
-| GET | `/v2/alerts/vapid-key` | Now respects CSP config |
-| POST | `/v2/alerts/subscribe` | Now respects CSP config |
+| Method | Path                   | Change                  |
+| ------ | ---------------------- | ----------------------- |
+| GET    | `/v2/alerts/vapid-key` | Now respects CSP config |
+| POST   | `/v2/alerts/subscribe` | Now respects CSP config |
 
 ---
 
@@ -178,11 +188,13 @@ QUICK_REFERENCE_UPDATES.md ............ NEW (API examples)
 If something breaks:
 
 1. **Revert database migration:**
+
    ```bash
    alembic downgrade -1
    ```
 
 2. **Revert code:**
+
    ```bash
    git revert HEAD~5  # Adjust number of commits as needed
    ```
@@ -197,12 +209,13 @@ If something breaks:
 
 ✅ All implemented  
 ✅ All syntax-checked  
-✅ All production-ready  
+✅ All production-ready
 
 🚀 **Ready to deploy!**
 
 ---
 
 **Questions or issues?** Check:
+
 - `IMPLEMENTATION_UPDATES.md` - Detailed technical docs
 - `QUICK_REFERENCE_UPDATES.md` - API examples and env variables

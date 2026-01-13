@@ -115,7 +115,7 @@ export function LocationAutocomplete({
   // Get timezone from coordinates using backend
   const getTimezone = useCallback(async (lat: number, lon: number): Promise<string> => {
     try {
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8001';
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
       const response = await fetch(`${baseUrl}/geocode/timezone?lat=${lat}&lon=${lon}`);
       if (response.ok) {
         const data = await response.json();

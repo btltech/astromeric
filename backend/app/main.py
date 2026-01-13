@@ -112,10 +112,10 @@ from .models import Reading as DBReading
 from .models import SectionFeedback, SessionLocal, User
 from .numerology_engine import build_numerology
 from .products import build_compatibility, build_forecast, build_natal_profile
+from .routers import alerts as v2_alerts
 from .routers import compatibility as v2_compatibility
 from .routers import daily_features as v2_daily
 from .routers import sky as v2_sky
-from .routers import alerts as v2_alerts
 from .validators import (
     ValidationError,
     validate_date_of_birth,
@@ -167,6 +167,7 @@ async def health_check():
 async def startup_event():
     """Run tasks on startup."""
     import asyncio
+
     from .transit_alerts import check_global_events
 
     # Simple check on startup
@@ -176,11 +177,22 @@ async def startup_event():
         logger.error(f"Startup event check failed: {e}")
 
 
+# Add custom middle to set request_id
+@api.middleware("http")
+async def add_request_id_middleware(request: Request, call_next):
+    import uuid
+
+    request.state.request_id = str(uuid.uuid4())
+    response = await call_next(request)
+    response.headers["X-Request-ID"] = request.state.request_id
+    return response
+
+
 # Add custom rate limiting middleware (60 req/min with burst support)
-app.middleware("http")(rate_limit_middleware)
+api.middleware("http")(rate_limit_middleware)
 
 # Add security headers middleware
-app.middleware("http")(security_headers_middleware)
+api.middleware("http")(security_headers_middleware)
 
 # Allow configurable CORS via env; default open for dev
 allow_origins_env = os.getenv("ALLOW_ORIGINS", "")

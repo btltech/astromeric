@@ -13,7 +13,7 @@ const translationStatus: Record<LanguageCode, 'full' | 'partial' | 'minimal'> = 
 };
 
 export function LanguageSwitcher() {
-  const { i18n, t } = useTranslation();
+  const { i18n } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 

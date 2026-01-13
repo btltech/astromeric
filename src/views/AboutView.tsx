@@ -1,17 +1,17 @@
 import React from 'react';
-import { useTranslation } from 'react-i18next';
 import { Helmet } from 'react-helmet';
 import { motion } from 'framer-motion';
 import './AboutView.css';
 
 export function AboutView() {
-  const { t } = useTranslation();
-
   return (
     <>
       <Helmet>
         <title>About Astromeric</title>
-        <meta name="description" content="Learn about Astromeric - AI-powered astrology and numerology for your cosmic blueprint." />
+        <meta
+          name="description"
+          content="Learn about Astromeric - AI-powered astrology and numerology for your cosmic blueprint."
+        />
       </Helmet>
 
       <main className="about-view">
@@ -27,9 +27,9 @@ export function AboutView() {
         >
           <h2>Our Mission</h2>
           <p>
-            Astromeric empowers you to understand yourself and navigate life's journey through the fusion of
-            celestial wisdom and advanced artificial intelligence. We believe that everyone deserves access to
-            personalized astrological and numerological insights.
+            Astromeric empowers you to understand yourself and navigate life&apos;s journey through
+            the fusion of celestial wisdom and advanced artificial intelligence. We believe that
+            everyone deserves access to personalized astrological and numerological insights.
           </p>
         </motion.section>
 
@@ -87,9 +87,10 @@ export function AboutView() {
         >
           <h2>Our Technology</h2>
           <p>
-            We combine rigorous astronomical calculations using Swiss Ephemeris data with cutting-edge AI to deliver
-            accurate, insightful interpretations. Our algorithms calculate planetary positions, aspects, and transits
-            with precision, while our AI provides personalized guidance tailored to your unique cosmic profile.
+            We combine rigorous astronomical calculations using Swiss Ephemeris data with
+            cutting-edge AI to deliver accurate, insightful interpretations. Our algorithms
+            calculate planetary positions, aspects, and transits with precision, while our AI
+            provides personalized guidance tailored to your unique cosmic profile.
           </p>
         </motion.section>
 
@@ -101,8 +102,9 @@ export function AboutView() {
         >
           <h2>Privacy & Safety</h2>
           <p>
-            Your privacy is paramount. We never share your personal data with third parties without explicit consent.
-            All birth data is encrypted and stored securely. You maintain complete control over your information.
+            Your privacy is paramount. We never share your personal data with third parties without
+            explicit consent. All birth data is encrypted and stored securely. You maintain complete
+            control over your information.
           </p>
           <p>
             Read our <a href="/privacy-policy">Privacy Policy</a> and{' '}
@@ -117,9 +119,7 @@ export function AboutView() {
           transition={{ delay: 0.4 }}
         >
           <h2>Get In Touch</h2>
-          <p>
-            Have questions or feedback? We'd love to hear from you!
-          </p>
+          <p>Have questions or feedback? We&apos;d love to hear from you!</p>
           <div className="contact-methods">
             <a href="mailto:support@astromeric.com" className="contact-link">
               📧 Email: support@astromeric.com

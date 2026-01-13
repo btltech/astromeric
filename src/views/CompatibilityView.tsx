@@ -68,7 +68,7 @@ export function CompatibilityView() {
       </div>
 
       <div className="form-group">
-        <label htmlFor="partner-name">Partner's Name *</label>
+        <label htmlFor="partner-name">Partner&apos;s Name *</label>
         <input
           id="partner-name"
           type="text"
@@ -80,7 +80,7 @@ export function CompatibilityView() {
       </div>
 
       <div className="form-group">
-        <label htmlFor="partner-dob">Partner's Date of Birth *</label>
+        <label htmlFor="partner-dob">Partner&apos;s Date of Birth *</label>
         <input
           id="partner-dob"
           type="date"

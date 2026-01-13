@@ -101,7 +101,7 @@ export class ApiError extends Error {
 }
 
 export async function apiFetch<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-  const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8001';
+  const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
   // Merge headers without losing defaults when callers pass Authorization, etc.
   const mergedHeaders = new Headers(options.headers || undefined);
@@ -401,7 +401,7 @@ export function fetchCurrentMoonPhase() {
 }
 
 export function fetchUpcomingMoonEvents(days: number = 30) {
-  return apiFetch<MoonEvent[]>('/moon/upcoming', {
+  return apiFetch<MoonEvent[]>(`/moon/upcoming?days=${days}`, {
     method: 'GET',
   });
 }
@@ -826,7 +826,9 @@ export interface WeeklyForecastResponse {
   days: ForecastDay[];
 }
 
-export async function fetchWeeklyForecast(profile: ProfilePayload): Promise<WeeklyForecastResponse> {
+export async function fetchWeeklyForecast(
+  profile: ProfilePayload
+): Promise<WeeklyForecastResponse> {
   const result = await apiFetch<ApiResponse<WeeklyForecastResponse>>('/v2/daily/forecast', {
     method: 'POST',
     body: JSON.stringify(profile),

@@ -8,7 +8,10 @@ export default function NotFoundView() {
     <>
       <Helmet>
         <title>404 - Page Not Found | Astromeric</title>
-        <meta name="description" content="Sorry, the page you're looking for doesn't exist. Return to explore astromeric." />
+        <meta
+          name="description"
+          content="Sorry, the page you're looking for doesn't exist. Return to explore astromeric."
+        />
         <meta name="robots" content="noindex" />
       </Helmet>
 
@@ -31,8 +34,8 @@ export default function NotFoundView() {
           <h2>Page Not Found</h2>
 
           <p>
-            The cosmic path you're seeking has drifted beyond the stars.
-            Let's guide you back to explore the universe of possibilities.
+            The cosmic path you&apos;re seeking has drifted beyond the stars. Let&apos;s guide you
+            back to explore the universe of possibilities.
           </p>
 
           <nav className="not-found-nav">

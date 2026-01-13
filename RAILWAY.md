@@ -31,27 +31,29 @@ railway up
 
 Set these in Railway dashboard:
 
-| Variable | Value | Required |
-|----------|-------|----------|
-| `ALLOW_ORIGINS` | `https://your-frontend.vercel.app,https://your-domain.com` | Recommended |
-| `ALLOW_ORIGIN_REGEX` | `https?://(.*\\.astronumeric\\.pages\\.dev|your-domain\\.com)(:\\d+)?` | Optional |
-| `JWT_SECRET_KEY` | `openssl rand -hex 32` | Yes |
-| `REDIS_URL` | Redis connection URL | Optional (for caching) |
-| `FUSION_CACHE_TTL` | `3600` | Optional |
-| `LOG_LEVEL` | `info` | Optional |
-| `EPHEMERIS_PATH` | `/app/ephemeris` | Automatic |
+| Variable             | Value                                                      | Required                    |
+| -------------------- | ---------------------------------------------------------- | --------------------------- | -------- |
+| `ALLOW_ORIGINS`      | `https://your-frontend.vercel.app,https://your-domain.com` | Recommended                 |
+| `ALLOW_ORIGIN_REGEX` | `https?://(.\*\\.astronumeric\\.pages\\.dev                | your-domain\\.com)(:\\d+)?` | Optional |
+| `JWT_SECRET_KEY`     | `openssl rand -hex 32`                                     | Yes                         |
+| `REDIS_URL`          | Redis connection URL                                       | Optional (for caching)      |
+| `FUSION_CACHE_TTL`   | `3600`                                                     | Optional                    |
+| `LOG_LEVEL`          | `info`                                                     | Optional                    |
+| `EPHEMERIS_PATH`     | `/app/ephemeris`                                           | Automatic                   |
 
 Note: The backend will fail to start on Railway if `JWT_SECRET_KEY` is not set, to prevent deploying with an insecure default secret.
 
 ## Add Database & Redis
 
 ### PostgreSQL (Optional - instead of SQLite)
+
 1. In Railway Dashboard → New
 2. Select PostgreSQL
 3. Copy connection string
 4. Update `backend/app/models.py` to use PostgreSQL
 
 ### Redis (Optional - for caching)
+
 1. In Railway Dashboard → New
 2. Select Redis
 3. Copy connection URL
@@ -60,6 +62,7 @@ Note: The backend will fail to start on Railway if `JWT_SECRET_KEY` is not set, 
 ## Get Your Backend URL
 
 After deployment:
+
 ```bash
 # Get service URL
 railway status
@@ -85,16 +88,19 @@ curl http://localhost:8000/health
 ## Troubleshooting
 
 ### Check Logs
+
 ```bash
 railway logs -f
 ```
 
 ### Restart Service
+
 ```bash
 railway restart
 ```
 
 ### Deploy Specific Version
+
 ```bash
 railway up --service astromeric-backend
 ```

@@ -8,12 +8,15 @@
 ## 1. Weekly Vibe Scoring Fix 🌟
 
 ### Problem
+
 The forecast endpoint was returning **fake rotating scores** that didn't reflect actual planetary positions or transits.
 
 ### Solution
+
 Replaced mock logic with **real-time transit calculations** using `calculate_timing_score()` from the timing advisor engine.
 
 #### Changes:
+
 - **File:** `backend/app/routers/daily_features.py` (lines 372-475)
 - **What Changed:**
   - Now builds a transit chart for each day using `build_transit_chart(profile_dict, forecast_date)`
@@ -27,27 +30,33 @@ Replaced mock logic with **real-time transit calculations** using `calculate_tim
   - Falls back gracefully if calculation fails (returns "Balanced" day)
 
 #### Impact:
+
 ✅ **Users now see scores based on actual planetary transits**  
 ✅ Mercury retrogrades show as low scores  
 ✅ Full moons show as high scores  
-✅ Trust is built through scientific accuracy  
+✅ Trust is built through scientific accuracy
 
 ---
 
 ## 2. CSP Manager (Environment-Driven) 🔐
 
 ### Problem
+
 CSP headers were hardcoded in two places:
+
 - `public/_headers` (Cloudflare/Netlify)
 - `backend/app/middleware/security_headers.py` (FastAPI)
 
 Every new API required manual edits in both files, risking forgotten updates.
 
 ### Solution
+
 Created centralized CSP configuration system in `backend/app/config.py`.
 
 #### Changes:
+
 - **File Created:** `backend/app/config.py`
+
   - `CSPConfig` class with:
     - `DEFAULT_CSP` dict (restrictive defaults)
     - `ENV_OVERRIDES` mapping (maps env vars to CSP directives)
@@ -55,6 +64,7 @@ Created centralized CSP configuration system in `backend/app/config.py`.
     - `to_header_string()` method (formats as HTTP header)
 
 - **File Modified:** `backend/app/middleware/security_headers.py`
+
   - Now imports `SECURITY_HEADERS` from `config.py`
   - Applies headers dynamically instead of hardcoding
 
@@ -63,6 +73,7 @@ Created centralized CSP configuration system in `backend/app/config.py`.
   - Shows syntax for adding new APIs
 
 #### How to Add a New API:
+
 ```bash
 # In your .env or Railway environment:
 CSP_CONNECT_SRC='self' https://api.fontshare.com https://new-api.example.com
@@ -71,23 +82,28 @@ CSP_CONNECT_SRC='self' https://api.fontshare.com https://new-api.example.com
 No code changes needed! The middleware automatically picks it up.
 
 #### Impact:
+
 ✅ **Single source of truth for CSP**  
 ✅ **No hardcoding = no forgotten updates**  
 ✅ **Easy to customize per environment (dev vs. prod)**  
-✅ **Reduced "CSP violation" bugs**  
+✅ **Reduced "CSP violation" bugs**
 
 ---
 
 ## 3. Notification Frequency Controls 🔔
 
 ### Problem
+
 Mercury Retrograde alerts broadcast 4x/year with no user control, causing alert fatigue.
 
 ### Solution
+
 Added granular notification preferences to the User model with frequency control logic.
 
 #### Changes:
+
 - **File Modified:** `backend/app/models.py` (User class)
+
   - Added `alert_mercury_retrograde: bool` (enable/disable alerts)
   - Added `alert_frequency: str` (frequency option)
     - `"every_retrograde"` (default) - Alert every time Mercury stations
@@ -113,10 +129,11 @@ Added granular notification preferences to the User model with frequency control
     - Updates `last_retrograde_alert` timestamp
 
 #### API Usage Example:
+
 ```javascript
 // Get preferences
 const prefs = await apiFetch('/v2/alerts/preferences', {
-  headers: { Authorization: `Bearer ${token}` }
+  headers: { Authorization: `Bearer ${token}` },
 });
 
 // Update preferences
@@ -125,47 +142,51 @@ await apiFetch('/v2/alerts/preferences', {
   headers: { Authorization: `Bearer ${token}` },
   body: JSON.stringify({
     alert_mercury_retrograde: true,
-    alert_frequency: 'weekly_digest'
-  })
+    alert_frequency: 'weekly_digest',
+  }),
 });
 ```
 
 #### Impact:
+
 ✅ **Users control alert frequency**  
 ✅ **Reduces alert fatigue**  
 ✅ **Enables weekly digest option (future)**  
 ✅ **One-per-year option for casual users**  
-✅ **Timestamps prevent re-alerts**  
+✅ **Timestamps prevent re-alerts**
 
 ---
 
 ## Files Modified Summary
 
-| File | Changes |
-|------|---------|
-| `backend/app/config.py` | **NEW** - Centralized CSP configuration |
-| `backend/app/middleware/security_headers.py` | Refactored to use config.py |
-| `backend/app/models.py` | Added notification preferences to User model |
-| `backend/app/routers/alerts.py` | Added preferences endpoints, updated broadcast logic |
-| `backend/app/routers/daily_features.py` | Replaced mock vibe logic with real transit calculations |
-| `.env.example` | Documented CSP environment variables |
+| File                                         | Changes                                                 |
+| -------------------------------------------- | ------------------------------------------------------- |
+| `backend/app/config.py`                      | **NEW** - Centralized CSP configuration                 |
+| `backend/app/middleware/security_headers.py` | Refactored to use config.py                             |
+| `backend/app/models.py`                      | Added notification preferences to User model            |
+| `backend/app/routers/alerts.py`              | Added preferences endpoints, updated broadcast logic    |
+| `backend/app/routers/daily_features.py`      | Replaced mock vibe logic with real transit calculations |
+| `.env.example`                               | Documented CSP environment variables                    |
 
 ---
 
 ## Testing Checklist
 
 ### Weekly Vibe
+
 - [ ] Call `/v2/daily-features/forecast` with a profile
 - [ ] Verify scores vary by day (not all 50)
 - [ ] Check that Mercury retrograde days show lower scores
 - [ ] Verify emoji/vibe labels match scores
 
 ### CSP
+
 - [ ] Check browser DevTools for CSP violations (should be none)
 - [ ] Set `CSP_CONNECT_SRC` in .env and verify it loads
 - [ ] Confirm fontshare still loads CSS without CSP errors
 
 ### Notification Preferences
+
 - [ ] Call `GET /v2/alerts/preferences` (authenticated) → returns preferences
 - [ ] Call `POST /v2/alerts/preferences` (authenticated) → updates settings
 - [ ] Verify `last_retrograde_alert` timestamp prevents duplicate alerts
@@ -176,7 +197,9 @@ await apiFetch('/v2/alerts/preferences', {
 ## Deployment Notes
 
 ### Database Migration
+
 Run this to add new User columns:
+
 ```bash
 alembic revision --autogenerate -m "add notification preferences to user"
 alembic upgrade head
@@ -185,7 +208,9 @@ alembic upgrade head
 Or in Railway, set `DATABASE_URL` and new migrations run automatically on startup.
 
 ### Environment Variables
+
 Add to Railway service:
+
 ```
 CSP_SCRIPT_SRC='self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com
 CSP_STYLE_SRC='self' 'unsafe-inline' https://api.fontshare.com https://fonts.googleapis.com

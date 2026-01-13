@@ -1,20 +1,17 @@
 import React, { useMemo } from 'react';
 import { useLocation, Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { decodeProfile, SharedProfile } from '../utils/comparison';
 import { WeeklyVibe } from '../components/WeeklyVibe';
 import { useProfiles } from '../hooks';
-import { useTranslation } from 'react-i18next';
 import { ProfilePayload } from '../api/client';
 
 export function ComparisonView() {
-  const { t } = useTranslation();
   const location = useLocation();
   const { selectedProfile } = useProfiles();
-  
+
   const query = new URLSearchParams(location.search);
   const pHash = query.get('p');
-  
+
   const friendProfile: SharedProfile | null = useMemo(() => {
     if (!pHash) return null;
     return decodeProfile(pHash);
@@ -25,7 +22,9 @@ export function ComparisonView() {
       <div className="page comparison-page error">
         <h2>Invalid Comparison Link</h2>
         <p>This link seems to be broken or expired.</p>
-        <Link to="/" className="btn-primary">Go Home</Link>
+        <Link to="/" className="btn-primary">
+          Go Home
+        </Link>
       </div>
     );
   }
@@ -44,12 +43,14 @@ export function ComparisonView() {
     <div className="page comparison-page">
       <section className="hero hero-compact text-center">
         <h1>Cosmic Synergy</h1>
-        <p className="lede">Comparing your weekly vibes with <strong>{friendProfile.name}</strong></p>
+        <p className="lede">
+          Comparing your weekly vibes with <strong>{friendProfile.name}</strong>
+        </p>
       </section>
 
       <div className="comparison-grid">
         <div className="comparison-col">
-          <h3 className="col-title">✨ {friendProfile.name}'s Vibe</h3>
+          <h3 className="col-title">✨ {friendProfile.name}&apos;s Vibe</h3>
           <WeeklyVibe profile={friendPayload} showShare={false} />
         </div>
 
@@ -72,8 +73,13 @@ export function ComparisonView() {
           <div className="comparison-col empty-state">
             <div className="card text-center">
               <h3>Where do you stand?</h3>
-              <p>Create or select a profile to see your energy side-by-side with {friendProfile.name}.</p>
-              <Link to="/" className="btn-primary">Set Up My Profile</Link>
+              <p>
+                Create or select a profile to see your energy side-by-side with {friendProfile.name}
+                .
+              </p>
+              <Link to="/" className="btn-primary">
+                Set Up My Profile
+              </Link>
             </div>
           </div>
         )}

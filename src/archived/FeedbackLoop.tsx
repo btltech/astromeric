@@ -67,7 +67,6 @@ export function FeedbackToggle({
   onFeedback,
 }: FeedbackToggleProps) {
   const [feedback, setFeedback] = useState<boolean | null>(null);
-  const [streak, setStreak] = useState(0);
   const [showThanks, setShowThanks] = useState(false);
 
   useEffect(() => {
@@ -76,14 +75,12 @@ export function FeedbackToggle({
     if (data[sectionId]) {
       setFeedback(data[sectionId].resonates);
     }
-    setStreak(getStreak());
   }, [sectionId]);
 
   const handleFeedback = (resonates: boolean) => {
     setFeedback(resonates);
     saveFeedback(sectionId, resonates);
-    const newStreak = updateStreak(resonates);
-    setStreak(newStreak);
+    updateStreak(resonates);
 
     // Show thanks briefly
     setShowThanks(true);

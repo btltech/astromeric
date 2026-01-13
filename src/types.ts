@@ -73,6 +73,7 @@ export interface PredictionData {
   charts?: {
     natal?: {
       planets: Array<{ name: string; sign: string; degree: number; house: number }>;
+      houses?: Array<{ house: number; sign: string; degree: number }>;
     };
   };
   element?: string;

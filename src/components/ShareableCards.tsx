@@ -112,7 +112,7 @@ export function ShareableDailyCard({
         </div>
 
         <div className="card-message">
-          <p>"{dailyMessage}"</p>
+          <p>&quot;{dailyMessage}&quot;</p>
         </div>
 
         <div className="card-lucky-items">
@@ -379,7 +379,7 @@ export function ShareableCompatCard({
         </div>
 
         <div className="compat-headline">
-          <p>"{headline}"</p>
+          <p>&quot;{headline}&quot;</p>
         </div>
 
         <div className="card-footer">

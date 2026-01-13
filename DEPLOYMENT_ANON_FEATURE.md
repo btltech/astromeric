@@ -11,12 +11,14 @@
 ## Deployed URLs
 
 ### Frontend (Cloudflare Pages)
+
 - **Live URL**: https://191134b8.astromeric.pages.dev
 - **Build**: 7.30s - Success
 - **Chunks**: 19 JS files + CSS
 - **Status**: ✅ Operational
 
 ### Backend (Railway)
+
 - **Live URL**: https://astromeric-backend-production.up.railway.app
 - **Status**: ✅ Operational
 - **Services**: All v1 & v2 routers loaded
@@ -27,7 +29,9 @@
 ## Features Deployed
 
 ### 1. Anonymous Reading Generation
+
 ✅ Users can generate readings without login
+
 - `/daily-reading` - Tested ✓
 - `/weekly-reading` - Available
 - `/monthly-reading` - Available
@@ -37,28 +41,36 @@
 - `/year-ahead` - Available
 
 ### 2. localStorage Reading Storage
+
 ✅ Up to 10 readings stored locally
+
 - Auto-saves after each reading
 - Persists across sessions
 - Auto-deletes oldest when limit exceeded
 - Clear on logout or manual action
 
 ### 3. Soft Upsell Modal
+
 ✅ Non-blocking conversion prompt
+
 - Appears after 3rd reading
 - Can dismiss and keep exploring
 - Never shown twice in same session
 - Benefits list with clear CTA
 
 ### 4. Reading Migration
+
 ✅ Auto-import to account on signup
+
 - New endpoint: `POST /auth/migrate-anon-readings`
 - Handles up to 10 readings
 - Optional profile creation from anon data
 - Graceful error handling
 
 ### 5. Learning Content
+
 ✅ Public access to educational content
+
 - `/learn/zodiac` - Open access
 - `/learn/numerology` - Open access
 - All modules accessible without auth
@@ -68,6 +80,7 @@
 ## Test Results
 
 ### Frontend Build
+
 ```
 ✓ 1327 modules transformed
 ✓ 7.30s total build time
@@ -77,6 +90,7 @@
 ```
 
 ### Backend Health
+
 ```
 ✓ Application startup complete
 ✓ Uvicorn running on port 8080
@@ -87,6 +101,7 @@
 ```
 
 ### API Endpoint Testing
+
 ```
 ✓ Daily reading generation - PASSED
 ✓ Health endpoint responding - PASSED
@@ -147,6 +162,7 @@ User (Browser)
 ## What's New Since Last Deployment
 
 ### Frontend Changes
+
 - `src/utils/anonReadingStorage.ts` - localStorage management
 - `src/components/SaveReadingsPrompt.tsx` - Upsell modal
 - `src/hooks/useAnonReadings.ts` - Anon state management
@@ -155,11 +171,13 @@ User (Browser)
 - `src/views/AuthView.tsx` - Migration on signup
 
 ### Backend Changes
+
 - `backend/app/migration_service.py` - New migration logic
 - `backend/app/routers/v1_auth.py` - New migration endpoint
   - `POST /auth/migrate-anon-readings` (requires auth token)
 
 ### No Database Migrations Needed
+
 - Uses existing Reading and Profile tables
 - No schema changes required
 
@@ -167,13 +185,13 @@ User (Browser)
 
 ## Performance Metrics
 
-| Metric | Value |
-|--------|-------|
-| Frontend Build Time | 7.30s |
-| Backend Deploy Time | ~2-3 min |
-| API Response Time | <200ms |
-| localStorage Size | ~50KB for 10 readings |
-| JS Bundle Overhead | +0.71KB (anonReadingStorage) |
+| Metric              | Value                        |
+| ------------------- | ---------------------------- |
+| Frontend Build Time | 7.30s                        |
+| Backend Deploy Time | ~2-3 min                     |
+| API Response Time   | <200ms                       |
+| localStorage Size   | ~50KB for 10 readings        |
+| JS Bundle Overhead  | +0.71KB (anonReadingStorage) |
 
 ---
 
@@ -221,19 +239,19 @@ railway rollback  # Backend
 
 ## Deployment Summary
 
-| Component | Status | URL |
-|-----------|--------|-----|
-| Frontend | ✅ LIVE | https://191134b8.astromeric.pages.dev |
-| Backend | ✅ LIVE | https://astromeric-backend-production.up.railway.app |
-| Anonymous Readings | ✅ Enabled | /daily-reading, /weekly-reading, etc. |
-| Reading Migration | ✅ Enabled | /auth/migrate-anon-readings |
-| localStorage Storage | ✅ Working | Max 10 readings |
-| Upsell Modal | ✅ Working | After 3rd reading |
+| Component            | Status     | URL                                                  |
+| -------------------- | ---------- | ---------------------------------------------------- |
+| Frontend             | ✅ LIVE    | https://191134b8.astromeric.pages.dev                |
+| Backend              | ✅ LIVE    | https://astromeric-backend-production.up.railway.app |
+| Anonymous Readings   | ✅ Enabled | /daily-reading, /weekly-reading, etc.                |
+| Reading Migration    | ✅ Enabled | /auth/migrate-anon-readings                          |
+| localStorage Storage | ✅ Working | Max 10 readings                                      |
+| Upsell Modal         | ✅ Working | After 3rd reading                                    |
 
 ---
 
 **Status**: 🟢 **FULLY OPERATIONAL**  
 **Tested**: ✅ All endpoints verified  
-**Ready for**: Users & analytics  
+**Ready for**: Users & analytics
 
 Users can now discover the app, generate readings, and seamlessly upgrade to a saved account! 🚀

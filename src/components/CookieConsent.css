@@ -86,7 +86,7 @@
   user-select: none;
 }
 
-.cookie-toggle input[type="checkbox"] {
+.cookie-toggle input[type='checkbox'] {
   width: 1.25rem;
   height: 1.25rem;
   cursor: pointer;
@@ -95,7 +95,7 @@
   min-height: 1.25rem;
 }
 
-.cookie-toggle input[type="checkbox"]:disabled {
+.cookie-toggle input[type='checkbox']:disabled {
   opacity: 0.7;
   cursor: not-allowed;
 }
@@ -206,7 +206,7 @@
 }
 
 /* Accessibility: Ensure minimum size for touch targets */
-.cookie-toggle input[type="checkbox"],
+.cookie-toggle input[type='checkbox'],
 .cookie-actions .btn {
   min-height: 2.5rem;
   min-width: 2.5rem;

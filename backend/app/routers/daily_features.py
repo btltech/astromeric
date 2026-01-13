@@ -382,9 +382,10 @@ async def get_weekly_vibe_forecast(
 
     try:
         from datetime import timedelta
+
         from ..chart_service import build_transit_chart
         from ..engine.timing_advisor import calculate_timing_score
-        
+
         logger.info(
             "Generating weekly vibe forecast",
             request_id=request_id,
@@ -419,11 +420,11 @@ async def get_weekly_vibe_forecast(
 
         for i in range(7):
             forecast_date = today + timedelta(days=i)
-            
+
             try:
                 # Build transit chart for this day
                 transit_chart = build_transit_chart(profile_dict, forecast_date)
-                
+
                 # Calculate score for a balanced activity (general vibe)
                 # Using "business_meeting" as a neutral activity that reflects overall timing
                 timing_result = calculate_timing_score(
@@ -434,13 +435,13 @@ async def get_weekly_vibe_forecast(
                     longitude=profile.longitude or -74.006,
                     timezone=profile.timezone or "UTC",
                 )
-                
+
                 score = timing_result.get("score", 50)
                 vibe_name, vibe_icon = score_to_vibe(score)
-                
+
                 # Get recommendation from timing advisor
                 recommendation = timing_result.get("rating", "Neutral day")
-                
+
                 days_forecast.append(
                     ForecastDay(
                         date=forecast_date,
@@ -479,4 +480,6 @@ async def get_weekly_vibe_forecast(
             request_id=request_id,
             error_type=type(e).__name__,
         )
-        raise HTTPException(status_code=500, detail={"code": "FORECAST_ERROR", "message": str(e)})
+        raise HTTPException(
+            status_code=500, detail={"code": "FORECAST_ERROR", "message": str(e)}
+        )
