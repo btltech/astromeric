@@ -26,8 +26,8 @@ export function ThemeSwitcher() {
             title={t.name}
             aria-pressed={theme === t.id}
           >
-            <span 
-              className="theme-preview" 
+            <span
+              className="theme-preview"
               style={{
                 background: `linear-gradient(135deg, ${t.colors[0]} 0%, ${t.colors[1]} 100%)`,
               }}

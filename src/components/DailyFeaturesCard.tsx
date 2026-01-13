@@ -57,7 +57,7 @@ export function DailyFeaturesCard({ birthDate, sunSign }: Props) {
   return (
     <div className="daily-features-card">
       <h3 className="card-title">✨ Your Daily Cosmic Guide</h3>
-      
+
       <div className="features-grid">
         {/* Lucky Numbers */}
         <div className="feature-item lucky-number">
@@ -71,7 +71,7 @@ export function DailyFeaturesCard({ birthDate, sunSign }: Props) {
 
         {/* Lucky Color */}
         <div className="feature-item lucky-color">
-          <div 
+          <div
             className="feature-icon color-swatch"
             style={{ backgroundColor: features.lucky_colors.primary_hex }}
           />
@@ -86,7 +86,7 @@ export function DailyFeaturesCard({ birthDate, sunSign }: Props) {
         <div className="feature-item ruling-planet">
           <div className="feature-icon">{PLANET_SYMBOLS[features.lucky_planet.planet] || '🌟'}</div>
           <div className="feature-content">
-            <span className="feature-label">Today's Ruling Planet</span>
+            <span className="feature-label">Today&apos;s Ruling Planet</span>
             <span className="feature-value">{features.lucky_planet.planet}</span>
             <span className="feature-meaning">{features.lucky_planet.message}</span>
           </div>
@@ -97,7 +97,9 @@ export function DailyFeaturesCard({ birthDate, sunSign }: Props) {
           <div className="feature-icon">{features.mood_forecast.emoji}</div>
           <div className="feature-content">
             <span className="feature-label">Mood Forecast</span>
-            <span className="feature-value">{features.mood_forecast.mood} ({features.mood_forecast.score}/10)</span>
+            <span className="feature-value">
+              {features.mood_forecast.mood} ({features.mood_forecast.score}/10)
+            </span>
             <span className="feature-meaning">{features.mood_forecast.description}</span>
           </div>
         </div>
@@ -117,7 +119,7 @@ export function DailyFeaturesCard({ birthDate, sunSign }: Props) {
       <div className="daily-affirmation">
         <span className="affirmation-label">🌟 Daily Affirmation</span>
         <blockquote className="affirmation-text">
-          "{features.affirmation.text}"
+          &quot;{features.affirmation.text}&quot;
         </blockquote>
       </div>
 
@@ -127,7 +129,9 @@ export function DailyFeaturesCard({ birthDate, sunSign }: Props) {
           <span className="alert-icon">⚠️ Retrograde Alert</span>
           {features.retrograde_alerts.map((alert, i) => (
             <div key={i} className="alert-content">
-              <p className="alert-planet">{alert.planet} {alert.status}</p>
+              <p className="alert-planet">
+                {alert.planet} {alert.status}
+              </p>
               <p className="alert-message">{alert.message}</p>
             </div>
           ))}

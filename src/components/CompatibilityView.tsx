@@ -27,9 +27,7 @@ export function CompatibilityView({
   return (
     <div className="card">
       <h2>{t('compatibility.title')}</h2>
-      <p className="section-subtitle">
-        {t('compatibility.subtitle')}
-      </p>
+      <p className="section-subtitle">{t('compatibility.subtitle')}</p>
       <div className="form-group">
         <label>{t('compatibility.compareWith')}</label>
         <select

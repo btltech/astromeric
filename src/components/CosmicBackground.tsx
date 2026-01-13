@@ -1,7 +1,89 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useMemo, useRef, useState, useEffect } from 'react';
 import * as THREE from 'three';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { Float, Sparkles, Stars } from '@react-three/drei';
+import { Float, Sparkles, Stars, Html } from '@react-three/drei';
+
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
+interface PlanetPos {
+  name: string;
+  x: float;
+  y: float;
+  z: float;
+  distance: float;
+  color: string;
+}
+
+function Planet({ pos, isMobile }: { pos: PlanetPos; isMobile: boolean }) {
+  const meshRef = useRef<THREE.Mesh>(null);
+  const orbitalScale = 4.0; // Scale AU to Three.js units
+
+  useFrame((_state) => {
+    if (meshRef.current) {
+      // Gentle self-rotation
+      meshRef.current.rotation.y += 0.01;
+    }
+  });
+
+  // Size logic
+  const size = useMemo(() => {
+    if (pos.name === 'Sun') return 0.8;
+    if (pos.name === 'Jupiter' || pos.name === 'Saturn') return 0.4;
+    if (pos.name === 'Moon') return 0.1;
+    return 0.2;
+  }, [pos.name]);
+
+  return (
+    <group position={[pos.x * orbitalScale, pos.z * orbitalScale, pos.y * orbitalScale]}>
+      <mesh ref={meshRef}>
+        <sphereGeometry args={[size, 32, 32]} />
+        <meshStandardMaterial
+          color={pos.color}
+          emissive={pos.color}
+          emissiveIntensity={pos.name === 'Sun' ? 2 : 0.5}
+        />
+      </mesh>
+      {pos.name === 'Sun' && <pointLight intensity={2} distance={20} color={pos.color} />}
+      {!isMobile && (
+        <Html distanceFactor={10}>
+          <div className="planet-label" style={{ color: pos.color }}>
+            {pos.name}
+          </div>
+        </Html>
+      )}
+    </group>
+  );
+}
+
+function Planetarium({ isMobile }: { isMobile: boolean }) {
+  const [planets, setPlanets] = useState<PlanetPos[]>([]);
+
+  useEffect(() => {
+    const fetchPlanets = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/v2/sky/planets`);
+        const data = await res.json();
+        if (data.status === 'success') {
+          setPlanets(data.data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch planetarium data', err);
+      }
+    };
+    fetchPlanets();
+    // Refresh every 10 minutes (planets move slow, but Moon moves faster)
+    const interval = setInterval(fetchPlanets, 10 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <group rotation={[Math.PI / 8, 0, 0]}>
+      {planets.map((p) => (
+        <Planet key={p.name} pos={p} isMobile={isMobile} />
+      ))}
+    </group>
+  );
+}
 
 const ELEMENT_STYLES: Record<
   string,
@@ -220,6 +302,7 @@ export function CosmicBackground({ element }: { element?: string }) {
           fade
           speed={1}
         />
+        <Planetarium isMobile={isMobile} />
         <ZodiacRing element={element} isMobile={isMobile} tilt={keyboardTilt + pointerTilt} />
       </Canvas>
     </div>

@@ -405,3 +405,37 @@ def send_transit_email(
     except Exception as e:
         logger.error(f"Failed to send email: {e}")
         return False
+
+
+def is_mercury_retrograde(jd: float) -> bool:
+    """Helper to check if Mercury is retrograde at Julian Day jd."""
+    import swisseph as swe
+
+    res, _ = swe.calc_ut(jd, swe.MERCURY)
+    return res[3] < 0  # Speed < 0 means retrograde
+
+
+def check_global_events():
+    """Check for major events like retrograde transitions."""
+    import swisseph as swe
+    from datetime import datetime, timezone
+
+    from .routers.alerts import broadcast_transit_alert
+
+    now = datetime.now(timezone.utc)
+    jd = swe.julday(now.year, now.month, now.day, now.hour)
+
+    # Check Mercury Retrograde
+    is_retro = is_mercury_retrograde(jd)
+    was_retro = is_mercury_retrograde(jd - 1)  # Check yesterday
+
+    if is_retro and not was_retro:
+        broadcast_transit_alert(
+            "Mercury Retrograde begins! 🌀",
+            "Mercury has just turned retrograde. Back up your data and double-check your communications!",
+        )
+    elif not is_retro and was_retro:
+        broadcast_transit_alert(
+            "Mercury direct! ✨",
+            "Mercury is moving forward again. Time to sign those contracts and move ahead with clarity.",
+        )

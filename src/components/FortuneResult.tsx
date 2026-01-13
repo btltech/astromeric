@@ -2,10 +2,11 @@ import React, { useMemo, useState } from 'react';
 import type { PredictionData } from '../types';
 import { SectionGrid } from './SectionGrid';
 import { DailyGuidance } from './DailyGuidance';
-import { ApiError, fetchAiExplanation } from '../api/client';
+import { ApiError, fetchAiExplanation, chatWithCosmicGuide } from '../api/client';
 import { useStore } from '../store/useStore';
 import { useProfiles } from '../hooks';
 import { toast } from './Toast';
+import { CosmicCard } from './CosmicCard';
 
 interface Props {
   data: PredictionData;
@@ -16,7 +17,7 @@ interface Props {
 const ZODIAC_STONES: Record<string, { stones: string[]; meaning: string }> = {
   Aries: { stones: ['Carnelian', 'Red Jasper', 'Diamond'], meaning: 'Courage & vitality' },
   Taurus: { stones: ['Rose Quartz', 'Emerald', 'Lapis Lazuli'], meaning: 'Love & abundance' },
-  Gemini: { stones: ['Citrine', 'Tiger\'s Eye', 'Agate'], meaning: 'Communication & clarity' },
+  Gemini: { stones: ['Citrine', "Tiger's Eye", 'Agate'], meaning: 'Communication & clarity' },
   Cancer: { stones: ['Moonstone', 'Pearl', 'Ruby'], meaning: 'Intuition & protection' },
   Leo: { stones: ['Sunstone', 'Peridot', 'Amber'], meaning: 'Confidence & creativity' },
   Virgo: { stones: ['Amazonite', 'Moss Agate', 'Sapphire'], meaning: 'Healing & precision' },
@@ -61,15 +62,15 @@ export function FortuneResult({ data, onReset }: Props) {
   const { user, token } = useStore();
   const { selectedProfile } = useProfiles();
   const isPaid = !!user?.is_paid;
-  
+
   // Derive sign from charts if not explicitly provided
   const sunSign = data.sign || data.charts?.natal?.planets?.find((p) => p.name === 'Sun')?.sign;
 
   // Get birth month for birthstone
-  const birthMonth = data.numerology?.birth_date 
-    ? new Date(data.numerology.birth_date).getMonth() + 1 
+  const birthMonth = data.numerology?.birth_date
+    ? new Date(data.numerology.birth_date).getMonth() + 1
     : null;
-  
+
   // Get zodiac stones data
   const zodiacStones = sunSign ? ZODIAC_STONES[sunSign] : null;
   const birthstone = birthMonth ? BIRTHSTONES[birthMonth] : null;
@@ -81,6 +82,11 @@ export function FortuneResult({ data, onReset }: Props) {
   const [showUpgradeMessage, setShowUpgradeMessage] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
 
+  // Cosmic Guide Chat State
+  const [messages, setMessages] = useState<{ role: 'user' | 'assistant'; content: string }[]>([]);
+  const [chatInput, setChatInput] = useState('');
+  const [chatLoading, setChatLoading] = useState(false);
+
   const keyTakeaways = useMemo(() => {
     const factors = data.summary?.top_factors ?? [];
     return factors.slice(0, 3);
@@ -88,7 +94,11 @@ export function FortuneResult({ data, onReset }: Props) {
 
   const readingText = useMemo(() => {
     const lines: string[] = [];
-    lines.push(`${data.scope?.toUpperCase?.() ?? 'READING'} — ${new Date(data.date || Date.now()).toLocaleDateString()}`);
+    lines.push(
+      `${data.scope?.toUpperCase?.() ?? 'READING'} — ${new Date(
+        data.date || Date.now()
+      ).toLocaleDateString()}`
+    );
     if (headline) lines.push(`\nTL;DR: ${headline}`);
 
     if (keyTakeaways.length) {
@@ -174,7 +184,7 @@ export function FortuneResult({ data, onReset }: Props) {
       setShowUpgradeMessage(true);
       return;
     }
-    
+
     setAiLoading(true);
     try {
       const sections =
@@ -203,12 +213,50 @@ export function FortuneResult({ data, onReset }: Props) {
     }
   };
 
+  const handleChatSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!chatInput.trim() || chatLoading) return;
+
+    if (!isPaid) {
+      setShowUpgradeMessage(true);
+      return;
+    }
+
+    const userMessage = chatInput.trim();
+    setChatInput('');
+    setMessages((prev) => [...prev, { role: 'user', content: userMessage }]);
+    setChatLoading(true);
+
+    try {
+      const risingSign = data.charts?.natal?.houses?.find((h) => h.house === 1)?.sign;
+      const moonSign = data.charts?.natal?.planets?.find((p) => p.name === 'Moon')?.sign;
+
+      const response = await chatWithCosmicGuide(
+        {
+          message: userMessage,
+          sun_sign: sunSign,
+          moon_sign: moonSign,
+          rising_sign: risingSign,
+          history: messages,
+        },
+        token ?? undefined
+      );
+
+      setMessages((prev) => [...prev, { role: 'assistant', content: response.response }]);
+    } catch (err) {
+      console.error('Chat failed', err);
+      toast.error('The Cosmic Guide is currently meditating. Please try again.');
+    } finally {
+      setChatLoading(false);
+    }
+  };
+
   return (
     <div className="card">
       {/* Top navigation bar for easy access */}
       <div className="reading-top-nav">
-        <button 
-          onClick={onReset} 
+        <button
+          onClick={onReset}
           className="btn-link"
           aria-label="Go back to profiles"
           type="button"
@@ -216,7 +264,7 @@ export function FortuneResult({ data, onReset }: Props) {
           ← Back to Profiles
         </button>
       </div>
-      
+
       <div className="header-badge">
         {data.element === 'Fire' && '🔥'}
         {data.element === 'Water' && '💧'}
@@ -231,7 +279,7 @@ export function FortuneResult({ data, onReset }: Props) {
           {sunSign} • Life Path {data.numerology.core_numbers.life_path.number}
         </h3>
       )}
-      
+
       {/* Cosmic Stones Section */}
       {(zodiacStones || birthstone) && (
         <div className="cosmic-stones-section">
@@ -242,7 +290,9 @@ export function FortuneResult({ data, onReset }: Props) {
                 <span className="stone-label">{sunSign} Crystals</span>
                 <div className="stone-list">
                   {zodiacStones.stones.map((stone, i) => (
-                    <span key={i} className="stone-tag">{stone}</span>
+                    <span key={i} className="stone-tag">
+                      {stone}
+                    </span>
                   ))}
                 </div>
                 <span className="stone-meaning">{zodiacStones.meaning}</span>
@@ -251,8 +301,8 @@ export function FortuneResult({ data, onReset }: Props) {
             {birthstone && (
               <div className="stone-category birthstone">
                 <span className="stone-label">Birthstone</span>
-                <span 
-                  className="stone-tag birthstone-tag" 
+                <span
+                  className="stone-tag birthstone-tag"
                   style={{ '--stone-color': birthstone.color } as React.CSSProperties}
                 >
                   {birthstone.stone}
@@ -262,7 +312,7 @@ export function FortuneResult({ data, onReset }: Props) {
           </div>
         </div>
       )}
-      
+
       {headline && (
         <div className="tldr-box">
           <strong>TL;DR:</strong> {headline}
@@ -311,15 +361,12 @@ export function FortuneResult({ data, onReset }: Props) {
         </div>
       )}
 
-      {aiInsight && (
-        <div className="tldr-box ai-insight">
-          {aiInsight}
-        </div>
-      )}
+      {aiInsight && <div className="tldr-box ai-insight">{aiInsight}</div>}
       {showUpgradeMessage && (
         <div className="tldr-box upgrade-message">
-          ✨ <strong>Premium Feature</strong> — AI insights are available for premium members. 
-          Upgrade to unlock personalized cosmic explanations, longer guidance, and saved insight history.
+          ✨ <strong>Premium Feature</strong> — AI insights are available for premium members.
+          Upgrade to unlock personalized cosmic explanations, longer guidance, and saved insight
+          history.
         </div>
       )}
       {!isPaid && (
@@ -330,9 +377,9 @@ export function FortuneResult({ data, onReset }: Props) {
           </p>
         </div>
       )}
-      
+
       {data.guidance && <DailyGuidance guidance={data.guidance} scope={data.scope} />}
-      
+
       {data.sections && data.sections.length > 0 && (
         <SectionGrid
           sections={data.sections}
@@ -340,6 +387,55 @@ export function FortuneResult({ data, onReset }: Props) {
           profileId={selectedProfile?.id || null}
         />
       )}
+
+      {/* Cosmic Guide Chat UI */}
+      <div className="cosmic-guide-container">
+        <h3 className="cosmic-guide-title">✨ Ask the Cosmic Guide</h3>
+        <p className="cosmic-guide-subtitle">
+          Ask follow-up questions about your reading or seek mystical advice.
+        </p>
+
+        <div className="chat-messages">
+          {messages.length === 0 && (
+            <div className="chat-placeholder">
+              &quot;What does this reading mean for my career?&quot;
+            </div>
+          )}
+          {messages.map((msg, i) => (
+            <div key={i} className={`chat-bubble ${msg.role}`}>
+              {msg.content}
+            </div>
+          ))}
+          {chatLoading && (
+            <div className="chat-bubble assistant loading">
+              <span className="dot">.</span>
+              <span className="dot">.</span>
+              <span className="dot">.</span>
+            </div>
+          )}
+        </div>
+
+        <form onSubmit={handleChatSubmit} className="chat-input-container">
+          <input
+            type="text"
+            value={chatInput}
+            onChange={(e) => setChatInput(e.target.value)}
+            placeholder="Ask the stars anything..."
+            className="chat-input"
+            disabled={chatLoading}
+          />
+          <button
+            type="submit"
+            className="chat-send-btn"
+            disabled={chatLoading || !chatInput.trim()}
+          >
+            {chatLoading ? '...' : 'Send'}
+          </button>
+        </form>
+      </div>
+
+      <CosmicCard data={data} userName={selectedProfile?.name || 'Seeker'} />
+
       <div className="action-buttons">
         <button
           onClick={handleAiExplain}
@@ -351,8 +447,8 @@ export function FortuneResult({ data, onReset }: Props) {
         >
           {aiLoading ? 'Thinking…' : isPaid ? '✨ Explain with AI' : '🔒 Premium AI Insight'}
         </button>
-        <button 
-          onClick={onReset} 
+        <button
+          onClick={onReset}
           className="btn-secondary"
           aria-label="Go back to profiles"
           type="button"
@@ -360,7 +456,6 @@ export function FortuneResult({ data, onReset }: Props) {
           Back to Profiles
         </button>
       </div>
-
     </div>
   );
 }

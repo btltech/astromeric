@@ -1,0 +1,145 @@
+/* SaveReadingsPrompt.css */
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(2px);
+}
+
+.save-readings-modal {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: 20px;
+  padding: 40px;
+  max-width: 450px;
+  width: 90%;
+  position: relative;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+}
+
+.modal-close {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: transparent;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.6);
+  transition: color 0.2s;
+  padding: 5px;
+}
+
+.modal-close:hover {
+  color: rgba(255, 255, 255, 1);
+}
+
+.modal-content {
+  text-align: center;
+}
+
+.modal-icon {
+  font-size: 48px;
+  margin-bottom: 20px;
+  display: inline-block;
+}
+
+.save-readings-modal h2 {
+  color: #fff;
+  font-size: 24px;
+  margin: 0 0 10px;
+  font-weight: 600;
+}
+
+.save-readings-modal p {
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0 0 25px;
+  line-height: 1.5;
+}
+
+.benefits {
+  list-style: none;
+  padding: 0;
+  margin: 25px 0;
+  text-align: left;
+}
+
+.benefits li {
+  color: rgba(255, 255, 255, 0.8);
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(139, 92, 246, 0.1);
+  font-size: 14px;
+}
+
+.benefits li:last-child {
+  border-bottom: none;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  margin: 30px 0;
+}
+
+.modal-actions .btn {
+  flex: 1;
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-weight: 500;
+  text-decoration: none;
+  display: inline-block;
+  text-align: center;
+  cursor: pointer;
+  border: none;
+  transition: all 0.3s;
+  font-size: 14px;
+}
+
+.modal-actions .btn-primary {
+  background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+  color: white;
+}
+
+.modal-actions .btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(139, 92, 246, 0.3);
+}
+
+.modal-actions .btn-secondary {
+  background: transparent;
+  color: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+}
+
+.modal-actions .btn-secondary:hover {
+  background: rgba(139, 92, 246, 0.1);
+  border-color: rgba(139, 92, 246, 0.5);
+}
+
+.modal-hint {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 15px 0 0;
+}
+
+@media (max-width: 600px) {
+  .save-readings-modal {
+    padding: 30px 20px;
+  }
+
+  .save-readings-modal h2 {
+    font-size: 20px;
+  }
+
+  .modal-actions {
+    flex-direction: column;
+  }
+}

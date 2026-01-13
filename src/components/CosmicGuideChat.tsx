@@ -27,7 +27,9 @@ export function CosmicGuideChat({ sunSign, moonSign, risingSign }: Props) {
     {
       id: 'welcome',
       role: 'assistant',
-      content: `✨ Greetings, cosmic traveler! I am your Celestial Guide, here to illuminate your path through the stars. ${sunSign ? `I sense your ${sunSign} solar energy...` : ''} Ask me about love, career, timing, retrogrades, or any cosmic wisdom you seek.`,
+      content: `✨ Greetings, cosmic traveler! I am your Celestial Guide, here to illuminate your path through the stars. ${
+        sunSign ? `I sense your ${sunSign} solar energy...` : ''
+      } Ask me about love, career, timing, retrogrades, or any cosmic wisdom you seek.`,
       timestamp: new Date(),
     },
   ]);
@@ -64,13 +66,7 @@ export function CosmicGuideChat({ sunSign, moonSign, risingSign }: Props) {
         .filter((m) => m.id !== 'welcome')
         .map((m) => ({ role: m.role, content: m.content }));
 
-      const response = await chatWithCosmicGuide(
-        input,
-        sunSign,
-        moonSign,
-        risingSign,
-        history
-      );
+      const response = await chatWithCosmicGuide(input, sunSign, moonSign, risingSign, history);
 
       const assistantMessage: Message = {
         id: `assistant-${Date.now()}`,
@@ -109,7 +105,7 @@ export function CosmicGuideChat({ sunSign, moonSign, risingSign }: Props) {
 
     try {
       const response = await fetchQuickInsight(topic, sunSign);
-      
+
       const assistantMessage: Message = {
         id: `assistant-${Date.now()}`,
         role: 'assistant',
@@ -160,9 +156,7 @@ export function CosmicGuideChat({ sunSign, moonSign, risingSign }: Props) {
       <div className="messages-container">
         {messages.map((msg) => (
           <div key={msg.id} className={`message ${msg.role}`}>
-            {msg.role === 'assistant' && (
-              <span className="message-avatar">🔮</span>
-            )}
+            {msg.role === 'assistant' && <span className="message-avatar">🔮</span>}
             <div className="message-content">
               <p>{msg.content}</p>
               <span className="message-time">
@@ -171,7 +165,7 @@ export function CosmicGuideChat({ sunSign, moonSign, risingSign }: Props) {
             </div>
           </div>
         ))}
-        
+
         {loading && (
           <div className="message assistant loading">
             <span className="message-avatar">🔮</span>
@@ -184,7 +178,7 @@ export function CosmicGuideChat({ sunSign, moonSign, risingSign }: Props) {
             </div>
           </div>
         )}
-        
+
         <div ref={messagesEndRef} />
       </div>
 
@@ -197,11 +191,7 @@ export function CosmicGuideChat({ sunSign, moonSign, risingSign }: Props) {
           onChange={(e) => setInput(e.target.value)}
           disabled={loading}
         />
-        <button 
-          type="submit" 
-          className="send-button"
-          disabled={loading || !input.trim()}
-        >
+        <button type="submit" className="send-button" disabled={loading || !input.trim()}>
           <span>✨</span>
         </button>
       </form>

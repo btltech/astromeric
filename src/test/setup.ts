@@ -31,7 +31,9 @@ global.IntersectionObserver = class IntersectionObserver {
   root = null;
   rootMargin = '';
   thresholds = [];
-  takeRecords() { return []; }
+  takeRecords() {
+    return [];
+  }
 };
 
 // Mock fetch for API tests

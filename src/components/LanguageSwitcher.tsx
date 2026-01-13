@@ -13,7 +13,7 @@ const translationStatus: Record<LanguageCode, 'full' | 'partial' | 'minimal'> = 
 };
 
 export function LanguageSwitcher() {
-  const { i18n, t } = useTranslation();
+  const { i18n } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -49,8 +49,8 @@ export function LanguageSwitcher() {
         <span className="lang-flag">{currentLang.flag}</span>
         <span className="lang-code">{currentLang.code.toUpperCase()}</span>
         {currentStatus !== 'full' && (
-          <span 
-            className="lang-status-indicator" 
+          <span
+            className="lang-status-indicator"
             title={currentStatus === 'partial' ? 'Some content in English' : 'Mostly English'}
           >
             {currentStatus === 'partial' ? '◐' : '○'}
@@ -89,7 +89,7 @@ export function LanguageSwitcher() {
                   <span className="lang-flag">{lang.flag}</span>
                   <span className="lang-name">{lang.name}</span>
                   {status !== 'full' && (
-                    <span 
+                    <span
                       className="lang-status-badge"
                       title={status === 'partial' ? 'Some content in English' : 'Mostly English'}
                     >

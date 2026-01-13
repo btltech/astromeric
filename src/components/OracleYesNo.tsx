@@ -36,30 +36,38 @@ export function OracleYesNo({ birthDate }: Props) {
 
   const getAnswerEmoji = (answer: string) => {
     switch (answer) {
-      case 'Yes': return '✅';
-      case 'No': return '❌';
-      case 'Maybe': return '🤔';
-      case 'Wait': return '⏳';
-      default: return '🔮';
+      case 'Yes':
+        return '✅';
+      case 'No':
+        return '❌';
+      case 'Maybe':
+        return '🤔';
+      case 'Wait':
+        return '⏳';
+      default:
+        return '🔮';
     }
   };
 
   const getAnswerColor = (answer: string) => {
     switch (answer) {
-      case 'Yes': return '#4ade80';
-      case 'No': return '#f87171';
-      case 'Maybe': return '#facc15';
-      case 'Wait': return '#a78bfa';
-      default: return '#a78bfa';
+      case 'Yes':
+        return '#4ade80';
+      case 'No':
+        return '#f87171';
+      case 'Maybe':
+        return '#facc15';
+      case 'Wait':
+        return '#a78bfa';
+      default:
+        return '#a78bfa';
     }
   };
 
   return (
     <div className="oracle-yes-no">
       <h3 className="oracle-title">🔮 Cosmic Decision Oracle</h3>
-      <p className="oracle-subtitle">
-        Ask a yes/no question and receive cosmic guidance
-      </p>
+      <p className="oracle-subtitle">Ask a yes/no question and receive cosmic guidance</p>
 
       {!result ? (
         <form onSubmit={handleAsk} className="oracle-form">
@@ -76,11 +84,7 @@ export function OracleYesNo({ birthDate }: Props) {
             <span className="input-glow" />
           </div>
 
-          <button 
-            type="submit" 
-            className="ask-button"
-            disabled={loading || !question.trim()}
-          >
+          <button type="submit" className="ask-button" disabled={loading || !question.trim()}>
             {loading ? (
               <>
                 <span className="crystal-animation">🔮</span>
@@ -108,10 +112,10 @@ export function OracleYesNo({ birthDate }: Props) {
         <div className="oracle-result">
           <div className="question-asked">
             <span className="label">You asked:</span>
-            <p>"{result.question}"</p>
+            <p>&quot;{result.question}&quot;</p>
           </div>
 
-          <div 
+          <div
             className="answer-reveal"
             style={{ '--answer-color': getAnswerColor(result.answer) } as React.CSSProperties}
           >
@@ -120,10 +124,7 @@ export function OracleYesNo({ birthDate }: Props) {
             <div className="confidence-meter">
               <span className="confidence-label">Cosmic Confidence</span>
               <div className="confidence-bar">
-                <div 
-                  className="confidence-fill"
-                  style={{ width: `${result.confidence}%` }}
-                />
+                <div className="confidence-fill" style={{ width: `${result.confidence}%` }} />
               </div>
               <span className="confidence-value">{result.confidence}%</span>
             </div>
@@ -144,8 +145,8 @@ export function OracleYesNo({ birthDate }: Props) {
             <p>{result.timing}</p>
           </div>
 
-          <button className="ask-again-button" onClick={handleReset}>
-            <span>🔄</span> Ask Another Question
+          <button onClick={handleReset} className="reset-button">
+            Ask Another Question
           </button>
         </div>
       )}

@@ -44,12 +44,12 @@ export interface ColorInfo {
 export interface DailyGuidance {
   avoid: {
     activities: string[];
-    colors: (string | ColorInfo)[];  // Support both old string and new object format
+    colors: (string | ColorInfo)[]; // Support both old string and new object format
     numbers: number[];
   };
   embrace: {
     activities: string[];
-    colors: (string | ColorInfo)[];  // Support both old string and new object format
+    colors: (string | ColorInfo)[]; // Support both old string and new object format
     time: string;
   };
   retrogrades: RetrogradeInfo[];
@@ -73,6 +73,7 @@ export interface PredictionData {
   charts?: {
     natal?: {
       planets: Array<{ name: string; sign: string; degree: number; house: number }>;
+      houses?: Array<{ house: number; sign: string; degree: number }>;
     };
   };
   element?: string;
@@ -347,7 +348,10 @@ export interface AccuracyStats {
   unrated_readings: number;
   accuracy_rate: number;
   by_outcome: Record<string, number>;
-  by_scope: Record<string, { accuracy: number; total: number; yes: number; no: number; partial: number }>;
+  by_scope: Record<
+    string,
+    { accuracy: number; total: number; yes: number; no: number; partial: number }
+  >;
   trend: 'improving' | 'declining' | 'stable' | 'neutral';
   trend_emoji: string;
   message: string;

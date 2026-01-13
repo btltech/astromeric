@@ -192,7 +192,6 @@ export default function TimingAdvisor({
 
   const renderDayCard = (day: TimingDayResult, isToday = false) => {
     const colors = RATING_COLORS[day.rating] || RATING_COLORS.Moderate;
-    const activityIcon = ACTIVITY_ICONS[day.activity] || '📅';
 
     return (
       <div
@@ -268,7 +267,9 @@ export default function TimingAdvisor({
           {activities.map((activity) => (
             <button
               key={activity.id}
-              className={`timing-activity-btn ${selectedActivity === activity.id ? 'timing-activity-btn--active' : ''}`}
+              className={`timing-activity-btn ${
+                selectedActivity === activity.id ? 'timing-activity-btn--active' : ''
+              }`}
               onClick={() => setSelectedActivity(activity.id)}
             >
               <span className="timing-activity-icon">{ACTIVITY_ICONS[activity.id] || '📅'}</span>
@@ -284,7 +285,7 @@ export default function TimingAdvisor({
           className={`timing-tab ${viewMode === 'today' ? 'timing-tab--active' : ''}`}
           onClick={() => setViewMode('today')}
         >
-          Today's Analysis
+          Today&apos;s Analysis
         </button>
         <button
           className={`timing-tab ${viewMode === 'week' ? 'timing-tab--active' : ''}`}
@@ -372,8 +373,8 @@ export default function TimingAdvisor({
         <h3>💡 Timing Tips</h3>
         <ul>
           <li>
-            <strong>Planetary Hours:</strong> Each hour of the day is ruled by a planet.
-            Jupiter hours are great for expansion, Mercury for communication.
+            <strong>Planetary Hours:</strong> Each hour of the day is ruled by a planet. Jupiter
+            hours are great for expansion, Mercury for communication.
           </li>
           <li>
             <strong>Moon Phase:</strong> Waxing moon (New to Full) is best for new beginnings.

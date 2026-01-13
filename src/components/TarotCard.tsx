@@ -29,17 +29,11 @@ export function TarotCard() {
   return (
     <div className="tarot-card-component">
       <h3 className="tarot-title">🃏 Daily Tarot Draw</h3>
-      <p className="tarot-subtitle">
-        Draw a card for cosmic guidance and reflection
-      </p>
+      <p className="tarot-subtitle">Draw a card for cosmic guidance and reflection</p>
 
       {!card ? (
         <div className="tarot-draw-area">
-          <button 
-            className="draw-button"
-            onClick={handleDraw}
-            disabled={loading}
-          >
+          <button className="draw-button" onClick={handleDraw} disabled={loading}>
             {loading ? (
               <>
                 <span className="shuffle-animation">🔮</span>
@@ -52,15 +46,15 @@ export function TarotCard() {
               </>
             )}
           </button>
-          
+
           <div className="tarot-deck">
             {[...Array(5)].map((_, i) => (
-              <div 
-                key={i} 
+              <div
+                key={i}
                 className="deck-card"
-                style={{ 
+                style={{
                   transform: `translateX(${i * 2}px) rotate(${(i - 2) * 3}deg)`,
-                  zIndex: 5 - i
+                  zIndex: 5 - i,
                 }}
               />
             ))}
@@ -76,11 +70,14 @@ export function TarotCard() {
                   <span className="mystical-symbol">☆</span>
                 </div>
               </div>
-              
+
               {/* Card Front */}
               <div className="card-front">
                 <div className="card-header">
-                  <h4 className="card-name">{card.card}{card.reversed ? ' (Reversed)' : ''}</h4>
+                  <h4 className="card-name">
+                    {card.card}
+                    {card.reversed ? ' (Reversed)' : ''}
+                  </h4>
                 </div>
                 <div className="card-body">
                   <div className="card-keywords">

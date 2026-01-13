@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
@@ -10,7 +10,13 @@ import { FortuneForm } from '../components/FortuneForm';
 
 // Mock LocationAutocomplete since it has external dependencies
 vi.mock('../components/LocationAutocomplete', () => ({
-  LocationAutocomplete: ({ onSelect, placeholder }: { onSelect: (loc: unknown) => void; placeholder: string }) => (
+  LocationAutocomplete: ({
+    onSelect,
+    placeholder,
+  }: {
+    onSelect: (loc: unknown) => void;
+    placeholder: string;
+  }) => (
     <input
       data-testid="location-autocomplete"
       placeholder={placeholder}
@@ -35,70 +41,88 @@ describe('FortuneForm', () => {
     mockOnSubmit.mockClear();
   });
 
-  it('renders all form fields', () => {
-    render(<FortuneForm onSubmit={mockOnSubmit} isLoading={false} />);
+  it('renders all form fields across steps', async () => {
+    const { container } = render(<FortuneForm onSubmit={mockOnSubmit} isLoading={false} />);
+    const user = userEvent.setup();
 
-    expect(screen.getByLabelText(/full name/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/date of birth/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/time of birth/i)).toBeInTheDocument();
-    // Place of birth uses LocationAutocomplete component
+    // Step 1: Name
+    expect(screen.getByText(/What is your name/i)).toBeInTheDocument();
+    await user.type(screen.getByPlaceholderText(/form\.fullNamePlaceholder/i), 'John Doe');
+    await user.click(screen.getByRole('button', { name: /next/i }));
+
+    // Step 2: DOB
+    expect(await screen.findByText(/When were you born/i)).toBeInTheDocument();
+    const dateInput = container.querySelector('input[type="date"]');
+    const timeInput = container.querySelector('input[type="time"]');
+    expect(dateInput).toBeInTheDocument();
+    expect(timeInput).toBeInTheDocument();
+
+    await user.type(timeInput!, '14:30');
+    fireEvent.change(dateInput!, { target: { value: '1990-05-15' } });
+    await user.click(screen.getByRole('button', { name: /next/i }));
+
+    // Step 3: Location
+    expect(await screen.findByText(/Where were you born/i)).toBeInTheDocument();
     expect(screen.getByTestId('location-autocomplete')).toBeInTheDocument();
+    await user.type(screen.getByTestId('location-autocomplete'), 'New York');
+    await user.click(screen.getByRole('button', { name: /next/i }));
+
+    // Step 4: Summary
+    expect(await screen.findByText(/Ready for your destiny/i)).toBeInTheDocument();
+    expect(screen.getByText('John Doe')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /prediction/i })).toBeInTheDocument();
   });
 
   it('shows validation error when name is empty', async () => {
     render(<FortuneForm onSubmit={mockOnSubmit} isLoading={false} />);
     const user = userEvent.setup();
 
-    // Fill date but leave name empty (simulate bypassing HTML5 validation)
-    const nameInput = screen.getByLabelText(/full name/i);
-    const dateInput = screen.getByLabelText(/date of birth/i);
-    
-    // Type a space then delete to trigger validation without HTML5 required blocking
-    await user.type(nameInput, ' ');
-    await user.clear(nameInput);
-    await user.type(dateInput, '1990-05-15');
+    // Try to go to next step without name
+    await user.click(screen.getByRole('button', { name: /next/i }));
 
-    // Submit form - need to click even though HTML5 might block
-    const submitButton = screen.getByRole('button', { name: /prediction/i });
-    await user.click(submitButton);
-
-    // The form validates on submit - check onSubmit wasn't called with empty name
-    // Note: HTML5 validation may prevent form submission, which is expected behavior
+    // Expect error message (translated key usually)
+    expect(await screen.findByText(/form\.errors\.nameRequired/i)).toBeInTheDocument();
     expect(mockOnSubmit).not.toHaveBeenCalled();
   });
 
-  it('shows validation error when date is in the future', async () => {
+  it('shows validation error when date is empty on step 2', async () => {
     render(<FortuneForm onSubmit={mockOnSubmit} isLoading={false} />);
     const user = userEvent.setup();
 
-    // Fill form with future date
-    await user.type(screen.getByLabelText(/full name/i), 'John Doe');
-    
-    // Set a future date (must clear first since date inputs can be tricky)
-    const dateInput = screen.getByLabelText(/date of birth/i);
-    await user.clear(dateInput);
-    fireEvent.change(dateInput, { target: { value: '2030-01-01' } });
+    // Step 1
+    await user.type(screen.getByPlaceholderText(/form\.fullNamePlaceholder/i), 'John Doe');
+    await user.click(screen.getByRole('button', { name: /next/i }));
 
-    // Submit form
-    const submitButton = screen.getByRole('button', { name: /prediction/i });
-    await user.click(submitButton);
+    // Step 2
+    expect(await screen.findByText(/When were you born/i)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /next/i }));
 
-    // Check for error about future date
-    expect(await screen.findByText(/cannot be in the future/i)).toBeInTheDocument();
-    expect(mockOnSubmit).not.toHaveBeenCalled();
+    expect(await screen.findByText(/form\.errors\.dobRequired/i)).toBeInTheDocument();
   });
 
   it('submits valid form data', async () => {
-    render(<FortuneForm onSubmit={mockOnSubmit} isLoading={false} />);
+    const { container } = render(<FortuneForm onSubmit={mockOnSubmit} isLoading={false} />);
     const user = userEvent.setup();
 
-    // Fill form with valid data
-    await user.type(screen.getByLabelText(/full name/i), 'Jane Doe');
-    await user.type(screen.getByLabelText(/date of birth/i), '1990-05-15');
-    await user.type(screen.getByLabelText(/time of birth/i), '14:30');
+    // Step 1
+    await user.type(screen.getByPlaceholderText(/form\.fullNamePlaceholder/i), 'Jane Doe');
+    await user.click(screen.getByRole('button', { name: /next/i }));
 
-    // Submit form
-    const submitButton = screen.getByRole('button', { name: /prediction/i });
+    // Step 2
+    expect(await screen.findByText(/When were you born/i)).toBeInTheDocument();
+    const dateInput = container.querySelector('input[type="date"]');
+    const timeInput = container.querySelector('input[type="time"]');
+    fireEvent.change(dateInput!, { target: { value: '1990-05-15' } });
+    await user.type(timeInput!, '14:30');
+    await user.click(screen.getByRole('button', { name: /next/i }));
+
+    // Step 3
+    const locationInput = await screen.findByTestId('location-autocomplete');
+    await user.type(locationInput, 'New York');
+    await user.click(screen.getByRole('button', { name: /next/i }));
+
+    // Step 4
+    const submitButton = await screen.findByRole('button', { name: /prediction/i });
     await user.click(submitButton);
 
     expect(mockOnSubmit).toHaveBeenCalledWith(
@@ -106,27 +130,57 @@ describe('FortuneForm', () => {
         name: 'Jane Doe',
         date_of_birth: '1990-05-15',
         time_of_birth: '14:30',
+        place_of_birth: 'New York, NY, USA',
       })
     );
   });
 
-  it('disables submit button when loading', () => {
-    render(<FortuneForm onSubmit={mockOnSubmit} isLoading={true} />);
+  it('disables submit button when loading', async () => {
+    const { container } = render(<FortuneForm onSubmit={mockOnSubmit} isLoading={true} />);
+    const user = userEvent.setup();
 
-    const submitButton = screen.getByRole('button', { name: /reading the stars/i });
+    // Go to last step
+    await user.type(screen.getByPlaceholderText(/form\.fullNamePlaceholder/i), 'John');
+    await user.click(screen.getByRole('button', { name: /next/i }));
+
+    // Wait for step 2
+    expect(await screen.findByText(/When were you born/i)).toBeInTheDocument();
+    const dateInput = container.querySelector('input[type="date"]');
+    fireEvent.change(dateInput!, { target: { value: '1990-01-01' } });
+    await user.click(screen.getByRole('button', { name: /next/i }));
+
+    // Wait for step 3
+    expect(await screen.findByText(/Where were you born/i)).toBeInTheDocument();
+    await user.type(await screen.findByTestId('location-autocomplete'), 'New York');
+    await user.click(screen.getByRole('button', { name: /next/i }));
+
+    // Wait for step 4
+    expect(await screen.findByText(/Ready for your destiny/i)).toBeInTheDocument();
+    const submitButton = await screen.findByRole('button', { name: /form\.readingStars/i });
     expect(submitButton).toBeDisabled();
   });
 
   it('updates location when LocationAutocomplete selects a place', async () => {
-    render(<FortuneForm onSubmit={mockOnSubmit} isLoading={false} />);
+    const { container } = render(<FortuneForm onSubmit={mockOnSubmit} isLoading={false} />);
     const user = userEvent.setup();
 
-    // Type in location to trigger mock selection
-    const locationInput = screen.getByTestId('location-autocomplete');
+    // Step 1
+    await user.type(screen.getByPlaceholderText(/form\.fullNamePlaceholder/i), 'John');
+    await user.click(screen.getByRole('button', { name: /next/i }));
+
+    // Step 2
+    expect(await screen.findByText(/When were you born/i)).toBeInTheDocument();
+    const dateInput = container.querySelector('input[type="date"]');
+    fireEvent.change(dateInput!, { target: { value: '1990-01-01' } });
+    await user.click(screen.getByRole('button', { name: /next/i }));
+
+    // Step 3: Location
+    expect(await screen.findByText(/Where were you born/i)).toBeInTheDocument();
+    const locationInput = await screen.findByTestId('location-autocomplete');
     await user.type(locationInput, 'New York');
 
-    // Check that geo indicator appears
-    expect(await screen.findByText(/40\.7128/)).toBeInTheDocument();
+    // Check that geo indicator appears (mock returns America/New_York)
+    expect(await screen.findByText(/America\/New_York/)).toBeInTheDocument();
   });
 });
 
@@ -188,13 +242,7 @@ describe('ErrorBoundary', () => {
 // ============================================
 // Toast System Tests
 // ============================================
-import { ToastContainer, toast, useToasts, ToastItem } from '../components/Toast';
-
-// Wrapper component to test the hook
-const ToastTestWrapper = () => {
-  const { toasts, dismiss } = useToasts();
-  return <ToastContainer toasts={toasts} onDismiss={dismiss} />;
-};
+import { ToastContainer } from '../components/Toast';
 
 describe('Toast System', () => {
   beforeEach(() => {
@@ -235,8 +283,8 @@ describe('Toast System', () => {
     // Check icons exist within toast-icon spans
     const iconSpans = document.querySelectorAll('.toast-icon');
     expect(iconSpans.length).toBe(4);
-    
-    const iconTexts = Array.from(iconSpans).map(el => el.textContent);
+
+    const iconTexts = Array.from(iconSpans).map((el) => el.textContent);
     expect(iconTexts).toContain('✓');
     expect(iconTexts).toContain('✕');
     expect(iconTexts).toContain('ℹ');
@@ -252,7 +300,7 @@ describe('Toast System', () => {
     };
 
     render(<ToastContainer toasts={[testToast]} onDismiss={mockDismiss} />);
-    
+
     const closeButton = screen.getByLabelText('Dismiss notification');
     fireEvent.click(closeButton);
 

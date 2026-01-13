@@ -1,6 +1,5 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useTranslation } from 'react-i18next';
 
 interface MobileActionBarProps {
   actions: Array<{
@@ -15,8 +14,6 @@ interface MobileActionBarProps {
 }
 
 export function MobileActionBar({ actions, visible = true }: MobileActionBarProps) {
-  const { t } = useTranslation();
-
   return (
     <AnimatePresence>
       {visible && (

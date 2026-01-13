@@ -350,23 +350,23 @@ function formatContent(text: string): React.ReactNode[] {
   });
 }
 
-function LessonCard({ lesson, isExpanded, onToggle }: { 
-  lesson: Lesson; 
-  isExpanded: boolean; 
+function LessonCard({
+  lesson,
+  isExpanded,
+  onToggle,
+}: {
+  lesson: Lesson;
+  isExpanded: boolean;
   onToggle: () => void;
 }) {
   return (
-    <motion.div 
+    <motion.div
       className={`lesson-card ${isExpanded ? 'expanded' : ''}`}
       layout
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
     >
-      <button 
-        className="lesson-header" 
-        onClick={onToggle}
-        aria-expanded={isExpanded}
-      >
+      <button className="lesson-header" onClick={onToggle} aria-expanded={isExpanded}>
         <span className="lesson-icon">{lesson.icon}</span>
         <div className="lesson-info">
           <h4>{lesson.title}</h4>
@@ -374,19 +374,17 @@ function LessonCard({ lesson, isExpanded, onToggle }: {
         </div>
         <span className="lesson-toggle">{isExpanded ? '−' : '+'}</span>
       </button>
-      
+
       <AnimatePresence>
         {isExpanded && (
-          <motion.div 
+          <motion.div
             className="lesson-content"
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.3 }}
           >
-            <div className="lesson-body">
-              {formatContent(lesson.content)}
-            </div>
+            <div className="lesson-body">{formatContent(lesson.content)}</div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -398,13 +396,14 @@ export function LearnView() {
   const [activeCategory, setActiveCategory] = useState<Category>('astrology');
   const [expandedLesson, setExpandedLesson] = useState<string | null>(null);
   const [completedLessons, setCompletedLessons] = useState<Set<string>>(() => {
-    const saved = localStorage.getItem('astromeric_completedLessons')
-      || localStorage.getItem('astronumeric_completedLessons');
+    const saved =
+      localStorage.getItem('astromeric_completedLessons') ||
+      localStorage.getItem('astronumeric_completedLessons');
     return saved ? new Set(JSON.parse(saved)) : new Set();
   });
 
   const lessons = LESSONS[activeCategory];
-  const completedCount = lessons.filter(l => completedLessons.has(l.id)).length;
+  const completedCount = lessons.filter((l) => completedLessons.has(l.id)).length;
   const progress = Math.round((completedCount / lessons.length) * 100);
   const nextLesson = lessons.find((l) => !completedLessons.has(l.id)) || null;
 
@@ -422,8 +421,9 @@ export function LearnView() {
   };
 
   const totalLessons = LESSONS.astrology.length + LESSONS.numerology.length;
-  const totalCompleted = [...completedLessons].filter(id => 
-    LESSONS.astrology.some(l => l.id === id) || LESSONS.numerology.some(l => l.id === id)
+  const totalCompleted = [...completedLessons].filter(
+    (id) =>
+      LESSONS.astrology.some((l) => l.id === id) || LESSONS.numerology.some((l) => l.id === id)
   ).length;
 
   return (
@@ -435,15 +435,21 @@ export function LearnView() {
 
       {/* Category Tabs */}
       <div className="learn-tabs">
-        <button 
+        <button
           className={`learn-tab ${activeCategory === 'astrology' ? 'active' : ''}`}
-          onClick={() => { setActiveCategory('astrology'); setExpandedLesson(null); }}
+          onClick={() => {
+            setActiveCategory('astrology');
+            setExpandedLesson(null);
+          }}
         >
           🌟 Astrology
         </button>
-        <button 
+        <button
           className={`learn-tab ${activeCategory === 'numerology' ? 'active' : ''}`}
-          onClick={() => { setActiveCategory('numerology'); setExpandedLesson(null); }}
+          onClick={() => {
+            setActiveCategory('numerology');
+            setExpandedLesson(null);
+          }}
         >
           🔢 Numerology
         </button>
@@ -452,9 +458,14 @@ export function LearnView() {
       {/* Overall Progress */}
       <div className="learn-progress overall">
         <div className="progress-bar">
-          <div className="progress-fill" style={{ width: `${(totalCompleted / totalLessons) * 100}%` }} />
+          <div
+            className="progress-fill"
+            style={{ width: `${(totalCompleted / totalLessons) * 100}%` }}
+          />
         </div>
-        <span className="progress-text">{totalCompleted}/{totalLessons} lessons completed</span>
+        <span className="progress-text">
+          {totalCompleted}/{totalLessons} lessons completed
+        </span>
       </div>
 
       {/* Category Progress */}
@@ -463,14 +474,19 @@ export function LearnView() {
           <div className="progress-fill" style={{ width: `${progress}%` }} />
         </div>
         <span className="progress-text">
-          {activeCategory === 'astrology' ? '🌟' : '🔢'} {completedCount}/{lessons.length} in {activeCategory}
+          {activeCategory === 'astrology' ? '🌟' : '🔢'} {completedCount}/{lessons.length} in{' '}
+          {activeCategory}
         </span>
       </div>
 
       <div className="next-lesson" style={{ marginBottom: '1rem' }}>
         {nextLesson ? (
           <p className="text-muted" style={{ margin: 0 }}>
-            Next up: <strong>{nextLesson.icon} {nextLesson.title}</strong> — tap to continue your path.
+            Next up:{' '}
+            <strong>
+              {nextLesson.icon} {nextLesson.title}
+            </strong>{' '}
+            — tap to continue your path.
           </p>
         ) : (
           <p className="text-muted" style={{ margin: 0 }}>
@@ -493,12 +509,12 @@ export function LearnView() {
 
       {/* Completion Message */}
       {totalCompleted === totalLessons && (
-        <motion.div 
+        <motion.div
           className="completion-message"
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
         >
-          🎉 Congratulations! You've completed all lessons! You're now a cosmic scholar.
+          🎉 Congratulations! You&apos;ve completed all lessons! You&apos;re now a cosmic scholar.
         </motion.div>
       )}
     </motion.div>

@@ -27,7 +27,7 @@ export function usePWA(): UsePWAReturn {
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
     // Check iOS standalone
     const isIOSStandalone = (navigator as unknown as { standalone?: boolean }).standalone === true;
-    
+
     setIsInstalled(isStandalone || isIOSStandalone);
   }, []);
 
@@ -116,7 +116,7 @@ export function usePWA(): UsePWAReturn {
     try {
       await installPrompt.prompt();
       const { outcome } = await installPrompt.userChoice;
-      
+
       if (outcome === 'accepted') {
         console.log('User accepted the install prompt');
         setInstallPrompt(null);

@@ -4,12 +4,5 @@ compatibility_date = "2024-01-01"
 
 [env.production]
 name = "astromeric"
-
-# Build configuration
-[build]
-command = "npm run build:prod"
-cwd = "."
-
 # Environment variables for production build
-[vars]
-VITE_API_URL = "https://astronumeric-backend-production.up.railway.app"
+vars = { VITE_API_URL = "https://astromeric-backend-production.up.railway.app" }

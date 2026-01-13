@@ -70,10 +70,18 @@ interface AppState {
   allowCloudHistory: boolean;
   setAllowCloudHistory: (allow: boolean) => void;
 
+  // Streak
+  streakCount: number;
+  lastVisitDate: string | null;
+  updateStreak: () => void;
+
   // Auth (new)
   token: string | null;
   user: { id: string; email: string; is_paid: boolean } | null;
-  setAuth: (token: string | null, user: { id: string; email: string; is_paid: boolean } | null) => void;
+  setAuth: (
+    token: string | null,
+    user: { id: string; email: string; is_paid: boolean } | null
+  ) => void;
   logout: () => void;
 }
 
@@ -145,6 +153,26 @@ export const useStore = create<AppState>()(
       allowCloudHistory: false,
       setAllowCloudHistory: (allow) => set({ allowCloudHistory: allow }),
 
+      // Streak
+      streakCount: 0,
+      lastVisitDate: null,
+      updateStreak: () => {
+        const today = new Date().toISOString().split('T')[0];
+        set((state) => {
+          if (state.lastVisitDate === today) return state;
+
+          const yesterday = new Date();
+          yesterday.setDate(yesterday.getDate() - 1);
+          const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+          if (state.lastVisitDate === yesterdayStr) {
+            return { streakCount: state.streakCount + 1, lastVisitDate: today };
+          } else {
+            return { streakCount: 1, lastVisitDate: today };
+          }
+        });
+      },
+
       // Auth
       token: null,
       user: null,
@@ -163,6 +191,8 @@ export const useStore = create<AppState>()(
         dailyReminderEnabled: state.dailyReminderEnabled,
         reminderCadence: state.reminderCadence,
         allowCloudHistory: state.allowCloudHistory,
+        streakCount: state.streakCount,
+        lastVisitDate: state.lastVisitDate,
       }),
       onRehydrateStorage: () => (state) => {
         // Reapply theme on page load

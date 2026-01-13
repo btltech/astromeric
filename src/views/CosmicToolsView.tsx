@@ -45,7 +45,7 @@ export function CosmicToolsView({ birthDate, sunSign, moonSign, risingSign }: Pr
   return (
     <div className="cosmic-tools-view redesigned">
       <h2 className="view-title">🌟 Cosmic Tools</h2>
-      
+
       <div className="tools-grid">
         {/* Compatibility Link Card */}
         <Link to="/compatibility" className="tool-card tool-link-card">
@@ -63,7 +63,7 @@ export function CosmicToolsView({ birthDate, sunSign, moonSign, risingSign }: Pr
 
         {/* Daily Cosmic Card */}
         <div className={`tool-card ${expandedTool === 'daily' ? 'expanded' : ''}`}>
-          <button 
+          <button
             className="tool-card-header"
             onClick={() => toggleTool('daily')}
             aria-expanded={expandedTool === 'daily'}
@@ -90,7 +90,7 @@ export function CosmicToolsView({ birthDate, sunSign, moonSign, risingSign }: Pr
 
         {/* Tarot Card */}
         <div className={`tool-card ${expandedTool === 'tarot' ? 'expanded' : ''}`}>
-          <button 
+          <button
             className="tool-card-header"
             onClick={() => toggleTool('tarot')}
             aria-expanded={expandedTool === 'tarot'}
@@ -113,7 +113,7 @@ export function CosmicToolsView({ birthDate, sunSign, moonSign, risingSign }: Pr
 
         {/* Oracle Card */}
         <div className={`tool-card ${expandedTool === 'oracle' ? 'expanded' : ''}`}>
-          <button 
+          <button
             className="tool-card-header"
             onClick={() => toggleTool('oracle')}
             aria-expanded={expandedTool === 'oracle'}
@@ -136,7 +136,7 @@ export function CosmicToolsView({ birthDate, sunSign, moonSign, risingSign }: Pr
 
         {/* AI Guide Card */}
         <div className={`tool-card ${expandedTool === 'guide' ? 'expanded' : ''}`}>
-          <button 
+          <button
             className="tool-card-header"
             onClick={() => toggleTool('guide')}
             aria-expanded={expandedTool === 'guide'}
@@ -152,11 +152,7 @@ export function CosmicToolsView({ birthDate, sunSign, moonSign, risingSign }: Pr
           </button>
           {expandedTool === 'guide' && (
             <div className="tool-card-content">
-              <CosmicGuideChat
-                sunSign={sunSign}
-                moonSign={moonSign}
-                risingSign={risingSign}
-              />
+              <CosmicGuideChat sunSign={sunSign} moonSign={moonSign} risingSign={risingSign} />
             </div>
           )}
         </div>

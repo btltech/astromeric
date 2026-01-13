@@ -51,9 +51,7 @@ export function CompatibilityView() {
   if (!selectedProfile) {
     return (
       <motion.div className="card" {...fadeIn}>
-        <p className="empty-state">
-          Please enter your birth details first from the Reading tab.
-        </p>
+        <p className="empty-state">Please enter your birth details first from the Reading tab.</p>
       </motion.div>
     );
   }
@@ -63,16 +61,14 @@ export function CompatibilityView() {
   return (
     <motion.div className="card" {...fadeIn}>
       <h2>💕 Compatibility Check</h2>
-      <p className="section-subtitle">
-        Compare your cosmic alignment with someone special
-      </p>
-      
+      <p className="section-subtitle">Compare your cosmic alignment with someone special</p>
+
       <div className="your-profile-box">
         <strong>Your Profile:</strong> {selectedProfile.name} ({selectedProfile.date_of_birth})
       </div>
 
       <div className="form-group">
-        <label htmlFor="partner-name">Partner's Name *</label>
+        <label htmlFor="partner-name">Partner&apos;s Name *</label>
         <input
           id="partner-name"
           type="text"
@@ -84,7 +80,7 @@ export function CompatibilityView() {
       </div>
 
       <div className="form-group">
-        <label htmlFor="partner-dob">Partner's Date of Birth *</label>
+        <label htmlFor="partner-dob">Partner&apos;s Date of Birth *</label>
         <input
           id="partner-dob"
           type="date"

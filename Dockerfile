@@ -14,9 +14,12 @@ COPY backend/requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy app
+COPY backend/alembic.ini ./
+COPY backend/alembic ./alembic
 COPY backend/app ./app
 
-EXPOSE 8000
+EXPOSE 8080
 
-# Use python to parse PORT from environment - more reliable than shell expansion
-CMD ["python", "-m", "app.main"]
+# Railway uses $PORT environment variable
+# Run migrations before starting the app
+CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8080}"]

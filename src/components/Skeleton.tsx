@@ -17,7 +17,8 @@ export const Skeleton: React.FC<SkeletonProps> = ({
 }) => {
   const getStyles = (): React.CSSProperties => {
     const baseStyles: React.CSSProperties = {
-      background: 'linear-gradient(90deg, rgba(139, 92, 246, 0.1) 25%, rgba(139, 92, 246, 0.2) 50%, rgba(139, 92, 246, 0.1) 75%)',
+      background:
+        'linear-gradient(90deg, rgba(139, 92, 246, 0.1) 25%, rgba(139, 92, 246, 0.2) 50%, rgba(139, 92, 246, 0.1) 75%)',
       backgroundSize: '200% 100%',
       animation: 'shimmer 1.5s infinite',
       borderRadius: variant === 'circular' ? '50%' : variant === 'card' ? '1rem' : '0.25rem',
@@ -61,12 +62,15 @@ export const Skeleton: React.FC<SkeletonProps> = ({
 
 // Pre-built skeleton components for common use cases
 export const CardSkeleton: React.FC = () => (
-  <div className="card-skeleton" style={{
-    background: 'rgba(139, 92, 246, 0.05)',
-    borderRadius: '1rem',
-    padding: '1.5rem',
-    border: '1px solid rgba(139, 92, 246, 0.1)',
-  }}>
+  <div
+    className="card-skeleton"
+    style={{
+      background: 'rgba(139, 92, 246, 0.05)',
+      borderRadius: '1rem',
+      padding: '1.5rem',
+      border: '1px solid rgba(139, 92, 246, 0.1)',
+    }}
+  >
     <Skeleton variant="text" width="60%" height={24} />
     <div style={{ marginTop: '1rem' }}>
       <Skeleton variant="text" count={3} />
@@ -104,7 +108,9 @@ export const ReadingSkeleton: React.FC = () => (
     <div className="skeleton-line short" />
     <div className="skeleton-line medium" />
     <div className="skeleton-line" />
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1.5rem' }}>
+    <div
+      style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1.5rem' }}
+    >
       <div>
         <div className="skeleton-line short" />
         <div className="skeleton-line" />

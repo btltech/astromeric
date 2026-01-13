@@ -13,7 +13,7 @@ fi
 
 # Initialize project
 echo "📦 Initializing Railway project..."
-railway init --name astronumeric-backend || true
+railway init --name astromeric-backend || true
 
 # Build and deploy
 echo "🏗️ Building and deploying..."

@@ -38,10 +38,7 @@ export function ChartViewPage() {
 
   return (
     <motion.div {...fadeIn}>
-      <ChartView
-        profile={selectedProfile}
-        onExportPDF={() => setError('')}
-      />
+      <ChartView profile={selectedProfile} onExportPDF={() => setError('')} />
     </motion.div>
   );
 }
