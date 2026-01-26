@@ -1,1 +1,5 @@
+# Static assets - these must exist and be served as-is
+# The :splat tells Cloudflare to pass through existing files
+
+# Catch-all for SPA (only applies if file doesn't exist)
 /* /index.html 200
