@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
-from ..ai_service import explain_with_gemini, fallback_summary
+from ..engine.cosmic_guide import ask_cosmic_guide
 from ..exceptions import InvalidDateError, StructuredLogger
 from ..schemas import ApiResponse, ProfilePayload, ResponseStatus
 
@@ -45,9 +45,115 @@ class InterpretationData(BaseModel):
     generated_at: datetime
 
 
+class ChatRequest(BaseModel):
+    """Chat request with cosmic guide."""
+
+    message: str
+    sun_sign: Optional[str] = None
+    moon_sign: Optional[str] = None
+    rising_sign: Optional[str] = None
+    history: Optional[List[Dict[str, str]]] = None
+
+
+class ChatResponse(BaseModel):
+    """Chat response from cosmic guide."""
+
+    response: str
+    provider: str
+    model: Optional[str] = None
+
+
 # ============================================================================
 # ENDPOINTS
 # ============================================================================
+
+
+@router.post("/chat")
+async def chat_with_cosmic_guide(
+    request: Request,
+    req: ChatRequest,
+):
+    """
+    Chat with the cosmic guide AI assistant.
+
+    ## Parameters
+    - **message**: The user's message/question
+    - **sun_sign**: Optional sun sign for personalization
+    - **moon_sign**: Optional moon sign for personalization
+    - **rising_sign**: Optional rising sign for personalization
+    - **history**: Optional conversation history
+
+    ## Response
+    Returns AI-generated response with cosmic wisdom.
+    """
+    request_id = getattr(request.state, "request_id", None)
+
+    try:
+        if not req.message or len(req.message.strip()) == 0:
+            raise ValueError("Message cannot be empty")
+
+        logger.info(
+            "Cosmic guide chat request",
+            request_id=request_id,
+            message_length=len(req.message),
+            has_signs=bool(req.sun_sign or req.moon_sign or req.rising_sign),
+        )
+
+        # Build chart data for personalization
+        chart_data = None
+        if req.sun_sign or req.moon_sign or req.rising_sign:
+            planets = []
+            if req.sun_sign:
+                planets.append({"name": "Sun", "sign": req.sun_sign})
+            if req.moon_sign:
+                planets.append({"name": "Moon", "sign": req.moon_sign})
+
+            chart_data = {"planets": planets}
+            if req.rising_sign:
+                chart_data["houses"] = [{"house": 1, "sign": req.rising_sign}]
+
+        # Use the proper cosmic guide engine
+        result = await ask_cosmic_guide(
+            question=req.message,
+            chart_data=chart_data,
+            conversation_history=req.history,
+        )
+
+        response_text = result.get(
+            "response",
+            "The cosmic energies are aligning to bring you clarity. Trust in the journey and remain open to the wisdom that unfolds.",
+        )
+        provider = result.get("provider", "gemini")
+
+        return ApiResponse(
+            status=ResponseStatus.SUCCESS,
+            data=ChatResponse(
+                response=response_text, provider=provider, model=result.get("model")
+            ),
+            request_id=request_id,
+        )
+    except ValueError as e:
+        logger.error(f"Invalid chat request: {str(e)}", request_id=request_id)
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "code": "INVALID_MESSAGE",
+                "message": str(e),
+            },
+        )
+    except Exception as e:
+        logger.error(
+            f"Chat error: {str(e)}",
+            request_id=request_id,
+            error_type=type(e).__name__,
+        )
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "code": "CHAT_ERROR",
+                "message": "Failed to generate cosmic guidance",
+            },
+        )
 
 
 @router.post("/guidance", response_model=ApiResponse[GuidanceResponse])
