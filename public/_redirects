@@ -1,5 +1,5 @@
-# Static assets - these must exist and be served as-is
-# The :splat tells Cloudflare to pass through existing files
+# Cloudflare Pages SPA configuration
+# Static files are served automatically before redirects are evaluated
+# This catch-all only applies to paths that don't match existing files
 
-# Catch-all for SPA (only applies if file doesn't exist)
 /* /index.html 200
