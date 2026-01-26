@@ -119,29 +119,82 @@ async def rate_limit_middleware(request: Request, call_next):
 def rate_limit(requests_per_minute: int = 30):
     """
     Decorator for rate limiting specific endpoints.
+    Works with FastAPI dependency injection - does not require request as first arg.
 
     Usage:
-        @app.get("/expensive-operation")
+        @router.post("/register")
         @rate_limit(requests_per_minute=5)
-        async def expensive_operation():
+        def register(user_data: UserCreate, db: Session = Depends(get_db)):
             ...
     """
     limiter = RateLimiter(requests_per_minute=requests_per_minute)
 
     def decorator(func: Callable):
+        import asyncio
+        import inspect
+
+        # Check if the original function is async
+        is_async = asyncio.iscoroutinefunction(func)
+
         @wraps(func)
-        async def wrapper(request: Request, *args, **kwargs):
-            allowed, headers = limiter.is_allowed(request)
+        async def async_wrapper(*args, request: Request = None, **kwargs):
+            # Try to find request in args or kwargs
+            req = request
+            if req is None:
+                for arg in args:
+                    if isinstance(arg, Request):
+                        req = arg
+                        break
+            if req is None:
+                for v in kwargs.values():
+                    if isinstance(v, Request):
+                        req = v
+                        break
 
-            if not allowed:
-                raise HTTPException(
-                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                    detail="Rate limit exceeded for this endpoint.",
-                    headers=headers,
-                )
+            # If we found a request, apply rate limiting
+            if req is not None:
+                allowed, headers = limiter.is_allowed(req)
+                if not allowed:
+                    raise HTTPException(
+                        status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                        detail="Rate limit exceeded for this endpoint.",
+                        headers=headers,
+                    )
 
-            return await func(request, *args, **kwargs)
+            # Call the original function
+            if is_async:
+                return await func(*args, **kwargs)
+            else:
+                return func(*args, **kwargs)
 
-        return wrapper
+        @wraps(func)
+        def sync_wrapper(*args, request: Request = None, **kwargs):
+            # Try to find request in args or kwargs
+            req = request
+            if req is None:
+                for arg in args:
+                    if isinstance(arg, Request):
+                        req = arg
+                        break
+            if req is None:
+                for v in kwargs.values():
+                    if isinstance(v, Request):
+                        req = v
+                        break
+
+            # If we found a request, apply rate limiting
+            if req is not None:
+                allowed, headers = limiter.is_allowed(req)
+                if not allowed:
+                    raise HTTPException(
+                        status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                        detail="Rate limit exceeded for this endpoint.",
+                        headers=headers,
+                    )
+
+            return func(*args, **kwargs)
+
+        # Return appropriate wrapper based on function type
+        return async_wrapper if is_async else sync_wrapper
 
     return decorator

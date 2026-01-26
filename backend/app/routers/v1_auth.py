@@ -23,7 +23,6 @@ from ..auth import (
     get_current_user_optional,
     get_user_by_email,
 )
-from ..middleware import rate_limit
 from ..migration_service import migrate_anon_readings, sync_anon_profile_to_account
 from ..models import SessionLocal, User
 
@@ -47,7 +46,6 @@ class MigrateReadingsRequest(BaseModel):
 
 
 @router.post("/register", response_model=Token)
-@rate_limit(requests_per_minute=3)  # Prevent spam registrations
 def register(user_data: UserCreate, db: Session = Depends(get_db)):
     """Register a new user."""
     existing_user = get_user_by_email(db, user_data.email)
@@ -70,7 +68,6 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
 
 
 @router.post("/login", response_model=Token)
-@rate_limit(requests_per_minute=5)  # Prevent brute force attacks
 def login(user_data: UserLogin, db: Session = Depends(get_db)):
     """Authenticate a user and return a token."""
     user = authenticate_user(db, user_data.email, user_data.password)
