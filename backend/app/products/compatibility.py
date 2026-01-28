@@ -1,87 +1,185 @@
 """
 compatibility.py
-Builds a compatibility report using synastry and numerology between two profiles.
+Builds a compatibility report using Pro-Level synastry and numerology between two profiles.
+Uses the 6-dimension weighted scoring system (Moon, Venus, Modality, Element, Life Path, Soul Urge).
 """
 
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import Dict
+from typing import Any, Dict, List
 
-from ..chart_service import build_natal_chart
-from ..numerology_engine import build_numerology
-from ..rule_engine import RuleEngine
+from ..engine.compatibility import calculate_combined_compatibility
 
 
-def build_compatibility(person_a: Dict, person_b: Dict, lang: str = "en") -> Dict:
-    chart_a = build_natal_chart(person_a)
-    chart_b = build_natal_chart(person_b)
-    numerology_a = build_numerology(
-        person_a["name"], person_a["date_of_birth"], datetime.now(timezone.utc)
-    )
-    numerology_b = build_numerology(
-        person_b["name"], person_b["date_of_birth"], datetime.now(timezone.utc)
-    )
-    engine = RuleEngine()
-    result = engine.evaluate(
-        "compatibility_romantic",
-        chart_a,
-        numerology=None,
-        comparison_chart=chart_b,
-        synastry_priority=_synastry_priority_pairs(),
+def build_compatibility(
+    person_a: Dict, person_b: Dict, lang: str = "en"
+) -> Dict[str, Any]:
+    """
+    Build a full compatibility report using Pro-Level engine.
+
+    Returns a structure matching the v2 API CompatibilityData schema:
+    - overall_score: 0.0-1.0 normalized score
+    - summary: Overall assessment text
+    - dimensions: List of scored compatibility dimensions
+    - strengths: Relationship strengths
+    - challenges: Potential friction areas
+    - recommendations: Actionable advice
+    """
+    # Use the Pro-Level combined compatibility engine
+    result = calculate_combined_compatibility(
+        name1=person_a["name"],
+        dob1=person_a["date_of_birth"],
+        name2=person_b["name"],
+        dob2=person_b["date_of_birth"],
+        relationship_type="romantic",
         lang=lang,
     )
-    strengths, challenges = _split_synastry_blocks(result["selected_blocks"])
+
+    # Transform engine output to API response format
+    score_breakdown = result.get("score_breakdown", {})
+
+    # Build dimensions array from score breakdown
+    dimensions = _build_dimensions(score_breakdown, result)
+
+    # Extract strengths from astrology data
+    astro = result.get("astrology", {})
+    strengths = astro.get("strengths", [])
+
+    # Build challenges from numerology friction
+    numerology = result.get("numerology", {})
+    challenges = []
+    if numerology.get("potential_friction"):
+        challenges.append(numerology["potential_friction"])
+
+    # Build recommendations from top_advice
+    recommendations = result.get("top_advice", [])
+    if isinstance(recommendations, str):
+        recommendations = [recommendations]
+
     return {
-        "people": [
-            {"name": person_a["name"], "dob": person_a["date_of_birth"]},
-            {"name": person_b["name"], "dob": person_b["date_of_birth"]},
-        ],
-        "topic_scores": result["topic_scores"],
-        "strengths": strengths,
-        "challenges": challenges,
-        "advice": _compatibility_advice(result["topic_scores"]),
-        "numerology": {"a": numerology_a, "b": numerology_b},
+        "overall_score": float(result.get("combined_score", 70)),  # 0-100 scale
+        "summary": result.get("overall_assessment", ""),
+        "dimensions": dimensions,
+        "strengths": strengths[:5] if strengths else _default_strengths(astro),
+        "challenges": challenges[:3] if challenges else [],
+        "recommendations": recommendations[:3],
+        # Include detailed breakdown for advanced views
+        "score_breakdown": score_breakdown,
+        "astrology": astro,
+        "numerology": numerology,
     }
 
 
-def _synastry_priority_pairs():
-    return [
-        "Sun-Sun",
-        "Sun-Moon",
-        "Moon-Moon",
-        "Moon-Venus",
-        "Venus-Mars",
-        "Sun-Asc",
-        "Moon-Asc",
-        "Sun-MC",
-        "Moon-MC",
-        "Mercury-Mercury",
-        "Mars-Mars",
-        "Saturn-Sun",
-        "Saturn-Moon",
-    ]
+def _build_dimensions(score_breakdown: Dict, result: Dict) -> List[Dict[str, Any]]:
+    """Transform score_breakdown into CompatibilityScore dimensions."""
+    dimensions = []
+
+    # Element Harmony (20%)
+    element = score_breakdown.get("element_harmony", {})
+    if element:
+        dimensions.append(
+            {
+                "name": "Element Harmony",
+                "score": float(element.get("score", 70)),  # 0-100 scale
+                "interpretation": element.get("desc", ""),
+            }
+        )
+
+    # Modality Match (15%)
+    modality = score_breakdown.get("modality_match", {})
+    if modality:
+        dimensions.append(
+            {
+                "name": "Modality Match",
+                "score": float(modality.get("score", 70)),  # 0-100 scale
+                "interpretation": modality.get("desc", ""),
+            }
+        )
+
+    # Moon Connection (20%)
+    moon = score_breakdown.get("moon_connection", {})
+    if moon:
+        moon_desc = moon.get("desc", "")
+        moon1 = moon.get("moon1", "")
+        moon2 = moon.get("moon2", "")
+        if moon1 and moon2 and not moon_desc:
+            moon_desc = f"Moon in {moon1} & {moon2}"
+        dimensions.append(
+            {
+                "name": "Emotional Connection",
+                "score": float(moon.get("score", 70)),  # 0-100 scale
+                "interpretation": moon_desc,
+            }
+        )
+
+    # Venus Harmony (15%)
+    venus = score_breakdown.get("venus_harmony", {})
+    if venus:
+        venus_desc = venus.get("desc", "")
+        venus1 = venus.get("venus1", "")
+        venus2 = venus.get("venus2", "")
+        if venus1 and venus2 and not venus_desc:
+            venus_desc = f"Venus in {venus1} & {venus2}"
+        dimensions.append(
+            {
+                "name": "Love Style",
+                "score": float(venus.get("score", 70)),  # 0-100 scale
+                "interpretation": venus_desc,
+            }
+        )
+
+    # Life Path (20%)
+    life_path = score_breakdown.get("life_path", {})
+    numerology = result.get("numerology", {})
+    if life_path or numerology:
+        lp_score = life_path.get("score", numerology.get("life_path_harmony", 70))
+        lp1 = numerology.get("person1", {}).get("life_path", 0)
+        lp2 = numerology.get("person2", {}).get("life_path", 0)
+        dimensions.append(
+            {
+                "name": "Life Path",
+                "score": float(lp_score),  # 0-100 scale
+                "interpretation": f"Life Paths {lp1} and {lp2} - {numerology.get('advice', '')}",
+            }
+        )
+
+    # Soul Urge (10%)
+    soul = score_breakdown.get("soul_urge", {})
+    if soul or numerology:
+        soul_score = soul.get("score", numerology.get("soul_connection", 70))
+        dimensions.append(
+            {
+                "name": "Soul Connection",
+                "score": float(soul_score),  # 0-100 scale
+                "interpretation": numerology.get(
+                    "summary", "Deep inner connection potential."
+                ),
+            }
+        )
+
+    return dimensions
 
 
-def _split_synastry_blocks(blocks):
+def _default_strengths(astro: Dict) -> List[str]:
+    """Generate default strengths from astrology data."""
     strengths = []
-    challenges = []
-    for block in blocks:
-        # Clean text only - no technical source prefixes
-        entry = block['text']
-        tags = block.get("tags", [])
-        if "challenge" in tags or block["weights"].get("challenge", 0) > 0.5:
-            challenges.append(entry)
-        elif "support" in tags or block["weights"].get("love", 0) > 0.4:
-            strengths.append(entry)
-        if len(strengths) >= 5 and len(challenges) >= 5:
-            break
-    return strengths[:5], challenges[:5]
+    p1 = astro.get("person1", {})
+    p2 = astro.get("person2", {})
 
+    if p1.get("element") and p2.get("element"):
+        if p1["element"] == p2["element"]:
+            strengths.append(
+                f"Both share {p1['element']} energy - natural understanding"
+            )
+        else:
+            strengths.append(
+                f"{p1['element']} and {p2['element']} create balanced dynamic"
+            )
 
-def _compatibility_advice(topic_scores: Dict[str, float]) -> str:
-    love = topic_scores.get("love", 0)
-    challenge = topic_scores.get("challenge", 0)
-    if love >= challenge:
-        return "Lean into the supportive aspects that already flow—celebrate what feels easy."
-    return "Name the sticking points early and build structure around them so chemistry has room to grow."
+    if p1.get("sign") and p2.get("sign"):
+        strengths.append(
+            f"{p1['sign']} brings initiative, {p2['sign']} offers stability"
+        )
+
+    return strengths

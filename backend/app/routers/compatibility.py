@@ -114,32 +114,34 @@ async def calculate_romantic_compatibility(
             "timezone": req.person_b.timezone or "UTC",
         }
 
-        # Calculate compatibility
+        # Calculate compatibility using Pro-Level engine
         compatibility = build_compatibility(
             profile_a, profile_b, lang=getattr(req, "language", "en")
         )
 
-        # Parse dimensions
+        # Parse dimensions from engine output
         dimensions = []
-        if isinstance(compatibility.get("dimensions"), list):
-            for dimension in compatibility["dimensions"]:
+        raw_dimensions = compatibility.get("dimensions", [])
+        if isinstance(raw_dimensions, list):
+            for dim in raw_dimensions:
                 dimensions.append(
                     CompatibilityScore(
-                        name=dimension.get("name", ""),
-                        score=dimension.get("score", 0.5),
-                        interpretation=dimension.get("interpretation", ""),
+                        name=dim.get("name", "Unknown"),
+                        score=float(dim.get("score", 0.5)),
+                        interpretation=dim.get("interpretation", ""),
                     )
                 )
 
+        # Build response with Pro-Level data
         response_data = CompatibilityData(
             person_a=req.person_a,
             person_b=req.person_b,
-            overall_score=compatibility.get("overall_score", 0.5),
-            summary=compatibility.get("summary", ""),
+            overall_score=float(compatibility.get("overall_score", 0.5)),
+            summary=compatibility.get("summary", "Compatibility analysis complete."),
             dimensions=dimensions,
-            strengths=compatibility.get("strengths", []),
-            challenges=compatibility.get("challenges", []),
-            recommendations=compatibility.get("recommendations", []),
+            strengths=compatibility.get("strengths", [])[:5],
+            challenges=compatibility.get("challenges", [])[:3],
+            recommendations=compatibility.get("recommendations", [])[:3],
             generated_at=datetime.now(timezone.utc),
         )
 
@@ -229,32 +231,36 @@ async def calculate_friendship_compatibility(
             "timezone": req.person_b.timezone or "UTC",
         }
 
-        # Calculate compatibility (reuse romantic analysis, can be customized)
+        # Calculate compatibility using Pro-Level engine
         compatibility = build_compatibility(
             profile_a, profile_b, lang=getattr(req, "language", "en")
         )
 
-        # Parse dimensions
+        # Parse dimensions from engine output
         dimensions = []
-        if isinstance(compatibility.get("dimensions"), list):
-            for dimension in compatibility["dimensions"]:
+        raw_dimensions = compatibility.get("dimensions", [])
+        if isinstance(raw_dimensions, list):
+            for dim in raw_dimensions:
                 dimensions.append(
                     CompatibilityScore(
-                        name=dimension.get("name", ""),
-                        score=dimension.get("score", 0.5),
-                        interpretation=dimension.get("interpretation", ""),
+                        name=dim.get("name", "Unknown"),
+                        score=float(dim.get("score", 0.5)),
+                        interpretation=dim.get("interpretation", ""),
                     )
                 )
 
+        # Build response with Pro-Level data
         response_data = CompatibilityData(
             person_a=req.person_a,
             person_b=req.person_b,
-            overall_score=compatibility.get("overall_score", 0.5),
-            summary=compatibility.get("summary", ""),
+            overall_score=float(compatibility.get("overall_score", 0.5)),
+            summary=compatibility.get(
+                "summary", "Friendship compatibility analysis complete."
+            ),
             dimensions=dimensions,
-            strengths=compatibility.get("strengths", []),
-            challenges=compatibility.get("challenges", []),
-            recommendations=compatibility.get("recommendations", []),
+            strengths=compatibility.get("strengths", [])[:5],
+            challenges=compatibility.get("challenges", [])[:3],
+            recommendations=compatibility.get("recommendations", [])[:3],
             generated_at=datetime.now(timezone.utc),
         )
 
