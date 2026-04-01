@@ -104,8 +104,10 @@ HOUSE_SYSTEM_MAP = {
 def build_natal_chart(profile: Dict) -> Dict:
     """Compute a natal chart for a profile."""
     _validate_profile(profile)
-    time_confidence = profile.get("time_confidence", "unknown")
-    birth_time_assumed = profile.get("time_of_birth") is None or time_confidence in ("approximate", "unknown")
+    has_time = bool(profile.get("time_of_birth"))
+    # If time_confidence not supplied, infer: provided time = exact, missing = unknown
+    time_confidence = profile.get("time_confidence") or ("exact" if has_time else "unknown")
+    birth_time_assumed = not has_time or time_confidence in ("approximate", "unknown")
     dt = _parse_datetime(
         profile["date_of_birth"],
         profile.get("time_of_birth"),

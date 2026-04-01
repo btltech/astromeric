@@ -77,9 +77,17 @@ class ProfilePayload(BaseModel):
     time_of_birth: Optional[str] = Field(
         None, description="HH:MM:SS or None for unknown"
     )
+    time_confidence: Optional[str] = Field(
+        None, description="'exact', 'approximate', or 'unknown'"
+    )
+    place_of_birth: Optional[str] = None
     latitude: Optional[float] = Field(None, ge=-90, le=90)
     longitude: Optional[float] = Field(None, ge=-180, le=180)
     timezone: Optional[str] = None  # IANA timezone
+    house_system: Optional[str] = Field(
+        None, description="House system (e.g., Placidus, Whole Sign)"
+    )
+    date: Optional[str] = Field(None, description="Optional reference date for calculations (YYYY-MM-DD)")
 
     class Config:
         json_schema_extra = {
@@ -87,9 +95,12 @@ class ProfilePayload(BaseModel):
                 "name": "Jane Doe",
                 "date_of_birth": "1990-06-15",
                 "time_of_birth": "14:30:00",
+                "time_confidence": "exact",
+                "place_of_birth": "New York, NY, USA",
                 "latitude": 40.7128,
                 "longitude": -74.0060,
                 "timezone": "America/New_York",
+                "house_system": "Placidus",
             }
         }
 
@@ -131,6 +142,16 @@ class NumerologyRequest(BaseModel):
 
     profile: ProfilePayload
     include_extended: bool = Field(False, description="Include extended numerology")
+    language: Optional[str] = Field("en", description="Language code (e.g., en, es)")
+    method: str = Field("pythagorean", description="Numerology system: 'pythagorean' or 'chaldean'")
+
+
+class NumerologyCompatibilityRequest(BaseModel):
+    """Request for numerology compatibility analysis."""
+
+    profile: ProfilePayload
+    person_b: ProfilePayload
+    language: Optional[str] = Field("en", description="Language code (e.g., en, es)")
 
 
 # ============================================================================
