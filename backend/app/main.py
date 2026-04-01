@@ -195,69 +195,28 @@ async def health_check():
 
 
 def register_routers():
-    """Register all API routers."""
+    """Register all API routers — each imported individually so one failure never blocks the rest."""
+    import importlib
+    import traceback
 
-    # V2 Routers (standardized API)
-    try:
-        from .routers import (
-            ai,
-            auth,
-            charts,
-            compatibility,
-            cosmic_guide,
-            daily_features,
-            feedback,
-            forecasts,
-            friends,
-            habits,
-            journal,
-            learning,
-            moon,
-            natal,
-            numerology,
-            notifications,
-            profiles,
-            relationships,
-            system,
-            timing,
-            transits,
-            year_ahead,
-        )
+    _router_names = [
+        "auth", "profiles", "natal", "forecasts", "compatibility",
+        "numerology", "charts", "daily_features", "moon", "timing",
+        "relationships", "journal", "habits", "year_ahead", "transits",
+        "notifications", "friends", "ai", "cosmic_guide", "learning",
+        "feedback", "system",
+    ]
 
-        # Core v2 routers
-        api.include_router(auth.router)
-        api.include_router(profiles.router)
-        api.include_router(natal.router)
-        api.include_router(forecasts.router)
-        api.include_router(compatibility.router)
-        api.include_router(numerology.router)
-        api.include_router(charts.router)
+    loaded = 0
+    for name in _router_names:
+        try:
+            mod = importlib.import_module(f".routers.{name}", package=__name__.rsplit(".", 1)[0])
+            api.include_router(mod.router)
+            loaded += 1
+        except Exception as e:
+            logger.error(f"ROUTER LOAD FAILED [{name}]: {type(e).__name__}: {e} | {traceback.format_exc()[-300:]}")
 
-        # Feature routers
-        api.include_router(daily_features.router)
-        api.include_router(moon.router)
-        api.include_router(timing.router)
-        api.include_router(relationships.router)
-        api.include_router(journal.router)
-        api.include_router(habits.router)
-        api.include_router(year_ahead.router)
-        api.include_router(transits.router)
-        api.include_router(notifications.router)
-        api.include_router(friends.router)
-
-        # AI and learning
-        api.include_router(ai.router)
-        api.include_router(cosmic_guide.router)
-        api.include_router(learning.router)
-
-        # Utility routers
-        api.include_router(feedback.router)
-        api.include_router(system.router)
-
-        logger.info("Successfully registered v2 routers (20 modules)")
-
-    except ImportError as e:
-        logger.warning(f"Could not import some v2 routers: {str(e)}")
+    logger.info(f"Registered {loaded}/{len(_router_names)} v2 routers")
 
     # V2 Additional routers (sky, alerts)
     try:
