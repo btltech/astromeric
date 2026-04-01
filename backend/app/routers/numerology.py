@@ -347,7 +347,6 @@ async def calculate_numerology_profile(
             detail={
                 "code": "NUMEROLOGY_ERROR",
                 "message": "Failed to calculate numerology profile",
-                "debug": f"{type(e).__name__}: {str(e)}",
             },
         )
 
