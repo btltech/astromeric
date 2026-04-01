@@ -97,11 +97,11 @@ async def calculate_romantic_compatibility(
             person_b=req.person_b.name,
         )
 
-        # Build profile data for both people
+        # Build profile data for both people (preserve None for time to enable data quality detection)
         profile_a = {
             "name": req.person_a.name,
             "date_of_birth": req.person_a.date_of_birth,
-            "time_of_birth": req.person_a.time_of_birth or "12:00:00",
+            "time_of_birth": req.person_a.time_of_birth,  # None preserved for confidence scoring
             "latitude": req.person_a.latitude or 0.0,
             "longitude": req.person_a.longitude or 0.0,
             "timezone": req.person_a.timezone or "UTC",
@@ -110,7 +110,7 @@ async def calculate_romantic_compatibility(
         profile_b = {
             "name": req.person_b.name,
             "date_of_birth": req.person_b.date_of_birth,
-            "time_of_birth": req.person_b.time_of_birth or "12:00:00",
+            "time_of_birth": req.person_b.time_of_birth,  # None preserved for confidence scoring
             "latitude": req.person_b.latitude or 0.0,
             "longitude": req.person_b.longitude or 0.0,
             "timezone": req.person_b.timezone or "UTC",
@@ -219,11 +219,11 @@ async def calculate_friendship_compatibility(
             person_b=req.person_b.name,
         )
 
-        # Build profile data
+        # Build profile data (preserve None for time to enable data quality detection)
         profile_a = {
             "name": req.person_a.name,
             "date_of_birth": req.person_a.date_of_birth,
-            "time_of_birth": req.person_a.time_of_birth or "12:00:00",
+            "time_of_birth": req.person_a.time_of_birth,
             "latitude": req.person_a.latitude or 0.0,
             "longitude": req.person_a.longitude or 0.0,
             "timezone": req.person_a.timezone or "UTC",
@@ -232,7 +232,7 @@ async def calculate_friendship_compatibility(
         profile_b = {
             "name": req.person_b.name,
             "date_of_birth": req.person_b.date_of_birth,
-            "time_of_birth": req.person_b.time_of_birth or "12:00:00",
+            "time_of_birth": req.person_b.time_of_birth,
             "latitude": req.person_b.latitude or 0.0,
             "longitude": req.person_b.longitude or 0.0,
             "timezone": req.person_b.timezone or "UTC",
