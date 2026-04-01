@@ -15,23 +15,52 @@ from app.interpretation.translations import get_translation
 # ========== LUCKY NUMBERS ==========
 
 def calculate_lucky_numbers(dob: str, reference_date: date) -> List[int]:
-    """Generate daily lucky numbers based on DOB and date."""
-    seed = hash(f"{dob}-{reference_date.isoformat()}")
-    random.seed(seed)
-    
-    # Always include life path influenced number
-    life_path = sum(int(d) for d in dob.replace("-", "")) % 9 or 9
-    
-    lucky = [life_path]
-    lucky.append(reference_date.day % 9 or 9)
-    lucky.append((life_path + reference_date.month) % 9 or 9)
-    
-    # Add 2-3 random lucky numbers
-    while len(lucky) < 5:
-        num = random.randint(1, 99)
-        if num not in lucky:
-            lucky.append(num)
-    
+    """
+    Generate 5 daily lucky numbers — all derived from numerology, none random.
+
+    Sources:
+    1. Life path number          — core soul vibration
+    2. Personal day number       — today's numerology energy
+    3. Month + life path blend   — monthly cycle influence
+    4. Expression number         — full name sum (approximated from DOB digits cross-sum)
+    5. Universal day number      — today's date reduced (day + month + year)
+    """
+    digits = [int(d) for d in dob.replace("-", "")]
+
+    # 1. Life path: reduce all DOB digits to single digit (or master number)
+    lp_sum = sum(digits)
+    life_path = lp_sum % 9 or 9
+
+    # 2. Personal day: (life_path + personal_month) reduced
+    personal_month_raw = life_path + reference_date.month
+    personal_month = personal_month_raw % 9 or 9
+    personal_day = (personal_month + reference_date.day) % 9 or 9
+
+    # 3. Month + life path blend
+    month_blend = (life_path + reference_date.month + reference_date.day) % 9 or 9
+
+    # 4. Expression number proxy: birth year cross-sum
+    birth_year_sum = sum(int(d) for d in str(digits[-4]) if d.isdigit()) if len(digits) >= 4 else life_path
+    expression = (life_path + birth_year_sum) % 9 or 9
+
+    # 5. Universal day number: reduce today's full date
+    universal = (reference_date.day + reference_date.month + reference_date.year) % 9 or 9
+
+    lucky = list(dict.fromkeys([life_path, personal_day, month_blend, expression, universal]))
+
+    # If any duplicates collapsed the list below 5, fill with compound numbers
+    # derived from existing values (never random)
+    extras = [
+        (life_path * 2) % 9 or 9,
+        (personal_day + universal) % 9 or 9,
+        (month_blend + expression) % 9 or 9,
+    ]
+    for e in extras:
+        if len(lucky) >= 5:
+            break
+        if e not in lucky:
+            lucky.append(e)
+
     return sorted(set(lucky))[:5]
 
 
@@ -60,26 +89,71 @@ ELEMENT_COLORS = {
     },
 }
 
+# Weekday planetary rulers: 0=Mon, 1=Tue, 2=Wed, 3=Thu, 4=Fri, 5=Sat, 6=Sun
+_WEEKDAY_RULER = {0: "Moon", 1: "Mars", 2: "Mercury", 3: "Jupiter", 4: "Venus", 5: "Saturn", 6: "Sun"}
+
+# Each planet maps to its traditional color per element affinity
+_PLANET_COLOR_BOOST: Dict[str, Dict[str, int]] = {
+    # planet -> {element -> index into that element's primary list}
+    "Sun":     {"Fire": 2, "Earth": 3, "Air": 3, "Water": 2},   # Gold / Olive / Silver / Deep Purple
+    "Moon":    {"Fire": 0, "Earth": 1, "Air": 2, "Water": 1},   # Ruby / Terracotta / Mint / Seafoam
+    "Mars":    {"Fire": 3, "Earth": 2, "Air": 0, "Water": 3},   # Crimson / Choc Brown / Sky Blue / Teal
+    "Mercury": {"Fire": 1, "Earth": 3, "Air": 1, "Water": 2},   # Sunset Orange / Olive / Lavender / Deep Purple
+    "Jupiter": {"Fire": 2, "Earth": 0, "Air": 3, "Water": 0},   # Gold / Forest Green / Silver / Ocean Blue
+    "Venus":   {"Fire": 0, "Earth": 1, "Air": 1, "Water": 1},   # Ruby / Terracotta / Lavender / Seafoam
+    "Saturn":  {"Fire": 3, "Earth": 2, "Air": 3, "Water": 3},   # Crimson / Choc Brown / Silver / Teal
+}
+
+# Personal day modifies the accent index (mod len)
+_PD_ACCENT_SHIFT = {1: 0, 2: 1, 3: 2, 4: 0, 5: 1, 6: 2, 7: 0, 8: 1, 9: 2}
+
 def get_lucky_colors(element: str, reference_date: date, lang: str = "en") -> Dict:
-    """Get daily lucky colors based on element and date."""
-    seed = hash(f"{element}-{reference_date.isoformat()}")
-    random.seed(seed)
-    
+    """
+    Pick lucky colors using weekday planetary ruler × element affinity.
+
+    Primary color: determined by today's planetary ruler and the user's element.
+    Accent color:  cycled by personal day number.
+    Both are fully deterministic — no randomness.
+    """
     colors = ELEMENT_COLORS.get(element, ELEMENT_COLORS["Fire"])
-    primary = random.choice(colors["primary"])
-    accent = random.choice(colors["accent"])
-    
+
+    # Primary: weekday ruler picks the color index for this element
+    weekday = reference_date.weekday()
+    ruler = _WEEKDAY_RULER.get(weekday, "Sun")
+    planet_boost = _PLANET_COLOR_BOOST.get(ruler, {})
+    primary_idx = planet_boost.get(element, 0)
+    primary_idx = min(primary_idx, len(colors["primary"]) - 1)
+    primary = colors["primary"][primary_idx]
+
+    # Accent: personal day number shifts through accent list
+    digits_today = [int(d) for d in reference_date.isoformat().replace("-", "")]
+    pd_raw = sum(digits_today) % 9 or 9
+    accent_idx = _PD_ACCENT_SHIFT.get(pd_raw, 0) % len(colors["accent"])
+    accent = colors["accent"][accent_idx]
+
+    usage_lines = {
+        "Sun":     "Perfect for visibility and confidence today.",
+        "Moon":    "Ideal for emotional clarity and intuition.",
+        "Mars":    "Wear it to channel drive and bold action.",
+        "Mercury": "Great for communication and mental sharpness.",
+        "Jupiter": "Amplifies abundance and good fortune.",
+        "Venus":   "Enhances harmony, beauty, and connection.",
+        "Saturn":  "Grounds your energy and sharpens focus.",
+    }
+    usage = usage_lines.get(ruler, f"Wear {primary} to amplify your energy.")
+
     desc_trans = get_translation(lang, "lucky_color_desc")
     if desc_trans:
         description = desc_trans[0].format(primary=primary, accent=accent)
     else:
-        description = f"Wear {primary} to amplify your energy, with touches of {accent} for balance."
-    
+        description = f"{usage} Accent with {accent} for balance."
+
     return {
         "primary": primary,
         "primary_hex": colors["hex"].get(primary, "#4ECDC4"),
         "accent": accent,
         "description": description,
+        "ruler": ruler,
     }
 
 
@@ -436,36 +510,95 @@ def get_daily_tarot(reference_date: date, name: str, lang: str = "en") -> Dict:
 
 # ========== YES/NO ORACLE ==========
 
-def get_yes_no_oracle(question: str, reference_date: date, lang: str = "en") -> Dict:
-    """Cosmic yes/no oracle for decision-making."""
-    seed = hash(f"{question}-{reference_date.isoformat()}")
-    random.seed(seed)
-    
-    # Define base answers
+def get_yes_no_oracle(
+    question: str,
+    reference_date: date,
+    dob: Optional[str] = None,
+    lang: str = "en",
+) -> Dict:
+    """
+    Cosmic yes/no oracle weighted by moon phase and personal day energy.
+
+    Weighting logic:
+    - Full Moon / Waxing Gibbous  → strong yes bias
+    - New Moon / Waxing Crescent  → gentle yes / maybe (seeds need time)
+    - Void-of-course proxy (Waning Crescent / late waning) → wait bias
+    - Waning Gibbous / Last Quarter → no / release bias
+    - Personal day 7 or 4          → introspective → wait/maybe boost
+    - Personal day 1, 3, 5         → action → yes bias
+    """
     base_answers = [
-        {"key": "yes_strong", "answer": "Yes", "confidence": "strong", "default": "The stars align in favor. Move forward with confidence."},
-        {"key": "yes_gentle", "answer": "Yes", "confidence": "gentle", "default": "A soft yes. Proceed with awareness and intention."},
-        {"key": "no_strong", "answer": "No", "confidence": "strong", "default": "The cosmos advises against this path right now."},
-        {"key": "no_gentle", "answer": "No", "confidence": "gentle", "default": "Not at this moment. Patience may change the answer."},
-        {"key": "wait", "answer": "Wait", "confidence": "neutral", "default": "The timing isn't clear. Ask again when the moon shifts."},
-        {"key": "maybe", "answer": "Maybe", "confidence": "neutral", "default": "The outcome depends on your actions. You have power here."},
+        {"key": "yes_strong",  "answer": "Yes",   "confidence": "strong",  "default": "The stars align in favor. Move forward with confidence."},
+        {"key": "yes_gentle",  "answer": "Yes",   "confidence": "gentle",  "default": "A soft yes. Proceed with awareness and intention."},
+        {"key": "no_strong",   "answer": "No",    "confidence": "strong",  "default": "The cosmos advises against this path right now."},
+        {"key": "no_gentle",   "answer": "No",    "confidence": "gentle",  "default": "Not at this moment. Patience may change the answer."},
+        {"key": "wait",        "answer": "Wait",  "confidence": "neutral", "default": "The timing isn't clear. Ask again when the moon shifts."},
+        {"key": "maybe",       "answer": "Maybe", "confidence": "neutral", "default": "The outcome depends on your actions. You have power here."},
     ]
-    
-    selected = random.choice(base_answers)
-    
-    # Localize
+
+    # Build weights: start at 1 for each answer
+    weights = {a["key"]: 1.0 for a in base_answers}
+
+    # Moon phase influence
+    try:
+        from .moon_phases import calculate_moon_phase
+        ref_dt = datetime(reference_date.year, reference_date.month, reference_date.day, 12, 0)
+        moon = calculate_moon_phase(ref_dt)
+        phase = moon.get("phase", "").lower()
+
+        if "full moon" in phase:
+            weights["yes_strong"] += 3; weights["yes_gentle"] += 1
+        elif "waxing gibbous" in phase:
+            weights["yes_strong"] += 2; weights["yes_gentle"] += 2
+        elif "waxing crescent" in phase or "first quarter" in phase:
+            weights["yes_gentle"] += 2; weights["maybe"] += 1
+        elif "new moon" in phase:
+            weights["yes_gentle"] += 1; weights["maybe"] += 2; weights["wait"] += 1
+        elif "waning crescent" in phase:
+            weights["wait"] += 3; weights["no_gentle"] += 1
+        elif "last quarter" in phase:
+            weights["no_gentle"] += 2; weights["wait"] += 2
+        elif "waning gibbous" in phase:
+            weights["no_gentle"] += 1; weights["maybe"] += 1
+    except Exception:
+        pass
+
+    # Personal day influence
+    if dob:
+        try:
+            digits = [int(d) for d in reference_date.isoformat().replace("-", "")]
+            pd = sum(digits) % 9 or 9
+            if pd in (1, 3, 5):
+                weights["yes_strong"] += 2; weights["yes_gentle"] += 1
+            elif pd in (4, 7):
+                weights["wait"] += 2; weights["maybe"] += 1
+            elif pd == 9:
+                weights["no_gentle"] += 1; weights["wait"] += 1  # endings, release
+            elif pd in (2, 6):
+                weights["yes_gentle"] += 1; weights["maybe"] += 1  # cooperation
+        except Exception:
+            pass
+
+    # Use question + date as seed for deterministic selection within the weighted pool
+    seed = hash(f"{question.strip().lower()}-{reference_date.isoformat()}")
+    random.seed(seed)
+    keys = list(weights.keys())
+    wvals = [weights[k] for k in keys]
+    selected_key = random.choices(keys, weights=wvals)[0]
+    selected = next(a for a in base_answers if a["key"] == selected_key)
+
     msg_key = f"oracle_{selected['key']}_msg"
     msg_trans = get_translation(lang, msg_key)
     message = msg_trans[0] if msg_trans else selected["default"]
-    
+
     ans_key = f"oracle_{selected['key']}_ans"
     ans_trans = get_translation(lang, ans_key)
     answer = ans_trans[0] if ans_trans else selected["answer"]
-    
+
     return {
         "answer": answer,
         "confidence": selected["confidence"],
-        "message": message
+        "message": message,
     }
 
 
