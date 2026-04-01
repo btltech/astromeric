@@ -8,7 +8,7 @@ from alembic import op
 import sqlalchemy as sa
 
 revision = "add_time_confidence_data_quality"
-down_revision = "add_notification_prefs"
+down_revision = "merge_notification_heads"
 branch_labels = None
 depends_on = None
 
