@@ -2,6 +2,7 @@
 numerology_engine.py
 --------------------
 Computes core numerology numbers and cycles with meaning blocks.
+Supports both Pythagorean (default) and Chaldean systems.
 """
 
 from __future__ import annotations
@@ -10,32 +11,45 @@ from datetime import datetime
 from typing import Dict
 
 from .interpretation import NUMEROLOGY_MEANINGS
-from .engine.constants import LETTER_VALUES, VOWELS, reduce_number
+from .engine.constants import LETTER_VALUES, VOWELS, CHALDEAN_LETTER_VALUES, reduce_number
+from .engine.numerology import calculate_life_path_number_chaldean
+
+# Chaldean uses same vowels as Pythagorean for soul urge extraction
+_CHALDEAN_VOWELS = VOWELS
 
 
-def life_path(dob: str) -> int:
-    """Calculate Life Path by reducing month, day, year separately then summing."""
+def life_path(dob: str, method: str = "pythagorean") -> int:
+    """Calculate Life Path by the appropriate method."""
+    if method == "chaldean":
+        return calculate_life_path_number_chaldean(dob)
     y, m, d = map(int, dob.split("-"))
-    # Traditional method: reduce each component first
     month_r = reduce_number(m, keep_master=True)
     day_r = reduce_number(d, keep_master=True)
     year_r = reduce_number(y, keep_master=True)
     return reduce_number(month_r + day_r + year_r)
 
 
-def expression(name: str) -> int:
-    total = sum(LETTER_VALUES.get(c, 0) for c in name.lower() if c.isalpha())
+def _letter_values(method: str) -> dict:
+    """Return the correct letter-value table for the given method."""
+    return CHALDEAN_LETTER_VALUES if method == "chaldean" else LETTER_VALUES
+
+
+def expression(name: str, method: str = "pythagorean") -> int:
+    lv = _letter_values(method)
+    total = sum(lv.get(c, 0) for c in name.lower() if c.isalpha())
     return reduce_number(total)
 
 
-def soul_urge(name: str) -> int:
-    total = sum(LETTER_VALUES.get(c, 0) for c in name.lower() if c in VOWELS)
+def soul_urge(name: str, method: str = "pythagorean") -> int:
+    lv = _letter_values(method)
+    total = sum(lv.get(c, 0) for c in name.lower() if c in VOWELS)
     return reduce_number(total)
 
 
-def personality(name: str) -> int:
+def personality(name: str, method: str = "pythagorean") -> int:
+    lv = _letter_values(method)
     total = sum(
-        LETTER_VALUES.get(c, 0) for c in name.lower() if c.isalpha() and c not in VOWELS
+        lv.get(c, 0) for c in name.lower() if c.isalpha() and c not in VOWELS
     )
     return reduce_number(total)
 
@@ -60,11 +74,11 @@ def personal_day(pm: int, ref: datetime) -> int:
     return reduce_number(pm + ref.day, keep_master=False)
 
 
-def build_numerology(name: str, dob: str, ref: datetime) -> Dict:
-    lp = life_path(dob)
-    expr = expression(name)
-    soul = soul_urge(name)
-    persona = personality(name)
+def build_numerology(name: str, dob: str, ref: datetime, method: str = "pythagorean") -> Dict:
+    lp = life_path(dob, method)
+    expr = expression(name, method)
+    soul = soul_urge(name, method)
+    persona = personality(name, method)
     bday = birthday_number(dob)
     py = personal_year(dob, ref)
     pm = personal_month(py, ref)
@@ -100,7 +114,12 @@ def build_numerology(name: str, dob: str, ref: datetime) -> Dict:
         },
         "personal_day": {"number": pd, "meaning": _numerology_text("personal_day", pd)},
     }
-    return {"core_numbers": core, "cycles": cycles, "meaning_blocks": meaning_blocks}
+    return {
+        "core_numbers": core,
+        "cycles": cycles,
+        "meaning_blocks": meaning_blocks,
+        "method": method,
+    }
 
 
 def _numerology_text(ntype: str, value: int) -> str:
