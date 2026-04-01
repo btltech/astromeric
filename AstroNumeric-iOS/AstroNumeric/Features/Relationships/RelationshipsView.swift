@@ -63,8 +63,8 @@ struct RelationshipsView: View {
                 Text("\(viewModel.savedRelationships.count)")
                     .font(.title.bold())
                 Text("Saved")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .font(.label)
+                    .foregroundStyle(Color.textSecondary)
             }
             .frame(maxWidth: .infinity)
             
@@ -72,12 +72,12 @@ struct RelationshipsView: View {
                 .frame(height: 40)
             
             VStack(spacing: 4) {
-                Text("\(Int(viewModel.averageCompatibility * 100))%")
+                Text("\(Int(viewModel.averageCompatibility))%")
                     .font(.title.bold())
                     .foregroundStyle(.purple)
                 Text("Avg Score")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .font(.label)
+                    .foregroundStyle(Color.textSecondary)
             }
             .frame(maxWidth: .infinity)
             
@@ -88,8 +88,8 @@ struct RelationshipsView: View {
                 Text(highestScoreEmoji)
                     .font(.title)
                 Text("Best Match")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .font(.label)
+                    .foregroundStyle(Color.textSecondary)
             }
             .frame(maxWidth: .infinity)
         }
@@ -104,9 +104,9 @@ struct RelationshipsView: View {
         guard let highest = viewModel.savedRelationships.max(by: { $0.overallScore < $1.overallScore }) else {
             return "💫"
         }
-        if highest.overallScore >= 0.85 { return "💯" }
-        if highest.overallScore >= 0.70 { return "🔥" }
-        if highest.overallScore >= 0.55 { return "✨" }
+        if highest.overallScore >= 85 { return "💯" }
+        if highest.overallScore >= 70 { return "🔥" }
+        if highest.overallScore >= 55 { return "✨" }
         return "💫"
     }
     
@@ -136,7 +136,7 @@ struct RelationshipsView: View {
             HStack(spacing: 4) {
                 Text(emoji)
                 Text(name)
-                    .font(.caption)
+                    .font(.label)
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
@@ -163,6 +163,19 @@ struct RelationshipsView: View {
                         selectedRelationship = relationship
                     }
                     .contextMenu {
+                        Button {
+                            selectedRelationship = relationship
+                        } label: {
+                            Label("View Details", systemImage: "info.circle")
+                        }
+                        Divider()
+                        Button(role: .destructive) {
+                            viewModel.deleteRelationship(relationship)
+                        } label: {
+                            Label("Delete", systemImage: "trash")
+                        }
+                    }
+                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                         Button(role: .destructive) {
                             viewModel.deleteRelationship(relationship)
                         } label: {
@@ -186,14 +199,14 @@ struct RelationshipsView: View {
             VStack(spacing: 16) {
                 Image(systemName: "heart.circle")
                     .font(.system(size: 48))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.textSecondary)
                 
                 Text("No relationships saved")
                     .font(.headline)
                 
                 Text("Calculate compatibility and save relationships to track them here")
                     .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.textSecondary)
                     .multilineTextAlignment(.center)
                 
                 NavigationLink {
@@ -222,6 +235,11 @@ struct RelationshipCard: View {
     let relationship: SavedRelationship
     let onTap: () -> Void
     
+    /// High compatibility threshold for glow effect
+    private var isHighCompatibility: Bool {
+        relationship.overallScore >= 90
+    }
+    
     var body: some View {
         Button(action: onTap) {
             HStack(spacing: 12) {
@@ -241,8 +259,8 @@ struct RelationshipCard: View {
                         .foregroundStyle(.primary)
                     
                     Text(relationship.type.displayName)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .font(.label)
+                        .foregroundStyle(Color.textSecondary)
                 }
                 
                 Spacer()
@@ -257,7 +275,7 @@ struct RelationshipCard: View {
                     GeometryReader { geo in
                         ZStack(alignment: .leading) {
                             Capsule()
-                                .fill(.cosmicSecondary.opacity(0.4))
+                                .fill(Color.cosmicSecondary.opacity(0.4))
                             Capsule()
                                 .fill(relationship.scoreColor)
                                 .frame(width: geo.size.width * relationship.overallScore)
@@ -270,6 +288,20 @@ struct RelationshipCard: View {
             .background(
                 RoundedRectangle(cornerRadius: 12)
                     .fill(.ultraThinMaterial)
+            )
+            .overlay(
+                // Dynamic glow border for 90%+ compatibility
+                RoundedRectangle(cornerRadius: 12)
+                    .strokeBorder(
+                        isHighCompatibility 
+                            ? relationship.scoreColor.opacity(0.6) 
+                            : Color.clear,
+                        lineWidth: 1.5
+                    )
+            )
+            .shadow(
+                color: isHighCompatibility ? relationship.scoreColor.opacity(0.4) : .clear,
+                radius: isHighCompatibility ? 12 : 0
             )
         }
         .buttonStyle(.plain)
@@ -345,8 +377,8 @@ struct RelationshipDetailSheet: View {
                     Text(relationship.personAName)
                         .font(.subheadline.bold())
                     Text(relationship.personADOB)
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
+                        .font(.meta)
+                        .foregroundStyle(Color.textSecondary)
                 }
                 
                 Text(relationship.type.emoji)
@@ -358,8 +390,8 @@ struct RelationshipDetailSheet: View {
                     Text(relationship.personBName)
                         .font(.subheadline.bold())
                     Text(relationship.personBDOB)
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
+                        .font(.meta)
+                        .foregroundStyle(Color.textSecondary)
                 }
             }
             
@@ -379,7 +411,7 @@ struct RelationshipDetailSheet: View {
                 .frame(width: 120, height: 120)
             
             Circle()
-                .trim(from: 0, to: relationship.overallScore)
+                .trim(from: 0, to: min(1.0, max(0.0, relationship.overallScore / 100.0)))
                 .stroke(
                     relationship.scoreColor,
                     style: StrokeStyle(lineWidth: 12, lineCap: .round)
@@ -392,8 +424,8 @@ struct RelationshipDetailSheet: View {
                     .font(.title.bold())
                     .foregroundStyle(relationship.scoreColor)
                 Text("Overall")
-                    .font(.caption)
-                    .foregroundStyle(.textSecondary)
+                    .font(.label)
+                    .foregroundStyle(Color.textSecondary)
             }
         }
     }
@@ -410,7 +442,7 @@ struct RelationshipDetailSheet: View {
                         Text(category.name)
                             .font(.subheadline)
                         Spacer()
-                        Text("\(Int(category.score * 100))%")
+                        Text("\(Int(category.score))%")
                             .font(.subheadline.bold())
                             .foregroundStyle(scoreColor(for: category.score))
                     }
@@ -432,7 +464,7 @@ struct RelationshipDetailSheet: View {
                     HStack(alignment: .top) {
                         Image(systemName: "checkmark.circle.fill")
                             .foregroundStyle(.green)
-                            .font(.caption)
+                            .font(.label)
                         Text(strength)
                             .font(.subheadline)
                     }
@@ -454,7 +486,7 @@ struct RelationshipDetailSheet: View {
                     HStack(alignment: .top) {
                         Image(systemName: "exclamationmark.triangle.fill")
                             .foregroundStyle(.orange)
-                            .font(.caption)
+                            .font(.label)
                         Text(challenge)
                             .font(.subheadline)
                     }
@@ -464,8 +496,8 @@ struct RelationshipDetailSheet: View {
     }
     
     private func scoreColor(for score: Double) -> Color {
-        if score >= 0.75 { return .green }
-        if score >= 0.50 { return .orange }
+        if score >= 75 { return .green }
+        if score >= 50 { return .orange }
         return .red
     }
 }
