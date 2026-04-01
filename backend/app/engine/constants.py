@@ -13,6 +13,15 @@ LETTER_VALUES = {
     "s": 1, "t": 2, "u": 3, "v": 4, "w": 5, "x": 6, "y": 7, "z": 8,
 }
 
+# Chaldean numerology letter values (1-8 cycle; 9 is sacred and not assigned to letters)
+CHALDEAN_LETTER_VALUES = {
+    "a": 1, "b": 2, "c": 3, "d": 4, "e": 5, "u": 6, "o": 7, "f": 8,
+    "h": 5, "v": 6, "p": 8, "j": 1, "q": 1, "y": 1,
+    "k": 2, "r": 2, "l": 3, "g": 3, "s": 3,
+    "m": 4, "t": 4, "n": 5, "x": 6, "w": 6,
+    "n": 5, "i": 1, "e": 5, "z": 7,
+}
+
 # Standard vowels for Soul Urge calculation (Y is treated as consonant in Pythagorean system)
 VOWELS: Set[str] = {"a", "e", "i", "o", "u"}
 

@@ -57,11 +57,22 @@ LIFE_PATH_DATA = {
 
 
 def calculate_life_path_number(dob: str) -> int:
-    """Calculate Life Path Number from date of birth (YYYY-MM-DD)."""
+    """
+    Calculate Life Path Number from date of birth (YYYY-MM-DD).
+    Uses standard Pythagorean method: reduce each component first, then sum.
+    Example: 1990-12-15 → month(12→3) + day(15→6) + year(1990→19→10→1) = 10 → 1
+    """
     parts = dob.split("-")
     year, month, day = int(parts[0]), int(parts[1]), int(parts[2])
-    total = year + month + day
-    return reduce_number(total)
+    
+    # Reduce each component individually (standard Pythagorean method)
+    month_reduced = reduce_number(month, keep_master=False)
+    day_reduced = reduce_number(day, keep_master=False)
+    year_reduced = reduce_number(year, keep_master=False)
+    
+    # Sum the reduced components and reduce again (preserving master numbers)
+    total = month_reduced + day_reduced + year_reduced
+    return reduce_number(total, keep_master=True)
 
 
 def calculate_name_number(name: str) -> int:
@@ -100,4 +111,84 @@ def get_life_path_data(number: int, lang: str = "en") -> Dict[str, any]:
     return {
         "meaning": meaning,
         "advice": advice
+    }
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# CHALDEAN NUMEROLOGY
+# ──────────────────────────────────────────────────────────────────────────────
+
+from .constants import CHALDEAN_LETTER_VALUES
+
+
+def calculate_life_path_number_chaldean(dob: str) -> int:
+    """
+    Calculate Life Path Number using the Chaldean method.
+
+    Chaldean uses a different reduction strategy:
+    all digits in the full DOB (YYYYMMDD) are summed, then reduced to 1–8.
+    (9 is sacred in Chaldean and only emerges if that is the exact sum.)
+    """
+    digits = "".join(dob.split("-"))  # YYYYMMDD
+    total = sum(int(d) for d in digits)
+
+    # Reduce to single digit, but preserve 9 if it arises naturally
+    while total > 9:
+        total = sum(int(d) for d in str(total))
+
+    return total
+
+
+def calculate_name_number_chaldean(name: str) -> int:
+    """Calculate Expression (Name) Number using Chaldean letter values."""
+    name = name.lower().replace(" ", "").replace("-", "")
+    total = sum(CHALDEAN_LETTER_VALUES.get(char, 0) for char in name)
+    # Chaldean: reduce but preserve compound numbers (≥10) as double digits
+    # Final single-digit reduction
+    while total > 9:
+        total = sum(int(d) for d in str(total))
+    return total
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# UNIFIED DISPATCHER
+# ──────────────────────────────────────────────────────────────────────────────
+
+def calculate_core_numbers(
+    dob: str,
+    name: str,
+    method: str = "pythagorean",
+) -> Dict:
+    """
+    Calculate Life Path and Name numbers using the requested method.
+
+    Args:
+        dob: Date of birth (YYYY-MM-DD)
+        name: Full name
+        method: 'pythagorean' (default) or 'chaldean'
+
+    Returns:
+        dict with life_path, name_number, method, and meaning.
+    """
+    use_chaldean = method.lower() == "chaldean"
+
+    life_path = (
+        calculate_life_path_number_chaldean(dob)
+        if use_chaldean
+        else calculate_life_path_number(dob)
+    )
+    name_number = (
+        calculate_name_number_chaldean(name)
+        if use_chaldean
+        else calculate_name_number(name)
+    )
+
+    life_path_info = get_life_path_data(life_path)
+
+    return {
+        "method": "chaldean" if use_chaldean else "pythagorean",
+        "life_path": life_path,
+        "name_number": name_number,
+        "life_path_meaning": life_path_info.get("meaning", ""),
+        "life_path_advice": life_path_info.get("advice", []),
     }
