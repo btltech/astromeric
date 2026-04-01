@@ -103,27 +103,43 @@ HOUSE_SYSTEM_MAP = {
 
 def build_natal_chart(profile: Dict) -> Dict:
     """Compute a natal chart for a profile."""
-    _validate_profile(profile)
     has_time = bool(profile.get("time_of_birth"))
+    has_location = profile.get("latitude") is not None and profile.get("longitude") is not None
     # If time_confidence not supplied, infer: provided time = exact, missing = unknown
     time_confidence = profile.get("time_confidence") or ("exact" if has_time else "unknown")
     birth_time_assumed = not has_time or time_confidence in ("approximate", "unknown")
+
+    # Fill in defaults so _validate_profile doesn't raise
+    profile_copy = dict(profile)
+    if not has_location:
+        profile_copy.setdefault("latitude", 0.0)
+        profile_copy.setdefault("longitude", 0.0)
+    profile_copy.setdefault("timezone", "UTC")
+
+    _validate_profile(profile_copy)
     dt = _parse_datetime(
-        profile["date_of_birth"],
-        profile.get("time_of_birth"),
-        profile.get("timezone", "UTC"),
+        profile_copy["date_of_birth"],
+        profile_copy.get("time_of_birth"),
+        profile_copy.get("timezone", "UTC"),
     )
-    chart = _build_chart(dt, profile, chart_type="natal")
+    chart = _build_chart(dt, profile_copy, chart_type="natal")
+    # Determine data quality tier
+    if not has_location:
+        data_quality = "date_only"
+    elif birth_time_assumed:
+        data_quality = "date_and_place"
+    else:
+        data_quality = "full"
     # Annotate with data quality flags
     chart["metadata"]["birth_time_assumed"] = birth_time_assumed
     chart["metadata"]["time_confidence"] = time_confidence
+    chart["metadata"]["data_quality"] = data_quality
     if birth_time_assumed:
         chart["metadata"]["assumed_time_of_birth"] = "12:00"
-        chart["metadata"]["data_quality"] = "date_and_place"
-    else:
-        chart["metadata"]["data_quality"] = "full"
+    if not has_location:
+        chart["metadata"]["location_assumed"] = True
     # Check moon sign ambiguity (Moon changes sign on birth date)
-    chart["metadata"]["moon_sign_uncertain"] = _moon_changes_sign_on_date(profile)
+    chart["metadata"]["moon_sign_uncertain"] = _moon_changes_sign_on_date(profile_copy)
     return chart
 
 
