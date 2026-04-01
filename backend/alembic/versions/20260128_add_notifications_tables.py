@@ -1,6 +1,6 @@
 """Add device tokens and transit subscriptions
 
-Revision ID: 20260128_add_notifications_tables
+Revision ID: notif_tables_20260128
 Revises: add_notification_prefs
 Create Date: 2026-01-28 00:00:00.000000
 
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision: str = "20260128_add_notifications_tables"
+revision: str = "notif_tables_20260128"
 down_revision: Union[str, None] = "add_notification_prefs"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
