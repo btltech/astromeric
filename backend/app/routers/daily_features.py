@@ -580,7 +580,8 @@ async def get_daily_reading(
             element=element,
             life_path=life_path,
             personal_day=personal_day,
-            reference_date=reference_date
+            reference_date=reference_date,
+            personal_year=personal_year,
         )
         
         # Power hours (fallback to defaults if no location)
@@ -595,8 +596,11 @@ async def get_daily_reading(
         )
         power_hours = [f"{h['start']} - {h['end']}" for h in power_hours_raw]
         
-        mood_score = res.get("mood_forecast", {}).get("score")
-        daily_luck = (mood_score / 10.0) if isinstance(mood_score, (int, float)) else None
+        mood_score = res.get("mood_forecast", {})
+        # Use the real weighted luck_score (0–100); fall back to legacy score×10 if missing
+        daily_luck = mood_score.get("luck_score") or (
+            (mood_score.get("score") * 10.0) if isinstance(mood_score.get("score"), (int, float)) else None
+        )
         
         lucky_colors = res.get("lucky_colors")
         lucky_color = None

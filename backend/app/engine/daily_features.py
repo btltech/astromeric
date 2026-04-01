@@ -555,47 +555,166 @@ MOOD_FORECASTS = {
     },
 }
 
+def _calculate_daily_luck_score(
+    element: str,
+    life_path: int,
+    personal_day: int,
+    personal_year: int,
+    reference_date: date,
+) -> float:
+    """
+    Calculate a deterministic daily luck score (0.0–100.0) from five weighted factors.
+
+    Factors & weights
+    -----------------
+    1. Personal Day energy     30% — numerology energy of today's personal day number
+    2. Moon phase              25% — lunar cycle position (new/full = high, balsamic = low)
+    3. Void-of-course penalty  15% — late-degree moon with no applying aspects = -15 pts
+    4. Personal Year cycle     15% — expansion years (1,3,5,9) vs contraction (4,7)
+    5. Weekday × element       15% — planetary ruler of weekday resonance with element
+    """
+    # ── 1. Personal Day energy (0–100) ──────────────────────────────────────
+    PD_ENERGY: Dict[int, float] = {
+        1: 85,  # New beginnings, high initiative
+        2: 60,  # Cooperation, patience required
+        3: 90,  # Creativity, self-expression, social
+        4: 45,  # Hard work, discipline, restriction
+        5: 80,  # Change, freedom, adventure
+        6: 75,  # Harmony, nurturing, balance
+        7: 40,  # Introspection, rest, inner work
+        8: 70,  # Ambition, power, material focus
+        9: 65,  # Completion, release, compassion
+    }
+    pd_score = PD_ENERGY.get(personal_day, 60)
+
+    # ── 2. Moon phase score (0–100) ──────────────────────────────────────────
+    try:
+        from .moon_phases import calculate_moon_phase
+        ref_dt = datetime(reference_date.year, reference_date.month, reference_date.day, 12, 0)
+        moon = calculate_moon_phase(ref_dt)
+        phase_name = moon.get("phase", "").lower()
+        illumination = moon.get("illumination", 50)
+
+        PHASE_SCORES: Dict[str, float] = {
+            "new moon":        85,  # Fresh start, plant seeds
+            "waxing crescent": 75,  # Building momentum
+            "first quarter":   70,  # Decision point, push forward
+            "waxing gibbous":  80,  # Refinement, nearly full power
+            "full moon":       90,  # Peak energy, maximum clarity
+            "waning gibbous":  65,  # Harvest, gratitude
+            "last quarter":    50,  # Release, let go
+            "waning crescent": 40,  # Rest, prepare, balsamic
+        }
+        moon_score = next(
+            (v for k, v in PHASE_SCORES.items() if k in phase_name),
+            50 + (illumination - 50) * 0.4,  # fallback: scale on illumination
+        )
+    except Exception:
+        moon_score = 60.0
+
+    # ── 3. Void-of-course moon penalty (0 or –15 pts applied at end) ─────────
+    voc_penalty = 0.0
+    try:
+        from .moon_phases import calculate_moon_phase
+        ref_dt = datetime(reference_date.year, reference_date.month, reference_date.day, 12, 0)
+        moon_data = calculate_moon_phase(ref_dt)
+        # VOC proxy: moon in late degrees (≥27°) of sign and waning
+        moon_deg = moon_data.get("degrees_in_sign", 0)
+        is_waning = "waning" in moon_data.get("phase", "").lower() or moon_data.get("illumination", 50) < 50
+        if moon_deg >= 27 and is_waning:
+            voc_penalty = 15.0
+    except Exception:
+        pass
+
+    # ── 4. Personal Year cycle energy (0–100) ────────────────────────────────
+    PY_ENERGY: Dict[int, float] = {
+        1: 85,  # Year of new beginnings
+        2: 60,
+        3: 80,
+        4: 45,  # Year of foundation — slow but necessary
+        5: 85,
+        6: 70,
+        7: 40,  # Year of introspection
+        8: 75,
+        9: 65,  # Year of endings & release
+    }
+    py_score = PY_ENERGY.get(personal_year % 9 or 9, 60)
+
+    # ── 5. Weekday × element resonance (0–100) ────────────────────────────────
+    # Each weekday is ruled by a planet; elements resonate with those rulers
+    WEEKDAY_RULERS = {
+        0: "Moon",    # Monday
+        1: "Mars",    # Tuesday
+        2: "Mercury", # Wednesday
+        3: "Jupiter", # Thursday
+        4: "Venus",   # Friday
+        5: "Saturn",  # Saturday
+        6: "Sun",     # Sunday
+    }
+    ELEMENT_RESONANCE: Dict[str, Dict[str, float]] = {
+        "Fire":  {"Sun": 90, "Mars": 85, "Jupiter": 75, "Venus": 60, "Mercury": 65, "Moon": 55, "Saturn": 40},
+        "Earth": {"Saturn": 85, "Venus": 80, "Mercury": 70, "Moon": 65, "Jupiter": 60, "Mars": 50, "Sun": 55},
+        "Air":   {"Mercury": 90, "Venus": 80, "Jupiter": 75, "Sun": 70, "Moon": 60, "Mars": 55, "Saturn": 45},
+        "Water": {"Moon": 90, "Venus": 75, "Jupiter": 70, "Saturn": 60, "Mercury": 55, "Mars": 50, "Sun": 65},
+    }
+    weekday = reference_date.weekday()
+    ruler = WEEKDAY_RULERS.get(weekday, "Sun")
+    element_scores = ELEMENT_RESONANCE.get(element, {})
+    weekday_score = element_scores.get(ruler, 60)
+
+    # ── Weighted composite ────────────────────────────────────────────────────
+    raw = (
+        pd_score    * 0.30 +
+        moon_score  * 0.25 +
+        py_score    * 0.15 +
+        weekday_score * 0.15 +
+        60          * 0.15   # base contribution for the VOC slot (penalty applied below)
+    ) - voc_penalty
+
+    return round(max(5.0, min(100.0, raw)), 1)
+
+
 def _calculate_mood_forecast(
     element: str,
     life_path: int,
     personal_day: int,
     reference_date: date,
     lang: str = "en",
+    personal_year: int = 5,
 ) -> Dict:
-    """Generate daily mood forecast."""
+    """Generate daily mood forecast with a real weighted luck score."""
     seed = hash(f"{element}-{life_path}-{personal_day}-{reference_date.isoformat()}")
     random.seed(seed)
-    
+
     # Weight moods based on element and personal day
     weights = {
-        "energetic": 1 if element in ["Fire", "Air"] else 0.5,
-        "reflective": 1 if personal_day in [7, 9] else 0.5,
-        "social": 1 if element in ["Air", "Fire"] or personal_day in [2, 3, 6] else 0.5,
-        "creative": 1 if personal_day in [3, 5] else 0.5,
-        "grounded": 1 if element == "Earth" or personal_day in [4, 8] else 0.5,
+        "energetic":      1 if element in ["Fire", "Air"] else 0.5,
+        "reflective":     1 if personal_day in [7, 9] else 0.5,
+        "social":         1 if element in ["Air", "Fire"] or personal_day in [2, 3, 6] else 0.5,
+        "creative":       1 if personal_day in [3, 5] else 0.5,
+        "grounded":       1 if element == "Earth" or personal_day in [4, 8] else 0.5,
         "transformative": 1 if element == "Water" or personal_day == 9 else 0.3,
     }
-    
+
     moods = list(weights.keys())
     mood = random.choices(moods, weights=list(weights.values()))[0]
     forecast = MOOD_FORECASTS[mood]
-    
-    # Localize
+
     desc_trans = get_translation(lang, f"mood_{mood}_desc")
     description = desc_trans[0] if desc_trans else forecast["description"]
-    
+
     tips_trans = get_translation(lang, f"mood_{mood}_tips")
     tips = tips_trans if tips_trans else forecast["tips"]
-    
-    # Calculate mood score (1-10)
-    base_score = random.randint(5, 8)
-    modifier = 1 if personal_day in [3, 5, 6] else -1 if personal_day in [4, 7] else 0
-    score = max(1, min(10, base_score + modifier))
-    
+
+    # Real weighted score (1–10 scale for backward compat, full score on separate key)
+    luck_100 = _calculate_daily_luck_score(element, life_path, personal_day, personal_year, reference_date)
+    score_10 = round(luck_100 / 10, 1)
+
     return {
         "mood": mood,
         "emoji": forecast["emoji"],
-        "score": score,
+        "score": score_10,
+        "luck_score": luck_100,   # full 0–100 value used by daily_luck field
         "description": description,
         "tips": tips,
         "peak_hours": f"{10 + (personal_day % 3)}am - {2 + (personal_day % 4)}pm",
@@ -663,11 +782,12 @@ def get_all_daily_features(
     personal_day: int,
     reference_date: Optional[date] = None,
     lang: str = "en",
+    personal_year: int = 5,
 ) -> Dict:
     """Get all daily features in one call."""
     if reference_date is None:
         reference_date = date.today()
-    
+
     return {
         "date": reference_date.isoformat(),
         "lucky_numbers": calculate_lucky_numbers(dob, reference_date),
@@ -676,7 +796,7 @@ def get_all_daily_features(
         "affirmation": get_daily_affirmation(element, life_path, reference_date, lang=lang),
         "tarot": get_daily_tarot(reference_date, name, lang=lang),
         "manifestation": get_manifestation_prompt(life_path, personal_day, reference_date, lang=lang),
-        "mood_forecast": _calculate_mood_forecast(element, life_path, personal_day, reference_date, lang=lang),
+        "mood_forecast": _calculate_mood_forecast(element, life_path, personal_day, reference_date, lang=lang, personal_year=personal_year),
         "retrograde_alerts": check_retrograde_alerts(reference_date, lang=lang),
     }
 
