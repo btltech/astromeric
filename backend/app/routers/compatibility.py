@@ -42,6 +42,8 @@ class CompatibilityData(BaseModel):
     challenges: List[str]
     recommendations: List[str]
     generated_at: datetime
+    confidence: Optional[int] = None
+    data_quality_note: Optional[str] = None
 
 
 # ============================================================================
@@ -132,6 +134,9 @@ async def calculate_romantic_compatibility(
                     )
                 )
 
+        # Extract data quality confidence from engine output
+        data_conf = compatibility.get("data_confidence", {})
+
         # Build response with Pro-Level data
         response_data = CompatibilityData(
             person_a=req.person_a,
@@ -143,6 +148,8 @@ async def calculate_romantic_compatibility(
             challenges=compatibility.get("challenges", [])[:3],
             recommendations=compatibility.get("recommendations", [])[:3],
             generated_at=datetime.now(timezone.utc),
+            confidence=data_conf.get("score") if isinstance(data_conf, dict) else None,
+            data_quality_note=data_conf.get("note") if isinstance(data_conf, dict) else None,
         )
 
         return ApiResponse(
@@ -233,7 +240,8 @@ async def calculate_friendship_compatibility(
 
         # Calculate compatibility using Pro-Level engine
         compatibility = build_compatibility(
-            profile_a, profile_b, lang=getattr(req, "language", "en")
+            profile_a, profile_b, lang=getattr(req, "language", "en"),
+            relationship_type="friendship"
         )
 
         # Parse dimensions from engine output
@@ -249,6 +257,9 @@ async def calculate_friendship_compatibility(
                     )
                 )
 
+        # Extract data quality confidence from engine output
+        data_conf = compatibility.get("data_confidence", {})
+
         # Build response with Pro-Level data
         response_data = CompatibilityData(
             person_a=req.person_a,
@@ -262,6 +273,8 @@ async def calculate_friendship_compatibility(
             challenges=compatibility.get("challenges", [])[:3],
             recommendations=compatibility.get("recommendations", [])[:3],
             generated_at=datetime.now(timezone.utc),
+            confidence=data_conf.get("score") if isinstance(data_conf, dict) else None,
+            data_quality_note=data_conf.get("note") if isinstance(data_conf, dict) else None,
         )
 
         return ApiResponse(

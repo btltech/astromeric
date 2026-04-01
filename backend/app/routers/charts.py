@@ -302,6 +302,16 @@ async def get_progressed_chart(
 
     chart_data = build_natal_chart(progressed_profile)
 
+    # Propagate truth-awareness from original profile
+    birth_time_assumed = req.profile.time_of_birth is None
+    time_confidence = req.profile.time_confidence or ("exact" if not birth_time_assumed else "unknown")
+    if time_confidence == "exact":
+        data_quality = "full"
+    elif time_confidence == "approximate":
+        data_quality = "date_and_place"
+    else:
+        data_quality = "date_and_place"
+
     return ApiResponse(
         status=ResponseStatus.SUCCESS,
         data=NatalChartData(
@@ -313,6 +323,9 @@ async def get_progressed_chart(
                 "progressed_date": progressed_dt.strftime("%Y-%m-%d"),
                 "target_date": target_dt.strftime("%Y-%m-%d"),
                 "house_system": profile.get("house_system", "Placidus"),
+                "birth_time_assumed": birth_time_assumed,
+                "data_quality": data_quality,
+                "assumed_time_of_birth": "12:00" if birth_time_assumed else None,
             },
         ),
     )
