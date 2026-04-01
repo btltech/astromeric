@@ -200,7 +200,11 @@ async def get_natal_chart(
     """
     _require_chart_inputs(req.profile)
     profile = _profile_to_dict(req.profile)
-    chart_data = cached_build_chart(profile, "natal", build_natal_chart)
+    try:
+        chart_data = cached_build_chart(profile, "natal", build_natal_chart)
+    except Exception as _debug_exc:
+        import traceback
+        raise HTTPException(status_code=500, detail={"debug_error": str(_debug_exc), "tb": traceback.format_exc()[-500:]})
     birth_time_assumed = req.profile.time_of_birth is None
     data_quality = "full" if not birth_time_assumed else "date_and_place"
     logger.info(
