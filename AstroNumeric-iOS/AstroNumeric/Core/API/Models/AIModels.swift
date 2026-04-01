@@ -32,13 +32,15 @@ struct ChatContext: Codable {
     let moonSign: String?
     let risingSign: String?
     let birthTimeAssumed: Bool?
+    let timeConfidence: String?
     let history: [ChatMessage]?
-    
+
     enum CodingKeys: String, CodingKey {
         case sunSign = "sun_sign"
         case moonSign = "moon_sign"
         case risingSign = "rising_sign"
         case birthTimeAssumed = "birth_time_assumed"
+        case timeConfidence = "time_confidence"
         case history
     }
 }
@@ -70,16 +72,18 @@ struct V2CosmicGuideChatRequest: Encodable {
     let moonSign: String?
     let risingSign: String?
     let birthTimeAssumed: Bool?
+    let timeConfidence: String?
     let history: [ChatMessage]?
     let systemPrompt: String?
     let tone: String?
-    
+
     enum CodingKeys: String, CodingKey {
         case message
         case sunSign = "sun_sign"
         case moonSign = "moon_sign"
         case risingSign = "rising_sign"
         case birthTimeAssumed = "birth_time_assumed"
+        case timeConfidence = "time_confidence"
         case history
         case systemPrompt = "system_prompt"
         case tone

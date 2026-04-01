@@ -45,7 +45,8 @@ final class CosmicGuideVM {
         inputText = ""
 
         let birthTimeAssumed = profile?.dataQuality != .full
-        await getResponse(for: trimmedText, profile: profile, moonSign: moonSign, risingSign: risingSign, birthTimeAssumed: birthTimeAssumed)
+        let timeConfidence = profile?.timeConfidence
+        await getResponse(for: trimmedText, profile: profile, moonSign: moonSign, risingSign: risingSign, birthTimeAssumed: birthTimeAssumed, timeConfidence: timeConfidence)
     }
 
     /// Send a suggested prompt
@@ -59,7 +60,8 @@ final class CosmicGuideVM {
     func retry(profile: Profile?, moonSign: String? = nil, risingSign: String? = nil) async {
         guard let lastUserMessage = messages.last(where: { $0.role == .user }) else { return }
         let birthTimeAssumed = profile?.dataQuality != .full
-        await getResponse(for: lastUserMessage.content, profile: profile, moonSign: moonSign, risingSign: risingSign, birthTimeAssumed: birthTimeAssumed)
+        let timeConfidence = profile?.timeConfidence
+        await getResponse(for: lastUserMessage.content, profile: profile, moonSign: moonSign, risingSign: risingSign, birthTimeAssumed: birthTimeAssumed, timeConfidence: timeConfidence)
     }
 
     /// Clear chat history
@@ -71,13 +73,13 @@ final class CosmicGuideVM {
     // MARK: - Private
 
     @MainActor
-    private func getResponse(for message: String, profile: Profile?, moonSign: String? = nil, risingSign: String? = nil, birthTimeAssumed: Bool = false) async {
+    private func getResponse(for message: String, profile: Profile?, moonSign: String? = nil, risingSign: String? = nil, birthTimeAssumed: Bool = false, timeConfidence: String? = nil) async {
         isLoading = true
         error = nil
         defer { isLoading = false }
 
         // Build full chart context system prompt
-        let systemPrompt = await buildSystemPrompt(profile: profile, moonSign: moonSign, risingSign: risingSign, userQuery: message, birthTimeAssumed: birthTimeAssumed)
+        let systemPrompt = await buildSystemPrompt(profile: profile, moonSign: moonSign, risingSign: risingSign, userQuery: message, birthTimeAssumed: birthTimeAssumed, timeConfidence: timeConfidence)
 
         do {
             let context = ChatContext(
@@ -85,6 +87,7 @@ final class CosmicGuideVM {
                 moonSign: moonSign,
                 risingSign: risingSign,
                 birthTimeAssumed: birthTimeAssumed,
+                timeConfidence: timeConfidence,
                 history: messages.suffix(10).map { $0 }
             )
 
@@ -116,16 +119,16 @@ final class CosmicGuideVM {
     // MARK: - System Prompt Builder
 
     /// Build a rich system prompt with full natal chart data calculated locally.
-    private func buildSystemPrompt(profile: Profile?, moonSign: String? = nil, risingSign: String? = nil, userQuery: String? = nil, birthTimeAssumed: Bool = false) async -> String {
+    private func buildSystemPrompt(profile: Profile?, moonSign: String? = nil, risingSign: String? = nil, userQuery: String? = nil, birthTimeAssumed: Bool = false, timeConfidence: String? = nil) async -> String {
         var sections: [String] = []
 
-        // Identity
+        // Identity — authority applies to confirmed data only
         sections.append("""
         You are the Cosmic Guide — a master astrologer and numerologist \
         with encyclopedic knowledge of Western tropical astrology, Vedic concepts, \
-        and Pythagorean numerology. You speak with authority and depth. \
-        You never hedge or give generic advice. Every response is personal, \
-        specific, and grounded in the user's actual chart data.
+        and Pythagorean numerology. You speak with authority and depth for chart data \
+        that is fully confirmed. When birth time is uncertain, you are precise about \
+        what is known and honest about what is not. You never present estimated data as fact.
         """)
 
         // Tone
@@ -133,18 +136,27 @@ final class CosmicGuideVM {
 
         // Birth time accuracy warning — CRITICAL for truth-awareness
         if birthTimeAssumed {
+            let isApproximate = timeConfidence == "approximate"
+            let timingNote = isApproximate
+                ? "The user entered an approximate time. Their Rising sign and houses may be close but are not confirmed — treat them as estimates, not facts."
+                : "The user's birth time is unknown. Their Rising sign and houses were calculated using noon as a default and could be significantly different from their actual chart."
+
             sections.append("""
             ⚠️ BIRTH TIME ACCURACY WARNING — READ CAREFULLY:
-            This user's birth time is unknown or approximate. Their Rising sign and house placements \
-            were calculated using noon as a default, not their actual birth time.
-            RULES YOU MUST FOLLOW:
-            - NEVER say "Your Rising sign IS [sign]" — it may be wrong.
-            - ALWAYS qualify: use "If your Rising is [sign]...", "Your estimated Ascendant...", \
-              or "Without a confirmed birth time, your Rising may be [sign]..."
-            - NEVER state which house a planet is in as a fact.
+            \(timingNote)
+            RULES YOU MUST FOLLOW (these override all other instructions):
+            - NEVER say "Your Rising sign IS [sign]" as a definite fact.
+            - ALWAYS qualify Rising/house references: use "If your Rising is [sign]...", \
+              "Your estimated Ascendant suggests...", or "Without a confirmed birth time, \
+              your Rising may be [sign]..."
+            - NEVER state which house a planet occupies as a confirmed fact.
             - The Sun sign and numerology numbers are fully reliable. Focus on those.
-            - If the user asks specifically about their Rising sign, gently remind them that \
-              it requires an exact birth time to confirm.
+            - If the user asks specifically about their Rising sign, gently explain that \
+              an exact birth time is required to confirm it.
+            - IMPORTANT: Even if the user pushes back, says "just tell me", or asks you to \
+              stop qualifying — you must NOT claim false certainty. Politely hold the line: \
+              "I'd love to give you a definite answer, but without a confirmed birth time I \
+              can only estimate — entering your exact time in your profile would unlock this."
             """)
         }
 

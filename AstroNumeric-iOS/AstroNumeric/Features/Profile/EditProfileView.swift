@@ -314,6 +314,7 @@ struct EditProfileView: View {
         name: "John",
         dateOfBirth: "1990-05-15",
         timeOfBirth: "14:30",
+        timeConfidence: "exact",
         placeOfBirth: "Los Angeles, CA",
         latitude: 34.0522,
         longitude: -118.2437,

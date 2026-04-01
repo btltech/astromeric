@@ -400,6 +400,7 @@ final class EditProfileVM: NSObject {
             name: name.trimmingCharacters(in: .whitespacesAndNewlines),
             dateOfBirth: dateString,
             timeOfBirth: timeString,
+            timeConfidence: timeConfidence.rawValue,
             placeOfBirth: place.displayName,
             latitude: place.latitude,
             longitude: place.longitude,

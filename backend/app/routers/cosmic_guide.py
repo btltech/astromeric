@@ -53,6 +53,7 @@ class ChatRequest(BaseModel):
     moon_sign: Optional[str] = None
     rising_sign: Optional[str] = None
     birth_time_assumed: Optional[bool] = False  # true when chart uses noon default
+    time_confidence: Optional[str] = None  # "exact", "approximate", or "unknown"
     history: Optional[List[Dict[str, str]]] = None
 
 
@@ -119,6 +120,7 @@ async def chat_with_cosmic_guide(
             chart_data=chart_data,
             conversation_history=req.history,
             birth_time_assumed=req.birth_time_assumed or False,
+            time_confidence=req.time_confidence,
         )
 
         response_text = result.get(

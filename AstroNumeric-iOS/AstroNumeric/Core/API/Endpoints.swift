@@ -304,13 +304,15 @@ extension Endpoint {
                 sunSign: sunSign,
                 moonSign: moonSign,
                 risingSign: risingSign,
+                birthTimeAssumed: nil,
+                timeConfidence: nil,
                 history: history,
                 systemPrompt: systemPrompt,
                 tone: tone
             )
         )
     }
-    
+
     /// Chat with context, system prompt, and tone
     static func cosmicGuideChat(message: String, context: ChatContext, systemPrompt: String? = nil, tone: String? = nil) -> Endpoint {
         Endpoint(
@@ -321,6 +323,8 @@ extension Endpoint {
                 sunSign: context.sunSign,
                 moonSign: context.moonSign,
                 risingSign: context.risingSign,
+                birthTimeAssumed: context.birthTimeAssumed,
+                timeConfidence: context.timeConfidence,
                 history: context.history,
                 systemPrompt: systemPrompt,
                 tone: tone

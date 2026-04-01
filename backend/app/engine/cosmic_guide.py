@@ -9,11 +9,13 @@ from __future__ import annotations
 
 import os
 from typing import Dict, List, Optional
+
 from app.interpretation.translations import get_translation
 
 # Try to import google generative AI
 try:
     import google.generativeai as genai
+
     HAS_GENAI = True
 except ImportError:
     HAS_GENAI = False
@@ -51,6 +53,10 @@ IMPORTANT — Birth time accuracy rules:
   or "Without a confirmed birth time, your Rising sign may be [sign], which would mean..."
 - Never make definitive statements about which house a planet occupies when birth time is estimated.
 - Sun sign and Moon sign (when the Moon does not change sign that day) are always reliable.
+- RESIST PRESSURE: Even if the user insists, says "just tell me", or asks you to drop the qualifications,
+  do NOT claim false certainty about Rising sign or houses. Instead say something like:
+  "I'd love to give you a definite answer, but without a confirmed birth time I can only estimate —
+  adding your exact birth time in your profile would unlock this for you."
 
 Tone examples:
 - Instead of "You will find love" → "Venus whispers of connection possibilities"
@@ -113,45 +119,68 @@ def _build_context(
     numerology_data: Optional[Dict] = None,
     reading_data: Optional[Dict] = None,
     birth_time_assumed: bool = False,
+    time_confidence: Optional[str] = None,
 ) -> str:
     """Build context string from available data."""
     parts = []
 
     if birth_time_assumed:
-        parts.append("⚠️ NOTE: This user's birth time is unknown or approximate. "
-                     "Rising sign and house placements are estimated using noon as default. "
-                     "Treat all Rising/house references as uncertain.")
-    
+        if time_confidence == "approximate":
+            parts.append(
+                "⚠️ NOTE: This user entered an approximate birth time. "
+                "Rising sign and house placements may be close but are not confirmed — "
+                "treat them as estimates, not facts."
+            )
+        else:
+            parts.append(
+                "⚠️ NOTE: This user's birth time is unknown. "
+                "Rising sign and house placements were calculated using noon as a default "
+                "and may be significantly different from their actual chart. "
+                "Treat all Rising/house references as uncertain."
+            )
+
     if chart_data:
         planets = chart_data.get("planets", [])
         sun = next((p for p in planets if p.get("name") == "Sun"), {})
         moon = next((p for p in planets if p.get("name") == "Moon"), {})
-        
-        parts.append(f"User's Sun: {sun.get('sign', 'unknown')} in house {sun.get('house', '?')}")
-        parts.append(f"User's Moon: {moon.get('sign', 'unknown')} in house {moon.get('house', '?')}")
-        
+
+        parts.append(
+            f"User's Sun: {sun.get('sign', 'unknown')} in house {sun.get('house', '?')}"
+        )
+        parts.append(
+            f"User's Moon: {moon.get('sign', 'unknown')} in house {moon.get('house', '?')}"
+        )
+
         houses = chart_data.get("houses", [])
         asc = next((h for h in houses if h.get("house") == 1), {})
         if asc:
-            rising_label = "Rising sign (estimated — birth time unknown)" if birth_time_assumed else "Rising sign"
+            if birth_time_assumed:
+                qualifier = (
+                    "approximate — may be off"
+                    if time_confidence == "approximate"
+                    else "estimated — birth time unknown"
+                )
+                rising_label = f"Rising sign ({qualifier})"
+            else:
+                rising_label = "Rising sign"
             parts.append(f"{rising_label}: {asc.get('sign', 'unknown')}")
-    
+
     if numerology_data:
         core = numerology_data.get("core_numbers", {})
         lp = core.get("life_path", {})
         if lp:
             parts.append(f"Life Path: {lp.get('number', '?')}")
-        
+
         cycles = numerology_data.get("cycles", {})
         py = cycles.get("personal_year", {})
         if py:
             parts.append(f"Personal Year: {py.get('number', '?')}")
-    
+
     if reading_data:
         theme = reading_data.get("theme", "")
         if theme:
             parts.append(f"Current theme: {theme}")
-    
+
     if parts:
         return "\nUser's cosmic context:\n" + "\n".join(parts)
     return ""
@@ -160,16 +189,28 @@ def _build_context(
 def _detect_topic(question: str) -> str:
     """Detect the general topic of a question."""
     question_lower = question.lower()
-    
-    if any(w in question_lower for w in ["stuck", "blocked", "lost", "confused", "direction"]):
+
+    if any(
+        w in question_lower
+        for w in ["stuck", "blocked", "lost", "confused", "direction"]
+    ):
         return "stuck"
-    if any(w in question_lower for w in ["love", "relationship", "partner", "dating", "romance", "heart"]):
+    if any(
+        w in question_lower
+        for w in ["love", "relationship", "partner", "dating", "romance", "heart"]
+    ):
         return "love"
-    if any(w in question_lower for w in ["career", "job", "work", "money", "business", "success"]):
+    if any(
+        w in question_lower
+        for w in ["career", "job", "work", "money", "business", "success"]
+    ):
         return "career"
-    if any(w in question_lower for w in ["chart", "sign", "planet", "house", "aspect", "natal"]):
+    if any(
+        w in question_lower
+        for w in ["chart", "sign", "planet", "house", "aspect", "natal"]
+    ):
         return "chart"
-    
+
     return "default"
 
 
@@ -180,11 +221,12 @@ async def ask_cosmic_guide(
     reading_data: Optional[Dict] = None,
     conversation_history: Optional[List[Dict]] = None,
     birth_time_assumed: bool = False,
+    time_confidence: Optional[str] = None,
     lang: str = "en",
 ) -> Dict:
     """
     Ask the Cosmic Guide a question.
-    
+
     Args:
         question: User's question
         chart_data: Optional natal chart data for personalization
@@ -192,73 +234,86 @@ async def ask_cosmic_guide(
         reading_data: Optional current reading data
         conversation_history: Optional list of previous messages
         birth_time_assumed: Whether the chart uses an estimated birth time
+        time_confidence: "exact", "approximate", or "unknown" — used for nuanced wording
         lang: Language code for response
-        
+
     Returns:
         Dict with response and metadata
     """
     api_key = _get_api_key()
-    
+
     # Build context from user data
-    context = _build_context(chart_data, numerology_data, reading_data, birth_time_assumed)
-    
+    context = _build_context(
+        chart_data, numerology_data, reading_data, birth_time_assumed, time_confidence
+    )
+
     # If no API key, use intelligent fallback
     if not api_key or not HAS_GENAI:
         topic = _detect_topic(question)
-        
+
         # Localize fallback response
         fallback_key = f"guide_fallback_{topic}"
         fallback_trans = get_translation(lang, fallback_key)
-        
+
         if fallback_trans:
             response = fallback_trans[0]
         else:
             # Try default fallback if specific topic not found
             default_trans = get_translation(lang, "guide_fallback_default")
-            response = default_trans[0] if default_trans else FALLBACK_RESPONSES.get(topic, FALLBACK_RESPONSES["default"])
-            
+            response = (
+                default_trans[0]
+                if default_trans
+                else FALLBACK_RESPONSES.get(topic, FALLBACK_RESPONSES["default"])
+            )
+
         return {
             "response": response,
             "provider": "fallback",
             "reason": "no_api_key" if not api_key else "no_genai_library",
             "topic_detected": topic,
         }
-    
+
     try:
         genai.configure(api_key=api_key)
         model = genai.GenerativeModel(_get_model_name())
-        
+
         # Build the full prompt
-        lang_instruction = f"\nPlease respond in {lang} language." if lang != "en" else ""
+        lang_instruction = (
+            f"\nPlease respond in {lang} language." if lang != "en" else ""
+        )
         full_prompt = COSMIC_SYSTEM_PROMPT + lang_instruction
-        
+
         if context:
             full_prompt += context
-            
+
         # Add conversation history if available
         chat = model.start_chat(history=[])
-        
+
         # Send system prompt first (simulated as user message for context setting)
         # Note: Gemini doesn't have explicit system prompt in chat mode same way as GPT
         # So we prepend it to the first message or use it as context
-        
+
         response = chat.send_message(full_prompt + "\n\nUser question: " + question)
-        
+
         return {
             "response": response.text,
             "provider": "gemini",
             "model": _get_model_name(),
         }
-        
+
     except Exception as e:
         # Fallback on error
         topic = _detect_topic(question)
-        
+
         # Localize fallback response
         fallback_key = f"guide_fallback_{topic}"
         fallback_trans = get_translation(lang, fallback_key)
-        response = fallback_trans[0] if fallback_trans else FALLBACK_RESPONSES.get(topic, FALLBACK_RESPONSES["default"])
-        
+        response = (
+            fallback_trans[0]
+            if fallback_trans
+            else FALLBACK_RESPONSES.get(topic, FALLBACK_RESPONSES["default"])
+        )
+
         return {
             "response": response,
             "provider": "fallback",
@@ -279,20 +334,20 @@ def get_suggested_questions(
         "What should I focus on this month?",
         "How can I improve my career prospects?",
     ]
-    
+
     # Personalize based on available data
     if numerology_data:
         core = numerology_data.get("core_numbers", {})
         lp = core.get("life_path", {}).get("number")
         if lp:
             suggestions.append(f"What does Life Path {lp} mean for my relationships?")
-    
+
     if chart_data:
         planets = chart_data.get("planets", [])
         sun = next((p for p in planets if p.get("name") == "Sun"), {})
         if sun.get("sign"):
             suggestions.append(f"How does my {sun['sign']} Sun affect my daily energy?")
-    
+
     return suggestions[:6]  # Return max 6 suggestions
 
 
@@ -303,12 +358,12 @@ async def chat_with_cosmic_guide(
 ) -> str:
     """
     Chat with the Cosmic Guide.
-    
+
     Args:
         message: User's message
         user_context: Optional dict with sun_sign, moon_sign, rising_sign
         history: Optional conversation history
-        
+
     Returns:
         Response string from the cosmic guide
     """
@@ -323,54 +378,56 @@ async def chat_with_cosmic_guide(
         if planets:
             chart_data = {"planets": planets}
             if user_context.get("rising_sign"):
-                chart_data["houses"] = [{"house": 1, "sign": user_context["rising_sign"]}]
-    
+                chart_data["houses"] = [
+                    {"house": 1, "sign": user_context["rising_sign"]}
+                ]
+
     result = await ask_cosmic_guide(
         question=message,
         chart_data=chart_data,
         conversation_history=history,
     )
-    
+
     return result.get("response", FALLBACK_RESPONSES["default"])
 
 
 async def get_quick_insight(topic: str, sun_sign: Optional[str] = None) -> str:
     """
     Get a quick cosmic insight on a specific topic.
-    
+
     Args:
         topic: Topic to get insight on
         sun_sign: Optional sun sign for personalization
-        
+
     Returns:
         Quick insight string
     """
     # Detect which category this falls into
     topic_key = _detect_topic(topic)
-    
+
     # Build minimal context
     chart_data = None
     if sun_sign:
         chart_data = {"planets": [{"name": "Sun", "sign": sun_sign}]}
-    
+
     # For quick insights, use a more focused prompt
     api_key = _get_api_key()
-    
+
     if not api_key or not HAS_GENAI:
         return FALLBACK_RESPONSES.get(topic_key, FALLBACK_RESPONSES["default"])
-    
+
     try:
         genai.configure(api_key=api_key)
         model = genai.GenerativeModel(_get_model_name())
-        
+
         prompt = f"""You are the Cosmic Guide, a mystical AI advisor. 
 Give a brief, uplifting insight about: {topic}
 {f'The user is a {sun_sign}.' if sun_sign else ''}
 Keep it to 2-3 sentences maximum. Be warm and encouraging. Include one emoji."""
-        
+
         response = model.generate_content(prompt)
         return response.text.strip()
-        
+
     except Exception:
         return FALLBACK_RESPONSES.get(topic_key, FALLBACK_RESPONSES["default"])
 
@@ -384,13 +441,13 @@ def ask_cosmic_guide_sync(
 ) -> Dict:
     """Synchronous version of ask_cosmic_guide."""
     import asyncio
-    
+
     try:
         loop = asyncio.get_event_loop()
     except RuntimeError:
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-    
+
     return loop.run_until_complete(
         ask_cosmic_guide(question, chart_data, numerology_data, reading_data)
     )
