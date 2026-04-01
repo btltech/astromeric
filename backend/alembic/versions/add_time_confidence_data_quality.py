@@ -14,13 +14,9 @@ depends_on = None
 
 
 def upgrade():
-    with op.batch_alter_table("profiles") as batch_op:
-        batch_op.add_column(
-            sa.Column("time_confidence", sa.String(20), nullable=True, server_default="unknown")
-        )
-        batch_op.add_column(
-            sa.Column("data_quality", sa.String(20), nullable=True)
-        )
+    # Use IF NOT EXISTS to be idempotent (columns may already exist)
+    op.execute("ALTER TABLE profiles ADD COLUMN IF NOT EXISTS time_confidence VARCHAR(20) DEFAULT 'unknown'")
+    op.execute("ALTER TABLE profiles ADD COLUMN IF NOT EXISTS data_quality VARCHAR(20)")
 
 
 def downgrade():

@@ -18,26 +18,29 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    op.create_table(
-        "device_tokens",
-        sa.Column("id", sa.Integer(), primary_key=True),
-        sa.Column("token", sa.String(), nullable=False),
-        sa.Column("platform", sa.String(length=20), nullable=False, server_default="ios"),
-        sa.Column("user_id", sa.String(), sa.ForeignKey("users.id"), nullable=True),
-        sa.Column("created_at", sa.DateTime(), nullable=False, server_default=sa.text("CURRENT_TIMESTAMP")),
-        sa.UniqueConstraint("token", name="uq_device_tokens_token"),
-    )
-    op.create_index("ix_device_tokens_user_id", "device_tokens", ["user_id"])
+    # Use raw SQL with IF NOT EXISTS so this is idempotent (tables may already exist)
+    op.execute("""
+        CREATE TABLE IF NOT EXISTS device_tokens (
+            id SERIAL PRIMARY KEY,
+            token VARCHAR NOT NULL,
+            platform VARCHAR(20) NOT NULL DEFAULT 'ios',
+            user_id VARCHAR REFERENCES users(id),
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            CONSTRAINT uq_device_tokens_token UNIQUE (token)
+        )
+    """)
+    op.execute("CREATE INDEX IF NOT EXISTS ix_device_tokens_user_id ON device_tokens(user_id)")
 
-    op.create_table(
-        "transit_subscriptions",
-        sa.Column("id", sa.Integer(), primary_key=True),
-        sa.Column("profile_id", sa.Integer(), sa.ForeignKey("profiles.id"), nullable=False),
-        sa.Column("email", sa.String(), nullable=False),
-        sa.Column("created_at", sa.DateTime(), nullable=False, server_default=sa.text("CURRENT_TIMESTAMP")),
-    )
-    op.create_index("ix_transit_subscriptions_profile_id", "transit_subscriptions", ["profile_id"])
-    op.create_index("ix_transit_subscriptions_email", "transit_subscriptions", ["email"])
+    op.execute("""
+        CREATE TABLE IF NOT EXISTS transit_subscriptions (
+            id SERIAL PRIMARY KEY,
+            profile_id INTEGER NOT NULL REFERENCES profiles(id),
+            email VARCHAR NOT NULL,
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    op.execute("CREATE INDEX IF NOT EXISTS ix_transit_subscriptions_profile_id ON transit_subscriptions(profile_id)")
+    op.execute("CREATE INDEX IF NOT EXISTS ix_transit_subscriptions_email ON transit_subscriptions(email)")
 
 
 def downgrade() -> None:
