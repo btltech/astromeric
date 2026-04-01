@@ -203,8 +203,13 @@ async def get_natal_chart(
     try:
         chart_data = cached_build_chart(profile, "natal", build_natal_chart)
     except Exception as _debug_exc:
-        import traceback
-        raise HTTPException(status_code=500, detail={"debug_error": str(_debug_exc), "tb": traceback.format_exc()[-500:]})
+        import traceback, sys
+        tb = traceback.format_exc()
+        print(f"[NATAL_CHART_ERROR] {type(_debug_exc).__name__}: {_debug_exc}", file=sys.stderr, flush=True)
+        print(f"[NATAL_CHART_TB] {tb}", file=sys.stderr, flush=True)
+        logger.error(f"Natal chart failed: {type(_debug_exc).__name__}: {_debug_exc}")
+        logger.error(f"Traceback: {tb}")
+        raise HTTPException(status_code=500, detail={"debug_error": str(_debug_exc), "tb": tb[-800:]})
     birth_time_assumed = req.profile.time_of_birth is None
     data_quality = "full" if not birth_time_assumed else "date_and_place"
     logger.info(
