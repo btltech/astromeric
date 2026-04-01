@@ -76,33 +76,25 @@ def _profile_payload_to_dict(profile: ProfilePayload) -> Dict[str, Any]:
 
 
 def _require_natal_inputs(profile: ProfilePayload) -> None:
-    missing: list[str] = []
-    if not profile.time_of_birth:
-        missing.append("time_of_birth")
-    if profile.latitude is None:
-        missing.append("latitude")
-    if profile.longitude is None:
-        missing.append("longitude")
-    if not profile.timezone:
-        missing.append("timezone")
-
-    if missing:
+    """Validate coordinates consistency only — missing time/location is allowed
+    (the chart_service will use graceful fallbacks and set data_quality accordingly)."""
+    # Only reject if one of lat/lon is provided but not the other
+    if (profile.latitude is None) != (profile.longitude is None):
         raise HTTPException(
             status_code=422,
             detail={
                 "error": {
                     "code": "MISSING_PROFILE_FIELDS",
-                    "message": "Natal profile requires full birth time + location + timezone for accuracy.",
-                    "missing": missing,
+                    "message": "Both latitude and longitude must be provided together.",
+                    "missing": ["latitude" if profile.latitude is None else "longitude"],
                 }
             },
         )
 
     tz = (profile.timezone or "").strip()
-    if tz not in ("UTC", "GMT"):
+    if tz and tz not in ("UTC", "GMT"):
         try:
             from zoneinfo import ZoneInfo
-
             ZoneInfo(tz)
         except Exception:
             raise HTTPException(
