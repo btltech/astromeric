@@ -57,6 +57,51 @@ def build_forecast(profile: Dict, scope: str = "daily", lang: str = "en") -> Dic
         lang=lang,
     )
 
+    # Calculate overall_score (0-10 scale) from topic scores, numerology, and personal cycles
+    # Extract personal day number for variance
+    personal_day = numerology.get("cycles", {}).get("personal_day", {}).get("number", 5)
+    personal_month = numerology.get("cycles", {}).get("personal_month", {}).get("number", 5)
+    personal_year = numerology.get("cycles", {}).get("personal_year", {}).get("number", 5)
+    
+    # Topic score contribution (smoothed transits)
+    # Raw topic scores typically range from 0-30, normalize to 0-1 scale
+    topic_values = list(smoothed.values()) if smoothed else [0.0]
+    avg_topic = sum(topic_values) / len(topic_values) if topic_values else 0.0
+    normalized_topic = min(1.0, avg_topic / 20.0)  # Normalize: 20+ = excellent
+    
+    # Numerology bonus from personal day/month/year cycles
+    numerology_bias = _numerology_bias(numerology)
+    numerology_bonus = sum(numerology_bias.values()) / 4
+    
+    # Personal day influence (1-9 each contribute differently)
+    # Days 1, 3, 5, 9 are generally higher energy; 4, 7, 8 are more challenging
+    personal_day_modifier = {
+        1: 1.2, 2: 0.3, 3: 1.0, 4: -0.4, 5: 0.7, 
+        6: 0.4, 7: -0.3, 8: 0.2, 9: 0.9
+    }.get(personal_day, 0.0)
+    
+    # Personal month adds longer-term influence
+    personal_month_modifier = {
+        1: 0.5, 2: 0.15, 3: 0.4, 4: -0.2, 5: 0.3,
+        6: 0.2, 7: -0.15, 8: 0.1, 9: 0.35
+    }.get(personal_month, 0.0)
+    
+    # Calculate score on 0-10 scale
+    # Base: normalized transit score (0-2.5 contribution)
+    base_score = 5.0 + (normalized_topic * 2.5)
+    # Add personal day influence (major variance, -0.4 to +1.2)
+    base_score += personal_day_modifier
+    # Add personal month influence (moderate, -0.2 to +0.5)
+    base_score += personal_month_modifier
+    # Add numerology topic bias (minor, 0-0.3)
+    base_score += (numerology_bonus * 1.5)
+    
+    # Clamp to 3.0-9.5 range for realistic variance
+    overall_score = max(3.0, min(9.5, base_score))
+    
+    # Round to one decimal
+    overall_score = round(overall_score, 1)
+
     return {
         "scope": scope,
         "date": anchor.date().isoformat(),
@@ -66,6 +111,7 @@ def build_forecast(profile: Dict, scope: str = "daily", lang: str = "en") -> Dic
         "charts": {"natal": natal, "transit": transit},
         "ratings": _ratings(smoothed, numerology),
         "guidance": guidance,
+        "overall_score": overall_score,
     }
 
 
@@ -305,10 +351,33 @@ def _topic_section(
     else:
         section_scores = scores
 
+    # Generate summary from highlights
+    summary = " ".join(highlights[:2]) if highlights else "Quiet sky; stay present."
+    
+    # Extract avoid/embrace from guidance (if available in result)
+    avoid_list = []
+    embrace_list = []
+    
+    # Look through blocks for avoid/embrace tags
+    for b in relevant[:10]:
+        tags = b.get("tags", [])
+        if "avoid" in tags and len(avoid_list) < 3:
+            avoid_text = b.get("text", "")
+            if avoid_text and avoid_text not in avoid_list:
+                avoid_list.append(avoid_text)
+        if "embrace" in tags and len(embrace_list) < 3:
+            embrace_text = b.get("text", "")
+            if embrace_text and embrace_text not in embrace_list:
+                embrace_list.append(embrace_text)
+
     return {
         "title": title,
+        "summary": summary,
         "highlights": highlights or ["Quiet sky; stay present."],
+        "topics": section_scores,
         "topic_scores": section_scores,
+        "avoid": avoid_list,
+        "embrace": embrace_list,
     }
 
 

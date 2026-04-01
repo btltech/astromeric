@@ -43,12 +43,13 @@ def get_db():
 class NatalChartData(BaseModel):
     """Natal chart calculation results."""
 
-    sun_sign: str
-    moon_sign: str
-    rising_sign: str
-    houses: Dict[str, Any]
+    # Raw chart dict from `chart_service.build_natal_chart`.
+    metadata: Dict[str, Any]
+    planets: List[Dict[str, Any]]
+    houses: List[Dict[str, Any]]
     aspects: List[Dict[str, Any]]
-    asteroids: Optional[List[Dict[str, Any]]] = None
+    ascendant: Optional[Dict[str, Any]] = None
+    midheaven: Optional[Dict[str, Any]] = None
 
 
 class NatalProfileResponse(BaseModel):
@@ -56,13 +57,64 @@ class NatalProfileResponse(BaseModel):
 
     profile: ProfilePayload
     chart: NatalChartData
-    interpretation: Dict[str, str]
+    numerology: Dict[str, Any]
+    sections: List[Dict[str, Any]]
     generated_at: datetime
 
 
 # ============================================================================
 # ENDPOINTS
 # ============================================================================
+
+def _profile_payload_to_dict(profile: ProfilePayload) -> Dict[str, Any]:
+    if hasattr(profile, "model_dump"):
+        data = profile.model_dump(exclude_none=True)
+    else:
+        data = profile.dict(exclude_none=True)  # type: ignore[attr-defined]
+
+    return data
+
+
+def _require_natal_inputs(profile: ProfilePayload) -> None:
+    missing: list[str] = []
+    if not profile.time_of_birth:
+        missing.append("time_of_birth")
+    if profile.latitude is None:
+        missing.append("latitude")
+    if profile.longitude is None:
+        missing.append("longitude")
+    if not profile.timezone:
+        missing.append("timezone")
+
+    if missing:
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "error": {
+                    "code": "MISSING_PROFILE_FIELDS",
+                    "message": "Natal profile requires full birth time + location + timezone for accuracy.",
+                    "missing": missing,
+                }
+            },
+        )
+
+    tz = (profile.timezone or "").strip()
+    if tz not in ("UTC", "GMT"):
+        try:
+            from zoneinfo import ZoneInfo
+
+            ZoneInfo(tz)
+        except Exception:
+            raise HTTPException(
+                status_code=422,
+                detail={
+                    "error": {
+                        "code": "INVALID_TIMEZONE",
+                        "message": f"Invalid timezone '{profile.timezone}'. Use a valid IANA timezone (e.g., 'America/New_York').",
+                        "field": "timezone",
+                    }
+                },
+            )
 
 
 @router.post("/natal", response_model=ApiResponse[NatalProfileResponse])
@@ -105,6 +157,8 @@ async def calculate_natal_profile(
                     "Both latitude and longitude must be provided together"
                 )
 
+        _require_natal_inputs(req.profile)
+
         # Calculate natal profile
         logger.info(
             f"Calculating natal profile for {req.profile.name}",
@@ -112,20 +166,25 @@ async def calculate_natal_profile(
             profile_name=req.profile.name,
         )
 
-        natal_data = build_natal_profile(req.profile)
+        natal_data = build_natal_profile(_profile_payload_to_dict(req.profile))
+        birth_time_assumed = natal_data.get("metadata", {}).get("birth_time_assumed", False)
+        data_quality = natal_data.get("metadata", {}).get("data_quality", "unknown")
 
         logger.info(
             f"Natal profile calculated successfully",
             request_id=request_id,
-            sun_sign=natal_data.get("sun_sign"),
+            provider=natal_data.get("chart", {}).get("metadata", {}).get("provider"),
+            birth_time_assumed=birth_time_assumed,
+            data_quality=data_quality,
         )
 
         return ApiResponse(
             status=ResponseStatus.SUCCESS,
             data=NatalProfileResponse(
                 profile=req.profile,
-                chart=natal_data.get("chart"),
-                interpretation=natal_data.get("interpretation"),
+                chart=NatalChartData(**(natal_data.get("chart") or {})),
+                numerology=natal_data.get("numerology") or {},
+                sections=natal_data.get("sections") or [],
                 generated_at=datetime.now(timezone.utc),
             ),
             message="Natal profile calculated successfully",
@@ -222,27 +281,31 @@ async def get_natal_profile(
             name=db_profile.name,
             date_of_birth=db_profile.date_of_birth,
             time_of_birth=db_profile.time_of_birth,
+            place_of_birth=db_profile.place_of_birth,
             latitude=db_profile.latitude,
             longitude=db_profile.longitude,
             timezone=db_profile.timezone,
             house_system=db_profile.house_system,
         )
 
+        _require_natal_inputs(profile_payload)
+
         # Calculate natal chart (same as POST /natal)
-        natal_data = build_natal_profile(profile_payload)
+        natal_data = build_natal_profile(_profile_payload_to_dict(profile_payload))
 
         logger.info(
             f"Natal profile {profile_id} retrieved successfully",
             request_id=request_id,
-            sun_sign=natal_data.get("sun_sign"),
+            provider=natal_data.get("chart", {}).get("metadata", {}).get("provider"),
         )
 
         return ApiResponse(
             status=ResponseStatus.SUCCESS,
             data=NatalProfileResponse(
                 profile=profile_payload,
-                chart=natal_data.get("chart"),
-                interpretation=natal_data.get("interpretation"),
+                chart=NatalChartData(**(natal_data.get("chart") or {})),
+                numerology=natal_data.get("numerology") or {},
+                sections=natal_data.get("sections") or [],
                 generated_at=datetime.now(timezone.utc),
             ),
             message="Natal profile retrieved successfully",

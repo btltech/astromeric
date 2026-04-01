@@ -13,7 +13,7 @@ from ..engine.compatibility import calculate_combined_compatibility
 
 
 def build_compatibility(
-    person_a: Dict, person_b: Dict, lang: str = "en"
+    person_a: Dict, person_b: Dict, lang: str = "en", relationship_type: str = "romantic"
 ) -> Dict[str, Any]:
     """
     Build a full compatibility report using Pro-Level engine.
@@ -32,7 +32,7 @@ def build_compatibility(
         dob1=person_a["date_of_birth"],
         name2=person_b["name"],
         dob2=person_b["date_of_birth"],
-        relationship_type="romantic",
+        relationship_type=relationship_type,
         lang=lang,
     )
 
@@ -64,11 +64,37 @@ def build_compatibility(
         "strengths": strengths[:5] if strengths else _default_strengths(astro),
         "challenges": challenges[:3] if challenges else [],
         "recommendations": recommendations[:3],
+        # Back-compat alias used by some clients/tests.
+        "advice": recommendations[:3],
         # Include detailed breakdown for advanced views
         "score_breakdown": score_breakdown,
         "astrology": astro,
         "numerology": numerology,
+        # Data quality confidence: reduced 25% per person missing birth time
+        "data_confidence": _data_confidence(person_a, person_b),
     }
+
+
+def _data_confidence(person_a: Dict, person_b: Dict) -> Dict[str, Any]:
+    """Return a confidence score and note based on birth time completeness."""
+    a_has_time = bool(person_a.get("time_of_birth"))
+    b_has_time = bool(person_b.get("time_of_birth"))
+    missing = []
+    penalty = 0
+    if not a_has_time:
+        missing.append(person_a.get("name", "Person A"))
+        penalty += 25
+    if not b_has_time:
+        missing.append(person_b.get("name", "Person B"))
+        penalty += 25
+    confidence = max(50, 100 - penalty)
+    note = None
+    if missing:
+        note = (
+            f"Birth time unknown for {', '.join(missing)}. "
+            "Rising sign and house placements are estimated, which may affect accuracy."
+        )
+    return {"score": confidence, "note": note}
 
 
 def _build_dimensions(score_breakdown: Dict, result: Dict) -> List[Dict[str, Any]]:

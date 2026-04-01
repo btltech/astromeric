@@ -32,6 +32,7 @@ class CreateProfileRequest(BaseModel):
     name: str = Field(..., min_length=1, max_length=100)
     date_of_birth: str = Field(..., pattern=r"\d{4}-\d{2}-\d{2}")
     time_of_birth: Optional[str] = None
+    time_confidence: Optional[str] = "unknown"  # exact / approximate / unknown
     place_of_birth: Optional[str] = None
     latitude: Optional[float] = None
     longitude: Optional[float] = None
@@ -43,6 +44,7 @@ class UpdateProfileRequest(BaseModel):
     """Request to update a profile."""
     name: Optional[str] = Field(None, min_length=1, max_length=100)
     time_of_birth: Optional[str] = None
+    time_confidence: Optional[str] = None  # exact / approximate / unknown
     place_of_birth: Optional[str] = None
     latitude: Optional[float] = None
     longitude: Optional[float] = None
@@ -56,11 +58,23 @@ class ProfileResponse(BaseModel):
     name: str
     date_of_birth: str
     time_of_birth: Optional[str]
+    time_confidence: Optional[str]
     place_of_birth: Optional[str]
     latitude: Optional[float]
     longitude: Optional[float]
     timezone: str
     house_system: str
+    data_quality: Optional[str]
+
+
+def _compute_data_quality(profile: DBProfile) -> str:
+    has_location = profile.latitude is not None and profile.longitude is not None
+    has_time = bool(profile.time_of_birth)
+    if has_location and has_time:
+        return "full"
+    if has_location:
+        return "date_and_place"
+    return "date_only"
 
 
 def _db_profile_to_dict(profile: DBProfile) -> Dict:
@@ -70,11 +84,13 @@ def _db_profile_to_dict(profile: DBProfile) -> Dict:
         "name": profile.name,
         "date_of_birth": profile.date_of_birth,
         "time_of_birth": profile.time_of_birth,
+        "time_confidence": profile.time_confidence or "unknown",
         "place_of_birth": profile.place_of_birth,
         "latitude": profile.latitude,
         "longitude": profile.longitude,
         "timezone": profile.timezone or "UTC",
         "house_system": profile.house_system or "Placidus",
+        "data_quality": _compute_data_quality(profile),
     }
 
 
@@ -126,6 +142,7 @@ async def create_profile(
         name=req.name,
         date_of_birth=req.date_of_birth,
         time_of_birth=req.time_of_birth,
+        time_confidence=req.time_confidence or ("exact" if req.time_of_birth else "unknown"),
         place_of_birth=req.place_of_birth,
         latitude=req.latitude,
         longitude=req.longitude,
@@ -189,6 +206,8 @@ async def update_profile(
         profile.name = req.name
     if req.time_of_birth is not None:
         profile.time_of_birth = req.time_of_birth
+    if req.time_confidence is not None:
+        profile.time_confidence = req.time_confidence
     if req.place_of_birth is not None:
         profile.place_of_birth = req.place_of_birth
     if req.latitude is not None:

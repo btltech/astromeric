@@ -6,6 +6,8 @@ import SwiftUI
 struct CompatibilityView: View {
     @Environment(AppStore.self) private var store
     @State private var viewModel = CompatibilityVM()
+    @State private var relationshipsVM = RelationshipsVM()
+    @State private var hasSaved = false
     @State private var showDatePicker = false
     @State private var showTimePicker = false
     
@@ -30,16 +32,39 @@ struct CompatibilityView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 if viewModel.hasData {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button(hasSaved ? "Saved" : "Save") {
+                            guard let personA = store.activeProfile,
+                                  let result = viewModel.compatibilityData else { return }
+                            
+                            let relationship = SavedRelationship.from(
+                                personA: personA,
+                                personBName: viewModel.resolvedPersonBName(store: store),
+                                personBDOB: viewModel.resolvedPersonBDOBString(store: store),
+                                result: result,
+                                type: .romantic
+                            )
+                            relationshipsVM.saveRelationship(relationship)
+                            hasSaved = true
+                        }
+                        .disabled(hasSaved)
+                    }
                     ToolbarItem(placement: .topBarTrailing) {
                         Button("Reset") {
                             withAnimation {
                                 viewModel.reset()
+                                hasSaved = false
                             }
                         }
                     }
                 }
             }
         }
+    }
+
+    private var personBCandidates: [Profile] {
+        guard let activeId = store.activeProfile?.id else { return store.profiles }
+        return store.profiles.filter { $0.id != activeId }
     }
     
     // MARK: - Input Section
@@ -52,18 +77,18 @@ struct CompatibilityView: View {
                     Text("Your Profile")
                         .font(.headline)
                     
-                    if let profile = store.selectedProfile {
+                    if let profile = store.activeProfile {
                         HStack {
                             Image(systemName: "person.fill")
                                 .foregroundStyle(.purple)
                             Text(profile.name)
                             Spacer()
                             Text(profile.dateOfBirth)
-                                .foregroundStyle(.textSecondary)
+                                .foregroundStyle(Color.textSecondary)
                         }
                     } else {
                         Text("No profile selected")
-                            .foregroundStyle(.textMuted)
+                            .foregroundStyle(Color.textMuted)
                     }
                 }
             }
@@ -73,21 +98,43 @@ struct CompatibilityView: View {
                 VStack(alignment: .leading, spacing: 16) {
                     Text("Compare With")
                         .font(.headline)
+
+                    if !personBCandidates.isEmpty {
+                        Toggle("Use Saved Profile", isOn: $viewModel.useSavedProfileForPersonB)
+                            .tint(.pink)
+                            .onChange(of: viewModel.useSavedProfileForPersonB) { _, newValue in
+                                if newValue, viewModel.selectedPersonBProfileId == nil {
+                                    viewModel.selectedPersonBProfileId = personBCandidates.first?.id
+                                }
+                            }
+
+                        if viewModel.useSavedProfileForPersonB {
+                            Picker("Profile", selection: $viewModel.selectedPersonBProfileId) {
+                                Text("Select a profile").tag(Optional<Int>(nil))
+                                ForEach(personBCandidates) { profile in
+                                    Text(profile.name).tag(Optional(profile.id))
+                                }
+                            }
+                            .pickerStyle(.menu)
+                            Divider()
+                        }
+                    }
                     
                     // Name
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Name")
                             .font(.caption)
-                            .foregroundStyle(.textMuted)
+                            .foregroundStyle(Color.textMuted)
                         TextField("Enter name", text: $viewModel.personBName)
                             .textFieldStyle(.roundedBorder)
+                            .disabled(viewModel.useSavedProfileForPersonB)
                     }
                     
                     // Birth date
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Birth Date")
                             .font(.caption)
-                            .foregroundStyle(.textMuted)
+                            .foregroundStyle(Color.textMuted)
                         DatePicker(
                             "Birth Date",
                             selection: $viewModel.personBDOB,
@@ -95,6 +142,7 @@ struct CompatibilityView: View {
                         )
                         .datePickerStyle(.compact)
                         .labelsHidden()
+                        .disabled(viewModel.useSavedProfileForPersonB)
                     }
                     
                     // Birth time (optional)
@@ -102,10 +150,10 @@ struct CompatibilityView: View {
                         HStack {
                             Text("Birth Time")
                                 .font(.caption)
-                                .foregroundStyle(.textMuted)
+                                .foregroundStyle(Color.textMuted)
                             Text("(optional)")
                                 .font(.caption2)
-                                .foregroundStyle(.tertiary)
+                                .foregroundStyle(Color.textMuted)
                         }
                         
                         if let time = viewModel.personBTime {
@@ -130,19 +178,20 @@ struct CompatibilityView: View {
                             .labelsHidden()
                         }
                     }
+                    .disabled(viewModel.useSavedProfileForPersonB)
                 }
             }
             
             // Calculate button
             GradientButton("Calculate Compatibility", icon: "heart.fill") {
                 Task {
-                    if let profile = store.selectedProfile {
-                        let personB = viewModel.buildPersonB()
-                        await viewModel.fetchCompatibility(personA: profile, personB: personB)
-                    }
+                    guard let profile = store.activeProfile else { return }
+                    hasSaved = false
+                    let personB = viewModel.resolvedPersonBPayload(store: store)
+                    await viewModel.fetchCompatibility(personA: profile, personB: personB)
                 }
             }
-            .disabled(viewModel.personBName.isEmpty || viewModel.isLoading)
+            .disabled(!viewModel.canCalculate(store: store) || viewModel.isLoading)
             
             if viewModel.isLoading {
                 ProgressView("Calculating...")
@@ -167,7 +216,7 @@ struct CompatibilityView: View {
                         Image(systemName: "person.fill")
                             .font(.title2)
                             .foregroundStyle(.purple)
-                        Text(store.selectedProfile?.name ?? "You")
+                        Text(store.activeProfile?.name ?? "You")
                             .font(.caption)
                     }
                     
@@ -183,7 +232,7 @@ struct CompatibilityView: View {
                         Image(systemName: "person.fill")
                             .font(.title2)
                             .foregroundStyle(.pink)
-                        Text(viewModel.personBName)
+                        Text(viewModel.resolvedPersonBName(store: store))
                             .font(.caption)
                     }
                 }
@@ -220,8 +269,17 @@ struct CompatibilityView: View {
                                 .font(.title.bold())
                             Text(compatibilityRating)
                                 .font(.caption)
-                                .foregroundStyle(.textSecondary)
+                                .foregroundStyle(Color.textSecondary)
                         }
+                    }
+
+                    // Confidence note when birth times are missing
+                    if let note = viewModel.confidenceNote {
+                        DataQualityBanner(
+                            icon: "clock.badge.questionmark",
+                            message: "Confidence \(Int(viewModel.confidenceScore))% — \(note)",
+                            color: .yellow
+                        )
                     }
                 }
             }
@@ -263,7 +321,7 @@ struct CompatibilityView: View {
                             if let description = category.description {
                                 Text(description)
                                     .font(.caption)
-                                    .foregroundStyle(.textMuted)
+                                    .foregroundStyle(Color.textMuted)
                             }
                         }
                         

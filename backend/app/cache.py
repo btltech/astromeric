@@ -67,7 +67,8 @@ class ChartCache:
         # Include all factors that affect chart calculation
         key_data = {
             "date": profile.get("date_of_birth"),
-            "time": profile.get("time_of_birth"),
+            "time": profile.get("time_of_birth") or "_unknown_",
+            "confidence": profile.get("time_confidence", "unknown"),  # exact/approximate/unknown affect chart output
             "lat": round(profile.get("latitude", 0.0), 4),  # 4 decimal places ≈ 11m precision
             "lon": round(profile.get("longitude", 0.0), 4),
             "house": profile.get("house_system", "Placidus"),

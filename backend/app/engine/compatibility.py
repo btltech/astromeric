@@ -1,11 +1,34 @@
-"""Compatibility calculations for astrology and numerology."""
+"""Compatibility calculations for astrology and numerology - Pro Level."""
 
+from datetime import datetime
 from typing import Dict
 
 from ..interpretation.translations import get_translation
 from .astrology import get_element, get_zodiac_sign
 from .numerology import calculate_life_path_number
 from .numerology_extended import calculate_expression_number, calculate_soul_urge_number
+from .moon_phases import estimate_moon_sign
+
+# Modality mapping (Cardinal, Fixed, Mutable)
+MODALITY_MAP = {
+    "Aries": "Cardinal", "Cancer": "Cardinal", "Libra": "Cardinal", "Capricorn": "Cardinal",
+    "Taurus": "Fixed", "Leo": "Fixed", "Scorpio": "Fixed", "Aquarius": "Fixed",
+    "Gemini": "Mutable", "Virgo": "Mutable", "Sagittarius": "Mutable", "Pisces": "Mutable",
+}
+
+# Modality compatibility scores
+MODALITY_COMPAT = {
+    ("Cardinal", "Cardinal"): {"score": 70, "desc": "Two leaders - dynamic but competitive."},
+    ("Cardinal", "Fixed"): {"score": 65, "desc": "Initiator meets sustainer - power struggles possible."},
+    ("Cardinal", "Mutable"): {"score": 85, "desc": "Leader meets adapter - natural flow."},
+    ("Fixed", "Fixed"): {"score": 75, "desc": "Stable but stubborn - loyalty is key."},
+    ("Fixed", "Mutable"): {"score": 80, "desc": "Anchor meets flexibility - balanced dynamic."},
+    ("Mutable", "Mutable"): {"score": 70, "desc": "Both adaptable - may lack direction."},
+}
+
+# Venus approximate offsets from Sun (in zodiac positions, simplified)
+# Venus is typically within 2 signs of Sun
+VENUS_OFFSET_PATTERN = [0, 1, -1, 0, 1, -1, 0, 1, -1, 0, 1, -1]  # 12 month pattern
 
 # Element compatibility matrix
 ELEMENT_COMPAT = {
@@ -164,6 +187,110 @@ def get_element_compat(e1: str, e2: str, lang: str = "en") -> Dict:
     return default_data
 
 
+def get_modality(sign: str) -> str:
+    """Get modality for a zodiac sign."""
+    return MODALITY_MAP.get(sign, "Mutable")
+
+
+def get_modality_compat(sign1: str, sign2: str) -> Dict:
+    """Get modality compatibility between two signs."""
+    mod1 = get_modality(sign1)
+    mod2 = get_modality(sign2)
+    
+    key = tuple(sorted([mod1, mod2]))
+    if key[0] == key[1]:
+        key = (mod1, mod2)
+    
+    return MODALITY_COMPAT.get(key, {"score": 70, "desc": "Balanced dynamic."})
+
+
+ZODIAC_ORDER = [
+    "Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo",
+    "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"
+]
+
+
+def estimate_venus_sign(dob: str) -> str:
+    """
+    Approximate Venus sign from DOB.
+    Venus is typically within ±2 signs of Sun sign.
+    Uses simplified pattern for estimation.
+    """
+    date = datetime.fromisoformat(dob)
+    sun_sign = get_zodiac_sign(dob)
+    sun_idx = ZODIAC_ORDER.index(sun_sign) if sun_sign in ZODIAC_ORDER else 0
+    
+    # Venus offset pattern based on month
+    offset = VENUS_OFFSET_PATTERN[date.month - 1]
+    venus_idx = (sun_idx + offset) % 12
+    
+    return ZODIAC_ORDER[venus_idx]
+
+
+def get_venus_compat(dob1: str, dob2: str) -> Dict:
+    """Get Venus sign compatibility (love style harmony)."""
+    venus1 = estimate_venus_sign(dob1)
+    venus2 = estimate_venus_sign(dob2)
+    
+    elem1 = get_element(venus1)
+    elem2 = get_element(venus2)
+    
+    # Element-based Venus compatibility
+    if elem1 == elem2:
+        score = 85
+        desc = f"Venus in {venus1} & {venus2}: Similar love languages."
+    elif (elem1 in ["Fire", "Air"] and elem2 in ["Fire", "Air"]) or \
+         (elem1 in ["Earth", "Water"] and elem2 in ["Earth", "Water"]):
+        score = 80
+        desc = f"Venus in {venus1} & {venus2}: Complementary romantic styles."
+    else:
+        score = 65
+        desc = f"Venus in {venus1} & {venus2}: Different love languages - growth opportunity."
+    
+    return {
+        "score": score,
+        "desc": desc,
+        "venus1": venus1,
+        "venus2": venus2,
+    }
+
+
+def get_moon_sign_compat(dob1: str, dob2: str) -> Dict:
+    """Get Moon sign compatibility (emotional connection)."""
+    date1 = datetime.fromisoformat(dob1)
+    date2 = datetime.fromisoformat(dob2)
+    
+    moon1 = estimate_moon_sign(date1)
+    moon2 = estimate_moon_sign(date2)
+    
+    elem1 = get_element(moon1)
+    elem2 = get_element(moon2)
+    
+    # Moon compatibility scoring
+    if moon1 == moon2:
+        score = 95
+        desc = f"Both Moons in {moon1}: Deep emotional understanding."
+    elif elem1 == elem2:
+        score = 88
+        desc = f"Moon in {moon1} & {moon2}: Natural emotional harmony."
+    elif (elem1 in ["Water", "Earth"] and elem2 in ["Water", "Earth"]):
+        score = 82
+        desc = f"Moon in {moon1} & {moon2}: Nurturing emotional bond."
+    elif (elem1 in ["Fire", "Air"] and elem2 in ["Fire", "Air"]):
+        score = 78
+        desc = f"Moon in {moon1} & {moon2}: Exciting emotional dynamic."
+    else:
+        score = 65
+        desc = f"Moon in {moon1} & {moon2}: Different emotional needs - opportunity for growth."
+    
+    return {
+        "score": score,
+        "desc": desc,
+        "moon1": moon1,
+        "moon2": moon2,
+    }
+
+
 def get_life_path_compat(lp1: int, lp2: int, lang: str = "en") -> Dict:
     """Get Life Path compatibility data."""
     # Reduce master numbers for lookup
@@ -270,9 +397,28 @@ def calculate_numerology_compatibility(
 def calculate_combined_compatibility(
     name1: str, dob1: str, name2: str, dob2: str, relationship_type: str = "romantic", lang: str = "en"
 ) -> Dict:
-    """Calculate full combined compatibility report."""
+    """
+    Calculate full combined compatibility report - PRO LEVEL.
+    
+    Scoring weights (total 100%):
+    - Element Harmony (Sun signs): 20%
+    - Modality Match: 15%
+    - Moon Sign Compatibility: 20% (emotional connection)
+    - Venus Compatibility: 15% (love style)
+    - Life Path Harmony: 20%
+    - Soul Urge Connection: 10%
+    """
+    # Get base astro and numerology data
     astro = calculate_astro_compatibility(dob1, dob2, lang)
     numerology = calculate_numerology_compatibility(name1, dob1, name2, dob2, lang)
+    
+    # Pro-level: Get additional compatibility dimensions
+    sign1 = get_zodiac_sign(dob1)
+    sign2 = get_zodiac_sign(dob2)
+    
+    modality_compat = get_modality_compat(sign1, sign2)
+    moon_compat = get_moon_sign_compat(dob1, dob2)
+    venus_compat = get_venus_compat(dob1, dob2)
 
     # Localize relationship context
     rel_context = RELATIONSHIP_TEXTS.get(
@@ -288,11 +434,14 @@ def calculate_combined_compatibility(
         if frame_trans: frame = frame_trans[0]
         if focus_trans: focus = focus_trans[0]
 
-    # Combined score (weighted average)
+    # PRO-LEVEL Combined score (6-dimension weighted average)
     combined_score = int(
-        astro["score"] * 0.4
-        + numerology["life_path_harmony"] * 0.4
-        + numerology["soul_connection"] * 0.2
+        astro["score"] * 0.20                      # Element harmony
+        + modality_compat["score"] * 0.15          # Modality match
+        + moon_compat["score"] * 0.20              # Moon sign (emotional)
+        + venus_compat["score"] * 0.15             # Venus (love style)
+        + numerology["life_path_harmony"] * 0.20   # Life Path
+        + numerology["soul_connection"] * 0.10     # Soul Urge
     )
 
     # Generate advice based on relationship type
@@ -323,7 +472,20 @@ def calculate_combined_compatibility(
         "relationship_type": relationship_type,
         "combined_score": combined_score,
         "overall_assessment": overall,
-        "astrology": astro,
+        # Pro-level breakdown
+        "score_breakdown": {
+            "element_harmony": {"score": astro["score"], "weight": "20%", "desc": astro["element_harmony"]},
+            "modality_match": {"score": modality_compat["score"], "weight": "15%", "desc": modality_compat["desc"]},
+            "moon_connection": {"score": moon_compat["score"], "weight": "20%", "desc": moon_compat["desc"], "moon1": moon_compat["moon1"], "moon2": moon_compat["moon2"]},
+            "venus_harmony": {"score": venus_compat["score"], "weight": "15%", "desc": venus_compat["desc"], "venus1": venus_compat["venus1"], "venus2": venus_compat["venus2"]},
+            "life_path": {"score": numerology["life_path_harmony"], "weight": "20%"},
+            "soul_urge": {"score": numerology["soul_connection"], "weight": "10%"},
+        },
+        "astrology": {
+            **astro,
+            "modality1": get_modality(sign1),
+            "modality2": get_modality(sign2),
+        },
         "numerology": numerology,
         "focus_areas": focus,
         "top_advice": [

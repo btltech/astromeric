@@ -43,6 +43,15 @@ Guidelines:
 - Never give medical, legal, or financial advice—suggest professional consultation
 - Personalize responses using any chart data provided
 
+IMPORTANT — Birth time accuracy rules:
+- If the user's chart was calculated with an estimated or unknown birth time (birth_time_assumed = true),
+  you MUST treat their Rising sign and house placements as uncertain.
+- Never state "Your Rising sign IS [sign]" as a fact when birth time is estimated.
+- Instead use language like: "If your Rising is [sign]...", "Your estimated Ascendant suggests...",
+  or "Without a confirmed birth time, your Rising sign may be [sign], which would mean..."
+- Never make definitive statements about which house a planet occupies when birth time is estimated.
+- Sun sign and Moon sign (when the Moon does not change sign that day) are always reliable.
+
 Tone examples:
 - Instead of "You will find love" → "Venus whispers of connection possibilities"
 - Instead of "You're wrong" → "The stars see it a bit differently..."
@@ -103,9 +112,15 @@ def _build_context(
     chart_data: Optional[Dict] = None,
     numerology_data: Optional[Dict] = None,
     reading_data: Optional[Dict] = None,
+    birth_time_assumed: bool = False,
 ) -> str:
     """Build context string from available data."""
     parts = []
+
+    if birth_time_assumed:
+        parts.append("⚠️ NOTE: This user's birth time is unknown or approximate. "
+                     "Rising sign and house placements are estimated using noon as default. "
+                     "Treat all Rising/house references as uncertain.")
     
     if chart_data:
         planets = chart_data.get("planets", [])
@@ -118,7 +133,8 @@ def _build_context(
         houses = chart_data.get("houses", [])
         asc = next((h for h in houses if h.get("house") == 1), {})
         if asc:
-            parts.append(f"Rising sign: {asc.get('sign', 'unknown')}")
+            rising_label = "Rising sign (estimated — birth time unknown)" if birth_time_assumed else "Rising sign"
+            parts.append(f"{rising_label}: {asc.get('sign', 'unknown')}")
     
     if numerology_data:
         core = numerology_data.get("core_numbers", {})
@@ -163,6 +179,7 @@ async def ask_cosmic_guide(
     numerology_data: Optional[Dict] = None,
     reading_data: Optional[Dict] = None,
     conversation_history: Optional[List[Dict]] = None,
+    birth_time_assumed: bool = False,
     lang: str = "en",
 ) -> Dict:
     """
@@ -174,6 +191,7 @@ async def ask_cosmic_guide(
         numerology_data: Optional numerology profile
         reading_data: Optional current reading data
         conversation_history: Optional list of previous messages
+        birth_time_assumed: Whether the chart uses an estimated birth time
         lang: Language code for response
         
     Returns:
@@ -182,7 +200,7 @@ async def ask_cosmic_guide(
     api_key = _get_api_key()
     
     # Build context from user data
-    context = _build_context(chart_data, numerology_data, reading_data)
+    context = _build_context(chart_data, numerology_data, reading_data, birth_time_assumed)
     
     # If no API key, use intelligent fallback
     if not api_key or not HAS_GENAI:

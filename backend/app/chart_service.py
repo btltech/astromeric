@@ -17,7 +17,8 @@ from __future__ import annotations
 
 import hashlib
 import os
-from datetime import datetime
+import re
+from datetime import datetime, timezone, timedelta
 from typing import Dict, List, Optional
 from zoneinfo import ZoneInfo
 
@@ -103,23 +104,42 @@ HOUSE_SYSTEM_MAP = {
 def build_natal_chart(profile: Dict) -> Dict:
     """Compute a natal chart for a profile."""
     _validate_profile(profile)
+    time_confidence = profile.get("time_confidence", "unknown")
+    birth_time_assumed = profile.get("time_of_birth") is None or time_confidence in ("approximate", "unknown")
     dt = _parse_datetime(
         profile["date_of_birth"],
         profile.get("time_of_birth"),
         profile.get("timezone", "UTC"),
     )
-    return _build_chart(dt, profile, chart_type="natal")
+    chart = _build_chart(dt, profile, chart_type="natal")
+    # Annotate with data quality flags
+    chart["metadata"]["birth_time_assumed"] = birth_time_assumed
+    chart["metadata"]["time_confidence"] = time_confidence
+    if birth_time_assumed:
+        chart["metadata"]["assumed_time_of_birth"] = "12:00"
+        chart["metadata"]["data_quality"] = "date_and_place"
+    else:
+        chart["metadata"]["data_quality"] = "full"
+    # Check moon sign ambiguity (Moon changes sign on birth date)
+    chart["metadata"]["moon_sign_uncertain"] = _moon_changes_sign_on_date(profile)
+    return chart
 
 
 def build_transit_chart(profile: Dict, target_date: datetime) -> Dict:
     """Compute a transit chart for a given target date/time at profile location."""
     _validate_profile(profile)
-    time_str = target_date.strftime("%H:%M")
-    date_str = target_date.strftime("%Y-%m-%d")
+    tz = _tzinfo_from_name(profile.get("timezone", "UTC"))
+    if target_date.tzinfo is None:
+        dt_local = target_date.replace(tzinfo=tz)
+    else:
+        dt_local = target_date.astimezone(tz)
+
+    time_str = dt_local.strftime("%H:%M")
+    date_str = dt_local.strftime("%Y-%m-%d")
     profile_copy = dict(profile)
     profile_copy["date_of_birth"] = date_str
     profile_copy["time_of_birth"] = time_str
-    return _build_chart(target_date, profile_copy, chart_type="transit")
+    return _build_chart(dt_local, profile_copy, chart_type="transit")
 
 
 # ---------- Internal helpers ----------
@@ -128,11 +148,7 @@ def build_transit_chart(profile: Dict, target_date: datetime) -> Dict:
 def _parse_datetime(date_str: str, time_str: Optional[str], tz: str) -> datetime:
     time_part = time_str or "12:00"
     naive = datetime.fromisoformat(f"{date_str}T{time_part}")
-    try:
-        return naive.replace(tzinfo=ZoneInfo(tz))
-    except Exception:
-        # Fallback to naive if timezone invalid; validation should catch this first.
-        return naive
+    return naive.replace(tzinfo=_tzinfo_from_name(tz))
 
 
 def _validate_profile(profile: Dict) -> None:
@@ -183,22 +199,16 @@ def _build_chart(dt: datetime, profile: Dict, chart_type: str) -> Dict:
 
 def _chart_with_flatlib(dt: datetime, profile: Dict, chart_type: str) -> Dict:
     """Calculate chart using flatlib."""
-    # Build flatlib datetime
-    date_str = dt.strftime("%Y/%m/%d")
-    time_str = dt.strftime("%H:%M")
+    tz = _tzinfo_from_name(profile.get("timezone", "UTC"))
+    if dt.tzinfo is None:
+        dt_local = dt.replace(tzinfo=tz)
+    else:
+        dt_local = dt.astimezone(tz)
 
-    # Calculate timezone offset
-    tz_name = profile.get("timezone", "UTC")
-    try:
-        # Create aware datetime to get correct offset for this specific time
-        tz = ZoneInfo(tz_name)
-        # dt is naive local time here
-        dt_aware = dt.replace(tzinfo=tz)
-        offset = dt_aware.strftime("%z")  # Returns +HHMM or -HHMM
-        # Format for flatlib: +HH:MM
-        offset_formatted = f"{offset[:3]}:{offset[3:]}"
-    except Exception:
-        offset_formatted = "+00:00"
+    date_str = dt_local.strftime("%Y/%m/%d")
+    time_str = dt_local.strftime("%H:%M")
+    offset = dt_local.strftime("%z")  # +HHMM / -HHMM
+    offset_formatted = f"{offset[:3]}:{offset[3:]}" if offset else "+00:00"
 
     flat_dt = Datetime(date_str, time_str, offset_formatted)
     
@@ -269,7 +279,7 @@ def _chart_with_flatlib(dt: datetime, profile: Dict, chart_type: str) -> Dict:
     return {
         "metadata": {
             "chart_type": chart_type,
-            "datetime": dt.isoformat(),
+            "datetime": dt_local.isoformat(),
             "location": {"lat": lat, "lon": lon},
             "house_system": profile.get("house_system", "Placidus"),
             "provider": "flatlib",
@@ -317,6 +327,57 @@ def _chart_stub(dt: datetime, profile: Dict, chart_type: str) -> Dict:
         "ascendant": {"sign": "Aries", "degree": 0.0, "absolute_degree": 0.0},
         "midheaven": {"sign": "Capricorn", "degree": 0.0, "absolute_degree": 0.0},
     }
+
+
+def _moon_changes_sign_on_date(profile: Dict) -> bool:
+    """Return True if the Moon changes zodiac sign during the birth date (00:00–23:59).
+    When True the Moon sign is ambiguous without an exact birth time."""
+    if not HAS_FLATLIB:
+        return False
+    try:
+        date_str = profile["date_of_birth"]
+        tz_str = profile.get("timezone", "UTC")
+        tz = _tzinfo_from_name(tz_str)
+        lat = float(profile.get("latitude") or 0.0)
+        lon = float(profile.get("longitude") or 0.0)
+        pos = GeoPos(lat, lon)
+
+        def _moon_sign(hour: int) -> str:
+            dt = datetime.fromisoformat(f"{date_str}T{hour:02d}:00").replace(tzinfo=tz)
+            date_f = dt.strftime("%Y/%m/%d")
+            time_f = dt.strftime("%H:%M")
+            offset = dt.strftime("%z")
+            offset_f = f"{offset[:3]}:{offset[3:]}" if offset else "+00:00"
+            c = Chart(Datetime(date_f, time_f, offset_f), pos, IDs=[const.MOON])
+            return c.get(const.MOON).sign
+
+        return _moon_sign(0) != _moon_sign(23)
+    except Exception:
+        return False
+
+
+def _tzinfo_from_name(tz_name: Optional[str]):
+    tz_name = (tz_name or "UTC").strip()
+    if tz_name in ("UTC", "GMT"):
+        return timezone.utc
+    # Support fixed-offset identifiers commonly produced by some client APIs.
+    # Examples: "GMT+0100", "GMT+01:00", "UTC-5", "+01:00", "-0530".
+    offset_re = re.compile(
+        r"^(?:UTC|GMT)?\s*([+-])\s*(\d{1,2})(?::?(\d{2}))?$", re.IGNORECASE
+    )
+    match = offset_re.match(tz_name)
+    if match:
+        sign, hh, mm = match.groups()
+        hours = int(hh)
+        minutes = int(mm or "0")
+        if hours > 23 or minutes > 59:
+            raise ValueError(f"Invalid timezone offset: {tz_name}")
+        delta = timedelta(hours=hours, minutes=minutes)
+        if sign == "-":
+            delta = -delta
+        return timezone(delta)
+
+    return ZoneInfo(tz_name)
 
 
 def _chart_polar_fallback(dt: datetime, profile: Dict, chart_type: str) -> Dict:

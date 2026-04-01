@@ -13,6 +13,7 @@ from sqlalchemy import (
     String,
     Text,
     create_engine,
+    text,
 )
 from sqlalchemy.orm import declarative_base, relationship, sessionmaker
 
@@ -44,10 +45,15 @@ class User(Base):
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     email = Column(String, unique=True, index=True, nullable=False)
-    hashed_password = Column(String, nullable=False)
+    hashed_password = Column(String, nullable=True)  # Nullable for Apple users
     is_active = Column(Boolean, default=True)
     is_paid = Column(Boolean, default=False)  # Premium subscription status
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+    # Apple Sign-In / OAuth fields
+    external_id = Column(String, unique=True, index=True, nullable=True)  # Apple user ID
+    auth_provider = Column(String(20), nullable=True)  # "apple", "google", etc.
+    full_name = Column(String(255), nullable=True)  # From Apple Sign-In
 
     # Notification preferences
     alert_mercury_retrograde = Column(
@@ -70,11 +76,13 @@ class Profile(Base):
     name = Column(String(100), nullable=False)  # Add length limit
     date_of_birth = Column(String, nullable=False)  # ISO format
     time_of_birth = Column(String, nullable=True)
+    time_confidence = Column(String(20), nullable=True, default="unknown")  # exact / approximate / unknown
     place_of_birth = Column(String(255), nullable=True)  # Add length limit
     latitude = Column(Float, nullable=True)
     longitude = Column(Float, nullable=True)
     timezone = Column(String(50), default="UTC")  # Add length limit
     house_system = Column(String(20), default="Placidus")  # Add length limit
+    data_quality = Column(String(20), nullable=True)  # full / date_and_place / date_only (computed on save)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     # User ownership (optional for guest users)
     user_id = Column(String, ForeignKey("users.id"), nullable=True)
@@ -143,5 +151,72 @@ class SectionFeedback(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
 
+class DeviceToken(Base):
+    __tablename__ = "device_tokens"
+
+    id = Column(Integer, primary_key=True, index=True)
+    token = Column(String, unique=True, index=True, nullable=False)
+    platform = Column(String(20), default="ios")
+    user_id = Column(String, ForeignKey("users.id"), nullable=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
+class TransitSubscription(Base):
+    __tablename__ = "transit_subscriptions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    profile_id = Column(Integer, ForeignKey("profiles.id"), nullable=False)
+    email = Column(String, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
 # Create tables
 Base.metadata.create_all(bind=engine)
+
+
+def _ensure_sqlite_schema() -> None:
+    """
+    Lightweight SQLite schema migration.
+
+    This repo historically shipped a tracked sqlite DB for local/dev usage.
+    `create_all()` does not add missing columns to existing tables, so older DBs
+    can break newer code paths. For SQLite only, patch up missing columns at
+    runtime to keep local dev/test usable.
+    """
+
+    if not DATABASE_URL.startswith("sqlite"):
+        return
+
+    with engine.begin() as conn:
+        def existing_columns(table: str) -> set[str]:
+            rows = conn.execute(text(f"PRAGMA table_info({table})")).fetchall()
+            return {r[1] for r in rows}  # (cid, name, type, notnull, dflt_value, pk)
+
+        def add_column_if_missing(table: str, name: str, definition_sql: str) -> None:
+            cols = existing_columns(table)
+            if name in cols:
+                return
+            conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {definition_sql}"))
+
+        # Users table (newer fields)
+        if "users" in conn.execute(
+            text("SELECT name FROM sqlite_master WHERE type='table' AND name='users'")
+        ).scalars().all():
+            add_column_if_missing("users", "is_paid", "is_paid INTEGER DEFAULT 0")
+            add_column_if_missing("users", "external_id", "external_id TEXT")
+            add_column_if_missing("users", "auth_provider", "auth_provider TEXT")
+            add_column_if_missing("users", "full_name", "full_name TEXT")
+            add_column_if_missing(
+                "users",
+                "alert_mercury_retrograde",
+                "alert_mercury_retrograde INTEGER DEFAULT 1",
+            )
+            add_column_if_missing(
+                "users",
+                "alert_frequency",
+                "alert_frequency TEXT DEFAULT 'every_retrograde'",
+            )
+            add_column_if_missing("users", "last_retrograde_alert", "last_retrograde_alert DATETIME")
+
+
+_ensure_sqlite_schema()
