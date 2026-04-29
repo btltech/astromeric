@@ -5,7 +5,7 @@ import { useCallback } from 'react';
 import { useStore } from '../store/useStore';
 import { apiFetch } from '../api/client';
 
-interface AuthResponse {
+interface AuthData {
   access_token: string;
   token_type: string;
   user: {
@@ -13,6 +13,11 @@ interface AuthResponse {
     email: string;
     is_paid: boolean;
   };
+}
+
+interface AuthResponse {
+  status: string;
+  data: AuthData;
 }
 
 export function useAuth() {
@@ -26,11 +31,12 @@ export function useAuth() {
       setError('');
 
       try {
-        const data = await apiFetch<AuthResponse>('/auth/login', {
+        const response = await apiFetch<AuthResponse>('/v2/auth/login', {
           method: 'POST',
           body: JSON.stringify({ email, password }),
         });
 
+        const data = response.data;
         setAuth(data.access_token, data.user);
         return data;
       } catch (err) {
@@ -50,11 +56,12 @@ export function useAuth() {
       setError('');
 
       try {
-        const data = await apiFetch<AuthResponse>('/auth/register', {
+        const response = await apiFetch<AuthResponse>('/v2/auth/register', {
           method: 'POST',
           body: JSON.stringify({ email, password }),
         });
 
+        const data = response.data;
         setAuth(data.access_token, data.user);
         return data;
       } catch (err) {

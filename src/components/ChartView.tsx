@@ -8,6 +8,7 @@ import { ChartWheel } from './ChartWheel';
 import { ChartSkeleton } from './Skeleton';
 import { toast } from './Toast';
 import { apiFetch } from '../api/client';
+import { getApiBaseUrl } from '../api/config';
 import type { SavedProfile } from '../types';
 
 interface Props {
@@ -232,7 +233,7 @@ export function ChartView({ profile, onExportPDF }: Props) {
       setError(null);
 
       try {
-        const data = await apiFetch<ChartData>('/chart/natal', {
+        const data = await apiFetch<ChartData>('/v2/charts/natal', {
           method: 'POST',
           body: JSON.stringify({
             profile: {
@@ -262,7 +263,7 @@ export function ChartView({ profile, onExportPDF }: Props) {
   const handleExportPDF = async () => {
     setExporting(true);
     try {
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      const baseUrl = getApiBaseUrl();
       const response = await fetch(`${baseUrl}/export/natal-pdf`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

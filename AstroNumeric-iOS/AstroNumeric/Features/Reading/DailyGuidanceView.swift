@@ -14,7 +14,7 @@ struct DailyGuidanceView: View {
                 HStack {
                     Text("🌙")
                         .font(.title2)
-                    Text("Today's Guidance")
+                    Text("ui.dailyGuidance.0".localized)
                         .font(.headline)
                     Spacer()
                     
@@ -22,6 +22,11 @@ struct DailyGuidanceView: View {
                         PowerBadge(power: power)
                     }
                 }
+
+                PremiumSectionHeader(
+                title: "section.dailyGuidance.0.title".localized,
+                subtitle: "section.dailyGuidance.0.subtitle".localized
+            )
                 
                 // Grid of guidance items
                 LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
@@ -65,7 +70,7 @@ struct DailyGuidanceView: View {
                 // Affirmation
                 if let affirmation = guidance.affirmation {
                     VStack(spacing: 8) {
-                        Text("Today's Affirmation")
+                        Text("ui.dailyGuidance.1".localized)
                             .font(.caption)
                             .foregroundStyle(Color.textSecondary)
                         
@@ -76,7 +81,7 @@ struct DailyGuidanceView: View {
                         HStack(spacing: 16) {
                             Spacer()
                             ShareLink(item: affirmation) {
-                                Label("Share", systemImage: "square.and.arrow.up")
+                                Label("ui.dailyGuidance.2".localized, systemImage: "square.and.arrow.up")
                                     .font(.caption)
                                     .foregroundStyle(Color.textSecondary)
                             }
@@ -84,7 +89,7 @@ struct DailyGuidanceView: View {
                                 UIPasteboard.general.string = affirmation
                                 HapticManager.notification(.success)
                             } label: {
-                                Label("Copy", systemImage: "doc.on.doc")
+                                Label("ui.dailyGuidance.3".localized, systemImage: "doc.on.doc")
                                     .font(.caption)
                                     .foregroundStyle(Color.textSecondary)
                             }
@@ -136,6 +141,10 @@ struct GuidanceItem: View {
         .background(
             RoundedRectangle(cornerRadius: 12)
                 .fill(Color.white.opacity(0.05))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color.white.opacity(0.06), lineWidth: 1)
+                )
         )
     }
 }

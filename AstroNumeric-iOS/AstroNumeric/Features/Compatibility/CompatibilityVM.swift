@@ -83,6 +83,14 @@ final class CompatibilityVM {
         if let p = resolvedPersonB(store: store) { return p.name }
         return personBName
     }
+
+    func resolvedPersonBDisplayName(store: AppStore, hideSensitive: Bool) -> String {
+        guard hideSensitive else { return resolvedPersonBName(store: store) }
+        if let p = resolvedPersonB(store: store) {
+            return p.displayName(hideSensitive: true, role: .partner)
+        }
+        return PrivacyRedaction.partnerLabel
+    }
     
     func resolvedPersonBDOBString(store: AppStore) -> String {
         if let p = resolvedPersonB(store: store) { return p.dateOfBirth }
@@ -92,16 +100,24 @@ final class CompatibilityVM {
     }
     
     func resolvedPersonBPayload(store: AppStore) -> ProfilePayload {
+        let hideSensitive = store.hideSensitiveDetailsEnabled
         if let p = resolvedPersonB(store: store) {
+            return p.privacySafePayload(hideSensitive: hideSensitive)
+        }
+        if hideSensitive {
+            let formatter = DateFormatter()
+            formatter.dateFormat = "yyyy-MM-dd"
             return ProfilePayload(
-                name: p.name,
-                dateOfBirth: p.dateOfBirth,
-                timeOfBirth: p.timeOfBirth,
-                placeOfBirth: p.placeOfBirth,
-                latitude: p.latitude,
-                longitude: p.longitude,
-                timezone: p.timezone,
-                houseSystem: p.houseSystem
+                name: PrivacyRedaction.partnerLabel,
+                dateOfBirth: formatter.string(from: personBDOB),
+                timeOfBirth: personBTime.map {
+                    let timeFormatter = DateFormatter()
+                    timeFormatter.dateFormat = "HH:mm"
+                    return timeFormatter.string(from: $0)
+                },
+                latitude: nil,
+                longitude: nil,
+                timezone: nil
             )
         }
         return buildManualPersonB()

@@ -27,7 +27,11 @@ export function DailyFeaturesCard({ birthDate, sunSign }: Props) {
       try {
         setLoading(true);
         setError(null);
-        const data = await fetchDailyFeatures(birthDate, sunSign);
+        const data = await fetchDailyFeatures({
+          name: 'Guest',
+          date_of_birth: birthDate,
+          sun_sign: sunSign,
+        } as any);
         setFeatures(data);
       } catch (err) {
         console.error('Failed to fetch daily features:', err);

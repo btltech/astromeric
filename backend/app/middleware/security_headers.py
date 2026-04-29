@@ -4,8 +4,7 @@ Adds essential security headers to all responses.
 Uses centralized config from config.py for CSP management.
 """
 
-from fastapi import Request, Response
-from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
+from fastapi import Request
 
 from ..config import SECURITY_HEADERS
 

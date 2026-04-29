@@ -5,61 +5,193 @@ Year-Ahead Forecast: Monthly breakdowns with Solar Return, eclipses,
 major transits, and personalized themes.
 """
 
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple
-from zoneinfo import ZoneInfo
+from datetime import datetime
+from typing import Dict, List, Optional
 
 from ..interpretation.translations import get_translation
 
 # Zodiac signs in order
 ZODIAC_ORDER = [
-    "Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo",
-    "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"
+    "Aries",
+    "Taurus",
+    "Gemini",
+    "Cancer",
+    "Leo",
+    "Virgo",
+    "Libra",
+    "Scorpio",
+    "Sagittarius",
+    "Capricorn",
+    "Aquarius",
+    "Pisces",
 ]
 
 # Months data
 MONTH_NAMES = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December"
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
 ]
 
 # 2025-2026 Eclipse data (pre-computed)
 ECLIPSES_2025_2026 = [
     # 2025 Eclipses
-    {"date": "2025-03-14", "type": "Total Lunar Eclipse", "sign": "Virgo", "degree": 23.9},
-    {"date": "2025-03-29", "type": "Partial Solar Eclipse", "sign": "Aries", "degree": 8.8},
-    {"date": "2025-09-07", "type": "Total Lunar Eclipse", "sign": "Pisces", "degree": 15.2},
-    {"date": "2025-09-21", "type": "Partial Solar Eclipse", "sign": "Virgo", "degree": 28.8},
+    {
+        "date": "2025-03-14",
+        "type": "Total Lunar Eclipse",
+        "sign": "Virgo",
+        "degree": 23.9,
+    },
+    {
+        "date": "2025-03-29",
+        "type": "Partial Solar Eclipse",
+        "sign": "Aries",
+        "degree": 8.8,
+    },
+    {
+        "date": "2025-09-07",
+        "type": "Total Lunar Eclipse",
+        "sign": "Pisces",
+        "degree": 15.2,
+    },
+    {
+        "date": "2025-09-21",
+        "type": "Partial Solar Eclipse",
+        "sign": "Virgo",
+        "degree": 28.8,
+    },
     # 2026 Eclipses
-    {"date": "2026-02-17", "type": "Annular Solar Eclipse", "sign": "Aquarius", "degree": 28.1},
-    {"date": "2026-03-03", "type": "Total Lunar Eclipse", "sign": "Virgo", "degree": 12.4},
-    {"date": "2026-08-12", "type": "Partial Solar Eclipse", "sign": "Leo", "degree": 19.2},
-    {"date": "2026-08-28", "type": "Partial Lunar Eclipse", "sign": "Pisces", "degree": 5.1},
+    {
+        "date": "2026-02-17",
+        "type": "Annular Solar Eclipse",
+        "sign": "Aquarius",
+        "degree": 28.1,
+    },
+    {
+        "date": "2026-03-03",
+        "type": "Total Lunar Eclipse",
+        "sign": "Virgo",
+        "degree": 12.4,
+    },
+    {
+        "date": "2026-08-12",
+        "type": "Partial Solar Eclipse",
+        "sign": "Leo",
+        "degree": 19.2,
+    },
+    {
+        "date": "2026-08-28",
+        "type": "Partial Lunar Eclipse",
+        "sign": "Pisces",
+        "degree": 5.1,
+    },
 ]
 
 # Slow planet ingress data 2025-2026
 MAJOR_INGRESSES = [
-    {"date": "2025-03-30", "planet": "Neptune", "sign": "Aries", "impact": "Collective spiritual awakening"},
-    {"date": "2025-05-25", "planet": "Saturn", "sign": "Aries", "impact": "New structures and responsibilities begin"},
-    {"date": "2025-06-09", "planet": "Uranus", "sign": "Gemini", "impact": "Revolution in communication and ideas"},
-    {"date": "2025-07-07", "planet": "Jupiter", "sign": "Cancer", "impact": "Expansion in home and family matters"},
-    {"date": "2026-02-14", "planet": "Saturn", "sign": "Aries", "impact": "Saturn settles into Aries themes"},
+    {
+        "date": "2025-03-30",
+        "planet": "Neptune",
+        "sign": "Aries",
+        "impact": "Collective spiritual awakening",
+    },
+    {
+        "date": "2025-05-25",
+        "planet": "Saturn",
+        "sign": "Aries",
+        "impact": "New structures and responsibilities begin",
+    },
+    {
+        "date": "2025-06-09",
+        "planet": "Uranus",
+        "sign": "Gemini",
+        "impact": "Revolution in communication and ideas",
+    },
+    {
+        "date": "2025-07-07",
+        "planet": "Jupiter",
+        "sign": "Cancer",
+        "impact": "Expansion in home and family matters",
+    },
+    {
+        "date": "2026-02-14",
+        "planet": "Saturn",
+        "sign": "Aries",
+        "impact": "Saturn settles into Aries themes",
+    },
 ]
 
 # Monthly themes based on Sun's sign
 MONTHLY_THEMES = {
-    1: {"season": "Capricorn→Aquarius", "focus": "Restructuring and innovation", "element": "Earth/Air"},
-    2: {"season": "Aquarius→Pisces", "focus": "Community and spiritual growth", "element": "Air/Water"},
-    3: {"season": "Pisces→Aries", "focus": "Endings and new beginnings", "element": "Water/Fire"},
-    4: {"season": "Aries→Taurus", "focus": "Initiative and grounding", "element": "Fire/Earth"},
-    5: {"season": "Taurus→Gemini", "focus": "Stability and communication", "element": "Earth/Air"},
-    6: {"season": "Gemini→Cancer", "focus": "Learning and nurturing", "element": "Air/Water"},
-    7: {"season": "Cancer→Leo", "focus": "Home and self-expression", "element": "Water/Fire"},
-    8: {"season": "Leo→Virgo", "focus": "Creativity and analysis", "element": "Fire/Earth"},
-    9: {"season": "Virgo→Libra", "focus": "Organization and balance", "element": "Earth/Air"},
-    10: {"season": "Libra→Scorpio", "focus": "Relationships and transformation", "element": "Air/Water"},
-    11: {"season": "Scorpio→Sagittarius", "focus": "Depth and expansion", "element": "Water/Fire"},
-    12: {"season": "Sagittarius→Capricorn", "focus": "Adventure and achievement", "element": "Fire/Earth"},
+    1: {
+        "season": "Capricorn→Aquarius",
+        "focus": "Restructuring and innovation",
+        "element": "Earth/Air",
+    },
+    2: {
+        "season": "Aquarius→Pisces",
+        "focus": "Community and spiritual growth",
+        "element": "Air/Water",
+    },
+    3: {
+        "season": "Pisces→Aries",
+        "focus": "Endings and new beginnings",
+        "element": "Water/Fire",
+    },
+    4: {
+        "season": "Aries→Taurus",
+        "focus": "Initiative and grounding",
+        "element": "Fire/Earth",
+    },
+    5: {
+        "season": "Taurus→Gemini",
+        "focus": "Stability and communication",
+        "element": "Earth/Air",
+    },
+    6: {
+        "season": "Gemini→Cancer",
+        "focus": "Learning and nurturing",
+        "element": "Air/Water",
+    },
+    7: {
+        "season": "Cancer→Leo",
+        "focus": "Home and self-expression",
+        "element": "Water/Fire",
+    },
+    8: {
+        "season": "Leo→Virgo",
+        "focus": "Creativity and analysis",
+        "element": "Fire/Earth",
+    },
+    9: {
+        "season": "Virgo→Libra",
+        "focus": "Organization and balance",
+        "element": "Earth/Air",
+    },
+    10: {
+        "season": "Libra→Scorpio",
+        "focus": "Relationships and transformation",
+        "element": "Air/Water",
+    },
+    11: {
+        "season": "Scorpio→Sagittarius",
+        "focus": "Depth and expansion",
+        "element": "Water/Fire",
+    },
+    12: {
+        "season": "Sagittarius→Capricorn",
+        "focus": "Adventure and achievement",
+        "element": "Fire/Earth",
+    },
 }
 
 # Numerology Universal Year themes
@@ -83,7 +215,7 @@ def calculate_solar_return_date(birth_date: str, year: int) -> datetime:
     """
     parts = birth_date.split("-")
     birth_month, birth_day = int(parts[1]), int(parts[2])
-    
+
     # Solar return is approximately on birthday (±1 day due to leap years)
     return datetime(year, birth_month, birth_day)
 
@@ -92,13 +224,13 @@ def get_personal_year_number(birth_date: str, year: int) -> int:
     """Calculate Personal Year number for numerology."""
     parts = birth_date.split("-")
     birth_month, birth_day = int(parts[1]), int(parts[2])
-    
+
     # Personal Year = birth month + birth day + current year (reduced)
     total = birth_month + birth_day + sum(int(d) for d in str(year))
-    
+
     while total > 9 and total not in [11, 22, 33]:
         total = sum(int(d) for d in str(total))
-    
+
     return total
 
 
@@ -127,55 +259,63 @@ def calculate_eclipse_impact(eclipse: Dict, natal_chart: Dict) -> Optional[Dict]
     """
     eclipse_degree = eclipse.get("degree", 0)
     eclipse_sign = eclipse.get("sign", "")
-    eclipse_sign_idx = ZODIAC_ORDER.index(eclipse_sign) if eclipse_sign in ZODIAC_ORDER else 0
+    eclipse_sign_idx = (
+        ZODIAC_ORDER.index(eclipse_sign) if eclipse_sign in ZODIAC_ORDER else 0
+    )
     eclipse_absolute = eclipse_sign_idx * 30 + eclipse_degree
-    
+
     impacts = []
     orb = 5  # Orb for eclipse impact
-    
+
     # Check planets
     for planet in natal_chart.get("planets", []):
         planet_absolute = planet.get("absolute_degree", 0)
         diff = abs(eclipse_absolute - planet_absolute)
         if diff > 180:
             diff = 360 - diff
-        
+
         if diff <= orb:
-            impacts.append({
-                "type": "planet",
-                "name": planet["name"],
-                "aspect": "conjunction" if diff < 3 else "close",
-                "orb": round(diff, 1),
-            })
-    
+            impacts.append(
+                {
+                    "type": "planet",
+                    "name": planet["name"],
+                    "aspect": "conjunction" if diff < 3 else "close",
+                    "orb": round(diff, 1),
+                }
+            )
+
     # Check Ascendant and MC if available
     for angle_key, angle_name in [("ascendant", "Ascendant"), ("mc", "Midheaven")]:
         if angle_key in natal_chart:
             angle_data = natal_chart[angle_key]
             if isinstance(angle_data, dict):
-                angle_degree = angle_data.get("absolute_degree", angle_data.get("degree", 0))
+                angle_degree = angle_data.get(
+                    "absolute_degree", angle_data.get("degree", 0)
+                )
             else:
                 angle_degree = 0
-            
+
             diff = abs(eclipse_absolute - angle_degree)
             if diff > 180:
                 diff = 360 - diff
-            
+
             if diff <= orb:
-                impacts.append({
-                    "type": "angle",
-                    "name": angle_name,
-                    "aspect": "conjunction" if diff < 3 else "close",
-                    "orb": round(diff, 1),
-                })
-    
+                impacts.append(
+                    {
+                        "type": "angle",
+                        "name": angle_name,
+                        "aspect": "conjunction" if diff < 3 else "close",
+                        "orb": round(diff, 1),
+                    }
+                )
+
     if impacts:
         return {
             "eclipse": eclipse,
             "impacts": impacts,
             "significance": _get_eclipse_significance(eclipse, impacts),
         }
-    
+
     return None
 
 
@@ -183,7 +323,7 @@ def _get_eclipse_significance(eclipse: Dict, impacts: List[Dict]) -> str:
     """Generate significance description for eclipse impact."""
     eclipse_type = eclipse.get("type", "Eclipse")
     impacted = [i["name"] for i in impacts]
-    
+
     if "Sun" in impacted:
         return f"{eclipse_type} highlights your core identity and life direction"
     if "Moon" in impacted:
@@ -202,7 +342,7 @@ def _get_eclipse_significance(eclipse: Dict, impacts: List[Dict]) -> str:
         return f"{eclipse_type} expands opportunities and beliefs"
     if "Saturn" in impacted:
         return f"{eclipse_type} restructures responsibilities and boundaries"
-    
+
     return f"{eclipse_type} has a subtle influence on your chart"
 
 
@@ -215,42 +355,41 @@ def build_monthly_forecast(
 ) -> Dict:
     """Build forecast for a specific month."""
     month_theme = MONTHLY_THEMES.get(month, {})
-    
+
     # Localize month theme
     focus_key = f"month_{month}_focus"
     focus_trans = get_translation(lang, focus_key)
     focus = focus_trans[0] if focus_trans else month_theme.get("focus", "")
-    
-    season_key = f"month_{month}_season" # Assuming we might want to translate this
-    season = month_theme.get("season", "") # Keep English for now if no key
-    
+
+    season = month_theme.get("season", "")  # Keep English for now if no key
+
     element = month_theme.get("element", "")
-    
+
     # Get eclipses this month
     month_str = f"{year}-{month:02d}"
     month_eclipses = [e for e in ECLIPSES_2025_2026 if e["date"].startswith(month_str)]
-    
+
     # Get ingresses this month
     month_ingresses = [i for i in MAJOR_INGRESSES if i["date"].startswith(month_str)]
-    
+
     # Calculate personal month number
     personal_month = (personal_year + month) % 9 or 9
-    
+
     # Generate month highlights
     highlights = []
-    
+
     if month_eclipses:
         for ecl in month_eclipses:
             highlights.append(f"{ecl['type']} in {ecl['sign']} on {ecl['date']}")
-    
+
     if month_ingresses:
         for ing in month_ingresses:
             highlights.append(f"{ing['planet']} enters {ing['sign']} on {ing['date']}")
-    
+
     # Add numerology insight
     pm_focus = _get_personal_month_focus(personal_month, lang=lang)
     highlights.append(f"Personal Month {personal_month}: {pm_focus}")
-    
+
     return {
         "month": month,
         "month_name": MONTH_NAMES[month - 1],
@@ -271,7 +410,7 @@ def _get_personal_month_focus(num: int, lang: str = "en") -> str:
     trans = get_translation(lang, key)
     if trans:
         return trans[0]
-        
+
     focuses = {
         1: "Initiative and new starts",
         2: "Patience and cooperation",
@@ -294,7 +433,7 @@ def build_year_ahead_forecast(
 ) -> Dict:
     """
     Build comprehensive year-ahead forecast.
-    
+
     Returns:
         - Solar Return date and themes
         - Personal Year number and meaning
@@ -306,14 +445,14 @@ def build_year_ahead_forecast(
     """
     if year is None:
         year = datetime.now().year
-    
+
     birth_date = profile.get("date_of_birth", "2000-01-01")
-    
+
     # Calculate key numbers
     personal_year = get_personal_year_number(birth_date, year)
     universal_year = get_universal_year_number(year)
     solar_return_date = calculate_solar_return_date(birth_date, year)
-    
+
     # Get eclipses and calculate personal impacts
     year_eclipses = get_eclipses_for_year(year)
     eclipse_impacts = []
@@ -321,34 +460,40 @@ def build_year_ahead_forecast(
         impact = calculate_eclipse_impact(eclipse, natal_chart)
         if impact:
             eclipse_impacts.append(impact)
-    
+
     # Get ingresses
     year_ingresses = get_ingresses_for_year(year)
-    
+
     # Build monthly forecasts
     monthly_forecasts = []
     for month in range(1, 13):
-        monthly = build_monthly_forecast(month, year, natal_chart, personal_year, lang=lang)
+        monthly = build_monthly_forecast(
+            month, year, natal_chart, personal_year, lang=lang
+        )
         monthly_forecasts.append(monthly)
-    
+
     # Generate key themes
     key_themes = _generate_key_themes(
-        personal_year, 
-        universal_year, 
-        eclipse_impacts, 
+        personal_year,
+        universal_year,
+        eclipse_impacts,
         year_ingresses,
         natal_chart,
         lang=lang,
     )
-    
+
     # Generate advice
     advice = _generate_year_advice(personal_year, eclipse_impacts, lang=lang)
-    
+
     # Localize Universal Year Theme
     univ_theme_key = f"univ_year_{universal_year}_theme"
     univ_theme_trans = get_translation(lang, univ_theme_key)
-    univ_theme = univ_theme_trans[0] if univ_theme_trans else UNIVERSAL_YEAR_THEMES.get(universal_year, "Transition")
-    
+    univ_theme = (
+        univ_theme_trans[0]
+        if univ_theme_trans
+        else UNIVERSAL_YEAR_THEMES.get(universal_year, "Transition")
+    )
+
     return {
         "year": year,
         "personal_year": {
@@ -381,7 +526,7 @@ def _get_personal_year_theme(num: int, lang: str = "en") -> str:
     trans = get_translation(lang, key)
     if trans:
         return trans[0]
-        
+
     themes = {
         1: "New Beginnings",
         2: "Partnership",
@@ -405,7 +550,7 @@ def _get_personal_year_description(num: int, lang: str = "en") -> str:
     trans = get_translation(lang, key)
     if trans:
         return trans[0]
-        
+
     descriptions = {
         1: "This is your year of new beginnings. Plant seeds for the future, take initiative, and don't be afraid to lead. Independence is key.",
         2: "Focus on relationships, patience, and diplomacy. Partnerships flourish when you give them attention. Avoid rushing.",
@@ -433,7 +578,7 @@ def _generate_key_themes(
 ) -> List[str]:
     """Generate key themes for the year."""
     themes = []
-    
+
     # Personal year theme
     py_theme = _get_personal_year_theme(personal_year, lang=lang)
     py_template = get_translation(lang, "key_theme_py")
@@ -441,45 +586,59 @@ def _generate_key_themes(
         themes.append(py_template[0].format(year=personal_year, theme=py_theme))
     else:
         themes.append(f"Personal Year {personal_year}: {py_theme}")
-    
+
     # Eclipse themes
     if eclipse_impacts:
         eclipse_template = get_translation(lang, "key_theme_eclipses")
         if eclipse_template:
             themes.append(eclipse_template[0].format(count=len(eclipse_impacts)))
         else:
-            themes.append(f"{len(eclipse_impacts)} eclipses activate your chart - significant shifts ahead")
-    
+            themes.append(
+                f"{len(eclipse_impacts)} eclipses activate your chart - significant shifts ahead"
+            )
+
     # Major ingress themes
     for ing in ingresses:
         ingress_template = get_translation(lang, "key_theme_ingress")
         if ingress_template:
-             themes.append(ingress_template[0].format(planet=ing['planet'], sign=ing['sign'], impact=ing['impact']))
+            themes.append(
+                ingress_template[0].format(
+                    planet=ing["planet"], sign=ing["sign"], impact=ing["impact"]
+                )
+            )
         else:
             themes.append(f"{ing['planet']} in {ing['sign']}: {ing['impact']}")
-    
+
     # Universal year context
     uy_theme_key = f"univ_year_{universal_year}_theme"
     uy_theme_trans = get_translation(lang, uy_theme_key)
-    uy_theme = uy_theme_trans[0] if uy_theme_trans else UNIVERSAL_YEAR_THEMES.get(universal_year, 'evolution')
-    
+    uy_theme = (
+        uy_theme_trans[0]
+        if uy_theme_trans
+        else UNIVERSAL_YEAR_THEMES.get(universal_year, "evolution")
+    )
+
     uy_template = get_translation(lang, "key_theme_uy")
     if uy_template:
         themes.append(uy_template[0].format(year=universal_year, theme=uy_theme))
     else:
-        themes.append(f"Universal Year {universal_year}: Collective focus on {uy_theme}")
-    
+        themes.append(
+            f"Universal Year {universal_year}: Collective focus on {uy_theme}"
+        )
+
     return themes[:6]  # Limit to 6 themes
 
 
-def _generate_year_advice(personal_year: int, eclipse_impacts: List[Dict], lang: str = "en") -> List[str]:
+def _generate_year_advice(
+    personal_year: int, eclipse_impacts: List[Dict], lang: str = "en"
+) -> List[str]:
     """Generate advice for the year."""
     advice = []
-    
+
     # Personal year advice
     py_key = f"advice_py_{personal_year}"
     py_trans = get_translation(lang, py_key)
-    
+
     if py_trans:
         advice.append(py_trans[0])
     else:
@@ -495,26 +654,194 @@ def _generate_year_advice(personal_year: int, eclipse_impacts: List[Dict], lang:
             9: "Complete unfinished business gracefully",
         }
         advice.append(py_advice.get(personal_year, "Trust your personal journey"))
-    
+
     # Eclipse-based advice
     if eclipse_impacts:
         ecl_trans = get_translation(lang, "advice_eclipses")
         if ecl_trans:
             advice.append(ecl_trans[0])
         else:
-            advice.append("Pay attention to eclipse windows - they bring pivotal moments")
-    
+            advice.append(
+                "Pay attention to eclipse windows - they bring pivotal moments"
+            )
+
     # General wisdom
     moon_trans = get_translation(lang, "advice_moon")
     if moon_trans:
         advice.append(moon_trans[0])
     else:
         advice.append("Track Moon phases for optimal timing")
-        
+
     retro_trans = get_translation(lang, "advice_retro")
     if retro_trans:
         advice.append(retro_trans[0])
     else:
         advice.append("Review during retrograde periods, launch during direct motion")
-    
+
     return advice
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# LIFE PHASE — "The Pattern"-style narrative cycles
+# ──────────────────────────────────────────────────────────────────────────────
+
+_LIFE_PHASES = [
+    # (min_age, max_age, name, duration_text, narrative, keywords)
+    (
+        0,
+        6,
+        "The Awakening",
+        "~7 years",
+        "Your foundation years — where your core beliefs, attachments, and early identity are being formed. The patterns set here echo throughout life.",
+        ["roots", "identity", "foundation"],
+    ),
+    (
+        7,
+        13,
+        "The Building Years",
+        "~7 years",
+        "Saturn makes its first square to its natal position. Authority, structure, and rules define this chapter. You're learning discipline and consequence.",
+        ["discipline", "learning", "structure"],
+    ),
+    (
+        14,
+        20,
+        "The First Jupiter Return",
+        "~3 years",
+        "Jupiter returns to where it was when you were born for the first time. A surge of optimism, expansion, and first encounters with your beliefs and philosophy.",
+        ["growth", "expansion", "belief"],
+    ),
+    (
+        21,
+        27,
+        "The Saturn Opposition",
+        "~2-3 years",
+        "Saturn opposes its natal position — a pivotal tension between where you came from and who you're becoming. Relationships and independence are tested.",
+        ["tension", "independence", "identity crisis"],
+    ),
+    (
+        28,
+        32,
+        "The Saturn Return",
+        "~2-3 years",
+        "Saturn has completed its first orbit. Life demands that you become fully yourself — relationships, career, and life path are restructured. Many describe this as their first real reckoning.",
+        ["reckoning", "responsibility", "authentic self"],
+    ),
+    (
+        33,
+        38,
+        "The Expansion",
+        "~5 years",
+        "Having survived Saturn's first return, a period of authentic expansion begins. You're building on solid ground — not what others expected, but what is truly yours.",
+        ["authentic growth", "building", "momentum"],
+    ),
+    (
+        39,
+        44,
+        "The Midlife Crossing",
+        "~5 years",
+        "Uranus opposes its natal position. The structures of your 30s are shaken — sometimes gently, sometimes dramatically. This is the cosmic invitation to choose your true path.",
+        ["disruption", "reinvention", "freedom"],
+    ),
+    (
+        45,
+        50,
+        "The Chiron Return",
+        "~2-3 years",
+        "Chiron, the wounded healer, returns to its natal position. Deep wounds from the past surface not to wound again, but to be healed — and your greatest gift often emerges from your deepest wound.",
+        ["healing", "wisdom", "vulnerability"],
+    ),
+    (
+        51,
+        58,
+        "The Second Saturn Return",
+        "~2-3 years",
+        "Saturn returns for the second time. This is a profound rite of passage — an invitation to evaluate the structures of your entire life and release what no longer has truth.",
+        ["legacy", "wisdom", "second chapter"],
+    ),
+    (
+        59,
+        70,
+        "The Elder's Power",
+        "~12 years",
+        "Neptune and Pluto transits deepen spiritual awareness. This is the time of distillation — drawing on all that was learned to become a living example of your highest values.",
+        ["wisdom", "spirituality", "legacy"],
+    ),
+    (
+        71,
+        120,
+        "The Sage",
+        "ongoing",
+        "You have navigated every major astrological cycle at least once. The work now is integration — sharing the wisdom of a full life with grace and presence.",
+        ["integration", "presence", "grace"],
+    ),
+]
+
+
+def get_life_phase(date_of_birth: str, lang: str = "en") -> Dict:
+    """
+    Identify the current life phase for a user based on their age.
+
+    Returns narrative description, duration, keywords, and age range —
+    modelled on The Pattern's 'timing windows' feature.
+    """
+    try:
+        parts = date_of_birth.split("-")
+        birth_year = int(parts[0])
+        birth_month = int(parts[1])
+        birth_day = int(parts[2])
+        today = datetime.now()
+        age = (
+            today.year
+            - birth_year
+            - ((today.month, today.day) < (birth_month, birth_day))
+        )
+    except Exception:
+        age = 30  # Reasonable fallback
+
+    current_phase = None
+    for min_age, max_age, name, duration, narrative, keywords in _LIFE_PHASES:
+        if min_age <= age <= max_age:
+            current_phase = {
+                "name": name,
+                "age": age,
+                "min_age": min_age,
+                "max_age": max_age,
+                "duration": duration,
+                "narrative": narrative,
+                "keywords": keywords,
+                "progress_pct": int(
+                    ((age - min_age) / max(max_age - min_age, 1)) * 100
+                ),
+            }
+            break
+
+    if not current_phase:
+        current_phase = {
+            "name": "The Sage",
+            "age": age,
+            "min_age": 71,
+            "max_age": 120,
+            "duration": "ongoing",
+            "narrative": _LIFE_PHASES[-1][4],
+            "keywords": _LIFE_PHASES[-1][5],
+            "progress_pct": 100,
+        }
+
+    # Upcoming phase
+    next_phase = None
+    for min_age, max_age, name, duration, narrative, keywords in _LIFE_PHASES:
+        if min_age > age:
+            years_until = min_age - age
+            next_phase = {
+                "name": name,
+                "begins_in_years": years_until,
+                "begins_at_age": min_age,
+                "preview": narrative[:120] + "…",
+            }
+            break
+
+    return {
+        "current_phase": current_phase,
+        "next_phase": next_phase,
+    }

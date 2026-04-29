@@ -2,19 +2,19 @@
 
 import os
 import sys
-from unittest.mock import patch, MagicMock
-
-import pytest
+from unittest.mock import MagicMock, patch
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from app.ai_service import (
-    build_prompt, 
-    fallback_summary,
-    explain_with_gemini,
-    _get_model_name,
-    _get_api_key,
     _configure_client,
+    _get_model_name,
+    build_prompt,
+    close_gemini_client,
+    create_gemini_client,
+    explain_with_gemini,
+    extract_gemini_text,
+    fallback_summary,
 )
 
 
@@ -47,7 +47,7 @@ class TestBuildPrompt:
             headline=None,
             theme=None,
             sections=[],
-            numerology="Life Path 7: seek wisdom today"
+            numerology="Life Path 7: seek wisdom today",
         )
         assert "Life Path 7" in prompt
 
@@ -57,7 +57,7 @@ class TestBuildPrompt:
             for i in range(10)
         ]
         prompt = build_prompt("daily", None, None, sections, None)
-        
+
         assert "Section 0" in prompt
         assert "Section 3" in prompt
         assert "Section 5" not in prompt
@@ -67,7 +67,7 @@ class TestBuildPrompt:
             {"title": "Test", "highlights": [f"Highlight {i}" for i in range(10)]}
         ]
         prompt = build_prompt("daily", None, None, sections, None)
-        
+
         assert "Highlight 0" in prompt
         assert "Highlight 2" in prompt
 
@@ -130,87 +130,117 @@ class TestFallbackSummary:
 
 class TestGetModelName:
     def test_default_model(self):
-        with patch.dict('os.environ', {}, clear=True):
-            old_val = os.environ.pop('GEMINI_MODEL', None)
+        with patch.dict("os.environ", {}, clear=True):
+            old_val = os.environ.pop("GEMINI_MODEL", None)
             try:
                 model = _get_model_name()
                 assert model == "gemini-2.0-flash"
             finally:
                 if old_val:
-                    os.environ['GEMINI_MODEL'] = old_val
+                    os.environ["GEMINI_MODEL"] = old_val
 
     def test_custom_model(self):
-        with patch.dict('os.environ', {'GEMINI_MODEL': 'gemini-1.5-pro'}):
+        with patch.dict("os.environ", {"GEMINI_MODEL": "gemini-1.5-pro"}):
             model = _get_model_name()
             assert model == "gemini-1.5-pro"
 
     def test_strips_models_prefix(self):
-        with patch.dict('os.environ', {'GEMINI_MODEL': 'models/gemini-2.0-flash'}):
+        with patch.dict("os.environ", {"GEMINI_MODEL": "models/gemini-2.0-flash"}):
             model = _get_model_name()
             assert model == "gemini-2.0-flash"
 
 
 class TestConfigureClient:
     def test_no_api_key_returns_false(self):
-        with patch.dict('os.environ', {}, clear=True):
-            old_val = os.environ.pop('GEMINI_API_KEY', None)
+        with patch.dict("os.environ", {}, clear=True):
+            old_val = os.environ.pop("GEMINI_API_KEY", None)
             try:
                 result = _configure_client()
                 assert result is False
             finally:
                 if old_val:
-                    os.environ['GEMINI_API_KEY'] = old_val
+                    os.environ["GEMINI_API_KEY"] = old_val
 
-    @patch('app.ai_service.genai')
+    @patch("app.ai_service.genai")
     def test_with_api_key_configures(self, mock_genai):
-        with patch.dict('os.environ', {'GEMINI_API_KEY': 'test-key'}):
-            mock_genai.configure = MagicMock()
+        with patch.dict("os.environ", {"GEMINI_API_KEY": "test-key"}):
             result = _configure_client()
             assert result is True
-            mock_genai.configure.assert_called_once()
+
+
+class TestClientHelpers:
+    @patch("app.ai_service.genai")
+    def test_create_gemini_client(self, mock_genai):
+        with patch.dict("os.environ", {"GEMINI_API_KEY": "test-key"}):
+            mock_client = MagicMock()
+            mock_genai.Client.return_value = mock_client
+            assert create_gemini_client() is mock_client
+            mock_genai.Client.assert_called_once_with(api_key="test-key")
+
+    def test_extract_gemini_text_prefers_text(self):
+        response = MagicMock()
+        response.text = "Hello from Gemini"
+        assert extract_gemini_text(response) == "Hello from Gemini"
+
+    def test_extract_gemini_text_falls_back_to_candidates(self):
+        response = MagicMock()
+        response.text = None
+        part = MagicMock()
+        part.text = "Candidate text"
+        content = MagicMock()
+        content.parts = [part]
+        candidate = MagicMock()
+        candidate.content = content
+        response.candidates = [candidate]
+        assert extract_gemini_text(response) == "Candidate text"
+
+    def test_close_gemini_client_calls_close(self):
+        client = MagicMock()
+        close_gemini_client(client)
+        client.close.assert_called_once()
 
 
 class TestExplainWithGemini:
-    @patch('app.ai_service.genai')
+    @patch("app.ai_service.genai")
     def test_successful_response(self, mock_genai):
-        with patch.dict('os.environ', {'GEMINI_API_KEY': 'test-key'}):
-            mock_model = MagicMock()
+        with patch.dict("os.environ", {"GEMINI_API_KEY": "test-key"}):
+            mock_client = MagicMock()
             mock_response = MagicMock()
             mock_response.text = "Today brings exciting cosmic energy."
-            mock_model.generate_content.return_value = mock_response
-            mock_genai.GenerativeModel.return_value = mock_model
-            
+            mock_client.models.generate_content.return_value = mock_response
+            mock_genai.Client.return_value = mock_client
+
             result = explain_with_gemini(
                 scope="daily",
                 headline="Growth",
                 theme="Jupiter",
                 sections=[{"title": "Career", "highlights": ["Expansion"]}],
-                numerology="Life Path 8"
+                numerology="Life Path 8",
             )
-            
+
             assert result is not None
             assert "cosmic energy" in result
 
-    @patch('app.ai_service.genai')
+    @patch("app.ai_service.genai")
     def test_empty_response_returns_none(self, mock_genai):
-        with patch.dict('os.environ', {'GEMINI_API_KEY': 'test-key'}):
-            mock_model = MagicMock()
+        with patch.dict("os.environ", {"GEMINI_API_KEY": "test-key"}):
+            mock_client = MagicMock()
             mock_response = MagicMock()
             mock_response.text = None
             mock_response.candidates = []
-            mock_model.generate_content.return_value = mock_response
-            mock_genai.GenerativeModel.return_value = mock_model
-            
+            mock_client.models.generate_content.return_value = mock_response
+            mock_genai.Client.return_value = mock_client
+
             result = explain_with_gemini("daily", None, None, [], None)
             assert result is None
 
-    @patch('app.ai_service.genai')
+    @patch("app.ai_service.genai")
     def test_extracts_from_candidates(self, mock_genai):
-        with patch.dict('os.environ', {'GEMINI_API_KEY': 'test-key'}):
-            mock_model = MagicMock()
+        with patch.dict("os.environ", {"GEMINI_API_KEY": "test-key"}):
+            mock_client = MagicMock()
             mock_response = MagicMock()
             mock_response.text = None
-            
+
             mock_part = MagicMock()
             mock_part.text = "From candidate parts"
             mock_content = MagicMock()
@@ -218,27 +248,27 @@ class TestExplainWithGemini:
             mock_candidate = MagicMock()
             mock_candidate.content = mock_content
             mock_response.candidates = [mock_candidate]
-            
-            mock_model.generate_content.return_value = mock_response
-            mock_genai.GenerativeModel.return_value = mock_model
-            
+
+            mock_client.models.generate_content.return_value = mock_response
+            mock_genai.Client.return_value = mock_client
+
             result = explain_with_gemini("daily", None, None, [], None)
             assert result == "From candidate parts"
 
     def test_no_api_key_returns_none(self):
-        with patch.dict('os.environ', {}, clear=True):
-            old_val = os.environ.pop('GEMINI_API_KEY', None)
+        with patch.dict("os.environ", {}, clear=True):
+            old_val = os.environ.pop("GEMINI_API_KEY", None)
             try:
                 result = explain_with_gemini("daily", None, None, [], None)
                 assert result is None
             finally:
                 if old_val:
-                    os.environ['GEMINI_API_KEY'] = old_val
+                    os.environ["GEMINI_API_KEY"] = old_val
 
 
 class TestPromptSecurity:
     def test_no_api_key_in_prompt(self):
-        with patch.dict('os.environ', {'GEMINI_API_KEY': 'secret-key-12345'}):
+        with patch.dict("os.environ", {"GEMINI_API_KEY": "secret-key-12345"}):
             prompt = build_prompt("daily", "Test", "Theme", [], None)
             assert "secret-key" not in prompt
             assert "12345" not in prompt
@@ -247,4 +277,3 @@ class TestPromptSecurity:
         prompt = build_prompt("daily", "Test", "Theme", [], None)
         assert "/Users/" not in prompt
         assert "password" not in prompt.lower()
-

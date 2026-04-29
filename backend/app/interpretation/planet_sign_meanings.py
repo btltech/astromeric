@@ -5,7 +5,8 @@ Concise planet-in-sign meaning blocks.
 
 from __future__ import annotations
 
-from typing import Dict, List
+from typing import Dict
+
 from .translations import get_translation
 
 PLANET_ARCHETYPES = {
@@ -145,17 +146,18 @@ def _combine_weights(
         weights[key] = round(weights.get(key, 0.0) + val, 2)
     return weights
 
-def get_planet_sign_text(planet: str, sign: str, lang: str = 'en') -> str:
+
+def get_planet_sign_text(planet: str, sign: str, lang: str = "en") -> str:
     """Return a concise, action-oriented sentence for planet in sign."""
     # Try to get translation
-    if lang != 'en':
-        p_keywords = get_translation(lang, 'planet_keywords')
-        s_flavors = get_translation(lang, 'sign_flavors')
-        
+    if lang != "en":
+        p_keywords = get_translation(lang, "planet_keywords")
+        s_flavors = get_translation(lang, "sign_flavors")
+
         if p_keywords and s_flavors:
             p_keyword = p_keywords.get(planet)
             s_data = s_flavors.get(sign)
-            
+
             if p_keyword and s_data:
                 # Simple sentence construction: "Keyword: style. Action."
                 # Using title() for keyword might not be correct for all languages, but acceptable
@@ -169,7 +171,7 @@ def get_planet_sign_text(planet: str, sign: str, lang: str = 'en') -> str:
     return f"{pdata['keyword'].title()} is {sdata['style']}. {sdata['action']}."
 
 
-def get_planet_sign_meanings(lang: str = 'en') -> Dict[str, Dict[str, Dict]]:
+def get_planet_sign_meanings(lang: str = "en") -> Dict[str, Dict[str, Dict]]:
     """Build planet sign meanings for a specific language."""
     meanings = {}
     for planet, pdata in PLANET_ARCHETYPES.items():
@@ -187,4 +189,4 @@ def get_planet_sign_meanings(lang: str = 'en') -> Dict[str, Dict[str, Dict]]:
 
 
 # Pre-build meanings dict (English default)
-PLANET_SIGN_MEANINGS = get_planet_sign_meanings('en')
+PLANET_SIGN_MEANINGS = get_planet_sign_meanings("en")

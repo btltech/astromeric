@@ -33,6 +33,17 @@ struct ExploreView: View {
             }
         }
     }
+
+    private struct ExploreToolItem: Identifiable {
+        let title: String
+        let icon: String
+        let color: Color
+        let description: String
+        let provenance: FeatureProvenance?
+        let destination: AnyView
+
+        var id: String { title }
+    }
     
     var body: some View {
         NavigationStack {
@@ -41,6 +52,16 @@ struct ExploreView: View {
                     .ignoresSafeArea()
                 
                 VStack(spacing: 0) {
+                    PremiumHeroCard(
+                            eyebrow: "hero.explore.eyebrow".localized,
+                            title: "hero.explore.title".localized,
+                            bodyText: "hero.explore.body".localized,
+                            accent: [Color(hex: "1f1038"), Color(hex: "5f35b5"), Color(hex: "0f7c8a")],
+                            chips: ["hero.explore.chip.0".localized, "hero.explore.chip.1".localized, "hero.explore.chip.2".localized, "hero.explore.chip.3".localized]
+                        )
+                    .padding(.horizontal)
+                    .padding(.top, 8)
+
                     // Category picker
                     categoryPicker
                         .padding(.horizontal)
@@ -57,11 +78,12 @@ struct ExploreView: View {
                             habitsContent
                         case .relationships:
                             relationshipsContent
+                            .readableContainer()
                         }
                     }
                 }
             }
-            .navigationTitle("Explore")
+            .navigationTitle("nav.explore".localized)
             .navigationBarTitleDisplayMode(.inline)
             .searchable(text: $searchText, prompt: "Search \(selectedCategory.rawValue.lowercased())...")
         }
@@ -92,34 +114,40 @@ struct ExploreView: View {
     
     // MARK: - Tools Content
     
-    private var filteredToolItems: [(title: String, icon: String, color: Color, description: String, destination: AnyView)] {
-        let all: [(String, String, Color, String, AnyView)] = [
-            ("Oracle", "questionmark.circle.fill", .blue, "Yes/No guidance", AnyView(OracleView())),
-            ("Affirmation", "star.fill", .orange, "Daily inspiration", AnyView(AffirmationView())),
-            ("Moon Phase", "moon.fill", .indigo, "Lunar guidance", AnyView(MoonPhaseView())),
-            ("Timing", "clock.badge.checkmark", .green, "Best time for activities", AnyView(TimingAdvisorView())),
-            ("Daily Guide", "sparkles", .yellow, "Cosmic features", AnyView(DailyFeaturesView())),
-            ("Journal", "book.closed.fill", .purple, "Track outcomes", AnyView(JournalView())),
-            ("Notifications", "bell.badge.fill", .orange, "Daily alerts", AnyView(NotificationSettingsView())),
-            ("Year Ahead", "calendar", .blue, "Solar return", AnyView(YearAheadView())),
-            ("Moon Events", "moon.stars.fill", .indigo, "Upcoming phases", AnyView(MoonEventsView())),
-            ("Life Phase", "arrow.trianglehead.clockwise", Color(hue: 0.57, saturation: 0.7, brightness: 0.9), "Your cosmic cycle", AnyView(YearAheadView())),
+    private var filteredToolItems: [ExploreToolItem] {
+        let all: [ExploreToolItem] = [
+            ExploreToolItem(title: "Oracle", icon: "questionmark.circle.fill", color: .blue, description: "Yes/no guidance using your day number and moon phase.", provenance: .hybrid, destination: AnyView(OracleView())),
+            ExploreToolItem(title: "Affirmation", icon: "star.fill", color: .orange, description: "Supportive language tuned to today's mood.", provenance: .interpretive, destination: AnyView(AffirmationView())),
+            ExploreToolItem(title: "Moon Phase", icon: "moon.fill", color: .indigo, description: "Current lunar phase, sign, and ritual timing.", provenance: .calculated, destination: AnyView(MoonPhaseView())),
+            ExploreToolItem(title: "Timing", icon: "clock.badge.checkmark", color: .green, description: "Activity windows scored from the live sky.", provenance: .calculated, destination: AnyView(TimingAdvisorView())),
+            ExploreToolItem(title: "Daily Guide", icon: "sparkles", color: .yellow, description: "Personal day, moon phase, retrogrades, and cues.", provenance: .calculated, destination: AnyView(DailyFeaturesView())),
+            ExploreToolItem(title: "Journal", icon: "book.closed.fill", color: .purple, description: "Track outcomes against your readings.", provenance: nil, destination: AnyView(JournalView())),
+            ExploreToolItem(title: "Notifications", icon: "bell.badge.fill", color: .orange, description: "Manage reminder and moon alert timing.", provenance: nil, destination: AnyView(NotificationSettingsView())),
+            ExploreToolItem(title: "Year Ahead", icon: "calendar", color: .blue, description: "Long-range forecast from your solar and numerology cycle.", provenance: .calculated, destination: AnyView(YearAheadView())),
+            ExploreToolItem(title: "Moon Events", icon: "moon.stars.fill", color: .indigo, description: "Upcoming lunar phases with exact timing.", provenance: .calculated, destination: AnyView(MoonEventsView())),
+            ExploreToolItem(title: "Life Phase", icon: "arrow.trianglehead.clockwise", color: Color(hue: 0.57, saturation: 0.7, brightness: 0.9), description: "Your current cycle interpreted from annual timing.", provenance: .hybrid, destination: AnyView(YearAheadView())),
         ]
-        if searchText.isEmpty { return all.map { (title: $0.0, icon: $0.1, color: $0.2, description: $0.3, destination: $0.4) } }
+        if searchText.isEmpty { return all }
         let q = searchText.lowercased()
-        return all.filter { $0.0.lowercased().contains(q) || $0.3.lowercased().contains(q) }
-                  .map { (title: $0.0, icon: $0.1, color: $0.2, description: $0.3, destination: $0.4) }
+        return all.filter { $0.title.lowercased().contains(q) || $0.description.lowercased().contains(q) }
     }
     
     private var toolsContent: some View {
         VStack(spacing: 20) {
+            PremiumSectionHeader(
+                title: "section.explore.0.title".localized,
+                subtitle: "section.explore.0.subtitle".localized
+            )
+            .padding(.horizontal)
+
             // Featured tool — hide when filtering
             if searchText.isEmpty {
                 FeaturedToolCard(
                     title: "Daily Tarot",
-                    subtitle: "Draw your card for today",
+                    subtitle: "Interpretive card pull for symbolic reflection",
                     icon: "suit.spade.fill",
-                    gradient: [.purple, .pink]
+                    gradient: [.purple, .pink],
+                    provenance: .interpretive
                 ) {
                     TarotView()
                 }
@@ -132,7 +160,7 @@ struct ExploreView: View {
                     Image(systemName: "magnifyingglass")
                         .font(.largeTitle)
                         .foregroundStyle(Color.textSecondary)
-                    Text("No tools match \"\(searchText)\"")
+                    Text(String(format: "fmt.explore.1".localized, "\(searchText)"))
                         .font(.subheadline)
                         .foregroundStyle(Color.textSecondary)
                 }
@@ -145,7 +173,8 @@ struct ExploreView: View {
                             title: item.title,
                             icon: item.icon,
                             color: item.color,
-                            description: item.description
+                            description: item.description,
+                            provenance: item.provenance
                         ) {
                             item.destination
                         }
@@ -161,12 +190,14 @@ struct ExploreView: View {
     
     private var learnContent: some View {
         VStack(spacing: 16) {
+            PremiumSectionHeader(
+                title: "section.explore.1.title".localized,
+                subtitle: "section.explore.1.subtitle".localized
+            )
+            .padding(.horizontal)
+
             // Learning tracks
             VStack(alignment: .leading, spacing: 12) {
-                Text("Learning Tracks")
-                    .font(.headline)
-                    .padding(.horizontal)
-                
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 12) {
                         LearningTrackCard(
@@ -212,9 +243,9 @@ struct ExploreView: View {
                 CardView {
                     HStack {
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("📚 Browse All Lessons")
+                            Text("ui.explore.0".localized)
                                 .font(.headline)
-                            Text("Explore our full library of cosmic knowledge")
+                            Text("ui.explore.1".localized)
                                 .font(.label)
                                 .foregroundStyle(Color.textSecondary)
                         }
@@ -251,9 +282,9 @@ struct ExploreView: View {
                 CardView {
                     HStack {
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("🌙 Lunar Habits")
+                            Text("ui.explore.2".localized)
                                 .font(.headline)
-                            Text("Track habits aligned with moon phases")
+                            Text("ui.explore.3".localized)
                                 .font(.label)
                                 .foregroundStyle(Color.textSecondary)
                         }
@@ -270,7 +301,7 @@ struct ExploreView: View {
             
             // Quick habit suggestions
             VStack(alignment: .leading, spacing: 12) {
-                Text("Suggested Habits")
+                Text("ui.explore.4".localized)
                     .font(.headline)
                     .padding(.horizontal)
                 
@@ -324,9 +355,9 @@ struct ExploreView: View {
                         }
                         
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("Check Compatibility")
+                            Text("ui.explore.5".localized)
                                 .font(.headline)
-                            Text("Compare your charts with someone special")
+                            Text("ui.explore.6".localized)
                                 .font(.label)
                                 .foregroundStyle(Color.textSecondary)
                         }
@@ -348,9 +379,9 @@ struct ExploreView: View {
                 CardView {
                     HStack {
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("💕 Saved Relationships")
+                            Text("ui.explore.7".localized)
                                 .font(.headline)
-                            Text("View your compatibility history")
+                            Text("ui.explore.8".localized)
                                 .font(.label)
                                 .foregroundStyle(Color.textSecondary)
                         }
@@ -367,7 +398,7 @@ struct ExploreView: View {
             
             // Relationship tips
             VStack(alignment: .leading, spacing: 12) {
-                Text("Cosmic Connection Tips")
+                Text("ui.explore.9".localized)
                     .font(.headline)
                     .padding(.horizontal)
                 
@@ -432,7 +463,24 @@ struct FeaturedToolCard<Destination: View>: View {
     let subtitle: String
     let icon: String
     let gradient: [Color]
+    let provenance: FeatureProvenance?
     @ViewBuilder let destination: () -> Destination
+
+    init(
+        title: String,
+        subtitle: String,
+        icon: String,
+        gradient: [Color],
+        provenance: FeatureProvenance? = nil,
+        @ViewBuilder destination: @escaping () -> Destination
+    ) {
+        self.title = title
+        self.subtitle = subtitle
+        self.icon = icon
+        self.gradient = gradient
+        self.provenance = provenance
+        self.destination = destination
+    }
     
     var body: some View {
         NavigationLink {
@@ -452,6 +500,9 @@ struct FeaturedToolCard<Destination: View>: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(title)
                         .font(.title3.bold())
+                    if let provenance {
+                        FeatureProvenanceBadge(provenance: provenance, compact: true)
+                    }
                     Text(subtitle)
                         .font(.subheadline)
                         .opacity(0.8)
@@ -485,7 +536,24 @@ struct ExploreToolCard<Destination: View>: View {
     let icon: String
     let color: Color
     let description: String
+    let provenance: FeatureProvenance?
     @ViewBuilder let destination: () -> Destination
+
+    init(
+        title: String,
+        icon: String,
+        color: Color,
+        description: String,
+        provenance: FeatureProvenance? = nil,
+        @ViewBuilder destination: @escaping () -> Destination
+    ) {
+        self.title = title
+        self.icon = icon
+        self.color = color
+        self.description = description
+        self.provenance = provenance
+        self.destination = destination
+    }
     
     var body: some View {
         NavigationLink {
@@ -505,11 +573,16 @@ struct ExploreToolCard<Destination: View>: View {
                 Text(title)
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.primary)
+
+                if let provenance {
+                    FeatureProvenanceBadge(provenance: provenance, compact: true)
+                }
                 
                 Text(description)
                     .font(.label)
                     .foregroundStyle(Color.textSecondary)
-                    .lineLimit(1)
+                    .lineLimit(3)
+                    .multilineTextAlignment(.center)
             }
             .frame(maxWidth: .infinity)
             .padding()
@@ -537,7 +610,7 @@ struct LearningTrackCard: View {
             Text(title)
                 .font(.subheadline.weight(.semibold))
             
-            Text("\(lessonCount) lessons")
+            Text(String(format: "fmt.explore.0".localized, "\(lessonCount)"))
                 .font(.caption)
                 .foregroundStyle(Color.textSecondary)
             

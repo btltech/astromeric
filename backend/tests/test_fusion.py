@@ -1,14 +1,12 @@
-import pytest
-from unittest.mock import patch, MagicMock
-from app.engine.fusion import fuse_prediction, _fuse_prediction
+from unittest.mock import patch
+
+from app.engine.fusion import fuse_prediction
+
 
 class TestFusion:
     def test_fuse_prediction_structure(self):
         result = fuse_prediction(
-            name="John Doe",
-            dob="1990-03-21",
-            date="2023-10-27",
-            scope="daily"
+            name="John Doe", dob="1990-03-21", date="2023-10-27", scope="daily"
         )
         assert "tldr" in result
         assert "tracks" in result
@@ -23,10 +21,7 @@ class TestFusion:
 
     def test_fuse_prediction_content(self):
         result = fuse_prediction(
-            name="John Doe",
-            dob="1990-03-21",
-            date="2023-10-27",
-            scope="daily"
+            name="John Doe", dob="1990-03-21", date="2023-10-27", scope="daily"
         )
         # Check if content is generated (not empty)
         assert len(result["tldr"]) > 0
@@ -40,13 +35,14 @@ class TestFusion:
             date="2023-10-27",
             scope="daily",
             time_of_birth="12:00",
-            place_of_birth="New York"
+            place_of_birth="New York",
         )
         assert result["rising_sign"] is not None
         assert result["place_vibe"] is not None
 
+
 class TestFusionLocalization:
-    @patch('app.engine.fusion.get_translation')
+    @patch("app.engine.fusion.get_translation")
     def test_fuse_prediction_localized(self, mock_get_translation):
         def side_effect(lang, category, key):
             if lang == "es":
@@ -76,16 +72,17 @@ class TestFusionLocalization:
                 if category == "astrology_traits":
                     return "Rasgo"
             return None
+
         mock_get_translation.side_effect = side_effect
-        
+
         result = fuse_prediction(
             name="John Doe",
             dob="1990-03-21",
             date="2023-10-27",
             scope="daily",
-            lang="es"
+            lang="es",
         )
-        
+
         assert result["theme_word"] == "PalabraTema"
         assert result["advice"] == "Consejo"
         assert result["affirmation"] == "Afirmación"
@@ -93,4 +90,3 @@ class TestFusionLocalization:
         assert result["element"] == "Fuego"
         assert "Resumen diario" in result["tldr"]
         assert "Fuego" in result["tldr"]
-

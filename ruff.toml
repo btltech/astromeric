@@ -1,0 +1,11 @@
+# Ruff configuration
+# See: https://docs.astral.sh/ruff/configuration/
+
+# Dead/unused legacy module retained for reference; not imported by app.main.
+extend-exclude = ["backend/app/main_legacy.py"]
+
+[lint]
+# E701: multi-statements on one line with colon (stylistic; common in compact guards).
+# E402: module-level imports not at top of file (intentional in app entrypoints
+#       where sys.path / env setup must precede imports).
+ignore = ["E701", "E402"]

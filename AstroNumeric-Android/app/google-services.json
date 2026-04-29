@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "725562595653",
+    "project_id": "astromeric-260422-f3f5",
+    "storage_bucket": "astromeric-260422-f3f5.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:725562595653:android:f8113eedfd3cfd3b3d862c",
+        "android_client_info": {
+          "package_name": "com.astromeric.android"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD21i3LneCaAhgU1ZwylVXs9l76PJRp4xk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

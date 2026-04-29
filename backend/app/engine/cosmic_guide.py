@@ -10,16 +10,12 @@ from __future__ import annotations
 import os
 from typing import Dict, List, Optional
 
+from app.ai_service import (
+    close_gemini_client,
+    create_gemini_client,
+    extract_gemini_text,
+)
 from app.interpretation.translations import get_translation
-
-# Try to import google generative AI
-try:
-    import google.generativeai as genai
-
-    HAS_GENAI = True
-except ImportError:
-    HAS_GENAI = False
-
 
 COSMIC_SYSTEM_PROMPT = """You are the Cosmic Guide, a mystical yet friendly AI assistant for Astronumeric, 
 an astrology and numerology app. You blend ancient wisdom with modern accessibility.
@@ -101,6 +97,13 @@ FALLBACK_RESPONSES = {
         "✨ Take a moment: Close your eyes, take three deep breaths, "
         "and ask yourself what your heart already knows."
     ),
+}
+
+TONE_OVERRIDES = {
+    "gentle": "Respond with warmth, patience, and soft reassurance. Prioritize compassion over bluntness.",
+    "balanced": "Be clear, grounded, and honest. Blend warmth with direct usefulness.",
+    "direct": "Be concise and straightforward. Tell the truth plainly without becoming cold.",
+    "roast": "Be witty, sharp, and playful. Keep the humor astrologically grounded, never cruel.",
 }
 
 
@@ -223,6 +226,8 @@ async def ask_cosmic_guide(
     birth_time_assumed: bool = False,
     time_confidence: Optional[str] = None,
     lang: str = "en",
+    system_prompt: Optional[str] = None,
+    tone: Optional[str] = None,
 ) -> Dict:
     """
     Ask the Cosmic Guide a question.
@@ -236,19 +241,22 @@ async def ask_cosmic_guide(
         birth_time_assumed: Whether the chart uses an estimated birth time
         time_confidence: "exact", "approximate", or "unknown" — used for nuanced wording
         lang: Language code for response
+        system_prompt: Optional client-provided prompt context
+        tone: Optional tone override for response style
 
     Returns:
         Dict with response and metadata
     """
-    api_key = _get_api_key()
-
     # Build context from user data
     context = _build_context(
         chart_data, numerology_data, reading_data, birth_time_assumed, time_confidence
     )
 
+    api_key = _get_api_key()
+    client = create_gemini_client()
+
     # If no API key, use intelligent fallback
-    if not api_key or not HAS_GENAI:
+    if client is None:
         topic = _detect_topic(question)
 
         # Localize fallback response
@@ -274,29 +282,34 @@ async def ask_cosmic_guide(
         }
 
     try:
-        genai.configure(api_key=api_key)
-        model = genai.GenerativeModel(_get_model_name())
-
         # Build the full prompt
         lang_instruction = (
             f"\nPlease respond in {lang} language." if lang != "en" else ""
         )
-        full_prompt = COSMIC_SYSTEM_PROMPT + lang_instruction
+        full_prompt = (
+            system_prompt.strip() if system_prompt else COSMIC_SYSTEM_PROMPT
+        ) + lang_instruction
 
-        if context:
+        if context and not system_prompt:
             full_prompt += context
 
-        # Add conversation history if available
-        chat = model.start_chat(history=[])
+        tone_instruction = TONE_OVERRIDES.get((tone or "").strip().lower())
+        if tone_instruction:
+            full_prompt += f"\n\nTone override:\n{tone_instruction}"
+
+        chat = client.chats.create(model=_get_model_name())
 
         # Send system prompt first (simulated as user message for context setting)
         # Note: Gemini doesn't have explicit system prompt in chat mode same way as GPT
         # So we prepend it to the first message or use it as context
 
         response = chat.send_message(full_prompt + "\n\nUser question: " + question)
+        response_text = extract_gemini_text(response)
+        if not response_text:
+            raise ValueError("Gemini returned empty response")
 
         return {
-            "response": response.text,
+            "response": response_text,
             "provider": "gemini",
             "model": _get_model_name(),
         }
@@ -320,6 +333,8 @@ async def ask_cosmic_guide(
             "reason": str(e),
             "topic_detected": topic,
         }
+    finally:
+        close_gemini_client(client)
 
 
 def get_suggested_questions(
@@ -406,30 +421,31 @@ async def get_quick_insight(topic: str, sun_sign: Optional[str] = None) -> str:
     topic_key = _detect_topic(topic)
 
     # Build minimal context
-    chart_data = None
     if sun_sign:
-        chart_data = {"planets": [{"name": "Sun", "sign": sun_sign}]}
+        pass
 
     # For quick insights, use a more focused prompt
-    api_key = _get_api_key()
-
-    if not api_key or not HAS_GENAI:
+    client = create_gemini_client()
+    if client is None:
         return FALLBACK_RESPONSES.get(topic_key, FALLBACK_RESPONSES["default"])
 
     try:
-        genai.configure(api_key=api_key)
-        model = genai.GenerativeModel(_get_model_name())
-
         prompt = f"""You are the Cosmic Guide, a mystical AI advisor. 
 Give a brief, uplifting insight about: {topic}
 {f'The user is a {sun_sign}.' if sun_sign else ''}
 Keep it to 2-3 sentences maximum. Be warm and encouraging. Include one emoji."""
 
-        response = model.generate_content(prompt)
-        return response.text.strip()
+        response = client.models.generate_content(
+            model=_get_model_name(),
+            contents=prompt,
+        )
+        text = extract_gemini_text(response)
+        return text or FALLBACK_RESPONSES.get(topic_key, FALLBACK_RESPONSES["default"])
 
     except Exception:
         return FALLBACK_RESPONSES.get(topic_key, FALLBACK_RESPONSES["default"])
+    finally:
+        close_gemini_client(client)
 
 
 # Sync wrapper for non-async contexts

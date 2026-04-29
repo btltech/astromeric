@@ -5,9 +5,9 @@ Ensures consistent structure across all endpoints.
 
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, Generic, List, Optional, TypeVar, Union
+from typing import Any, Dict, Generic, List, Optional, TypeVar
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 T = TypeVar("T")
 
@@ -28,17 +28,8 @@ class ResponseStatus(str, Enum):
 class ApiResponse(BaseModel, Generic[T]):
     """Standard API response envelope for all endpoints."""
 
-    status: ResponseStatus
-    data: Optional[T] = None
-    error: Optional[Dict[str, Any]] = None
-    message: Optional[str] = None
-    request_id: Optional[str] = Field(
-        None, description="Unique request ID for debugging"
-    )
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
-
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "status": "success",
                 "data": {"key": "value"},
@@ -47,6 +38,16 @@ class ApiResponse(BaseModel, Generic[T]):
                 "timestamp": "2026-01-01T13:54:00Z",
             }
         }
+    )
+
+    status: ResponseStatus
+    data: Optional[T] = None
+    error: Optional[Dict[str, Any]] = None
+    message: Optional[str] = None
+    request_id: Optional[str] = Field(
+        None, description="Unique request ID for debugging"
+    )
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
 
 
 class PaginatedResponse(BaseModel, Generic[T]):
@@ -72,6 +73,22 @@ class PaginatedResponse(BaseModel, Generic[T]):
 class ProfilePayload(BaseModel):
     """Standardized user profile data."""
 
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "name": "Jane Doe",
+                "date_of_birth": "1990-06-15",
+                "time_of_birth": "14:30:00",
+                "time_confidence": "exact",
+                "place_of_birth": "New York, NY, USA",
+                "latitude": 40.7128,
+                "longitude": -74.0060,
+                "timezone": "America/New_York",
+                "house_system": "Placidus",
+            }
+        }
+    )
+
     name: str = Field(..., min_length=1, max_length=100)
     date_of_birth: str = Field(..., description="ISO format: YYYY-MM-DD")
     time_of_birth: Optional[str] = Field(
@@ -87,22 +104,9 @@ class ProfilePayload(BaseModel):
     house_system: Optional[str] = Field(
         None, description="House system (e.g., Placidus, Whole Sign)"
     )
-    date: Optional[str] = Field(None, description="Optional reference date for calculations (YYYY-MM-DD)")
-
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "name": "Jane Doe",
-                "date_of_birth": "1990-06-15",
-                "time_of_birth": "14:30:00",
-                "time_confidence": "exact",
-                "place_of_birth": "New York, NY, USA",
-                "latitude": 40.7128,
-                "longitude": -74.0060,
-                "timezone": "America/New_York",
-                "house_system": "Placidus",
-            }
-        }
+    date: Optional[str] = Field(
+        None, description="Optional reference date for calculations (YYYY-MM-DD)"
+    )
 
 
 class NatalProfileRequest(BaseModel):
@@ -125,6 +129,11 @@ class ForecastRequest(BaseModel):
         None, description="ISO format: YYYY-MM-DD (defaults to today)"
     )
     include_details: bool = Field(True)
+    tone: Optional[str] = Field(
+        "balanced_mystical",
+        pattern="^(very_practical|balanced_practical|balanced_mystical|very_mystical)$",
+        description="Narrative style for forecast text",
+    )
 
 
 class CompatibilityRequest(BaseModel):
@@ -143,7 +152,9 @@ class NumerologyRequest(BaseModel):
     profile: ProfilePayload
     include_extended: bool = Field(False, description="Include extended numerology")
     language: Optional[str] = Field("en", description="Language code (e.g., en, es)")
-    method: str = Field("pythagorean", description="Numerology system: 'pythagorean' or 'chaldean'")
+    method: str = Field(
+        "pythagorean", description="Numerology system: 'pythagorean' or 'chaldean'"
+    )
 
 
 class NumerologyCompatibilityRequest(BaseModel):

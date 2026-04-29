@@ -99,7 +99,7 @@ struct LockedFeatureView: View {
             Image(systemName: "lock.circle")
                 .font(.largeTitle)
                 .foregroundStyle(.secondary)
-            Text("More Data Needed")
+            Text("ui.dataQualityEngine.0".localized)
                 .font(.headline)
             Text(hint)
                 .font(.caption)

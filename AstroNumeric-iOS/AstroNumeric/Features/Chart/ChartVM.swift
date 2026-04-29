@@ -36,23 +36,24 @@ final class ChartVM {
         error = nil
         defer { isLoading = false }
         
-        // LOCAL-FIRST: Try Swiss Ephemeris on-device calculation
-        do {
-            let localChart = try await EphemerisEngine.shared.calculateNatalChart(profile: profile)
-            chartData = localChart
-            HapticManager.impact(.light)
-            return
-        } catch {
-            DebugLog.log("Local ephemeris failed, falling back to API: \(error)")
-        }
-        
-        // FALLBACK: API calculation
+        // API-FIRST: backend chart data is the canonical source because it
+        // includes richer points, metadata, and interpretation inputs.
         do {
             let response: V2ApiResponse<ChartData> = try await api.fetch(
                 .natalChart(profile: profile),
                 cachePolicy: .networkFirst
             )
             chartData = response.data
+            HapticManager.impact(.light)
+            return
+        } catch {
+            DebugLog.log("API chart fetch failed, falling back to local ephemeris: \(error)")
+        }
+        
+        // FALLBACK: local Swiss Ephemeris calculation for offline resilience
+        do {
+            let localChart = try await EphemerisEngine.shared.calculateNatalChart(profile: profile)
+            chartData = localChart
             HapticManager.impact(.light)
         } catch {
             self.error = error.localizedDescription
@@ -114,6 +115,11 @@ final class ChartVM {
     /// All planet placements
     var placements: [PlanetPlacement] {
         chartData?.planets ?? []
+    }
+    
+    /// Sensitive points: North Node, South Node, Chiron, Part of Fortune
+    var chartPoints: [ChartPoint] {
+        chartData?.points ?? []
     }
     
     /// House placements

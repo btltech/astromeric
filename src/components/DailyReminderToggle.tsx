@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useStore } from '../store/useStore';
-
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+import { API_BASE_URL } from '../api/config';
 
 // Register service worker and schedule push subscription
 async function registerPushSubscription(_cadence: string): Promise<boolean> {
@@ -14,7 +13,7 @@ async function registerPushSubscription(_cadence: string): Promise<boolean> {
     let subscription = await registration.pushManager.getSubscription();
 
     // Fetch public key from backend
-    const keyRes = await fetch(`${API_BASE}/v2/alerts/vapid-key`);
+    const keyRes = await fetch(`${API_BASE_URL}/v2/alerts/vapid-key`);
     const { public_key: vapidKey } = await keyRes.json();
 
     if (!subscription && vapidKey) {
@@ -26,7 +25,7 @@ async function registerPushSubscription(_cadence: string): Promise<boolean> {
 
     if (subscription) {
       // Send subscription to backend
-      await fetch(`${API_BASE}/v2/alerts/subscribe`, {
+      await fetch(`${API_BASE_URL}/v2/alerts/subscribe`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(subscription.toJSON()),
@@ -183,7 +182,7 @@ export function DailyReminderToggle() {
               style={{ fontSize: '0.7rem', marginTop: '0.25rem', opacity: 0.6, display: 'block' }}
               onClick={async () => {
                 try {
-                  await fetch(`${API_BASE}/v2/alerts/test-notify`, { method: 'POST' });
+                  await fetch(`${API_BASE_URL}/v2/alerts/test-notify`, { method: 'POST' });
                 } catch (e) {
                   console.error(e);
                 }

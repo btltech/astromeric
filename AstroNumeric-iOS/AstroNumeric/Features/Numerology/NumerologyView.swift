@@ -29,7 +29,13 @@ struct NumerologyView: View {
                                 VStack(spacing: 20) {
                                     Button {
                                         Task { @MainActor in
-                                            await explain(data, name: profile.name)
+                                            await explain(
+                                                data,
+                                                name: profile.displayName(
+                                                    hideSensitive: store.hideSensitiveDetailsEnabled,
+                                                    role: .share
+                                                )
+                                            )
                                         }
                                     } label: {
                                         HStack(spacing: 8) {
@@ -39,7 +45,7 @@ struct NumerologyView: View {
                                             } else {
                                                 Image(systemName: "sparkles")
                                             }
-                                            Text(isExplaining ? "Generating..." : "Explain My Numbers")
+                                            Text(isExplaining ? "tern.numerology.0a".localized : "tern.numerology.0b".localized)
                                                 .font(.subheadline.weight(.medium))
                                         }
                                         .foregroundStyle(.purple)
@@ -54,6 +60,10 @@ struct NumerologyView: View {
                                     NumerologySystemToggle(useChaldean: $useChaldean) {
                                         numerologyData = nil
                                         Task { await fetchNumerology(for: profile, useChaldean: useChaldean) }
+                                    }
+
+                                    if let synthesis = data.synthesis {
+                                        synthesisSection(synthesis)
                                     }
 
                                     // Life Purpose (main feature)
@@ -85,8 +95,22 @@ struct NumerologyView: View {
                                     if let pinnacles = data.pinnacles, !pinnacles.isEmpty {
                                         pinnaclesSection(pinnacles)
                                     }
+
+                                    // Challenges
+                                    if let challenges = data.challenges, !challenges.isEmpty {
+                                        challengesSection(challenges)
+                                    }
+                                    
+                                    // Karmic Debts (only shown when present)
+                                    if let debts = data.karmicDebts, !debts.isEmpty {
+                                        karmicDebtsSection(debts)
+                                    }
                                 }
                                 .padding()
+                                .readableContainer()
+                            }
+                            .refreshable {
+                                await fetchNumerology(for: profile, useChaldean: useChaldean)
                             }
                         } else if isLoading {
                             VStack(spacing: 16) {
@@ -116,7 +140,7 @@ struct NumerologyView: View {
                     }
                 }
             }
-            .navigationTitle("Numerology")
+            .navigationTitle("charts.numerology".localized)
         }
         .sheet(isPresented: $showExplanation) {
             if let markdown = explanationMarkdown {
@@ -126,7 +150,17 @@ struct NumerologyView: View {
                     generatedAt: explanationGeneratedAt,
                         onRegenerate: {
                             if let data = numerologyData, let profile = store.selectedProfile {
-                                Task { @MainActor in await explain(data, name: profile.name, forceRefresh: true) }
+                                Task {
+                                    @MainActor in
+                                    await explain(
+                                        data,
+                                        name: profile.displayName(
+                                            hideSensitive: store.hideSensitiveDetailsEnabled,
+                                            role: .share
+                                        ),
+                                        forceRefresh: true
+                                    )
+                                }
                             }
                         }
                     )
@@ -140,7 +174,7 @@ struct NumerologyView: View {
         CardView {
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
-                    Text("🌟 Life Path \(lifePath.number)")
+                    Text(String(format: "fmt.numerology.2".localized, "\(lifePath.number)"))
                         .font(.title2.bold())
                         .foregroundStyle(
                             LinearGradient(
@@ -177,6 +211,91 @@ struct NumerologyView: View {
             }
         }
     }
+
+    private func synthesisSection(_ synthesis: NumerologySynthesis) -> some View {
+        CardView {
+            VStack(alignment: .leading, spacing: 14) {
+                HStack {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("ui.numerology.0".localized)
+                            .font(.system(.caption2, design: .monospaced))
+                            .foregroundStyle(Color.textMuted)
+                        Text("ui.numerology.1".localized)
+                            .font(.title3.bold())
+                    }
+                    Spacer()
+                    Image(systemName: "sparkles.rectangle.stack")
+                        .foregroundStyle(.purple)
+                }
+
+                Text(synthesis.summary)
+                    .font(.body)
+                    .foregroundStyle(.primary)
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("ui.numerology.2".localized)
+                        .font(.subheadline.weight(.semibold))
+                    Text(synthesis.currentFocus)
+                        .font(.subheadline)
+                        .foregroundStyle(Color.textSecondary)
+                }
+
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 10) {
+                        ForEach(synthesis.dominantNumbers) { item in
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(item.label)
+                                    .font(.caption)
+                                    .foregroundStyle(Color.textSecondary)
+                                Text("\(item.number)")
+                                    .font(.title3.bold())
+                                    .foregroundStyle(.purple)
+                            }
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 10)
+                            .background(Color.purple.opacity(0.12))
+                            .clipShape(RoundedRectangle(cornerRadius: 14))
+                        }
+                    }
+                }
+
+                if !synthesis.strengths.isEmpty {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("ui.numerology.3".localized)
+                            .font(.subheadline.weight(.semibold))
+                        ForEach(Array(synthesis.strengths.prefix(3).enumerated()), id: \.offset) { _, item in
+                            Text("• \(item)")
+                                .font(.caption)
+                                .foregroundStyle(Color.textSecondary)
+                        }
+                    }
+                }
+
+                if let growthEdge = synthesis.growthEdges.first, !growthEdge.isEmpty {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("ui.numerology.4".localized)
+                            .font(.subheadline.weight(.semibold))
+                        Text(growthEdge)
+                            .font(.caption)
+                            .foregroundStyle(Color.textSecondary)
+                    }
+                }
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("ui.numerology.5".localized)
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.purple)
+                    Text(synthesis.affirmation)
+                        .font(.footnote.italic())
+                        .foregroundStyle(.purple)
+                        .padding(12)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(Color.purple.opacity(0.08))
+                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                }
+            }
+        }
+    }
     
     @State private var tappedNumerologyLuckyNumber: Int?
     
@@ -184,10 +303,10 @@ struct NumerologyView: View {
         CardView {
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
-                    Text("🍀 Lucky Numbers")
+                    Text("ui.numerology.6".localized)
                         .font(.headline)
                     Spacer()
-                    Text("Tap for meaning")
+                    Text("ui.numerology.7".localized)
                         .font(.caption)
                         .foregroundStyle(Color.textSecondary)
                 }
@@ -238,7 +357,7 @@ struct NumerologyView: View {
     private func auspiciousDaysSection(_ days: [Int]) -> some View {
         CardView {
             VStack(alignment: .leading, spacing: 12) {
-                Text("📅 Auspicious Days This Month")
+                Text("ui.numerology.8".localized)
                     .font(.headline)
                 
                 HStack(spacing: 8) {
@@ -252,7 +371,7 @@ struct NumerologyView: View {
                     }
                 }
                 
-                Text("These days align with your numerological energy")
+                Text("ui.numerology.9".localized)
                     .font(.caption)
                     .foregroundStyle(Color.textSecondary)
             }
@@ -261,7 +380,7 @@ struct NumerologyView: View {
     
     private func coreNumbersSection(_ core: CoreNumbers) -> some View {
         VStack(spacing: 16) {
-            Text("Your Core Numbers")
+            Text("ui.numerology.10".localized)
                 .font(.headline)
             
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
@@ -284,7 +403,7 @@ struct NumerologyView: View {
     private func cyclesSection(_ cycles: NumerologyCycles) -> some View {
         CardView {
             VStack(alignment: .leading, spacing: 12) {
-                Text("🔄 Current Cycles")
+                Text("ui.numerology.11".localized)
                     .font(.headline)
                 
                 if let year = cycles.personalYear {
@@ -300,16 +419,65 @@ struct NumerologyView: View {
         }
     }
     
+    private func karmicDebtsSection(_ debts: [KarmicDebt]) -> some View {
+        CardView {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    Text("ui.numerology.12".localized)
+                        .font(.headline)
+                    Spacer()
+                    Text("\(debts.count)")
+                        .font(.caption.bold())
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(Color.orange.opacity(0.2))
+                        .foregroundStyle(.orange)
+                        .clipShape(Capsule())
+                }
+
+                Text("ui.numerology.13".localized)
+                    .font(.caption)
+                    .foregroundStyle(Color.textSecondary)
+
+                ForEach(debts) { debt in
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack {
+                            Text(debt.label)
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(.orange)
+                            Spacer()
+                            // Show which core numbers carry this debt
+                            let sourceLabels = debt.sources.map { $0.replacingOccurrences(of: "_", with: " ").capitalized }
+                            Text(sourceLabels.joined(separator: ", "))
+                                .font(.caption2)
+                                .foregroundStyle(Color.textSecondary)
+                        }
+                        Text(debt.theme)
+                            .font(.caption.italic())
+                            .foregroundStyle(Color.textSecondary)
+                        Text(debt.description)
+                            .font(.caption)
+                            .foregroundStyle(Color.textPrimary)
+                            .lineLimit(4)
+                    }
+                    if debt.id != debts.last?.id {
+                        Divider()
+                    }
+                }
+            }
+        }
+    }
+
     private func pinnaclesSection(_ pinnacles: [Pinnacle]) -> some View {
         CardView {
             VStack(alignment: .leading, spacing: 12) {
-                Text("🏔️ Life Pinnacles")
+                Text("ui.numerology.14".localized)
                     .font(.headline)
                 
                 ForEach(pinnacles) { pinnacle in
                     VStack(alignment: .leading, spacing: 4) {
                         HStack {
-                            Text("Pinnacle \(pinnacle.number)")
+                            Text(String(format: "fmt.numerology.1".localized, "\(pinnacle.number)"))
                                 .font(.subheadline.weight(.medium))
                             if let ages = pinnacle.ages {
                                 Text("(\(ages))")
@@ -330,14 +498,45 @@ struct NumerologyView: View {
             }
         }
     }
+
+    private func challengesSection(_ challenges: [Challenge]) -> some View {
+        CardView {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("ui.numerology.15".localized)
+                    .font(.headline)
+
+                ForEach(challenges) { challenge in
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack {
+                            Text(String(format: "fmt.numerology.0".localized, "\(challenge.number)"))
+                                .font(.subheadline.weight(.medium))
+                            if let ages = challenge.ages {
+                                Text("(\(ages))")
+                                    .font(.caption)
+                                    .foregroundStyle(Color.textSecondary)
+                            }
+                        }
+                        if let meaning = challenge.meaning {
+                            Text(meaning)
+                                .font(.caption)
+                                .foregroundStyle(Color.textSecondary)
+                        }
+                    }
+                    if challenge.number != challenges.last?.number {
+                        Divider()
+                    }
+                }
+            }
+        }
+    }
     
     private var noProfileView: some View {
         VStack(spacing: 20) {
             Text("🔢")
-                .font(.system(size: 64))
-            Text("Create Your Profile")
+                .font(.system(.largeTitle))
+            Text("ui.numerology.16".localized)
                 .font(.title2.bold())
-            Text("Add your birth details to discover your numerology")
+            Text("ui.numerology.17".localized)
                 .font(.subheadline)
                 .foregroundStyle(Color.textSecondary)
                 .multilineTextAlignment(.center)
@@ -359,7 +558,7 @@ struct NumerologyView: View {
         isLoading = true
         error = nil
         defer { isLoading = false }
-        let method = useChaldean ? "chaldean" : "pythagorean"
+        let method = useChaldean ? "tern.numerology.1a".localized : "tern.numerology.1b".localized
         do {
             let response: V2ApiResponse<NumerologyData> = try await APIClient.shared.fetch(
                 .numerologyProfile(profile: profile, method: method),
@@ -384,13 +583,13 @@ struct NumerologyView: View {
             core?.personality.map { SectionSummary(title: "Personality \($0.number)", highlights: [$0.meaning ?? ""]) },
         ].compactMap { $0 }
 
-        let headline = "Numerology for \(name)"
+        let headline = AppStore.shared.hideSensitiveDetailsEnabled ? "Your Numerology" : "Numerology for \(name)"
         let request = AIExplainRequest(
             scope: "numerology",
             headline: headline,
             theme: nil,
             sections: sections,
-            numerologySummary: nil,
+            numerologySummary: data.synthesis?.summary,
             simpleLanguage: true
         )
 
@@ -400,7 +599,7 @@ struct NumerologyView: View {
                 cachePolicy: forceRefresh ? .networkOnly : .cacheFirst
             )
             explanationMarkdown = response.data.summary
-            explanationSource = .ai
+            explanationSource = AIInsightSource(provider: response.data.provider)
             explanationGeneratedAt = Date()
         } catch {
             var fallback = "## TL;DR\n\n"
@@ -438,7 +637,7 @@ struct NumberCardView: View {
                     .foregroundStyle(Color.textSecondary)
                 
                 Text("\(number)")
-                    .font(.system(size: 40, weight: .bold, design: .rounded))
+                    .font(.system(.largeTitle, design: .rounded)).fontWeight(.bold)
                     .foregroundStyle(
                         LinearGradient(
                             colors: [.purple, .pink],
@@ -505,7 +704,7 @@ struct TooltipSheet: View {
             .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                Button("Done") { dismiss() }
+                Button("action.done".localized) { dismiss() }
             }
         }
         .presentationDetents([.medium])
@@ -528,7 +727,7 @@ struct NumerologySystemToggle: View {
                     withAnimation(.spring(response: 0.3)) { useChaldean = false }
                     onToggle()
                 } label: {
-                    Text("Pythagorean")
+                    Text("ui.numerology.18".localized)
                         .font(.subheadline.weight(useChaldean ? .regular : .bold))
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 8)
@@ -546,7 +745,7 @@ struct NumerologySystemToggle: View {
                     onToggle()
                 } label: {
                     HStack(spacing: 4) {
-                        Text("Chaldean")
+                        Text("ui.numerology.19".localized)
                         Text("✨")
                             .font(.caption)
                             .accessibilityHidden(true)
@@ -568,7 +767,7 @@ struct NumerologySystemToggle: View {
             Button {
                 showInfo.toggle()
             } label: {
-                Label(useChaldean ? "Ancient Babylonian system (1–8 cycle)" : "Modern Western system (1–9 cycle)", systemImage: "info.circle")
+                Label(useChaldean ? "tern.numerology.2a".localized : "tern.numerology.2b".localized, systemImage: "info.circle")
                     .font(.caption)
                     .foregroundStyle(Color.textMuted)
             }
@@ -578,14 +777,14 @@ struct NumerologySystemToggle: View {
             NavigationStack {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
-                        Text("**Pythagorean** numerology (the default) assigns values 1–9 in sequence to the Latin alphabet. It's the most widely used Western system.")
-                        Text("**Chaldean** numerology is the older Babylonian system. Letters are assigned values 1–8 (9 is considered sacred and not assigned). Many practitioners consider it more spiritually accurate.")
-                        Text("Switching the system recalculates your Life Path, Expression, and Soul Urge numbers — the results may differ.")
+                        Text("ui.numerology.20".localized)
+                        Text("ui.numerology.21".localized)
+                        Text("ui.numerology.22".localized)
                     }
                     .padding()
                 }
-                .navigationTitle("Numerology Systems")
-                .toolbar { Button("Done") { showInfo = false } }
+                .navigationTitle("screen.numerologySystems".localized)
+                .toolbar { Button("action.done".localized) { showInfo = false } }
             }
             .presentationDetents([.medium])
         }

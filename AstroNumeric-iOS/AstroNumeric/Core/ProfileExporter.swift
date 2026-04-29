@@ -9,15 +9,17 @@ import UniformTypeIdentifiers
 struct ProfileExport: Codable {
     let version: String
     let exportedAt: Date
+    let isRedacted: Bool?
     let profile: ExportedProfile
     
-    static let currentVersion = "1.0"
+    static let currentVersion = "1.1"
 }
 
 struct ExportedProfile: Codable {
     let name: String
     let dateOfBirth: String
     let timeOfBirth: String?
+    let timeConfidence: String?
     let placeOfBirth: String?
     let latitude: Double?
     let longitude: Double?
@@ -28,6 +30,7 @@ struct ExportedProfile: Codable {
         self.name = profile.name
         self.dateOfBirth = profile.dateOfBirth
         self.timeOfBirth = profile.timeOfBirth
+        self.timeConfidence = profile.timeConfidence
         self.placeOfBirth = profile.placeOfBirth
         self.latitude = profile.latitude
         self.longitude = profile.longitude
@@ -35,14 +38,13 @@ struct ExportedProfile: Codable {
         self.houseSystem = profile.houseSystem
     }
     
-    /// Creates a Profile with sentinel ID (-1) for imported profiles that need API creation
-    func toProfile() -> Profile {
+    func toLocalProfile(id: Int) -> Profile {
         Profile(
-            id: -1, // Sentinel ID - indicates this needs to be created via API
+            id: id,
             name: name,
             dateOfBirth: dateOfBirth,
             timeOfBirth: timeOfBirth,
-            timeConfidence: nil,
+            timeConfidence: timeConfidence ?? (timeOfBirth == nil ? "tern.profileExporter.0a".localized : "tern.profileExporter.0b".localized),
             placeOfBirth: placeOfBirth,
             latitude: latitude,
             longitude: longitude,
@@ -62,11 +64,23 @@ class ProfileExporter: ObservableObject {
     @Published var showImportConfirmation = false
     
     // MARK: - Export
+
+    func exportFileName(for profile: Profile) -> String {
+        if AppStore.shared.hideSensitiveDetailsEnabled {
+            return "private_profile.json"
+        }
+
+        let sanitizedName = profile.name
+            .replacingOccurrences(of: " ", with: "_")
+            .replacingOccurrences(of: "/", with: "-")
+        return "\(sanitizedName)_profile.json"
+    }
     
     func exportProfile(_ profile: Profile) -> Data? {
         let exportData = ProfileExport(
             version: ProfileExport.currentVersion,
             exportedAt: Date(),
+            isRedacted: false,
             profile: ExportedProfile(from: profile)
         )
         
@@ -85,7 +99,7 @@ class ProfileExporter: ObservableObject {
     func exportAsFile(_ profile: Profile) -> URL? {
         guard let data = exportProfile(profile) else { return nil }
         
-        let fileName = "\(profile.name.replacingOccurrences(of: " ", with: "_"))_profile.json"
+        let fileName = exportFileName(for: profile)
         let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
         
         do {
@@ -122,7 +136,7 @@ class ProfileExporter: ObservableObject {
                 // Still try to import - might be compatible
             }
             
-            return export.profile.toProfile()
+            return export.profile.toLocalProfile(id: -1)
         } catch {
             importError = "Invalid profile format: \(error.localizedDescription)"
             return nil
@@ -165,21 +179,30 @@ class ProfileExporter: ObservableObject {
     // MARK: - Export as Text
     
     func exportAsText(_ profile: Profile) -> String {
+        let hideSensitive = AppStore.shared.hideSensitiveDetailsEnabled
+        let exportedName = profile.displayName(
+            hideSensitive: hideSensitive,
+            role: .share
+        )
+        let exportedDOB = profile.maskedDateOfBirth(hideSensitive: hideSensitive)
+        let exportedTime = profile.maskedBirthTime(hideSensitive: hideSensitive)
+        let exportedPlace = profile.maskedBirthplace(hideSensitive: hideSensitive)
+
         var text = """
         🌟 AstroNumeric Profile
         
-        Name: \(profile.name)
-        Date of Birth: \(profile.dateOfBirth)
+        Name: \(exportedName)
+        Date of Birth: \(exportedDOB)
         """
         
-        if let time = profile.timeOfBirth {
-            text += "\nTime of Birth: \(time)"
+        if profile.timeOfBirth != nil {
+            text += "\nTime of Birth: \(exportedTime)"
         } else {
             text += "\nTime of Birth: Unknown (noon used for chart calculations)"
         }
         
-        if let place = profile.placeOfBirth {
-            text += "\nPlace of Birth: \(place)"
+        if profile.placeOfBirth != nil {
+            text += "\nPlace of Birth: \(exportedPlace)"
         }
 
         // Add data quality disclaimer
@@ -190,6 +213,10 @@ class ProfileExporter: ObservableObject {
             text += "\n\n⚠️ Chart Accuracy: Estimated — birth time unknown. Rising sign and house placements use noon as default and may be inaccurate."
         case .dateOnly:
             text += "\n\n⚠️ Chart Accuracy: Limited — only Sun sign is reliable. Birth place and time unknown."
+        }
+
+        if hideSensitive {
+            text += "\n\nSensitive details were hidden because privacy mode is enabled."
         }
         
         text += "\n\n✨ Generated with AstroNumeric"
@@ -237,9 +264,11 @@ struct ProfileImportPicker: UIViewControllerRepresentable {
 // MARK: - Export/Import Buttons View
 
 struct ProfileExportImportButtons: View {
-    let profile: Profile
+    @Environment(AppStore.self) private var store
+    let profile: Profile?
     @StateObject private var exporter = ProfileExporter()
     @State private var showShareSheet = false
+    @State private var showExportNotice = false
     @State private var showImportPicker = false
     @State private var showImportConfirm = false
     @State private var pendingImport: Profile?
@@ -247,21 +276,24 @@ struct ProfileExportImportButtons: View {
     
     var body: some View {
         VStack(spacing: 12) {
-            // Export button
-            Button {
-                if exporter.exportAsFile(profile) != nil {
-                    showShareSheet = true
+            if let profile {
+                Button {
+                    if store.hideSensitiveDetailsEnabled {
+                        showExportNotice = true
+                    } else if exporter.exportAsFile(profile) != nil {
+                        showShareSheet = true
+                    }
+                } label: {
+                    HStack {
+                        Image(systemName: "square.and.arrow.up")
+                        Text(store.hideSensitiveDetailsEnabled ? "tern.profileExporter.1a".localized : "tern.profileExporter.1b".localized)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                    .background(Color.purple.opacity(0.15))
+                    .foregroundStyle(.purple)
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
                 }
-            } label: {
-                HStack {
-                    Image(systemName: "square.and.arrow.up")
-                    Text("Export Profile")
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 12)
-                .background(Color.purple.opacity(0.15))
-                .foregroundStyle(.purple)
-                .clipShape(RoundedRectangle(cornerRadius: 10))
             }
             
             // Import button
@@ -270,7 +302,7 @@ struct ProfileExportImportButtons: View {
             } label: {
                 HStack {
                     Image(systemName: "square.and.arrow.down")
-                    Text("Import Profile")
+                    Text("ui.profileExporter.0".localized)
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 12)
@@ -279,22 +311,33 @@ struct ProfileExportImportButtons: View {
                 .clipShape(RoundedRectangle(cornerRadius: 10))
             }
             
-            // Copy as text
-            Button {
-                let text = exporter.exportAsText(profile)
-                UIPasteboard.general.string = text
-                HapticManager.notification(.success)
-            } label: {
-                HStack {
-                    Image(systemName: "doc.on.doc")
-                    Text("Copy as Text")
+            if let profile {
+                Button {
+                    let text = exporter.exportAsText(profile)
+                    UIPasteboard.general.string = text
+                    HapticManager.notification(.success)
+                } label: {
+                    HStack {
+                        Image(systemName: "doc.on.doc")
+                        Text(store.hideSensitiveDetailsEnabled ? "tern.profileExporter.2a".localized : "tern.profileExporter.2b".localized)
+                    }
+                    .font(.subheadline)
+                    .foregroundStyle(Color.textSecondary)
                 }
-                .font(.subheadline)
-                .foregroundStyle(Color.textSecondary)
             }
         }
+        .alert("ui.profileExporter.2".localized, isPresented: $showExportNotice) {
+            Button("action.cancel".localized, role: .cancel) {}
+            Button("ui.profileExporter.6".localized) {
+                if let profile, exporter.exportAsFile(profile) != nil {
+                    showShareSheet = true
+                }
+            }
+        } message: {
+            Text("ui.profileExporter.1".localized)
+        }
         .sheet(isPresented: $showShareSheet) {
-            if let url = exporter.exportAsFile(profile) {
+            if let profile, let url = exporter.exportAsFile(profile) {
                 ShareSheet(items: [url])
             }
         }
@@ -307,23 +350,25 @@ struct ProfileExportImportButtons: View {
                 }
             }
         }
-        .alert("Import Profile?", isPresented: $showImportConfirm) {
-            Button("Cancel", role: .cancel) {
+        .alert("ui.profileExporter.3".localized, isPresented: $showImportConfirm) {
+            Button("action.cancel".localized, role: .cancel) {
                 pendingImport = nil
             }
-            Button("Import") {
+            Button("ui.profileExporter.7".localized) {
                 if let imported = pendingImport {
-                    // Copy profile data to clipboard for manual creation
-                    // (Profile creation requires API call through onboarding flow)
-                    let text = """
-                    Imported Profile: \(imported.name)
-                    Date of Birth: \(imported.dateOfBirth)
-                    Time: \(imported.timeOfBirth ?? "Not set")
-                    Place: \(imported.placeOfBirth ?? "Not set")
-                    
-                    Please create a new profile with these details.
-                    """
-                    UIPasteboard.general.string = text
+                    let importedProfile = Profile(
+                        id: store.nextLocalProfileId(),
+                        name: imported.name,
+                        dateOfBirth: imported.dateOfBirth,
+                        timeOfBirth: imported.timeOfBirth,
+                        timeConfidence: imported.timeConfidence ?? (imported.timeOfBirth == nil ? "tern.profileExporter.3a".localized : "tern.profileExporter.3b".localized),
+                        placeOfBirth: imported.placeOfBirth,
+                        latitude: imported.latitude,
+                        longitude: imported.longitude,
+                        timezone: imported.timezone,
+                        houseSystem: imported.houseSystem
+                    )
+                    store.upsertProfile(importedProfile, select: true)
                     HapticManager.notification(.success)
                 }
                 pendingImport = nil
@@ -331,21 +376,21 @@ struct ProfileExportImportButtons: View {
         } message: {
             if let imported = pendingImport {
                 if validationIssues.isEmpty {
-                    Text("Import profile for \(imported.name)?")
+                    Text(String(format: "fmt.profileExporter.1".localized, "\(imported.name)"))
                 } else {
-                    Text("Import profile for \(imported.name)?\n\nWarnings:\n\(validationIssues.joined(separator: "\n"))")
+                    Text(String(format: "fmt.profileExporter.0".localized, "\(imported.name)", "\(validationIssues.joined(separator: "\n"))"))
                 }
             }
         }
-        .alert("Export Error", isPresented: .constant(exporter.exportError != nil)) {
-            Button("OK") {
+        .alert("ui.profileExporter.4".localized, isPresented: .constant(exporter.exportError != nil)) {
+            Button("action.ok".localized) {
                 exporter.exportError = nil
             }
         } message: {
             Text(exporter.exportError ?? "")
         }
-        .alert("Import Error", isPresented: .constant(exporter.importError != nil)) {
-            Button("OK") {
+        .alert("ui.profileExporter.5".localized, isPresented: .constant(exporter.importError != nil)) {
+            Button("action.ok".localized) {
                 exporter.importError = nil
             }
         } message: {
@@ -370,5 +415,6 @@ struct ProfileExportImportButtons: View {
         houseSystem: "Placidus"
     ))
     .padding()
+    .environment(AppStore.shared)
     .preferredColorScheme(.dark)
 }

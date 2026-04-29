@@ -1,0 +1,36 @@
+# Keep Docker build context small for Railway
+.git
+.github
+.vscode
+.DS_Store
+
+# Python
+**/__pycache__/
+**/*.py[cod]
+**/*.pyo
+.venv/
+.env
+.env.*
+
+# Node / frontend
+node_modules/
+dist/
+build/
+.vite/
+coverage/
+
+# Tests & tooling
+cypress/
+playwright/
+
+# Mobile app sources are not needed for backend image
+AstroNumeric-iOS/
+
+# Local data
+*.db
+*.sqlite
+*.sqlite3
+*.log
+
+# Docs (optional; not needed for runtime image)
+docs/

@@ -9,8 +9,7 @@ No repetition across sections - each has its own voice and focus.
 from __future__ import annotations
 
 import random
-from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 # ========== OVERVIEW SECTION ==========
 
@@ -309,10 +308,18 @@ EMOTIONAL_TIP_CONTENT = [
 def get_element_from_sign(sign: str) -> str:
     """Get element for a zodiac sign."""
     elements = {
-        "Aries": "Fire", "Leo": "Fire", "Sagittarius": "Fire",
-        "Taurus": "Earth", "Virgo": "Earth", "Capricorn": "Earth",
-        "Gemini": "Air", "Libra": "Air", "Aquarius": "Air",
-        "Cancer": "Water", "Scorpio": "Water", "Pisces": "Water",
+        "Aries": "Fire",
+        "Leo": "Fire",
+        "Sagittarius": "Fire",
+        "Taurus": "Earth",
+        "Virgo": "Earth",
+        "Capricorn": "Earth",
+        "Gemini": "Air",
+        "Libra": "Air",
+        "Aquarius": "Air",
+        "Cancer": "Water",
+        "Scorpio": "Water",
+        "Pisces": "Water",
     }
     return elements.get(sign, "Fire")
 
@@ -325,10 +332,10 @@ def get_energy_mode(blocks: List[Dict], topic: str) -> str:
         "career": ["ambitious", "steady", "innovative", "collaborative"],
         "emotional": ["transformative", "peaceful", "seeking", "processing"],
     }
-    
+
     # Score based on block tags and weights
     scores = {mode: 0 for mode in modes.get(topic, ["default"])}
-    
+
     tag_mappings = {
         "confident": ["action", "assertion", "leadership", "fire"],
         "reflective": ["insight", "wisdom", "contemplation", "water"],
@@ -347,7 +354,7 @@ def get_energy_mode(blocks: List[Dict], topic: str) -> str:
         "seeking": ["seeking", "purpose", "meaning", "spiritual"],
         "processing": ["emotional", "healing", "processing", "release"],
     }
-    
+
     for block in blocks:
         block_tags = block.get("tags", [])
         for mode, keywords in tag_mappings.items():
@@ -355,10 +362,10 @@ def get_energy_mode(blocks: List[Dict], topic: str) -> str:
                 for tag in block_tags:
                     if tag.lower() in keywords:
                         scores[mode] += 1
-    
+
     if not scores or max(scores.values()) == 0:
         return random.choice(list(scores.keys())) if scores else "default"
-    
+
     return max(scores, key=scores.get)
 
 
@@ -370,23 +377,25 @@ def generate_overview_content(
 ) -> Dict:
     """Generate unique overview section content."""
     random.seed(hash(seed + "overview"))
-    
+
     mode = get_energy_mode(blocks, "overview")
-    metaphor = random.choice(OVERVIEW_METAPHORS.get(element, OVERVIEW_METAPHORS["Fire"]))
+    metaphor = random.choice(
+        OVERVIEW_METAPHORS.get(element, OVERVIEW_METAPHORS["Fire"])
+    )
     opener = random.choice(OVERVIEW_OPENERS).format(theme=theme, metaphor=metaphor)
-    
+
     scenario = random.choice(OVERVIEW_SCENARIOS).format(
         action=random.choice(OVERVIEW_ACTIONS.get(mode, OVERVIEW_ACTIONS["confident"]))
     )
-    
+
     tip_template = random.choice(OVERVIEW_TIPS)
     tip = tip_template.format(tip=random.choice(OVERVIEW_TIP_CONTENT))
-    
+
     highlights = [opener, scenario]
     for block in blocks[:2]:
         highlights.append(f"{block.get('source', 'Stars')}: {block.get('text', '')}")
     highlights.append(tip)
-    
+
     return {
         "title": "Overview",
         "highlights": highlights,
@@ -402,25 +411,29 @@ def generate_love_content(
 ) -> Dict:
     """Generate unique love & relationships content."""
     random.seed(hash(seed + "love"))
-    
+
     mode = get_energy_mode(blocks, "love")
     metaphor = random.choice(LOVE_METAPHORS.get(mode, LOVE_METAPHORS["gentle"]))
     opener = random.choice(LOVE_OPENERS).format(theme=theme, metaphor=metaphor)
-    
+
     scenario = random.choice(LOVE_SCENARIOS).format(
-        partnered=random.choice(LOVE_PARTNERED),
-        single=random.choice(LOVE_SINGLE)
+        partnered=random.choice(LOVE_PARTNERED), single=random.choice(LOVE_SINGLE)
     )
-    
+
     tip_template = random.choice(LOVE_TIPS)
     tip = tip_template.format(tip=random.choice(LOVE_TIP_CONTENT))
-    
+
     highlights = [opener, scenario]
     for block in blocks[:2]:
-        if "love" in block.get("tags", []) or block.get("weights", {}).get("love", 0) > 0.3:
-            highlights.append(f"{block.get('source', 'Venus')}: {block.get('text', '')}")
+        if (
+            "love" in block.get("tags", [])
+            or block.get("weights", {}).get("love", 0) > 0.3
+        ):
+            highlights.append(
+                f"{block.get('source', 'Venus')}: {block.get('text', '')}"
+            )
     highlights.append(tip)
-    
+
     return {
         "title": "Love & Relationships",
         "highlights": highlights,
@@ -436,25 +449,29 @@ def generate_career_content(
 ) -> Dict:
     """Generate unique career & money content."""
     random.seed(hash(seed + "career"))
-    
+
     mode = get_energy_mode(blocks, "career")
     metaphor = random.choice(CAREER_METAPHORS.get(mode, CAREER_METAPHORS["steady"]))
     opener = random.choice(CAREER_OPENERS).format(theme=theme, metaphor=metaphor)
-    
+
     scenario = random.choice(CAREER_SCENARIOS).format(
-        meeting=random.choice(CAREER_MEETING),
-        solo=random.choice(CAREER_SOLO)
+        meeting=random.choice(CAREER_MEETING), solo=random.choice(CAREER_SOLO)
     )
-    
+
     tip_template = random.choice(CAREER_TIPS)
     tip = tip_template.format(tip=random.choice(CAREER_TIP_CONTENT))
-    
+
     highlights = [opener, scenario]
     for block in blocks[:2]:
-        if "career" in block.get("tags", []) or block.get("weights", {}).get("career", 0) > 0.3:
-            highlights.append(f"{block.get('source', 'Saturn')}: {block.get('text', '')}")
+        if (
+            "career" in block.get("tags", [])
+            or block.get("weights", {}).get("career", 0) > 0.3
+        ):
+            highlights.append(
+                f"{block.get('source', 'Saturn')}: {block.get('text', '')}"
+            )
     highlights.append(tip)
-    
+
     return {
         "title": "Career & Money",
         "highlights": highlights,
@@ -470,25 +487,30 @@ def generate_emotional_content(
 ) -> Dict:
     """Generate unique emotional & spiritual content."""
     random.seed(hash(seed + "emotional"))
-    
+
     mode = get_energy_mode(blocks, "emotional")
-    metaphor = random.choice(EMOTIONAL_METAPHORS.get(mode, EMOTIONAL_METAPHORS["peaceful"]))
+    metaphor = random.choice(
+        EMOTIONAL_METAPHORS.get(mode, EMOTIONAL_METAPHORS["peaceful"])
+    )
     opener = random.choice(EMOTIONAL_OPENERS).format(theme=theme, metaphor=metaphor)
-    
+
     scenario = random.choice(EMOTIONAL_SCENARIOS).format(
         mental=random.choice(EMOTIONAL_MENTAL),
-        spiritual=random.choice(EMOTIONAL_SPIRITUAL)
+        spiritual=random.choice(EMOTIONAL_SPIRITUAL),
     )
-    
+
     tip_template = random.choice(EMOTIONAL_TIPS)
     tip = tip_template.format(tip=random.choice(EMOTIONAL_TIP_CONTENT))
-    
+
     highlights = [opener, scenario]
     for block in blocks[:2]:
-        if "emotional" in block.get("tags", []) or block.get("weights", {}).get("emotional", 0) > 0.3:
+        if (
+            "emotional" in block.get("tags", [])
+            or block.get("weights", {}).get("emotional", 0) > 0.3
+        ):
             highlights.append(f"{block.get('source', 'Moon')}: {block.get('text', '')}")
     highlights.append(tip)
-    
+
     return {
         "title": "Emotional & Spiritual",
         "highlights": highlights,
@@ -505,20 +527,20 @@ def generate_all_sections(
     seed: str,
 ) -> List[Dict]:
     """Generate all four sections with unique, non-repeating content."""
-    
+
     # Derive topic-specific themes
     overview_theme = overall_theme
     love_theme = _derive_love_theme(blocks, numerology)
     career_theme = _derive_career_theme(blocks, numerology)
     emotional_theme = _derive_emotional_theme(blocks, numerology)
-    
+
     sections = [
         generate_overview_content(blocks, element, overview_theme, seed),
         generate_love_content(blocks, love_theme, seed),
         generate_career_content(blocks, career_theme, seed),
         generate_emotional_content(blocks, emotional_theme, seed),
     ]
-    
+
     return sections
 
 
@@ -527,7 +549,7 @@ def _derive_love_theme(blocks: List[Dict], numerology: Dict) -> str:
     love_blocks = [b for b in blocks if "love" in b.get("tags", [])]
     if love_blocks:
         return love_blocks[0].get("text", "connection energy")[:50]
-    
+
     pd = numerology.get("cycles", {}).get("personal_day", {}).get("number", 1)
     love_themes = {
         1: "new beginnings in connection",
@@ -548,7 +570,7 @@ def _derive_career_theme(blocks: List[Dict], numerology: Dict) -> str:
     career_blocks = [b for b in blocks if "career" in b.get("tags", [])]
     if career_blocks:
         return career_blocks[0].get("text", "professional momentum")[:50]
-    
+
     py = numerology.get("cycles", {}).get("personal_year", {}).get("number", 1)
     career_themes = {
         1: "initiative and leadership",
@@ -569,7 +591,7 @@ def _derive_emotional_theme(blocks: List[Dict], numerology: Dict) -> str:
     emotional_blocks = [b for b in blocks if "emotional" in b.get("tags", [])]
     if emotional_blocks:
         return emotional_blocks[0].get("text", "inner transformation")[:50]
-    
+
     pm = numerology.get("cycles", {}).get("personal_month", {}).get("number", 1)
     emotional_themes = {
         1: "self-discovery",

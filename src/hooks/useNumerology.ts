@@ -19,7 +19,7 @@ export function useNumerology() {
         const headers: Record<string, string> = {};
         if (token) headers['Authorization'] = `Bearer ${token}`;
 
-        const data = await apiFetch<NumerologyProfile>('/numerology', {
+        const data = await apiFetch<NumerologyProfile>('/v2/numerology/profile', {
           method: 'POST',
           headers,
           body: JSON.stringify({
@@ -58,7 +58,7 @@ export function useNumerology() {
         const headers: Record<string, string> = {};
         if (token) headers['Authorization'] = `Bearer ${token}`;
 
-        const data = await apiFetch<NumerologyProfile>(`/numerology/profile/${profileId}`, {
+        const data = await apiFetch<NumerologyProfile>(`/v2/numerology/profile/${profileId}`, {
           headers,
         });
         setNumerologyProfile(data);

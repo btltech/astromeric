@@ -16,22 +16,40 @@ struct CompositeChartView: View {
                 
                 ScrollView {
                     VStack(spacing: 16) {
+                        PremiumHeroCard(
+                            eyebrow: "hero.compositeChart.eyebrow".localized,
+                            title: "hero.compositeChart.title".localized,
+                            bodyText: "hero.compositeChart.body".localized,
+                            accent: [Color(hex: "241532"), Color(hex: "8750b7"), Color(hex: "d07a56")],
+                            chips: ["hero.compositeChart.chip.0".localized, "hero.compositeChart.chip.1".localized, "hero.compositeChart.chip.2".localized]
+                        )
+
                         if store.profiles.count < 2 {
                             CardView {
-                                Text("Add at least two profiles to generate a composite chart.")
+                                Text("ui.compositeChart.0".localized)
                                     .font(.caption)
                                     .foregroundStyle(Color.textSecondary)
                             }
                         } else {
-                            Picker("Partner", selection: $selectedPartnerId) {
-                                ForEach(store.profiles.filter { $0.id != store.activeProfile?.id }) { profile in
-                                    Text(profile.name).tag(Optional(profile.id))
+                            Picker("ui.compositeChart.3".localized, selection: $selectedPartnerId) {
+                                ForEach(Array(store.profiles.filter { $0.id != store.activeProfile?.id }.enumerated()), id: \.element.id) { index, profile in
+                                    Text(profile.displayName(
+                                        hideSensitive: store.hideSensitiveDetailsEnabled,
+                                        role: .genericProfile,
+                                        index: index
+                                    ))
+                                    .tag(Optional(profile.id))
                                 }
                             }
                             .pickerStyle(.menu)
                             .onChange(of: selectedPartnerId) { _, _ in
                                 Task { await vm.load(store: store, partnerId: selectedPartnerId) }
                             }
+
+                            PremiumSectionHeader(
+                title: "section.compositeChart.0.title".localized,
+                subtitle: "section.compositeChart.0.subtitle".localized
+            )
 
                             // Data quality warning when either profile lacks exact birth time
                             let personA = store.activeProfile
@@ -50,9 +68,13 @@ struct CompositeChartView: View {
                             } else if let chart = vm.chart {
                                 CardView {
                                     VStack(alignment: .leading, spacing: 6) {
-                                        Text("Composite Chart")
+                                        Text("ui.compositeChart.1".localized)
                                             .font(.headline)
-                                        Text("\(chart.metadata.personA) + \(chart.metadata.personB)")
+                                        Text(
+                                            store.hideSensitiveDetailsEnabled
+                                                ? "You + Match"
+                                                : "\(chart.metadata.personA) + \(chart.metadata.personB)"
+                                        )
                                             .font(.caption)
                                             .foregroundStyle(Color.textSecondary)
                                     }
@@ -62,7 +84,7 @@ struct CompositeChartView: View {
                                 if !insights.isEmpty {
                                     CardView {
                                         VStack(alignment: .leading, spacing: 6) {
-                                            Text("Interpretation")
+                                            Text("ui.compositeChart.2".localized)
                                                 .font(.headline)
                                             ForEach(insights, id: \.self) { item in
                                                 Text("• \(item)")
@@ -89,9 +111,10 @@ struct CompositeChartView: View {
                         }
                     }
                     .padding()
+                    .readableContainer()
                 }
             }
-            .navigationTitle("Composite Chart")
+            .navigationTitle("screen.compositeChart".localized)
             .navigationBarTitleDisplayMode(.inline)
             .task(id: "\(store.activeProfile?.id ?? 0)-\(store.profiles.count)") {
                 if selectedPartnerId == nil {
@@ -150,14 +173,7 @@ final class CompositeChartVM {
         error = nil
         defer { isLoading = false }
         
-        let payload = ProfilePayload(
-            name: personBProfile.name,
-            dateOfBirth: personBProfile.dateOfBirth,
-            timeOfBirth: personBProfile.timeOfBirth,
-            latitude: personBProfile.latitude,
-            longitude: personBProfile.longitude,
-            timezone: personBProfile.timezone
-        )
+        let payload = personBProfile.privacySafePayload(hideSensitive: store.hideSensitiveDetailsEnabled)
         do {
             let response: V2ApiResponse<CompositeChartResponse> = try await api.fetch(
                 .compositeChart(personA: personA, personB: payload),

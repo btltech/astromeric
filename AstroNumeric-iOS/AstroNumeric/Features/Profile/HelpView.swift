@@ -2,6 +2,7 @@
 // In-app help & FAQ
 
 import SwiftUI
+import UIKit
 
 struct HelpView: View {
     @State private var expandedQuestion: String? = nil
@@ -28,7 +29,7 @@ struct HelpView: View {
                     Image(systemName: "magnifyingglass")
                         .foregroundStyle(Color.textSecondary)
                         .accessibilityHidden(true)
-                    TextField("Search help topics…", text: $searchText)
+                    TextField("ui.help.3".localized, text: $searchText)
                         .font(.subheadline)
                         .accessibilityLabel("Search help topics")
                     if !searchText.isEmpty {
@@ -48,9 +49,22 @@ struct HelpView: View {
 
                 ScrollView {
                     VStack(spacing: 16) {
+                        PremiumHeroCard(
+                            eyebrow: "hero.help.eyebrow".localized,
+                            title: "hero.help.title".localized,
+                            bodyText: "hero.help.body".localized,
+                            accent: [Color(hex: "1a1f38"), Color(hex: "3f63bc"), Color(hex: "7d59b1")],
+                            chips: ["hero.help.chip.0".localized, "hero.help.chip.1".localized, "hero.help.chip.2".localized]
+                        )
+
                         if filteredFAQ.isEmpty {
                             emptySearch
                         } else {
+                            PremiumSectionHeader(
+                title: "section.help.0.title".localized,
+                subtitle: "section.help.0.subtitle".localized
+            )
+
                             ForEach(filteredFAQ, id: \.title) { section in
                                 FAQSectionView(
                                     section: section,
@@ -63,10 +77,11 @@ struct HelpView: View {
                         Spacer(minLength: 32)
                     }
                     .padding()
+                    .readableContainer()
                 }
             }
         }
-        .navigationTitle("Help & FAQ")
+        .navigationTitle("screen.helpFaq".localized)
         .navigationBarTitleDisplayMode(.inline)
     }
 
@@ -76,10 +91,10 @@ struct HelpView: View {
         CardView {
             VStack(spacing: 10) {
                 Image(systemName: "questionmark.circle.fill")
-                    .font(.system(size: 36))
+                    .font(.system(.largeTitle))
                     .foregroundStyle(Color.textSecondary)
                     .accessibilityHidden(true)
-                Text("No results for \"\(searchText)\"")
+                Text(String(format: "fmt.help.0".localized, "\(searchText)"))
                     .font(.subheadline)
                     .foregroundStyle(Color.textSecondary)
             }
@@ -93,20 +108,20 @@ struct HelpView: View {
     private var supportCard: some View {
         CardView {
             VStack(spacing: 12) {
-                Label("Still need help?", systemImage: "bubble.left.and.bubble.right.fill")
+                Label("ui.help.2".localized, systemImage: "bubble.left.and.bubble.right.fill")
                     .font(.headline)
                     .foregroundStyle(.purple)
 
-                Text("Couldn't find what you were looking for? Our support team usually responds within 24 hours.")
+                Text("ui.help.0".localized)
                     .font(.subheadline)
                     .multilineTextAlignment(.center)
                     .foregroundStyle(Color.textSecondary)
 
-                Link(destination: URL(string: "mailto:support@astromeric.app")!) {
+                Link(destination: supportEmailURL) {
                     HStack {
                         Image(systemName: "envelope.fill")
                             .accessibilityHidden(true)
-                        Text("Email Support")
+                        Text("ui.help.1".localized)
                     }
                     .font(.headline)
                     .frame(maxWidth: .infinity)
@@ -118,6 +133,40 @@ struct HelpView: View {
                 .accessibilityLabel("Email support at support@astromeric.app")
             }
         }
+    }
+
+    private var supportEmailURL: URL {
+        var components = URLComponents()
+        components.scheme = "mailto"
+        components.path = "support@astromeric.app"
+        components.queryItems = [
+            URLQueryItem(name: "subject", value: "AstroNumeric iOS Support"),
+            URLQueryItem(name: "body", value: supportEmailBody)
+        ]
+        return components.url ?? URL(string: "mailto:support@astromeric.app")!
+    }
+
+    private var supportEmailBody: String {
+        let info = Bundle.main.infoDictionary
+        let version = info?["CFBundleShortVersionString"] as? String ?? "?"
+        let build = info?["CFBundleVersion"] as? String ?? "?"
+        let device = UIDevice.current
+        return """
+        Please describe what happened:
+
+        Screen or feature:
+        Expected result:
+        Actual result:
+        Steps to reproduce:
+
+        ---
+        Diagnostics
+        Version \(version) (\(build))
+        iOS \(device.systemVersion)
+        Device: \(device.model)
+
+        No birth date, birth time, birthplace, journal text, or chart data is included automatically.
+        """
     }
 
     // MARK: - FAQ Data
@@ -133,7 +182,9 @@ struct HelpView: View {
             FAQItem(question: "How do I edit my birth details?",
                     answer: "Go to Profile, tap 'Edit' in the Birth Details card, make your changes, and tap Save. All your readings will automatically recalculate."),
             FAQItem(question: "How do I delete my data?",
-                    answer: "To delete a profile from your device, long press it in the Profiles list and tap Delete. For server-side deletion of all data, email privacy@astromeric.app with 'Data Deletion Request'."),
+                    answer: "To remove a profile from the app, long press it in the Profiles list and tap Delete. In the current personal-mode build, most profile data lives on your device. If you want a broader reset, remove the app from your device. For backend-held data questions such as push tokens or synced friend records, email privacy@astromeric.app."),
+            FAQItem(question: "What does 'Hide Sensitive Details' do?",
+                    answer: "It masks names, birth details, share cards, and some local cache labels across the app. It does not remove the underlying birth data needed to calculate charts, and backup export files can still contain full details so they can be restored later."),
         ]),
         FAQSection(title: "Readings & Accuracy", icon: "sparkles", iconColor: .orange, items: [
             FAQItem(question: "Why does my reading look the same as yesterday?",
@@ -157,9 +208,9 @@ struct HelpView: View {
         ]),
         FAQSection(title: "Notifications & Widgets", icon: "bell.circle.fill", iconColor: .yellow, items: [
             FAQItem(question: "How do I enable the daily reminder?",
-                    answer: "Go to Profile → Settings and toggle on 'Daily Reading Reminder'. If prompted, allow notifications. You can set the reminder time in iOS Settings → Notifications → AstroNumeric."),
+                    answer: "You can use the quick toggle in Profile for the daily reading reminder, or open the Notifications screen to set exact times for daily, moon, habit, transit, and timing alerts. iOS Settings still controls the system-level permission."),
             FAQItem(question: "The morning brief widget shows old data.",
-                    answer: "Open the app and fetch the Daily Brief at least once — this pushes fresh data to the widget. Widgets update on a system schedule (roughly every 15 minutes) so there may be a short delay."),
+                    answer: "Bring the app to the foreground with an active profile so it can refresh today's brief and hand the latest data to the widget. Widgets still refresh on Apple's schedule, so a short delay is normal even after the app updates the data."),
             FAQItem(question: "How do I add the widget to my Lock Screen?",
                     answer: "Long press your Lock Screen, tap Customize, then tap the Lock Screen. Tap the '+' button and search for 'AstroNumeric'. Choose the brief widget or personal day widget."),
         ]),
@@ -169,15 +220,15 @@ struct HelpView: View {
             FAQItem(question: "What does the compatibility percentage mean?",
                     answer: "The score combines synastry aspects (how your planets interact), life path resonance, and element balance. 80%+ is exceptional alignment. 60–80% is strong. Below 60% indicates more friction — which can drive growth. No score predicts a relationship's success."),
             FAQItem(question: "My friend data disappeared after an app update.",
-                    answer: "Friend data is now stored on a persistent server-side volume and should survive updates. If you lost data, it may have been stored before this feature was added. Re-add your friends — future updates won't affect them."),
+                    answer: "Cosmic Circle friends and saved relationship history are handled separately. Friends sync through the app backend, while saved compatibility history stays on your device. If something looks missing, refresh the Friends screen first. If it still does not return, contact support."),
         ]),
         FAQSection(title: "Troubleshooting", icon: "wrench.and.screwdriver.fill", iconColor: .red, items: [
             FAQItem(question: "The app shows 'Unable to load' errors.",
                     answer: "Check your internet connection. If connected, the server may be temporarily down — try again in a minute. You can also pull down to retry. If the issue persists, email support@astromeric.app."),
             FAQItem(question: "How do I clear the cache?",
-                    answer: "Go to Profile → System Diagnostics. You'll see the current cache sizes there. Currently, caches clear automatically after their TTL. A full cache flush can be done by reinstalling the app."),
+                    answer: "Most local caches clear automatically after their TTL. There is no one-tap full cache wipe in the current build, so reinstalling the app is the cleanest way to clear local caches."),
             FAQItem(question: "The app crashed. How do I report it?",
-                    answer: "Crash logs are automatically submitted to our crash reporting system. If you'd like to describe what happened, email support@astromeric.app with 'Crash Report' in the subject and the steps that led to the crash."),
+                    answer: "The app does not currently include a dedicated in-app crash reporting SDK. If it crashes, relaunch it and email support@astromeric.app with 'Crash Report' in the subject, your device model, iOS version, and the steps that led to the crash."),
             FAQItem(question: "Readings aren't updating.",
                     answer: "Try pulling down to refresh. If still stale, check your internet connection. Daily readings cache for 1 hour — if you've already fetched today's reading, you'll see it again until the hour expires or you force-refresh."),
         ]),
@@ -235,7 +286,7 @@ struct FAQSectionView: View {
                                         .foregroundStyle(Color.primary)
                                         .multilineTextAlignment(.leading)
                                     Spacer()
-                                    Image(systemName: expandedQuestion == item.question ? "chevron.up" : "chevron.down")
+                                    Image(systemName: expandedQuestion == item.question ? "tern.help.0a".localized : "tern.help.0b".localized)
                                         .font(.caption)
                                         .foregroundStyle(Color.textSecondary)
                                         .accessibilityHidden(true)
@@ -244,7 +295,7 @@ struct FAQSectionView: View {
                             }
                             .buttonStyle(.plain)
                             .accessibilityLabel(item.question)
-                            .accessibilityHint(expandedQuestion == item.question ? "Collapse answer" : "Expand answer")
+                            .accessibilityHint(expandedQuestion == item.question ? "tern.help.1a".localized : "tern.help.1b".localized)
 
                             // Answer
                             if expandedQuestion == item.question {

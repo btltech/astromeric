@@ -9,13 +9,32 @@ from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Optional
 
 from ..chart_service import build_natal_chart, build_transit_chart
+from ..engine.guidance import get_daily_guidance
 from ..numerology_engine import build_numerology
 from ..rule_engine import RuleEngine
-from ..engine.guidance import get_daily_guidance
+
+VALID_READING_TONES = {
+    "very_practical",
+    "balanced_practical",
+    "balanced_mystical",
+    "very_mystical",
+}
 
 
-def build_forecast(profile: Dict, scope: str = "daily", lang: str = "en") -> Dict:
-    anchor = datetime.now(timezone.utc)
+def build_forecast(
+    profile: Dict,
+    scope: str = "daily",
+    lang: str = "en",
+    target_date: Optional[str] = None,
+    tone: Optional[str] = None,
+) -> Dict:
+    """
+    Build a forecast centered on `target_date` (YYYY-MM-DD).
+
+    If `target_date` is omitted, uses today's date in the user's timezone.
+    Forecast calculations are anchored at local noon to avoid DST/midnight edge-cases.
+    """
+    anchor = _resolve_anchor_datetime(profile, target_date)
     natal = build_natal_chart(profile)
     transit = build_transit_chart(profile, anchor)
     numerology = build_numerology(profile["name"], profile["date_of_birth"], anchor)
@@ -44,12 +63,12 @@ def build_forecast(profile: Dict, scope: str = "daily", lang: str = "en") -> Dic
         transit_filter,
         synastry_priority,
     )
-    
+
     # Generate daily guidance (Avoid/Embrace) with location for power hours
     guidance = get_daily_guidance(
-        natal, 
-        transit, 
-        numerology, 
+        natal,
+        transit,
+        numerology,
         scope,
         latitude=profile.get("latitude"),
         longitude=profile.get("longitude"),
@@ -60,32 +79,48 @@ def build_forecast(profile: Dict, scope: str = "daily", lang: str = "en") -> Dic
     # Calculate overall_score (0-10 scale) from topic scores, numerology, and personal cycles
     # Extract personal day number for variance
     personal_day = numerology.get("cycles", {}).get("personal_day", {}).get("number", 5)
-    personal_month = numerology.get("cycles", {}).get("personal_month", {}).get("number", 5)
-    personal_year = numerology.get("cycles", {}).get("personal_year", {}).get("number", 5)
-    
+    personal_month = (
+        numerology.get("cycles", {}).get("personal_month", {}).get("number", 5)
+    )
+    (numerology.get("cycles", {}).get("personal_year", {}).get("number", 5))
+
     # Topic score contribution (smoothed transits)
     # Raw topic scores typically range from 0-30, normalize to 0-1 scale
     topic_values = list(smoothed.values()) if smoothed else [0.0]
     avg_topic = sum(topic_values) / len(topic_values) if topic_values else 0.0
     normalized_topic = min(1.0, avg_topic / 20.0)  # Normalize: 20+ = excellent
-    
+
     # Numerology bonus from personal day/month/year cycles
     numerology_bias = _numerology_bias(numerology)
     numerology_bonus = sum(numerology_bias.values()) / 4
-    
+
     # Personal day influence (1-9 each contribute differently)
     # Days 1, 3, 5, 9 are generally higher energy; 4, 7, 8 are more challenging
     personal_day_modifier = {
-        1: 1.2, 2: 0.3, 3: 1.0, 4: -0.4, 5: 0.7, 
-        6: 0.4, 7: -0.3, 8: 0.2, 9: 0.9
+        1: 1.2,
+        2: 0.3,
+        3: 1.0,
+        4: -0.4,
+        5: 0.7,
+        6: 0.4,
+        7: -0.3,
+        8: 0.2,
+        9: 0.9,
     }.get(personal_day, 0.0)
-    
+
     # Personal month adds longer-term influence
     personal_month_modifier = {
-        1: 0.5, 2: 0.15, 3: 0.4, 4: -0.2, 5: 0.3,
-        6: 0.2, 7: -0.15, 8: 0.1, 9: 0.35
+        1: 0.5,
+        2: 0.15,
+        3: 0.4,
+        4: -0.2,
+        5: 0.3,
+        6: 0.2,
+        7: -0.15,
+        8: 0.1,
+        9: 0.35,
     }.get(personal_month, 0.0)
-    
+
     # Calculate score on 0-10 scale
     # Base: normalized transit score (0-2.5 contribution)
     base_score = 5.0 + (normalized_topic * 2.5)
@@ -94,18 +129,18 @@ def build_forecast(profile: Dict, scope: str = "daily", lang: str = "en") -> Dic
     # Add personal month influence (moderate, -0.2 to +0.5)
     base_score += personal_month_modifier
     # Add numerology topic bias (minor, 0-0.3)
-    base_score += (numerology_bonus * 1.5)
-    
+    base_score += numerology_bonus * 1.5
+
     # Clamp to 3.0-9.5 range for realistic variance
     overall_score = max(3.0, min(9.5, base_score))
-    
+
     # Round to one decimal
     overall_score = round(overall_score, 1)
 
     return {
         "scope": scope,
         "date": anchor.date().isoformat(),
-        "sections": _sections(result, smoothed, numerology, scope),
+        "sections": _sections(result, smoothed, numerology, scope, tone=tone),
         "theme": _top_theme(result),
         "numerology": numerology,
         "charts": {"natal": natal, "transit": transit},
@@ -115,25 +150,137 @@ def build_forecast(profile: Dict, scope: str = "daily", lang: str = "en") -> Dic
     }
 
 
-def _sections(result: Dict, smoothed_scores: Dict, numerology: Dict, scope: str = "daily") -> list:
+def _resolve_anchor_datetime(profile: Dict, target_date: Optional[str]) -> datetime:
+    tz_name = (profile.get("timezone") or "UTC").strip()
+
+    # Build a tz-aware datetime at local noon on the requested (or current) date.
+    if target_date:
+        date_part = target_date
+    else:
+        now_utc = datetime.now(timezone.utc)
+        if tz_name in ("UTC", "GMT"):
+            date_part = now_utc.date().isoformat()
+        else:
+            from zoneinfo import ZoneInfo
+
+            date_part = now_utc.astimezone(ZoneInfo(tz_name)).date().isoformat()
+
+    # Attach timezone information without converting (we're defining a local time).
+    naive_noon = datetime.fromisoformat(f"{date_part}T12:00:00")
+    if tz_name in ("UTC", "GMT"):
+        return naive_noon.replace(tzinfo=timezone.utc)
+
+    from zoneinfo import ZoneInfo
+
+    return naive_noon.replace(tzinfo=ZoneInfo(tz_name))
+
+
+def _normalize_tone(tone: Optional[str]) -> str:
+    if tone in VALID_READING_TONES:
+        return tone
+    return "balanced_mystical"
+
+
+def _terminal_punctuation(text: str) -> str:
+    cleaned = (text or "").strip()
+    if not cleaned:
+        return ""
+    if cleaned[-1] in ".!?":
+        return cleaned
+    return f"{cleaned}."
+
+
+def _compose_summary(highlights: list[str], tone: Optional[str]) -> str:
+    normalized = _normalize_tone(tone)
+    if not highlights:
+        fallback = {
+            "very_practical": "Bottom line: keep things simple and stay present.",
+            "balanced_practical": "Key theme: stay present and work with what is in front of you.",
+            "balanced_mystical": "Cosmic weather: the sky is quiet, so stay present and grounded.",
+            "very_mystical": "The stars are quiet here, asking for presence more than force.",
+        }
+        return fallback[normalized]
+
+    first = _terminal_punctuation(highlights[0])
+    second = _terminal_punctuation(highlights[1]) if len(highlights) > 1 else ""
+
+    if normalized == "very_practical":
+        if second:
+            return f"Bottom line: {first} Practical focus: {second}"
+        return f"Bottom line: {first}"
+
+    if normalized == "balanced_practical":
+        if second:
+            return f"Key theme: {first} Keep it grounded with this: {second}"
+        return f"Key theme: {first}"
+
+    if normalized == "very_mystical":
+        if second:
+            return f"The stars gather around this theme: {first} A deeper current moves underneath it: {second}"
+        return f"The stars gather around this theme: {first}"
+
+    if second:
+        return f"Cosmic weather: {first} Beneath that, the current points to {second}"
+    return f"Cosmic weather: {first}"
+
+
+def _sections(
+    result: Dict,
+    smoothed_scores: Dict,
+    numerology: Dict,
+    scope: str = "daily",
+    tone: Optional[str] = None,
+) -> list:
     blocks = result["selected_blocks"]
     sections = []
     used_sources: set = set()  # Track sources to avoid repetition
-    
-    sections.append(
-        _topic_section("Overview", None, blocks, smoothed_scores, numerology, used_sources, scope)
-    )
+
     sections.append(
         _topic_section(
-            "Love & Relationships", "love", blocks, smoothed_scores, numerology, used_sources, scope
+            "Overview",
+            None,
+            blocks,
+            smoothed_scores,
+            numerology,
+            used_sources,
+            scope,
+            tone=tone,
         )
     )
     sections.append(
-        _topic_section("Career & Money", "career", blocks, smoothed_scores, numerology, used_sources, scope)
+        _topic_section(
+            "Love & Relationships",
+            "love",
+            blocks,
+            smoothed_scores,
+            numerology,
+            used_sources,
+            scope,
+            tone=tone,
+        )
     )
     sections.append(
         _topic_section(
-            "Emotional & Spiritual", "emotional", blocks, smoothed_scores, numerology, used_sources, scope
+            "Career & Money",
+            "career",
+            blocks,
+            smoothed_scores,
+            numerology,
+            used_sources,
+            scope,
+            tone=tone,
+        )
+    )
+    sections.append(
+        _topic_section(
+            "Emotional & Spiritual",
+            "emotional",
+            blocks,
+            smoothed_scores,
+            numerology,
+            used_sources,
+            scope,
+            tone=tone,
         )
     )
     return sections
@@ -253,29 +400,44 @@ def _topic_section(
     numerology: Dict,
     used_sources: Optional[set] = None,
     scope: str = "daily",
+    tone: Optional[str] = None,
 ) -> Dict:
     """Build a section with highlights relevant to the topic, avoiding repetition."""
     if used_sources is None:
         used_sources = set()
-    
+
     # Scope-specific source preferences
     # Daily: emphasize transits and fast-moving indicators
     # Weekly: emphasize Mars, Venus transits and medium-term themes
     # Monthly: emphasize Jupiter, Saturn and structural themes
     scope_source_boost = {
         "daily": ["Transit Moon", "Transit Mercury", "Transit Sun", "personal day"],
-        "weekly": ["Transit Mars", "Transit Venus", "Transit Jupiter", "personal month"],
-        "monthly": ["Transit Jupiter", "Transit Saturn", "Transit Pluto", "personal year", "Life Path"],
+        "weekly": [
+            "Transit Mars",
+            "Transit Venus",
+            "Transit Jupiter",
+            "personal month",
+        ],
+        "monthly": [
+            "Transit Jupiter",
+            "Transit Saturn",
+            "Transit Pluto",
+            "personal year",
+            "Life Path",
+        ],
     }
     preferred_sources = scope_source_boost.get(scope, [])
-    
+
     def source_boost(b):
         source = b.get("source", "")
         for pref in preferred_sources:
             if pref.lower() in source.lower():
                 return 0.5
         return 0.0
-    
+
+    def _is_transit_block(b: Dict) -> bool:
+        return b.get("source", "").startswith("Transit ")
+
     if topic_key:
         # Sort by how relevant blocks are to THIS specific topic
         def topic_relevance(b):
@@ -291,11 +453,14 @@ def _topic_section(
             boost = source_boost(b)
             # Include block weight from rule engine
             block_weight = b.get("weight", 1.0)
-            return (direct_weight + tag_match - (other_weight * 0.3) + boost) * block_weight
-        
+            return (
+                direct_weight + tag_match - (other_weight * 0.3) + boost
+            ) * block_weight
+
         # Filter to blocks that have SOME relevance to this topic
         relevant = [
-            b for b in blocks
+            b
+            for b in blocks
             if topic_key in b.get("weights", {}) or topic_key in b.get("tags", [])
         ]
         # Sort by topic-specific relevance
@@ -312,9 +477,16 @@ def _topic_section(
             # Include block weight from rule engine
             block_weight = b.get("weight", 1.0)
             return (general + (breadth * 0.1) + boost) * block_weight
-        
+
         relevant = sorted(blocks, key=overview_relevance, reverse=True)
-    
+
+    # For forecast scopes, transit blocks (date-sensitive) must lead each section.
+    # Without this, high-weight natal blocks always win and all dates look identical.
+    if scope in ("daily", "weekly", "monthly"):
+        transit_blocks = [b for b in relevant if _is_transit_block(b)]
+        natal_blocks = [b for b in relevant if not _is_transit_block(b)]
+        relevant = transit_blocks + natal_blocks
+
     # Select highlights, avoiding already-used sources
     # Output clean text only (no source prefix for cleaner UX)
     highlights = []
@@ -324,24 +496,24 @@ def _topic_section(
         if source in used_sources:
             continue
         # Clean text only - no technical prefixes
-        highlights.append(b['text'])
+        highlights.append(b["text"])
         used_sources.add(source)
         if len(highlights) >= 4:
             break
-    
+
     # If we couldn't find enough unique blocks, allow some overlap
     if len(highlights) < 2:
         for b in relevant[:4]:
-            text = b['text']
+            text = b["text"]
             if text not in highlights:
                 highlights.append(text)
             if len(highlights) >= 4:
                 break
-    
+
     numerology_note = _numerology_hook(topic_key, numerology)
     if numerology_note:
         highlights.append(numerology_note)
-    
+
     # Provide section-specific topic scores so the UI can render meaningful ratings.
     if topic_key:
         section_scores = {
@@ -352,12 +524,12 @@ def _topic_section(
         section_scores = scores
 
     # Generate summary from highlights
-    summary = " ".join(highlights[:2]) if highlights else "Quiet sky; stay present."
-    
+    summary = _compose_summary(highlights[:2], tone)
+
     # Extract avoid/embrace from guidance (if available in result)
     avoid_list = []
     embrace_list = []
-    
+
     # Look through blocks for avoid/embrace tags
     for b in relevant[:10]:
         tags = b.get("tags", [])

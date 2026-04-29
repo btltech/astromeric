@@ -11,11 +11,3 @@ Crawl-delay: 1
 Disallow: /api/
 Disallow: /health
 Disallow: /cache/
-
-# Allow search engines to index main pages
-Allow: /natal
-Allow: /compatibility
-Allow: /numerology
-Allow: /forecast
-Allow: /learn
-Allow: /glossary

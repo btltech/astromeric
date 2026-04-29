@@ -10,48 +10,150 @@ Generates personalized daily Do's and Don'ts based on:
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
-from typing import Dict, List, Optional, Any
-
+from typing import Any, Dict, List, Optional
 
 # ──────────────────────────────────────────────────────────────
 #  Transit-aware Do / Don't libraries
 # ──────────────────────────────────────────────────────────────
 
 _ASPECT_DOS: Dict[str, List[str]] = {
-    "Sun_conjunction": ["Set bold intentions", "Take centre stage", "Announce big decisions"],
-    "Sun_trine":       ["Trust your instincts", "Start creative projects", "Share your ideas freely"],
-    "Sun_square":      ["Channel frustration into focus", "Double-check before acting", "Seek outside perspective"],
-    "Sun_opposition":  ["Listen before speaking", "Find the middle ground", "Collaborate rather than compete"],
-    "Moon_conjunction":["Honour your feelings", "Spend time with close ones", "Journal your inner world"],
-    "Moon_trine":      ["Make intuitive decisions", "Nurture relationships", "Practise self-care"],
-    "Moon_square":     ["Pause before reacting emotionally", "Breathe before big conversations", "Set healthy limits"],
-    "Moon_opposition": ["Acknowledge both sides of how you feel", "Talk it out with a trusted friend"],
-    "Mercury_conjunction": ["Sign agreements", "Have important conversations", "Study or learn something new"],
-    "Mercury_trine":   ["Write, pitch, or present your ideas", "Network and reach out", "Read and research"],
-    "Mercury_square":  ["Re-read messages before sending", "Confirm appointments in advance", "Back up your data"],
-    "Mercury_opposition":["Listen more than you speak", "Seek clarity before concluding"],
-    "Venus_conjunction":   ["Schedule date nights", "Buy something beautiful", "Express affection openly"],
-    "Venus_trine":     ["Smooth over old tensions", "Enjoy art or music", "Tell people you appreciate them"],
-    "Venus_square":    ["Avoid impulse purchases", "Address relationship friction calmly"],
-    "Mars_conjunction":    ["Start new fitness routines", "Tackle the hardest task first", "Assert your needs clearly"],
-    "Mars_trine":      ["Push towards ambitious goals", "Move your body", "Take decisive action"],
-    "Mars_square":     ["Avoid confrontations", "Redirect aggression into exercise", "Take short breaks to release tension"],
-    "Jupiter_trine":   ["Think bigger", "Apply for opportunities", "Be generous with your time"],
-    "Saturn_trine":    ["Make long-term plans", "Commit to new disciplines", "Review your progress"],
-    "Saturn_square":   ["Be patient with delays", "Strengthen your structures", "Accept reality as a teacher"],
+    "Sun_conjunction": [
+        "Set bold intentions",
+        "Take centre stage",
+        "Announce big decisions",
+    ],
+    "Sun_trine": [
+        "Trust your instincts",
+        "Start creative projects",
+        "Share your ideas freely",
+    ],
+    "Sun_square": [
+        "Channel frustration into focus",
+        "Double-check before acting",
+        "Seek outside perspective",
+    ],
+    "Sun_opposition": [
+        "Listen before speaking",
+        "Find the middle ground",
+        "Collaborate rather than compete",
+    ],
+    "Moon_conjunction": [
+        "Honour your feelings",
+        "Spend time with close ones",
+        "Journal your inner world",
+    ],
+    "Moon_trine": [
+        "Make intuitive decisions",
+        "Nurture relationships",
+        "Practise self-care",
+    ],
+    "Moon_square": [
+        "Pause before reacting emotionally",
+        "Breathe before big conversations",
+        "Set healthy limits",
+    ],
+    "Moon_opposition": [
+        "Acknowledge both sides of how you feel",
+        "Talk it out with a trusted friend",
+    ],
+    "Mercury_conjunction": [
+        "Sign agreements",
+        "Have important conversations",
+        "Study or learn something new",
+    ],
+    "Mercury_trine": [
+        "Write, pitch, or present your ideas",
+        "Network and reach out",
+        "Read and research",
+    ],
+    "Mercury_square": [
+        "Re-read messages before sending",
+        "Confirm appointments in advance",
+        "Back up your data",
+    ],
+    "Mercury_opposition": [
+        "Listen more than you speak",
+        "Seek clarity before concluding",
+    ],
+    "Venus_conjunction": [
+        "Schedule date nights",
+        "Buy something beautiful",
+        "Express affection openly",
+    ],
+    "Venus_trine": [
+        "Smooth over old tensions",
+        "Enjoy art or music",
+        "Tell people you appreciate them",
+    ],
+    "Venus_square": ["Avoid impulse purchases", "Address relationship friction calmly"],
+    "Mars_conjunction": [
+        "Start new fitness routines",
+        "Tackle the hardest task first",
+        "Assert your needs clearly",
+    ],
+    "Mars_trine": [
+        "Push towards ambitious goals",
+        "Move your body",
+        "Take decisive action",
+    ],
+    "Mars_square": [
+        "Avoid confrontations",
+        "Redirect aggression into exercise",
+        "Take short breaks to release tension",
+    ],
+    "Jupiter_trine": [
+        "Think bigger",
+        "Apply for opportunities",
+        "Be generous with your time",
+    ],
+    "Saturn_trine": [
+        "Make long-term plans",
+        "Commit to new disciplines",
+        "Review your progress",
+    ],
+    "Saturn_square": [
+        "Be patient with delays",
+        "Strengthen your structures",
+        "Accept reality as a teacher",
+    ],
 }
 
 _ASPECT_DONTS: Dict[str, List[str]] = {
-    "Sun_square":      ["Force outcomes", "Skip steps to gain speed", "Make solo decisions that affect others"],
-    "Sun_opposition":  ["Go it alone", "Dismiss other people's needs", "Over-promise"],
-    "Moon_square":     ["Make major choices when upset", "Suppress what you're feeling", "Isolate yourself"],
-    "Moon_opposition": ["Project emotions onto others", "Avoid the conversation you need to have"],
-    "Mercury_square":  ["Sign documents without reading", "Assume you were understood", "Spread unverified rumours"],
-    "Mercury_opposition":["Argue just to win", "Send that heated email"],
-    "Venus_square":    ["Spend to fill an emotional gap", "Issue ultimatums in relationships"],
-    "Mars_square":     ["React impulsively", "Start fights you can't finish", "Push through injury or exhaustion"],
-    "Saturn_square":   ["Cut corners on important commitments", "Resist helpful feedback", "Rush milestones"],
+    "Sun_square": [
+        "Force outcomes",
+        "Skip steps to gain speed",
+        "Make solo decisions that affect others",
+    ],
+    "Sun_opposition": ["Go it alone", "Dismiss other people's needs", "Over-promise"],
+    "Moon_square": [
+        "Make major choices when upset",
+        "Suppress what you're feeling",
+        "Isolate yourself",
+    ],
+    "Moon_opposition": [
+        "Project emotions onto others",
+        "Avoid the conversation you need to have",
+    ],
+    "Mercury_square": [
+        "Sign documents without reading",
+        "Assume you were understood",
+        "Spread unverified rumours",
+    ],
+    "Mercury_opposition": ["Argue just to win", "Send that heated email"],
+    "Venus_square": [
+        "Spend to fill an emotional gap",
+        "Issue ultimatums in relationships",
+    ],
+    "Mars_square": [
+        "React impulsively",
+        "Start fights you can't finish",
+        "Push through injury or exhaustion",
+    ],
+    "Saturn_square": [
+        "Cut corners on important commitments",
+        "Resist helpful feedback",
+        "Rush milestones",
+    ],
 }
 
 # Personal-day mapped guidance
@@ -81,21 +183,21 @@ _PERSONAL_DAY_DONTS: Dict[int, str] = {
 
 # Moon-phase guidance
 _MOON_PHASE_DOS: Dict[str, str] = {
-    "New Moon":       "Set your intentions for the next 28 days",
-    "Waxing Crescent":"Take one small action toward your goal",
-    "First Quarter":  "Push past resistance — momentum is building",
+    "New Moon": "Set your intentions for the next 28 days",
+    "Waxing Crescent": "Take one small action toward your goal",
+    "First Quarter": "Push past resistance — momentum is building",
     "Waxing Gibbous": "Refine and perfect what you've been building",
-    "Full Moon":      "Celebrate progress and release what no longer serves you",
+    "Full Moon": "Celebrate progress and release what no longer serves you",
     "Waning Gibbous": "Share your wisdom and express gratitude",
-    "Last Quarter":   "Forgive, let go, and make space for the new",
-    "Waning Crescent":"Rest, reflect, and prepare for the cycle to begin again",
+    "Last Quarter": "Forgive, let go, and make space for the new",
+    "Waning Crescent": "Rest, reflect, and prepare for the cycle to begin again",
 }
 
 _MOON_PHASE_DONTS: Dict[str, str] = {
-    "New Moon":       "Start big projects without clear intention",
-    "Full Moon":      "Make permanent decisions in a highly emotional state",
-    "Last Quarter":   "Begin major new ventures — this is completion energy",
-    "Waning Crescent":"Overextend yourself — conserve your energy",
+    "New Moon": "Start big projects without clear intention",
+    "Full Moon": "Make permanent decisions in a highly emotional state",
+    "Last Quarter": "Begin major new ventures — this is completion energy",
+    "Waning Crescent": "Overextend yourself — conserve your energy",
 }
 
 
@@ -125,7 +227,7 @@ def build_do_dont(
     # 1. Transit aspects
     if natal_chart and transit_chart:
         try:
-            from ..transit_alerts import find_transit_aspects, get_absolute_degree
+            from ..transit_alerts import find_transit_aspects
 
             aspects = find_transit_aspects(natal_chart, transit_chart)
             tight_aspects = [a for a in aspects if a["orb"] <= 2.0][:6]

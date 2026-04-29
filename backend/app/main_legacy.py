@@ -49,17 +49,14 @@ from .ai_service import explain_with_gemini, fallback_summary
 from .auth import (
     ACCESS_TOKEN_EXPIRE_MINUTES,
     Token,
-    UserCreate,
     UserLogin,
     authenticate_user,
     create_access_token,
-    create_user,
     get_current_user,
     get_current_user_optional,
-    get_user_by_email,
 )
 from .cache import cached_build_chart, get_chart_cache
-from .chart_service import EPHEMERIS_PATH, HAS_FLATLIB, build_natal_chart
+from .chart_service import EPHEMERIS_PATH, build_natal_chart
 from .engine.glossary import NUMEROLOGY_GLOSSARY, ZODIAC_GLOSSARY
 from .engine.habit_tracker import (
     HABIT_CATEGORIES,
@@ -70,7 +67,6 @@ from .engine.habit_tracker import (
     get_habit_streak,
     get_lunar_cycle_report,
     get_lunar_habit_recommendations,
-    get_moon_phase_name,
     get_today_habit_forecast,
     log_habit_completion,
 )
@@ -101,7 +97,6 @@ from .engine.relationship_timeline import (
 )
 from .engine.timing_advisor import (
     ACTIVITY_PROFILES,
-    calculate_timing_score,
     find_best_days,
     get_available_activities,
     get_timing_advice,
@@ -122,9 +117,7 @@ from .validators import (
     validate_latitude,
     validate_longitude,
     validate_name,
-    validate_profile_data,
     validate_time_of_birth,
-    validate_timezone,
 )
 
 api = FastAPI(
@@ -166,7 +159,6 @@ async def health_check():
 @api.on_event("startup")
 async def startup_event():
     """Run tasks on startup."""
-    import asyncio
 
     from .transit_alerts import check_global_events
 
@@ -439,6 +431,9 @@ class AIExplainRequest(BaseModel):
     theme: Optional[str] = None
     sections: list[AIExplainSection] = Field(default_factory=list)
     numerology_summary: Optional[str] = None
+    simple_language: bool = Field(
+        True, description="Use ultra-simple everyday language"
+    )
 
 
 class AIExplainResponse(BaseModel):
@@ -561,6 +556,7 @@ def explain_reading(
         payload.theme,
         sections,
         payload.numerology_summary,
+        payload.simple_language,
     )
     provider = "gemini-flash"
     if not summary:
@@ -821,7 +817,7 @@ class TimingAdviceRequest(BaseModel):
 
     activity: str = Field(
         ...,
-        description="Activity type: business_meeting, travel, romance_date, signing_contracts, job_interview, starting_project, creative_work, medical_procedure, financial_decision, meditation_spiritual",
+        description="Activity type: business_meeting, travel, romance_date, signing_contracts, job_interview, starting_project, creative_work, financial_decision, meditation_spiritual",
     )
     profile: Optional[ProfilePayload] = None
     latitude: float = Field(
@@ -848,7 +844,6 @@ def get_timing_advice_endpoint(req: TimingAdviceRequest):
         )
 
     # Build transit chart for current time
-    from datetime import datetime as dt
 
     personal_day = None
     transit_chart = {}
@@ -954,7 +949,6 @@ def list_timing_activities():
 # /journal/report, /journal/prompts
 # =============================================================================
 # =============================================================================
-
 
 
 class JournalEntryRequest(BaseModel):

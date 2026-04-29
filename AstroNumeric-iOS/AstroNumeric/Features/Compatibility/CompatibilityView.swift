@@ -19,6 +19,14 @@ struct CompatibilityView: View {
                 
                 ScrollView {
                     VStack(spacing: 24) {
+                        PremiumHeroCard(
+                            eyebrow: "hero.compatibility.eyebrow".localized,
+                            title: "hero.compatibility.title".localized,
+                            bodyText: "hero.compatibility.body".localized,
+                            accent: [Color(hex: "2d102d"), Color(hex: "a53d79"), Color(hex: "4d3ca6")],
+                            chips: ["hero.compatibility.chip.0".localized, "hero.compatibility.chip.1".localized, "hero.compatibility.chip.2".localized, "hero.compatibility.chip.3".localized]
+                        )
+
                         if viewModel.hasData {
                             resultsSection
                         } else {
@@ -26,14 +34,15 @@ struct CompatibilityView: View {
                         }
                     }
                     .padding()
+                    .readableContainer()
                 }
             }
-            .navigationTitle("Compatibility")
+            .navigationTitle("charts.compatibility".localized)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 if viewModel.hasData {
                     ToolbarItem(placement: .topBarLeading) {
-                        Button(hasSaved ? "Saved" : "Save") {
+                        Button(hasSaved ? "tern.compatibility.0a".localized : "tern.compatibility.0b".localized) {
                             guard let personA = store.activeProfile,
                                   let result = viewModel.compatibilityData else { return }
                             
@@ -42,7 +51,8 @@ struct CompatibilityView: View {
                                 personBName: viewModel.resolvedPersonBName(store: store),
                                 personBDOB: viewModel.resolvedPersonBDOBString(store: store),
                                 result: result,
-                                type: .romantic
+                                type: .romantic,
+                                hideSensitive: store.hideSensitiveDetailsEnabled
                             )
                             relationshipsVM.saveRelationship(relationship)
                             hasSaved = true
@@ -50,7 +60,7 @@ struct CompatibilityView: View {
                         .disabled(hasSaved)
                     }
                     ToolbarItem(placement: .topBarTrailing) {
-                        Button("Reset") {
+                        Button("action.reset".localized) {
                             withAnimation {
                                 viewModel.reset()
                                 hasSaved = false
@@ -71,23 +81,31 @@ struct CompatibilityView: View {
     
     private var inputSection: some View {
         VStack(spacing: 20) {
+            PremiumSectionHeader(
+                title: "section.compatibility.0.title".localized,
+                subtitle: "section.compatibility.0.subtitle".localized
+            )
+
             // Your profile (Person A)
             CardView {
                 VStack(alignment: .leading, spacing: 12) {
-                    Text("Your Profile")
+                    Text("ui.compatibility.0".localized)
                         .font(.headline)
                     
                     if let profile = store.activeProfile {
                         HStack {
                             Image(systemName: "person.fill")
                                 .foregroundStyle(.purple)
-                            Text(profile.name)
+                            Text(profile.displayName(
+                                hideSensitive: store.hideSensitiveDetailsEnabled,
+                                role: .activeUser
+                            ))
                             Spacer()
-                            Text(profile.dateOfBirth)
+                            Text(store.hideSensitiveDetailsEnabled ? PrivacyRedaction.maskedDate : profile.dateOfBirth)
                                 .foregroundStyle(Color.textSecondary)
                         }
                     } else {
-                        Text("No profile selected")
+                        Text("ui.compatibility.1".localized)
                             .foregroundStyle(Color.textMuted)
                     }
                 }
@@ -96,11 +114,11 @@ struct CompatibilityView: View {
             // Person B input
             CardView {
                 VStack(alignment: .leading, spacing: 16) {
-                    Text("Compare With")
+                    Text("ui.compatibility.2".localized)
                         .font(.headline)
 
                     if !personBCandidates.isEmpty {
-                        Toggle("Use Saved Profile", isOn: $viewModel.useSavedProfileForPersonB)
+                        Toggle("ui.compatibility.13".localized, isOn: $viewModel.useSavedProfileForPersonB)
                             .tint(.pink)
                             .onChange(of: viewModel.useSavedProfileForPersonB) { _, newValue in
                                 if newValue, viewModel.selectedPersonBProfileId == nil {
@@ -109,10 +127,15 @@ struct CompatibilityView: View {
                             }
 
                         if viewModel.useSavedProfileForPersonB {
-                            Picker("Profile", selection: $viewModel.selectedPersonBProfileId) {
-                                Text("Select a profile").tag(Optional<Int>(nil))
-                                ForEach(personBCandidates) { profile in
-                                    Text(profile.name).tag(Optional(profile.id))
+                            Picker("ui.compatibility.15".localized, selection: $viewModel.selectedPersonBProfileId) {
+                                Text("ui.compatibility.3".localized).tag(Optional<Int>(nil))
+                                ForEach(Array(personBCandidates.enumerated()), id: \.element.id) { index, profile in
+                                    Text(profile.displayName(
+                                        hideSensitive: store.hideSensitiveDetailsEnabled,
+                                        role: .genericProfile,
+                                        index: index
+                                    ))
+                                    .tag(Optional(profile.id))
                                 }
                             }
                             .pickerStyle(.menu)
@@ -122,17 +145,17 @@ struct CompatibilityView: View {
                     
                     // Name
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Name")
+                        Text("ui.compatibility.4".localized)
                             .font(.caption)
                             .foregroundStyle(Color.textMuted)
-                        TextField("Enter name", text: $viewModel.personBName)
+                        TextField("ui.compatibility.14".localized, text: $viewModel.personBName)
                             .textFieldStyle(.roundedBorder)
                             .disabled(viewModel.useSavedProfileForPersonB)
                     }
                     
                     // Birth date
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Birth Date")
+                        Text("ui.compatibility.5".localized)
                             .font(.caption)
                             .foregroundStyle(Color.textMuted)
                         DatePicker(
@@ -148,10 +171,10 @@ struct CompatibilityView: View {
                     // Birth time (optional)
                     VStack(alignment: .leading, spacing: 4) {
                         HStack {
-                            Text("Birth Time")
+                            Text("ui.compatibility.6".localized)
                                 .font(.caption)
                                 .foregroundStyle(Color.textMuted)
-                            Text("(optional)")
+                            Text("ui.compatibility.7".localized)
                                 .font(.caption2)
                                 .foregroundStyle(Color.textMuted)
                         }
@@ -160,7 +183,7 @@ struct CompatibilityView: View {
                             HStack {
                                 Text(time, style: .time)
                                 Spacer()
-                                Button("Clear") {
+                                Button("ui.compatibility.16".localized) {
                                     viewModel.personBTime = nil
                                 }
                                 .font(.caption)
@@ -209,6 +232,11 @@ struct CompatibilityView: View {
     
     private var resultsSection: some View {
         VStack(spacing: 20) {
+            PremiumSectionHeader(
+                title: "section.compatibility.1.title".localized,
+                subtitle: "section.compatibility.1.subtitle".localized
+            )
+
             // Names header
             CardView {
                 HStack {
@@ -216,7 +244,12 @@ struct CompatibilityView: View {
                         Image(systemName: "person.fill")
                             .font(.title2)
                             .foregroundStyle(.purple)
-                        Text(store.activeProfile?.name ?? "You")
+                        Text(
+                            store.activeProfile?.displayName(
+                                hideSensitive: store.hideSensitiveDetailsEnabled,
+                                role: .activeUser
+                            ) ?? "You"
+                        )
                             .font(.caption)
                     }
                     
@@ -232,7 +265,10 @@ struct CompatibilityView: View {
                         Image(systemName: "person.fill")
                             .font(.title2)
                             .foregroundStyle(.pink)
-                        Text(viewModel.resolvedPersonBName(store: store))
+                        Text(viewModel.resolvedPersonBDisplayName(
+                            store: store,
+                            hideSensitive: store.hideSensitiveDetailsEnabled
+                        ))
                             .font(.caption)
                     }
                 }
@@ -242,7 +278,7 @@ struct CompatibilityView: View {
             // Overall score
             CardView {
                 VStack(spacing: 16) {
-                    Text("Overall Compatibility")
+                    Text("ui.compatibility.8".localized)
                         .font(.headline)
                     
                     ZStack {
@@ -290,7 +326,7 @@ struct CompatibilityView: View {
                     HStack {
                         Image(systemName: "chart.bar.fill")
                             .foregroundStyle(.purple)
-                        Text("Dimension Breakdown")
+                        Text("ui.compatibility.9".localized)
                             .font(.headline)
                     }
                     
@@ -339,7 +375,7 @@ struct CompatibilityView: View {
                         HStack {
                             Image(systemName: "star.fill")
                                 .foregroundStyle(.green)
-                            Text("Strengths")
+                            Text("ui.compatibility.10".localized)
                                 .font(.headline)
                         }
                         
@@ -363,7 +399,7 @@ struct CompatibilityView: View {
                         HStack {
                             Image(systemName: "exclamationmark.triangle.fill")
                                 .foregroundStyle(.orange)
-                            Text("Challenges")
+                            Text("ui.compatibility.11".localized)
                                 .font(.headline)
                         }
                         
@@ -387,7 +423,7 @@ struct CompatibilityView: View {
                         HStack {
                             Image(systemName: "lightbulb.fill")
                                 .foregroundStyle(.yellow)
-                            Text("Relationship Advice")
+                            Text("ui.compatibility.12".localized)
                                 .font(.headline)
                         }
                         

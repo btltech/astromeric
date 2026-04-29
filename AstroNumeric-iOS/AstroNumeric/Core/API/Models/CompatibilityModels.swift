@@ -11,26 +11,9 @@ struct CompatibilityRequest: Encodable {
     let relationshipType: String
     
     init(personA: Profile, personB: Profile, relationshipType: String = "romantic") {
-        self.personA = ProfilePayload(
-            name: personA.name,
-            dateOfBirth: personA.dateOfBirth,
-            timeOfBirth: personA.timeOfBirth,
-            placeOfBirth: personA.placeOfBirth,
-            latitude: personA.latitude,
-            longitude: personA.longitude,
-            timezone: personA.timezone,
-            houseSystem: personA.houseSystem
-        )
-        self.personB = ProfilePayload(
-            name: personB.name,
-            dateOfBirth: personB.dateOfBirth,
-            timeOfBirth: personB.timeOfBirth,
-            placeOfBirth: personB.placeOfBirth,
-            latitude: personB.latitude,
-            longitude: personB.longitude,
-            timezone: personB.timezone,
-            houseSystem: personB.houseSystem
-        )
+        let hideSensitive = AppStore.shared.hideSensitiveDetailsEnabled
+        self.personA = personA.privacySafePayload(hideSensitive: hideSensitive)
+        self.personB = personB.privacySafePayload(hideSensitive: hideSensitive)
         self.relationshipType = relationshipType
     }
     
@@ -46,16 +29,7 @@ struct RomanticCompatibilityRequest: Encodable {
     let personB: ProfilePayload
     
     init(personA: Profile, personB: ProfilePayload) {
-        self.personA = ProfilePayload(
-            name: personA.name,
-            dateOfBirth: personA.dateOfBirth,
-            timeOfBirth: personA.timeOfBirth,
-            placeOfBirth: personA.placeOfBirth,
-            latitude: personA.latitude,
-            longitude: personA.longitude,
-            timezone: personA.timezone,
-            houseSystem: personA.houseSystem
-        )
+        self.personA = personA.privacySafePayload(hideSensitive: AppStore.shared.hideSensitiveDetailsEnabled)
         self.personB = personB
     }
     
@@ -70,16 +44,7 @@ struct FriendshipCompatibilityRequest: Encodable {
     let personB: ProfilePayload
     
     init(personA: Profile, personB: ProfilePayload) {
-        self.personA = ProfilePayload(
-            name: personA.name,
-            dateOfBirth: personA.dateOfBirth,
-            timeOfBirth: personA.timeOfBirth,
-            placeOfBirth: personA.placeOfBirth,
-            latitude: personA.latitude,
-            longitude: personA.longitude,
-            timezone: personA.timezone,
-            houseSystem: personA.houseSystem
-        )
+        self.personA = personA.privacySafePayload(hideSensitive: AppStore.shared.hideSensitiveDetailsEnabled)
         self.personB = personB
     }
     

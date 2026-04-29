@@ -1,294 +1,71 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, NavLink, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, NavLink, Navigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useTranslation } from 'react-i18next';
 import { CosmicBackground } from './components/CosmicBackground';
-import { LanguageSwitcher } from './components/LanguageSwitcher';
 import { CookieConsent } from './components/CookieConsent';
 import { Footer } from './components/Footer';
-import { useProfiles, useAuth } from './hooks';
-import { useStore } from './store/useStore';
-import { ToastContainer, useToasts } from './components/Toast';
-import { ErrorBoundary } from './components/ErrorBoundary';
 import { PWAPrompt } from './components/PWAPrompt';
 
 // Lazy load views for code splitting
-const ReadingView = React.lazy(() =>
-  import('./views/ReadingView').then((m) => ({ default: m.ReadingView }))
-);
-const NumerologyView = React.lazy(() =>
-  import('./views/NumerologyView').then((m) => ({ default: m.NumerologyView }))
-);
-const CompatibilityView = React.lazy(() =>
-  import('./views/CompatibilityView').then((m) => ({ default: m.CompatibilityView }))
-);
-const LearnView = React.lazy(() =>
-  import('./views/LearnView').then((m) => ({ default: m.LearnView }))
-);
-const AuthView = React.lazy(() =>
-  import('./views/AuthView').then((m) => ({ default: m.AuthView }))
-);
-const ProfileView = React.lazy(() =>
-  import('./views/ProfileView').then((m) => ({ default: m.ProfileView }))
-);
-const ChartViewPage = React.lazy(() =>
-  import('./views/ChartViewPage').then((m) => ({ default: m.ChartViewPage }))
-);
-const CosmicToolsView = React.lazy(() =>
-  import('./views/CosmicToolsView').then((m) => ({ default: m.CosmicToolsView }))
-);
-const ComparisonView = React.lazy(() =>
-  import('./views/ComparisonView').then((m) => ({ default: m.ComparisonView }))
+const HomeSupportView = React.lazy(() =>
+  import('./views/HomeSupportView').then((m) => ({ default: m.HomeSupportView }))
 );
 const PrivacyPolicy = React.lazy(() =>
   import('./views/PrivacyPolicy').then((m) => ({ default: m.PrivacyPolicy }))
 );
+const TermsOfService = React.lazy(() =>
+  import('./views/TermsOfService').then((m) => ({ default: m.TermsOfService }))
+);
 const CookiePolicy = React.lazy(() =>
   import('./views/CookiePolicy').then((m) => ({ default: m.CookiePolicy }))
 );
-const AboutView = React.lazy(() =>
-  import('./views/AboutView').then((m) => ({ default: m.AboutView }))
-);
-const NotFoundView = React.lazy(() => import('./views/NotFoundView'));
-// styles.css is imported at the root level (index.tsx)
 
 function NavBar() {
-  const { t } = useTranslation();
-  const { isAuthenticated, user, logout } = useAuth();
-  const [isOpen, setIsOpen] = React.useState(false);
-
   return (
-    <header>
-      <NavLink to="/" className="logo-link">
+    <header style={{ justifyContent: 'center' }}>
+      <NavLink to="/" className="logo-link" style={{ margin: '0 auto' }}>
         <div className="logo" aria-label="AstroNumeric home">
           ASTRO<span>NUMERIC</span>
         </div>
       </NavLink>
-
-      <div className="header-actions">
-        <LanguageSwitcher />
-        {isAuthenticated && user && (
-          <div className="user-bar">
-            <span className="user-email">{user.email}</span>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={logout}
-              className="btn-logout"
-              aria-label={t('nav.signOut')}
-            >
-              {t('nav.signOut')}
-            </motion.button>
-          </div>
-        )}
-      </div>
-
-      <button
-        className="nav-toggle"
-        aria-label="Toggle navigation"
-        aria-expanded={isOpen}
-        onClick={() => setIsOpen((v) => !v)}
-      >
-        {isOpen ? '✕' : '☰'}
-      </button>
-
-      <nav
-        className={`main-nav ${isOpen ? 'open' : ''}`}
-        role="navigation"
-        aria-label="Main navigation"
-      >
-        <NavLink
-          to="/"
-          className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}
-          onClick={() => setIsOpen(false)}
-        >
-          {t('nav.reading')}
-        </NavLink>
-        <NavLink
-          to="/numerology"
-          className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}
-          onClick={() => setIsOpen(false)}
-        >
-          {t('nav.numbers')}
-        </NavLink>
-        <NavLink
-          to="/tools"
-          className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}
-          onClick={() => setIsOpen(false)}
-        >
-          {t('nav.tools')}
-        </NavLink>
-        <NavLink
-          to="/learn"
-          className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}
-          onClick={() => setIsOpen(false)}
-        >
-          {t('nav.learn')}
-        </NavLink>
-        <NavLink
-          to="/about"
-          className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}
-          onClick={() => setIsOpen(false)}
-        >
-          ℹ️ About
-        </NavLink>
-        {!isAuthenticated && (
-          <NavLink
-            to="/auth"
-            className={({ isActive }) => `nav-btn nav-btn-secondary ${isActive ? 'active' : ''}`}
-            onClick={() => setIsOpen(false)}
-          >
-            {t('nav.signIn')}
-          </NavLink>
-        )}
-        {isAuthenticated && (
-          <NavLink
-            to="/profile"
-            className={({ isActive }) => `nav-btn nav-btn-profile ${isActive ? 'active' : ''}`}
-            onClick={() => setIsOpen(false)}
-          >
-            👤 {t('nav.profile')}
-          </NavLink>
-        )}
-      </nav>
     </header>
   );
 }
 
 function AnimatedRoutes() {
   const location = useLocation();
-  const { result } = useStore();
-  const { sessionProfile } = useProfiles();
-
-  // Extract chart data for cosmic tools
-  const chartData = result?.charts?.natal;
-  const sunSign = chartData?.planets?.find((p: { name: string }) => p.name === 'Sun')?.sign;
-  const moonSign = chartData?.planets?.find((p: { name: string }) => p.name === 'Moon')?.sign;
-  // Rising sign may be in ascendant or in planets array depending on backend
-  const risingSign =
-    (result?.charts?.natal as { ascendant?: { sign?: string } })?.ascendant?.sign ||
-    chartData?.planets?.find((p: { name: string }) => p.name === 'Ascendant')?.sign;
-  const birthDate = sessionProfile?.date_of_birth;
 
   return (
-    <ErrorBoundary>
-      <AnimatePresence mode="wait">
-        <React.Suspense fallback={<LoadingOverlay forceVisible />}>
-          <Routes location={location} key={location.pathname}>
-            <Route path="/" element={<ReadingView />} />
-            <Route path="/numerology" element={<NumerologyView />} />
-            <Route path="/compatibility" element={<CompatibilityView />} />
-            <Route path="/chart" element={<ChartViewPage />} />
-            <Route path="/compare" element={<ComparisonView />} />
-            <Route
-              path="/tools"
-              element={
-                <CosmicToolsView
-                  birthDate={birthDate}
-                  sunSign={sunSign}
-                  moonSign={moonSign}
-                  risingSign={risingSign}
-                />
-              }
-            />
-            <Route path="/learn" element={<LearnView />} />
-            <Route path="/auth" element={<AuthView />} />
-            <Route path="/profile" element={<ProfileView />} />
-            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-            <Route path="/cookie-policy" element={<CookiePolicy />} />
-            <Route path="/about" element={<AboutView />} />
-            <Route path="*" element={<NotFoundView />} />
-          </Routes>
-        </React.Suspense>
-      </AnimatePresence>
-    </ErrorBoundary>
-  );
-}
+    <AnimatePresence mode="wait">
+      <React.Suspense fallback={<div className="loader-overlay" />}>
+        <Routes location={location} key={location.pathname}>
+          <Route path="/" element={<HomeSupportView />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/privacy" element={<Navigate to="/privacy-policy" replace />} />
+          <Route path="/terms" element={<TermsOfService />} />
+          <Route path="/cookie-policy" element={<CookiePolicy />} />
 
-function LoadingOverlay({ forceVisible = false }: { forceVisible?: boolean }) {
-  const { t } = useTranslation();
-  const { loading } = useStore();
-  const isVisible = loading || forceVisible;
-
-  return (
-    <AnimatePresence>
-      {isVisible && (
-        <motion.div
-          className="loader-overlay"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          aria-live="polite"
-        >
-          <motion.div
-            className="spinner"
-            animate={{ rotate: 360 }}
-            transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
-            aria-hidden="true"
-          />
-          <span>{t('common.consultingStars')}</span>
-        </motion.div>
-      )}
+          {/* Default redirect to home/support */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </React.Suspense>
     </AnimatePresence>
   );
 }
 
-function ErrorBanner() {
-  const { error, setError } = useStore();
-
-  if (!error) return null;
-
-  return (
-    <motion.div
-      className="error-banner"
-      initial={{ opacity: 0, y: -20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      role="alert"
-    >
-      {error}
-      <button
-        onClick={() => setError('')}
-        style={{
-          marginLeft: '1rem',
-          background: 'none',
-          border: 'none',
-          color: 'inherit',
-          cursor: 'pointer',
-        }}
-        aria-label="Dismiss error"
-      >
-        ✕
-      </button>
-    </motion.div>
-  );
-}
-
 function Layout() {
-  const { t } = useTranslation();
-  const { result } = useStore();
-  const { toasts, dismiss } = useToasts();
-
   return (
     <div className="app-container">
-      {/* Skip link for keyboard navigation */}
-      <a href="#main-content" className="skip-link">
-        {t('common.skipToContent')}
-      </a>
-
-      <CosmicBackground element={result?.element} />
+      <CosmicBackground element="fire" />
 
       <div className="content-wrapper">
         <NavBar />
-        <ErrorBanner />
         <main id="main-content" tabIndex={-1}>
           <AnimatedRoutes />
         </main>
         <Footer />
       </div>
 
-      <LoadingOverlay />
-      <ToastContainer toasts={toasts} onDismiss={dismiss} />
       <PWAPrompt />
       <CookieConsent />
     </div>
@@ -296,7 +73,6 @@ function Layout() {
 }
 
 export function App() {
-  // No fetchProfiles - all profiles are session-only for privacy
   return (
     <BrowserRouter>
       <Layout />

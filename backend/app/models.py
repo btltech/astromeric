@@ -51,7 +51,9 @@ class User(Base):
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     # Apple Sign-In / OAuth fields
-    external_id = Column(String, unique=True, index=True, nullable=True)  # Apple user ID
+    external_id = Column(
+        String, unique=True, index=True, nullable=True
+    )  # Apple user ID
     auth_provider = Column(String(20), nullable=True)  # "apple", "google", etc.
     full_name = Column(String(255), nullable=True)  # From Apple Sign-In
 
@@ -76,13 +78,17 @@ class Profile(Base):
     name = Column(String(100), nullable=False)  # Add length limit
     date_of_birth = Column(String, nullable=False)  # ISO format
     time_of_birth = Column(String, nullable=True)
-    time_confidence = Column(String(20), nullable=True, default="unknown")  # exact / approximate / unknown
+    time_confidence = Column(
+        String(20), nullable=True, default="unknown"
+    )  # exact / approximate / unknown
     place_of_birth = Column(String(255), nullable=True)  # Add length limit
     latitude = Column(Float, nullable=True)
     longitude = Column(Float, nullable=True)
     timezone = Column(String(50), default="UTC")  # Add length limit
     house_system = Column(String(20), default="Placidus")  # Add length limit
-    data_quality = Column(String(20), nullable=True)  # full / date_and_place / date_only (computed on save)
+    data_quality = Column(
+        String(20), nullable=True
+    )  # full / date_and_place / date_only (computed on save)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     # User ownership (optional for guest users)
     user_id = Column(String, ForeignKey("users.id"), nullable=True)
@@ -161,6 +167,31 @@ class DeviceToken(Base):
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 
+class Friend(Base):
+    __tablename__ = "friends"
+
+    id = Column(Integer, primary_key=True, index=True)
+    owner_id = Column(String(100), nullable=False)
+    friend_id = Column(String(100), nullable=False)
+    name = Column(String(100), nullable=False)
+    date_of_birth = Column(String, nullable=False)
+    time_of_birth = Column(String, nullable=True, default="12:00")
+    latitude = Column(Float, nullable=True)
+    longitude = Column(Float, nullable=True)
+    timezone = Column(String(50), default="UTC")
+    avatar_emoji = Column(String(16), default="👤")
+    relationship_type = Column(String(20), default="friendship")
+    notes = Column(Text, nullable=True)
+    added_at = Column(
+        DateTime, default=lambda: datetime.now(timezone.utc), nullable=False
+    )
+
+    __table_args__ = (
+        Index("idx_friends_owner_added", "owner_id", "added_at"),
+        Index("idx_friends_owner_friend", "owner_id", "friend_id", unique=True),
+    )
+
+
 class TransitSubscription(Base):
     __tablename__ = "transit_subscriptions"
 
@@ -188,6 +219,7 @@ def _ensure_sqlite_schema() -> None:
         return
 
     with engine.begin() as conn:
+
         def existing_columns(table: str) -> set[str]:
             rows = conn.execute(text(f"PRAGMA table_info({table})")).fetchall()
             return {r[1] for r in rows}  # (cid, name, type, notnull, dflt_value, pk)
@@ -199,9 +231,16 @@ def _ensure_sqlite_schema() -> None:
             conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {definition_sql}"))
 
         # Users table (newer fields)
-        if "users" in conn.execute(
-            text("SELECT name FROM sqlite_master WHERE type='table' AND name='users'")
-        ).scalars().all():
+        if (
+            "users"
+            in conn.execute(
+                text(
+                    "SELECT name FROM sqlite_master WHERE type='table' AND name='users'"
+                )
+            )
+            .scalars()
+            .all()
+        ):
             add_column_if_missing("users", "is_paid", "is_paid INTEGER DEFAULT 0")
             add_column_if_missing("users", "external_id", "external_id TEXT")
             add_column_if_missing("users", "auth_provider", "auth_provider TEXT")
@@ -216,7 +255,46 @@ def _ensure_sqlite_schema() -> None:
                 "alert_frequency",
                 "alert_frequency TEXT DEFAULT 'every_retrograde'",
             )
-            add_column_if_missing("users", "last_retrograde_alert", "last_retrograde_alert DATETIME")
+            add_column_if_missing(
+                "users", "last_retrograde_alert", "last_retrograde_alert DATETIME"
+            )
+
+        # Profiles table (historically tracked sqlite DB may predate auth/profile enrichments)
+        if (
+            "profiles"
+            in conn.execute(
+                text(
+                    "SELECT name FROM sqlite_master WHERE type='table' AND name='profiles'"
+                )
+            )
+            .scalars()
+            .all()
+        ):
+            add_column_if_missing(
+                "profiles",
+                "time_confidence",
+                "time_confidence TEXT DEFAULT 'unknown'",
+            )
+            add_column_if_missing(
+                "profiles",
+                "house_system",
+                "house_system TEXT DEFAULT 'Placidus'",
+            )
+            add_column_if_missing(
+                "profiles",
+                "data_quality",
+                "data_quality TEXT",
+            )
+            add_column_if_missing(
+                "profiles",
+                "created_at",
+                "created_at DATETIME",
+            )
+            add_column_if_missing(
+                "profiles",
+                "user_id",
+                "user_id TEXT",
+            )
 
 
 _ensure_sqlite_schema()

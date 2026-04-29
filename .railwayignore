@@ -1,0 +1,12 @@
+# Railway Ignore
+.git/
+.venv/
+backend/.venv/
+node_modules/
+dist/
+AstroNumeric-iOS/
+.DS_Store
+*.log
+*.sqlite
+astronumerology.db
+__pycache__/

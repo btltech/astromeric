@@ -121,13 +121,13 @@ enum GuideTone: String, CaseIterable, Identifiable {
     var prompt: String {
         switch self {
         case .gentle:
-            return "Speak with warmth and compassion. Be encouraging and supportive. Soften harsh aspects."
+            return "Speak with warmth and compassion. Be encouraging and supportive without becoming vague. Soften harsh aspects while keeping the guidance useful."
         case .balanced:
-            return "Be informative and balanced. Mix encouragement with honest observations."
+            return "Be informative and balanced. Mix encouragement with honest observations and concrete next steps."
         case .direct:
-            return "Be blunt and straightforward. No sugar-coating. Give it to me straight."
+            return "Be blunt and straightforward. Avoid sugar-coating, but stay respectful and practical."
         case .roast:
-            return "Roast me based on my chart. Be savage but astrologically accurate. Make it funny."
+            return "Use playful chart-based teasing without cruelty. Keep it astrologically accurate, funny, and still useful."
         }
     }
 }
@@ -165,4 +165,5 @@ struct SectionSummary: Encodable {
 
 struct AIExplainResponse: Codable {
     let summary: String
+    let provider: String?
 }

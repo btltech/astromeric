@@ -23,13 +23,14 @@ from __future__ import annotations
 import logging
 import os
 import uuid
+from contextlib import asynccontextmanager
+from typing import AsyncIterator
 
 from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.exception_handlers import http_exception_handler
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from .config import SECURITY_HEADERS
 from .middleware import rate_limit_middleware, security_headers_middleware
 from .validators import ValidationError
 
@@ -41,11 +42,26 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+@asynccontextmanager
+async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+    """Run startup tasks using FastAPI's lifespan API."""
+    from .transit_alerts import check_global_events
+
+    try:
+        check_global_events()
+        logger.info("Startup event check completed successfully")
+    except Exception as e:
+        logger.error(f"Startup event check failed: {e}")
+
+    yield
+
+
 # =============================================================================
 # APPLICATION SETUP
 # =============================================================================
 
 api = FastAPI(
+    lifespan=lifespan,
     title="AstroNumerology API",
     version="4.0.0",
     description="""## AstroNumerology API
@@ -162,23 +178,6 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 
 # =============================================================================
-# STARTUP EVENTS
-# =============================================================================
-
-
-@api.on_event("startup")
-async def startup_event():
-    """Run tasks on startup."""
-    from .transit_alerts import check_global_events
-
-    try:
-        check_global_events()
-        logger.info("Startup event check completed successfully")
-    except Exception as e:
-        logger.error(f"Startup event check failed: {e}")
-
-
-# =============================================================================
 # HEALTH CHECK (simple endpoint kept in main for load balancer checks)
 # =============================================================================
 
@@ -200,21 +199,42 @@ def register_routers():
     import traceback
 
     _router_names = [
-        "auth", "profiles", "natal", "forecasts", "compatibility",
-        "numerology", "charts", "daily_features", "moon", "timing",
-        "relationships", "journal", "habits", "year_ahead", "transits",
-        "notifications", "friends", "ai", "cosmic_guide", "learning",
-        "feedback", "system",
+        "auth",
+        "profiles",
+        "natal",
+        "forecasts",
+        "compatibility",
+        "numerology",
+        "charts",
+        "daily_features",
+        "moon",
+        "timing",
+        "relationships",
+        "journal",
+        "habits",
+        "year_ahead",
+        "transits",
+        "notifications",
+        "friends",
+        "ai",
+        "cosmic_guide",
+        "learning",
+        "feedback",
+        "system",
     ]
 
     loaded = 0
     for name in _router_names:
         try:
-            mod = importlib.import_module(f".routers.{name}", package=__name__.rsplit(".", 1)[0])
+            mod = importlib.import_module(
+                f".routers.{name}", package=__name__.rsplit(".", 1)[0]
+            )
             api.include_router(mod.router)
             loaded += 1
         except Exception as e:
-            logger.error(f"ROUTER LOAD FAILED [{name}]: {type(e).__name__}: {e} | {traceback.format_exc()[-300:]}")
+            logger.error(
+                f"ROUTER LOAD FAILED [{name}]: {type(e).__name__}: {e} | {traceback.format_exc()[-300:]}"
+            )
 
     logger.info(f"Registered {loaded}/{len(_router_names)} v2 routers")
 
@@ -245,23 +265,27 @@ register_routers()
 
 from typing import Any, Dict, List, Optional
 
-from fastapi import Depends, HTTPException, Query
+from fastapi import Depends, Query
 from pydantic import BaseModel
 
 from .auth import get_current_user
+
 
 @api.post("/daily-features", tags=["Legacy"])
 async def legacy_daily_features(request: Request, body: dict):
     """Alias for /v2/daily/reading to support existing frontend."""
     from .routers.daily_features import get_daily_reading
+
     # Extract profile if available, else None
     profile = body.get("profile")
     return await get_daily_reading(request, profile)
+
 
 @api.post("/forecast/mood", tags=["Legacy"])
 async def legacy_mood_forecast(request: Request, body: dict):
     """Alias for /v2/daily/reading to support existing mood calls."""
     from .routers.daily_features import get_daily_reading
+
     profile = body.get("profile")
     return await get_daily_reading(request, profile)
 
@@ -381,7 +405,11 @@ async def legacy_habit_phase_guidance(phase: str):
 
 @api.post("/habits/alignment", tags=["Legacy"])
 async def legacy_habit_alignment(category: str, moon_phase: str):
-    from .engine.habit_tracker import HABIT_CATEGORIES, LUNAR_HABIT_GUIDANCE, calculate_lunar_alignment_score
+    from .engine.habit_tracker import (
+        HABIT_CATEGORIES,
+        LUNAR_HABIT_GUIDANCE,
+        calculate_lunar_alignment_score,
+    )
 
     if category not in HABIT_CATEGORIES:
         raise HTTPException(status_code=400, detail="Invalid category")
@@ -392,7 +420,10 @@ async def legacy_habit_alignment(category: str, moon_phase: str):
 
 @api.post("/habits/recommendations", tags=["Legacy"])
 async def legacy_habit_recommendations(moon_phase: str):
-    from .engine.habit_tracker import LUNAR_HABIT_GUIDANCE, get_lunar_habit_recommendations
+    from .engine.habit_tracker import (
+        LUNAR_HABIT_GUIDANCE,
+        get_lunar_habit_recommendations,
+    )
 
     if moon_phase not in LUNAR_HABIT_GUIDANCE:
         raise HTTPException(status_code=400, detail="Invalid moon_phase")
@@ -413,7 +444,9 @@ async def legacy_habit_create(body: LegacyCreateHabitBody):
 async def legacy_habit_log(body: LegacyLogHabitBody, moon_phase: str):
     from .engine.habit_tracker import log_habit_completion
 
-    completion = log_habit_completion(body.habit_id, moon_phase=moon_phase, notes=body.notes)
+    completion = log_habit_completion(
+        body.habit_id, moon_phase=moon_phase, notes=body.notes
+    )
     return {"success": True, "completion": completion}
 
 
@@ -428,7 +461,9 @@ async def legacy_habit_streak(body: LegacyStreakBody, frequency: str = "daily"):
 async def legacy_habit_today(body: LegacyTodayHabitsBody, moon_phase: str):
     from .engine.habit_tracker import get_today_habit_forecast
 
-    return get_today_habit_forecast(body.habits, moon_phase, completions_today=body.completions_today)
+    return get_today_habit_forecast(
+        body.habits, moon_phase, completions_today=body.completions_today
+    )
 
 
 # -----------------------------------------------------------------------------
@@ -506,8 +541,18 @@ async def legacy_journal_outcome(
 
 
 VALID_SIGNS = {
-    "Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo",
-    "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces",
+    "Aries",
+    "Taurus",
+    "Gemini",
+    "Cancer",
+    "Leo",
+    "Virgo",
+    "Libra",
+    "Scorpio",
+    "Sagittarius",
+    "Capricorn",
+    "Aquarius",
+    "Pisces",
 }
 
 
@@ -526,6 +571,7 @@ class LegacyRelationshipTimingBody(BaseModel):
 @api.post("/relationship/timeline", tags=["Legacy"])
 async def legacy_relationship_timeline(body: LegacyRelationshipTimelineBody):
     from datetime import datetime, timezone
+
     from .engine.relationship_timeline import build_relationship_timeline
 
     if body.sun_sign not in VALID_SIGNS:
@@ -544,6 +590,7 @@ async def legacy_relationship_timeline(body: LegacyRelationshipTimelineBody):
 @api.post("/relationship/timing", tags=["Legacy"])
 async def legacy_relationship_timing(body: LegacyRelationshipTimingBody):
     from datetime import datetime, timezone
+
     from .engine.relationship_timeline import analyze_relationship_timing
 
     if body.sun_sign not in VALID_SIGNS:
@@ -555,7 +602,9 @@ async def legacy_relationship_timing(body: LegacyRelationshipTimingBody):
         try:
             check_date = datetime.fromisoformat(body.date)
         except ValueError:
-            raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD")
+            raise HTTPException(
+                status_code=400, detail="Invalid date format. Use YYYY-MM-DD"
+            )
     else:
         check_date = datetime.now(timezone.utc)
 
@@ -565,12 +614,15 @@ async def legacy_relationship_timing(body: LegacyRelationshipTimingBody):
 @api.get("/relationship/best-days/{sun_sign}", tags=["Legacy"])
 async def legacy_relationship_best_days(sun_sign: str, days_ahead: int = 30):
     from datetime import datetime, timezone
+
     from .engine.relationship_timeline import get_best_relationship_days
 
     if sun_sign not in VALID_SIGNS:
         raise HTTPException(status_code=400, detail="Invalid sign")
 
-    best_days = get_best_relationship_days(datetime.now(timezone.utc), sun_sign, days_ahead)
+    best_days = get_best_relationship_days(
+        datetime.now(timezone.utc), sun_sign, days_ahead
+    )
     return {
         "sun_sign": sun_sign,
         "days_ahead": days_ahead,
@@ -579,14 +631,19 @@ async def legacy_relationship_best_days(sun_sign: str, days_ahead: int = 30):
 
 
 @api.get("/relationship/events", tags=["Legacy"])
-async def legacy_relationship_events(days_ahead: int = 90, sun_sign: Optional[str] = None):
+async def legacy_relationship_events(
+    days_ahead: int = 90, sun_sign: Optional[str] = None
+):
     from datetime import datetime, timezone
+
     from .engine.relationship_timeline import get_upcoming_relationship_dates
 
     if sun_sign and sun_sign not in VALID_SIGNS:
         raise HTTPException(status_code=400, detail="Invalid sign")
 
-    events = get_upcoming_relationship_dates(datetime.now(timezone.utc), days_ahead, sun_sign)
+    events = get_upcoming_relationship_dates(
+        datetime.now(timezone.utc), days_ahead, sun_sign
+    )
     return {
         "days_ahead": days_ahead,
         "sun_sign": sun_sign,
@@ -597,7 +654,12 @@ async def legacy_relationship_events(days_ahead: int = 90, sun_sign: Optional[st
 @api.get("/relationship/venus-status", tags=["Legacy"])
 async def legacy_relationship_venus_status():
     from datetime import datetime, timezone
-    from .engine.relationship_timeline import get_mars_transit, get_venus_transit, is_venus_retrograde
+
+    from .engine.relationship_timeline import (
+        get_mars_transit,
+        get_venus_transit,
+        is_venus_retrograde,
+    )
 
     now = datetime.now(timezone.utc)
     return {

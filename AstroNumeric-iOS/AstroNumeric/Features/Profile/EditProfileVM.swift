@@ -108,15 +108,13 @@ final class EditProfileVM: NSObject {
         // Parse time
         if let timeString = profile.timeOfBirth {
             timeConfidence = TimeConfidence(rawValue: profile.timeConfidence ?? "exact") ?? .exact
-            let timeFormatter = DateFormatter()
-            timeFormatter.dateFormat = "HH:mm"
-            if let time = timeFormatter.date(from: timeString) {
+            if let time = Self.parseBirthTime(timeString) {
                 // Combine date and time
                 let calendar = Calendar.current
-                let timeComponents = calendar.dateComponents([.hour, .minute], from: time)
+                let timeComponents = calendar.dateComponents([.hour, .minute, .second], from: time)
                 if let combinedTime = calendar.date(bySettingHour: timeComponents.hour ?? 12,
                                                      minute: timeComponents.minute ?? 0,
-                                                     second: 0,
+                                                     second: timeComponents.second ?? 0,
                                                      of: Date()) {
                     birthTime = combinedTime
                 }
@@ -285,9 +283,12 @@ final class EditProfileVM: NSObject {
         
         switch status {
         case .notDetermined:
+            isUsingCurrentLocation = true
+            locationPermissionDenied = false
             locationManager.requestWhenInUseAuthorization()
         case .authorizedWhenInUse, .authorizedAlways:
             isUsingCurrentLocation = true
+            locationPermissionDenied = false
             locationManager.requestLocation()
         case .denied, .restricted:
             locationPermissionDenied = true
@@ -375,7 +376,7 @@ final class EditProfileVM: NSObject {
         var timeString: String? = nil
         if timeConfidence != .unknown {
             let timeFormatter = DateFormatter()
-            timeFormatter.dateFormat = "HH:mm"
+            timeFormatter.dateFormat = "HH:mm:ss"
             timeString = timeFormatter.string(from: birthTime)
         }
         
@@ -462,6 +463,23 @@ final class EditProfileVM: NSObject {
                 errorMessage = "Failed to save profile: \(error.localizedDescription)"
             }
         }
+    }
+}
+
+private extension EditProfileVM {
+    static func parseBirthTime(_ timeString: String) -> Date? {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone(identifier: "UTC")
+
+        for format in ["HH:mm:ss", "HH:mm"] {
+            formatter.dateFormat = format
+            if let date = formatter.date(from: timeString) {
+                return date
+            }
+        }
+
+        return nil
     }
 }
 

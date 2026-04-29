@@ -22,7 +22,7 @@ struct LoadingOverlay: View {
                 if let message {
                     Text(message)
                         .font(.subheadline)
-                        .foregroundStyle(.textSecondary)
+                        .foregroundStyle(Color.textSecondary)
                 }
             }
             .padding(32)
@@ -83,7 +83,7 @@ struct InlineLoading: View {
             
             Text(message)
                 .font(.subheadline)
-                .foregroundStyle(.textSecondary)
+                .foregroundStyle(Color.textSecondary)
         }
         .padding()
     }

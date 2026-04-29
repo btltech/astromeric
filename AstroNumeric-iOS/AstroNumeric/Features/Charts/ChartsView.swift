@@ -40,6 +40,16 @@ struct ChartsView: View {
                     .ignoresSafeArea()
                 
                 VStack(spacing: 0) {
+                    PremiumHeroCard(
+                            eyebrow: "hero.charts.eyebrow".localized,
+                            title: "hero.charts.title".localized,
+                            bodyText: "hero.charts.body".localized,
+                            accent: [Color(hex: "1d1635"), Color(hex: "6f3db8"), Color(hex: "c35b6e")],
+                            chips: ["hero.charts.chip.0".localized, "hero.charts.chip.1".localized, "hero.charts.chip.2".localized, "hero.charts.chip.3".localized]
+                        )
+                    .padding(.horizontal)
+                    .padding(.top)
+
                     // Segmented control
                     chartTabPicker
                         .padding()
@@ -60,8 +70,9 @@ struct ChartsView: View {
                     }
                     .tabViewStyle(.page(indexDisplayMode: .never))
                 }
+                .readableContainer()
             }
-            .navigationTitle("Charts")
+            .navigationTitle("charts.title".localized)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -129,17 +140,22 @@ struct ChartsView: View {
     private var numerologyContent: some View {
         ScrollView {
             VStack(spacing: 16) {
+                PremiumSectionHeader(
+                title: "section.charts.0.title".localized,
+                subtitle: "section.charts.0.subtitle".localized
+            )
+
                 if let profile = store.selectedProfile {
                     // Profile card for numerology
                     CardView {
                         VStack(alignment: .leading, spacing: 8) {
-                            Text("📊 Numerology Profile")
+                            Text("ui.charts.0".localized)
                                 .font(.headline)
                             
-                            Text("Based on: \(profile.name)")
+                            Text(String(format: "fmt.charts.2".localized, "\(profile.displayName(hideSensitive: store.hideSensitiveDetailsEnabled, role: .activeUser))"))
                                 .font(.subtext)
                             
-                            Text("Birth Date: ••••-••-••")
+                            Text("ui.charts.1".localized)
                                 .font(.label)
                                 .foregroundStyle(Color.textSecondary)
                         }
@@ -161,10 +177,10 @@ struct ChartsView: View {
                     // Numerology info
                     CardView {
                         VStack(alignment: .leading, spacing: 12) {
-                            Text("🔢 Your Core Numbers")
+                            Text("ui.charts.2".localized)
                                 .font(.headline)
                             
-                            Text("Get your Life Path, Expression, Soul Urge, and Personality numbers calculated from your name and birth date.")
+                            Text("ui.charts.3".localized)
                                 .font(.label)
                                 .foregroundStyle(Color.textMuted)
                         }
@@ -187,6 +203,11 @@ struct ChartsView: View {
     private var compatibilityContent: some View {
         ScrollView {
             VStack(spacing: 16) {
+                PremiumSectionHeader(
+                title: "section.charts.1.title".localized,
+                subtitle: "section.charts.1.subtitle".localized
+            )
+
                 // New compatibility check
                 NavigationLink {
                     CompatibilityView()
@@ -208,10 +229,10 @@ struct ChartsView: View {
                                 .foregroundStyle(.white)
                         }
                         
-                        Text("Check Compatibility")
+                        Text("ui.charts.4".localized)
                             .font(.title2.bold())
                         
-                        Text("Compare your charts with someone special")
+                        Text("ui.charts.5".localized)
                             .font(.subheadline)
                             .foregroundStyle(Color.textSecondary)
                             .multilineTextAlignment(.center)
@@ -227,7 +248,7 @@ struct ChartsView: View {
                 
                 // Compatibility tips
                 VStack(alignment: .leading, spacing: 12) {
-                    Text("Compatibility Insights")
+                    Text("ui.charts.6".localized)
                         .font(.headline)
                     
                     ChartsCompatibilityTipRow(
@@ -262,9 +283,9 @@ struct ChartsView: View {
                     CardView {
                         HStack {
                             VStack(alignment: .leading, spacing: 4) {
-                                Text("Saved Relationships")
+                                Text("ui.charts.7".localized)
                                     .font(.headline)
-                                Text("View your compatibility history")
+                                Text("ui.charts.8".localized)
                                     .font(.label)
                                     .foregroundStyle(Color.textSecondary)
                             }
@@ -292,7 +313,10 @@ extension ChartsView {
         isExporting = true
         
         let exportView = ChartExportCard(
-            profileName: profile.name,
+            profileName: profile.displayName(
+                hideSensitive: store.hideSensitiveDetailsEnabled,
+                role: .share
+            ),
             dateOfBirth: profile.dateOfBirth,
             sunSign: profile.sunSign,
             moonSign: store.activeMoonSign,
@@ -341,14 +365,14 @@ struct ChartExportCard: View {
             
             VStack(spacing: 24) {
                 // Header
-                Text("ASTRONUMERIC")
-                    .font(.system(size: 11, weight: .bold, design: .monospaced))
+                Text("ui.charts.9".localized)
+                    .font(.system(.caption, design: .monospaced)).fontWeight(.bold)
                     .tracking(6)
                     .foregroundStyle(.white.opacity(0.5))
                 
                 // Name
                 Text(profileName.uppercased())
-                    .font(.system(size: 28, weight: .bold, design: .serif))
+                    .font(.system(.title, design: .serif)).fontWeight(.bold)
                     .foregroundColor(.white)
                 
                 // Divider
@@ -383,13 +407,13 @@ struct ChartExportCard: View {
                 }
                 
                 // Birth Details
-                Text("Born: ••••-••-••")
-                    .font(.system(size: 12, design: .monospaced))
+                Text("ui.charts.10".localized)
+                    .font(.system(.caption, design: .monospaced))
                     .foregroundStyle(.white.opacity(0.4))
                 
                 // Footer
-                Text("astronumeric.app")
-                    .font(.system(size: 10, design: .monospaced))
+                Text("ui.charts.11".localized)
+                    .font(.system(.caption2, design: .monospaced))
                     .foregroundColor(.white.opacity(0.3))
             }
             .padding(32)
@@ -401,20 +425,20 @@ struct ChartExportCard: View {
     private func chartSignColumn(label: String, sign: String, emoji: String) -> some View {
         VStack(spacing: 6) {
             Text(emoji)
-                .font(.system(size: 28))
+                .font(.system(.title))
             Text(label)
-                .font(.system(size: 9, weight: .bold, design: .monospaced))
+                .font(.system(.caption2, design: .monospaced)).fontWeight(.bold)
                 .tracking(2)
                 .foregroundStyle(.white.opacity(0.5))
             Text(sign.uppercased())
-                .font(.system(size: 14, weight: .bold))
+                .font(.system(.subheadline)).fontWeight(.bold)
                 .foregroundColor(.white)
         }
     }
     
     private func chartInfoPill(label: String) -> some View {
         Text(label)
-            .font(.system(size: 11, weight: .medium))
+            .font(.system(.caption)).fontWeight(.medium)
             .foregroundStyle(.white.opacity(0.8))
             .padding(.horizontal, 14)
             .padding(.vertical, 6)
@@ -460,33 +484,34 @@ struct ChartExportCard: View {
 // MARK: - Supporting Views
 
 struct ChartsProfileInfoCard: View {
+    @Environment(AppStore.self) private var store
     let profile: Profile
     
     var body: some View {
         CardView {
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
-                    Text("✨ Your Birth Chart")
+                    Text("ui.charts.12".localized)
                         .font(.headline)
                     Spacer()
                 }
                 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(profile.name)
+                    Text(profile.displayName(hideSensitive: store.hideSensitiveDetailsEnabled, role: .activeUser))
                         .font(.subheadline.weight(.medium))
                     
-                    Text("Born: ••••-••-••")
+                    Text("ui.charts.13".localized)
                         .font(.caption)
                         .foregroundStyle(Color.textSecondary)
                     
                     if let place = profile.placeOfBirth {
-                        Text("Location: \(place)")
+                        Text(String(format: "fmt.charts.1".localized, "\(store.hideSensitiveDetailsEnabled ? PrivacyRedaction.hiddenValue : place)"))
                             .font(.caption)
                             .foregroundStyle(Color.textSecondary)
                     }
                     
                     if let time = profile.timeOfBirth {
-                        Text("Time: \(time)")
+                        Text(String(format: "fmt.charts.0".localized, "\(store.hideSensitiveDetailsEnabled ? PrivacyRedaction.hiddenValue : time)"))
                             .font(.caption)
                             .foregroundStyle(Color.textSecondary)
                     }
@@ -551,7 +576,7 @@ struct ChartsNoProfileCard: View {
     var body: some View {
         VStack(spacing: 16) {
             Image(systemName: icon)
-                .font(.system(size: 50))
+                .font(.system(.largeTitle))
                 .foregroundStyle(Color.textSecondary)
             
             Text(title)
@@ -565,7 +590,7 @@ struct ChartsNoProfileCard: View {
             NavigationLink {
                 ProfileView()
             } label: {
-                Text("Set Up Profile")
+                Text("ui.charts.14".localized)
                     .font(.headline)
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)

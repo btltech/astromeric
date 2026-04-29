@@ -75,7 +75,7 @@ interface AppState {
   lastVisitDate: string | null;
   updateStreak: () => void;
 
-  // Auth (new)
+  // Auth
   token: string | null;
   user: { id: string; email: string; is_paid: boolean } | null;
   setAuth: (

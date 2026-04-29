@@ -43,7 +43,7 @@ struct Endpoint {
 // MARK: - Auth Endpoints
 
 
-// MARK: - Auth Endpoints (removed in God-Mode pivot)
+// MARK: - Auth Endpoints (removed in local-first pivot)
 
 // MARK: - Profile Endpoints
 
@@ -76,7 +76,7 @@ extension Endpoint {
 extension Endpoint {
     /// Daily Do's and Don'ts — personalized by transits, numerology, and moon phase
     static func dailyDoDont(profile: ProfilePayload) -> Endpoint {
-        let today = ISO8601DateFormatter().string(from: Date()).prefix(10)
+        let today = Date().formattedDateISO8601(timeZoneId: profile.timezone)
         return Endpoint(
             path: "/v2/daily/do-dont",
             method: .POST,
@@ -89,7 +89,7 @@ extension Endpoint {
 
     /// 3-bullet morning brief — ideal for widgets and push notifications
     static func morningBrief(profile: ProfilePayload) -> Endpoint {
-        let today = ISO8601DateFormatter().string(from: Date()).prefix(10)
+        let today = Date().formattedDateISO8601(timeZoneId: profile.timezone)
         return Endpoint(
             path: "/v2/daily/brief",
             method: .POST,
@@ -116,15 +116,19 @@ extension Endpoint {
         return Endpoint(path: "/v2/friends/add", method: .POST, body: AddBody(owner_id: ownerId, friend: friend))
     }
 
-    static func compareAllFriends(profile: ProfilePayload) -> Endpoint {
+    static func compareAllFriends(ownerId: String, profile: ProfilePayload) -> Endpoint {
+        struct CompareAllBody: Encodable {
+            let owner_id: String
+            let owner_profile: ProfilePayload
+        }
         let today = ISO8601DateFormatter().string(from: Date()).prefix(10)
         return Endpoint(
             path: "/v2/friends/compare-all",
             method: .POST,
-            body: profile,
+            body: CompareAllBody(owner_id: ownerId, owner_profile: profile),
             isCacheable: true,
             cacheTTL: 3600,
-            cacheKey: "friends-compare-\(profile.name)-\(profile.dateOfBirth)-\(today)"
+            cacheKey: "friends-compare-\(ownerId)-\(profile.name)-\(profile.dateOfBirth)-\(today)"
         )
     }
 }
@@ -200,6 +204,7 @@ extension Endpoint {
     static func reading(profile: Profile, scope: ReadingScope, date: Date? = nil) -> Endpoint {
         let dateString = date?.formattedDateISO8601(timeZoneId: profile.timezone)
         let cal = Calendar.current
+        let toneKey = AppStore.shared.readingTone.rawValue
         let scopeKey: String
         switch scope {
         case .daily:
@@ -220,7 +225,7 @@ extension Endpoint {
             body: V2ForecastRequest(profile: profile, scope: scope.rawValue, date: dateString),
             isCacheable: true,
             cacheTTL: scope == .daily ? 3600 : 7200,
-            cacheKey: "reading-\(profile.id)-\(scope.rawValue)-\(scopeKey)"
+            cacheKey: "reading-\(profile.id)-\(scope.rawValue)-\(scopeKey)-\(toneKey)"
         )
     }
 }
@@ -451,22 +456,16 @@ extension Endpoint {
     
     /// Get daily cosmic features (affirmation, lucky numbers, colors, power hours)
     static func dailyFeatures(profile: Profile, date: Date? = nil) -> Endpoint {
-        Endpoint(
+        var payload = profile.privacySafePayload(hideSensitive: AppStore.shared.hideSensitiveDetailsEnabled)
+        payload.date = date?.formattedDateISO8601(timeZoneId: profile.timezone)
+        let dayKey = (date ?? Date()).formattedDateISO8601(timeZoneId: profile.timezone)
+        return Endpoint(
             path: "/v2/daily/reading",
             method: .POST,
-            body: ProfilePayload(
-                name: profile.name,
-                dateOfBirth: profile.dateOfBirth,
-                timeOfBirth: profile.timeOfBirth,
-                placeOfBirth: profile.placeOfBirth,
-                latitude: profile.latitude,
-                longitude: profile.longitude,
-                timezone: profile.timezone,
-                houseSystem: profile.houseSystem,
-                date: date?.formattedDateISO8601(timeZoneId: profile.timezone)
-            ),
+            body: payload,
             isCacheable: true,
-            cacheTTL: 3600
+            cacheTTL: 3600,
+            cacheKey: "daily-features-\(profile.id)-\(dayKey)"
         )
     }
 }
@@ -515,16 +514,7 @@ extension Endpoint {
             path: "/v2/moon/ritual",
             method: .POST,
             body: MoonRitualRequest(
-                profile: profile.map {
-                    ProfilePayload(
-                        name: $0.name,
-                        dateOfBirth: $0.dateOfBirth,
-                        timeOfBirth: $0.timeOfBirth,
-                        latitude: $0.latitude,
-                        longitude: $0.longitude,
-                        timezone: $0.timezone
-                    )
-                }
+                profile: profile.map { $0.privacySafePayload(hideSensitive: AppStore.shared.hideSensitiveDetailsEnabled) }
             ),
             isCacheable: true,
             cacheTTL: 3600
@@ -577,16 +567,7 @@ extension Endpoint {
         Endpoint(
             path: "/v2/daily/forecast",
             method: .POST,
-            body: ProfilePayload(
-                name: profile.name,
-                dateOfBirth: profile.dateOfBirth,
-                timeOfBirth: profile.timeOfBirth,
-                placeOfBirth: profile.placeOfBirth,
-                latitude: profile.latitude,
-                longitude: profile.longitude,
-                timezone: profile.timezone,
-                houseSystem: profile.houseSystem
-            ),
+            body: profile.privacySafePayload(hideSensitive: AppStore.shared.hideSensitiveDetailsEnabled),
             isCacheable: true,
             cacheTTL: 3600  // Cache for 1 hour
         )
@@ -609,16 +590,7 @@ extension Endpoint {
         Endpoint(
             path: "/v2/daily/yes-no",
             method: .POST,
-            body: ProfilePayload(
-                name: profile.name,
-                dateOfBirth: profile.dateOfBirth,
-                timeOfBirth: profile.timeOfBirth,
-                placeOfBirth: profile.placeOfBirth,
-                latitude: profile.latitude,
-                longitude: profile.longitude,
-                timezone: profile.timezone,
-                houseSystem: profile.houseSystem
-            ),
+            body: profile.privacySafePayload(hideSensitive: AppStore.shared.hideSensitiveDetailsEnabled),
             queryItems: [URLQueryItem(name: "question", value: question)]
         )
     }
@@ -631,16 +603,7 @@ extension Endpoint {
         return Endpoint(
             path: "/v2/daily/affirmation",
             method: .POST,
-            body: ProfilePayload(
-                name: profile.name,
-                dateOfBirth: profile.dateOfBirth,
-                timeOfBirth: profile.timeOfBirth,
-                placeOfBirth: profile.placeOfBirth,
-                latitude: profile.latitude,
-                longitude: profile.longitude,
-                timezone: profile.timezone,
-                houseSystem: profile.houseSystem
-            ),
+            body: profile.privacySafePayload(hideSensitive: AppStore.shared.hideSensitiveDetailsEnabled),
             isCacheable: true,
             cacheTTL: 3600, // 1h — content changes daily
             cacheKey: "affirmation-\(profile.id)-\(year)-\(month)"
@@ -775,14 +738,7 @@ extension Endpoint {
             path: "/v2/transits/daily",
             method: .POST,
             body: TransitRequest(
-                profile: ProfilePayload(
-                    name: profile.name,
-                    dateOfBirth: profile.dateOfBirth,
-                    timeOfBirth: profile.timeOfBirth,
-                    latitude: profile.latitude,
-                    longitude: profile.longitude,
-                    timezone: profile.timezone
-                )
+                profile: profile.privacySafePayload(hideSensitive: AppStore.shared.hideSensitiveDetailsEnabled)
             ),
             isCacheable: true,
             cacheTTL: 3600
@@ -814,14 +770,7 @@ extension Endpoint {
             path: "/v2/year-ahead/forecast",
             method: .POST,
             body: YearAheadRequest(
-                profile: ProfilePayload(
-                    name: profile.name,
-                    dateOfBirth: profile.dateOfBirth,
-                    timeOfBirth: profile.timeOfBirth,
-                    latitude: profile.latitude,
-                    longitude: profile.longitude,
-                    timezone: profile.timezone
-                ),
+                profile: profile.privacySafePayload(hideSensitive: AppStore.shared.hideSensitiveDetailsEnabled),
                 year: year
             ),
             isCacheable: true,

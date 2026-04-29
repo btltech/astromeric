@@ -5,6 +5,14 @@ import SwiftUI
 
 struct ToolsView: View {
     @Environment(AppStore.self) private var store
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
+    private var toolColumns: [GridItem] {
+        if dynamicTypeSize.isAccessibilitySize {
+            return [GridItem(.flexible())]
+        }
+        return [GridItem(.flexible()), GridItem(.flexible())]
+    }
     
     var body: some View {
         NavigationStack {
@@ -14,13 +22,54 @@ struct ToolsView: View {
                 
                 ScrollView {
                     VStack(spacing: 20) {
+                        PremiumHeroCard(
+                            eyebrow: "hero.tools.eyebrow".localized,
+                            title: "hero.tools.title".localized,
+                            bodyText: "hero.tools.body".localized,
+                            accent: [Color(hex: "25103f"), Color(hex: "5531a7"), Color(hex: "0f6a7d")],
+                            chips: ["hero.tools.chip.0".localized, "hero.tools.chip.1".localized, "hero.tools.chip.2".localized]
+                        )
+                        .padding(.horizontal)
+
+                        PremiumSectionHeader(
+                title: "section.tools.0.title".localized,
+                subtitle: "section.tools.0.subtitle".localized
+            )
+                        .padding(.horizontal)
+
+                        CardView {
+                            VStack(alignment: .leading, spacing: 10) {
+                                Text("ui.tools.0".localized)
+                                    .font(.headline)
+
+                                Text("ui.tools.1".localized)
+                                    .font(.subheadline)
+                                    .foregroundStyle(Color.textSecondary)
+
+                                HStack(spacing: 8) {
+                                    FeatureProvenanceBadge(provenance: .calculated, compact: true)
+                                    FeatureProvenanceBadge(provenance: .hybrid, compact: true)
+                                    FeatureProvenanceBadge(provenance: .interpretive, compact: true)
+                                    FeatureProvenanceBadge(provenance: .reference, compact: true)
+                                }
+                            }
+                        }
+                        .padding(.horizontal)
+
+                        PremiumSectionHeader(
+                title: "section.tools.1.title".localized,
+                subtitle: "section.tools.1.subtitle".localized
+            )
+                        .padding(.horizontal)
+
                         // Tool Cards
-                        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
+                        LazyVGrid(columns: toolColumns, spacing: 16) {
                             ToolCard(
                                 title: "Tarot",
                                 icon: "suit.spade.fill",
                                 color: .purple,
-                                description: "Daily card draw"
+                                description: "Card pull for symbolic reflection.",
+                                provenance: .interpretive
                             ) {
                                 TarotView()
                             }
@@ -29,7 +78,8 @@ struct ToolsView: View {
                                 title: "Oracle",
                                 icon: "questionmark.circle.fill",
                                 color: .blue,
-                                description: "Yes/No guidance"
+                                description: "Yes/no guidance using your day number and moon phase.",
+                                provenance: .hybrid
                             ) {
                                 OracleView()
                             }
@@ -38,7 +88,8 @@ struct ToolsView: View {
                                 title: "Affirmation",
                                 icon: "star.fill",
                                 color: .orange,
-                                description: "Daily inspiration"
+                                description: "Supportive language tuned to today's mood.",
+                                provenance: .interpretive
                             ) {
                                 AffirmationView()
                             }
@@ -47,7 +98,8 @@ struct ToolsView: View {
                                 title: "Moon Phase",
                                 icon: "moon.fill",
                                 color: .indigo,
-                                description: "Lunar guidance"
+                                description: "Current lunar phase, sign, and ritual timing.",
+                                provenance: .calculated
                             ) {
                                 MoonPhaseView()
                             }
@@ -56,7 +108,8 @@ struct ToolsView: View {
                                 title: "Birth Chart",
                                 icon: "circle.grid.3x3",
                                 color: .teal,
-                                description: "Your cosmic map"
+                                description: "Planetary placements from your birth data.",
+                                provenance: .calculated
                             ) {
                                 ChartView()
                             }
@@ -65,7 +118,8 @@ struct ToolsView: View {
                                 title: "Compatibility",
                                 icon: "heart.fill",
                                 color: .pink,
-                                description: "Relationship synastry"
+                                description: "Synastry and numerology between two profiles.",
+                                provenance: .calculated
                             ) {
                                 CompatibilityView()
                             }
@@ -74,7 +128,8 @@ struct ToolsView: View {
                                 title: "Daily Guide",
                                 icon: "sparkles",
                                 color: .yellow,
-                                description: "Daily cosmic features"
+                                description: "Personal day, moon phase, retrogrades, and cues.",
+                                provenance: .calculated
                             ) {
                                 DailyFeaturesView()
                             }
@@ -83,7 +138,8 @@ struct ToolsView: View {
                                 title: "Timing",
                                 icon: "clock.badge.checkmark",
                                 color: .green,
-                                description: "Best time for activities"
+                                description: "Activity windows scored from the live sky.",
+                                provenance: .calculated
                             ) {
                                 TimingAdvisorView()
                             }
@@ -92,7 +148,8 @@ struct ToolsView: View {
                                 title: "Temporal Matrix",
                                 icon: "calendar.badge.clock",
                                 color: .cyan,
-                                description: "48h cosmic weather HUD"
+                                description: "48-hour transit weather for planning and pacing.",
+                                provenance: .calculated
                             ) {
                                 TemporalMatrixView()
                             }
@@ -101,7 +158,8 @@ struct ToolsView: View {
                                 title: "Birthstones",
                                 icon: "sparkle",
                                 color: .mint,
-                                description: "Gems for your sign"
+                                description: "Gemstone guide matched to sign and month traditions.",
+                                provenance: .reference
                             ) {
                                 BirthstoneGuidanceView()
                             }
@@ -109,9 +167,10 @@ struct ToolsView: View {
                         .padding(.horizontal)
                     }
                     .padding(.vertical)
+                    .readableContainer()
                 }
             }
-            .navigationTitle("Cosmic Tools")
+            .navigationTitle("screen.cosmicTools".localized)
             .navigationBarTitleDisplayMode(.inline)
         }
     }
@@ -125,6 +184,7 @@ struct ToolCard<Destination: View>: View {
     let icon: String
     let color: Color
     let description: String
+    let provenance: FeatureProvenance
     @ViewBuilder let destination: () -> Destination
     
     var body: some View {
@@ -133,9 +193,13 @@ struct ToolCard<Destination: View>: View {
         } label: {
             VStack(spacing: 12) {
                 ZStack {
-                    Circle()
-                        .fill(color.opacity(0.2))
-                        .frame(width: 60, height: 60)
+                    RoundedRectangle(cornerRadius: 18)
+                        .fill(color.opacity(0.18))
+                        .frame(width: 64, height: 64)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 18)
+                                .stroke(color.opacity(0.28), lineWidth: 1)
+                        )
                     
                     Image(systemName: icon)
                         .font(.title)
@@ -145,10 +209,14 @@ struct ToolCard<Destination: View>: View {
                 Text(title)
                     .font(.headline)
                     .foregroundStyle(.primary)
+                    .multilineTextAlignment(.center)
+
+                FeatureProvenanceBadge(provenance: provenance, compact: true)
                 
                 Text(description)
                     .font(.caption)
                     .foregroundStyle(Color.textSecondary)
+                    .lineLimit(3)
                     .multilineTextAlignment(.center)
             }
             .frame(maxWidth: .infinity)
@@ -156,8 +224,15 @@ struct ToolCard<Destination: View>: View {
             .background(
                 RoundedRectangle(cornerRadius: 16)
                     .fill(.ultraThinMaterial)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16)
+                            .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                    )
             )
         }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(title)
+        .accessibilityHint("\(description) \(provenance.description)")
     }
 }
 

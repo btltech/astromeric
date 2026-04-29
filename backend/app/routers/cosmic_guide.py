@@ -6,11 +6,12 @@ Standardized request/response format for AI-powered guidance and interpretations
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Body, HTTPException, Request
 from pydantic import BaseModel
 
+from ..ai_service import explain_with_gemini, fallback_summary
 from ..engine.cosmic_guide import ask_cosmic_guide
-from ..exceptions import InvalidDateError, StructuredLogger
+from ..exceptions import StructuredLogger
 from ..schemas import ApiResponse, ProfilePayload, ResponseStatus
 
 logger = StructuredLogger(__name__)
@@ -55,6 +56,8 @@ class ChatRequest(BaseModel):
     birth_time_assumed: Optional[bool] = False  # true when chart uses noon default
     time_confidence: Optional[str] = None  # "exact", "approximate", or "unknown"
     history: Optional[List[Dict[str, str]]] = None
+    system_prompt: Optional[str] = None
+    tone: Optional[str] = None
 
 
 class ChatResponse(BaseModel):
@@ -99,6 +102,8 @@ async def chat_with_cosmic_guide(
             request_id=request_id,
             message_length=len(req.message),
             has_signs=bool(req.sun_sign or req.moon_sign or req.rising_sign),
+            tone=req.tone,
+            has_system_prompt=bool(req.system_prompt),
         )
 
         # Build chart data for personalization
@@ -121,6 +126,8 @@ async def chat_with_cosmic_guide(
             conversation_history=req.history,
             birth_time_assumed=req.birth_time_assumed or False,
             time_confidence=req.time_confidence,
+            system_prompt=req.system_prompt,
+            tone=req.tone,
         )
 
         response_text = result.get(
@@ -163,8 +170,8 @@ async def chat_with_cosmic_guide(
 @router.post("/guidance", response_model=ApiResponse[GuidanceResponse])
 async def get_cosmic_guidance(
     request: Request,
-    question: str,
-    profile: Optional[ProfilePayload] = None,
+    question: Optional[str] = None,
+    payload: Optional[Dict[str, Any]] = Body(default=None),
 ) -> ApiResponse[GuidanceResponse]:
     """
     Get AI-powered cosmic guidance for a specific question.
@@ -179,25 +186,58 @@ async def get_cosmic_guidance(
     request_id = request.state.request_id
 
     try:
-        if not question or len(question.strip()) == 0:
+        payload = payload or {}
+        effective_question = question or payload.get("topic")
+
+        effective_profile = None
+        if "profile" in payload and isinstance(payload["profile"], dict):
+            effective_profile = ProfilePayload(**payload["profile"])
+        elif "name" in payload and "date_of_birth" in payload:
+            effective_profile = ProfilePayload(**payload)
+
+        context = payload.get("context")
+
+        if not effective_question or len(effective_question.strip()) == 0:
             raise ValueError("Question cannot be empty")
 
         logger.info(
             "Generating cosmic guidance",
             request_id=request_id,
-            question=question[:100],
-            personalized=profile is not None,
+            question=effective_question[:100],
+            personalized=effective_profile is not None,
         )
 
-        # Generate guidance using AI
-        guidance_text = await explain_with_gemini(question)
-        if not guidance_text or guidance_text == fallback_summary:
-            guidance_text = (
-                "The cosmos suggests reflection and trust in your intuition."
+        sections = []
+        if context:
+            sections.append({"title": "Context", "highlights": [context]})
+        if effective_profile:
+            sections.append(
+                {
+                    "title": "Profile",
+                    "highlights": [
+                        effective_profile.date_of_birth,
+                        effective_profile.timezone or "UTC",
+                    ],
+                }
+            )
+
+        guidance_text = explain_with_gemini(
+            scope="guidance",
+            headline=effective_question,
+            theme=None,
+            sections=sections,
+            numerology=None,
+            simple_language=True,
+        )
+        if not guidance_text:
+            guidance_text = fallback_summary(
+                effective_question,
+                sections,
+                "Trust the timing and take one grounded next step.",
             )
 
         response_data = GuidanceResponse(
-            question=question,
+            question=effective_question,
             guidance=guidance_text,
             interpretation="Your question resonates with current cosmic energies",
             recommendations=[
@@ -242,8 +282,9 @@ async def get_cosmic_guidance(
 @router.post("/interpret", response_model=ApiResponse[InterpretationData])
 async def get_detailed_interpretation(
     request: Request,
-    topic: str,
+    topic: Optional[str] = None,
     context: Optional[str] = None,
+    payload: Optional[Dict[str, Any]] = Body(default=None),
 ) -> ApiResponse[InterpretationData]:
     """
     Get detailed AI interpretation of an astrological topic.
@@ -258,26 +299,48 @@ async def get_detailed_interpretation(
     request_id = request.state.request_id
 
     try:
-        if not topic or len(topic.strip()) == 0:
+        payload = payload or {}
+        effective_topic = topic or payload.get("question") or "general"
+        effective_context = context
+        parts = [payload.get("chart_data"), payload.get("reading_data")]
+        body_context = " | ".join(part for part in parts if part)
+        if body_context:
+            effective_context = (
+                body_context
+                if not effective_context
+                else f"{effective_context} | {body_context}"
+            )
+
+        if not effective_topic or len(effective_topic.strip()) == 0:
             raise ValueError("Topic cannot be empty")
 
         logger.info(
             "Generating interpretation",
             request_id=request_id,
-            topic=topic[:100],
+            topic=effective_topic[:100],
         )
 
         # Generate interpretation using AI
-        query = f"Provide detailed interpretation of: {topic}"
-        if context:
-            query += f" Context: {context}"
-
-        interpretation_text = await explain_with_gemini(query)
+        sections = []
+        if effective_context:
+            sections.append({"title": "Context", "highlights": [effective_context]})
+        interpretation_text = explain_with_gemini(
+            scope="interpretation",
+            headline=effective_topic,
+            theme=None,
+            sections=sections,
+            numerology=None,
+            simple_language=False,
+        )
         if not interpretation_text:
-            interpretation_text = fallback_summary
+            interpretation_text = fallback_summary(
+                effective_topic,
+                sections,
+                "Look for the pattern before acting.",
+            )
 
         response_data = InterpretationData(
-            topic=topic,
+            topic=effective_topic,
             summary=interpretation_text[:200],
             detailed_interpretation=interpretation_text,
             planetary_influences={

@@ -46,6 +46,42 @@ class PersonalYearCycle(BaseModel):
     focus_areas: List[str]
 
 
+class PinnacleData(BaseModel):
+    """Life pinnacle period and its meaning."""
+
+    number: int
+    ages: Optional[str] = None
+    meaning: Optional[str] = None
+
+
+class ChallengeData(BaseModel):
+    """Life challenge period and its meaning."""
+
+    number: int
+    ages: Optional[str] = None
+    meaning: Optional[str] = None
+
+
+class NumerologyHighlight(BaseModel):
+    """Primary number surfaced in the deterministic synthesis."""
+
+    key: str
+    label: str
+    number: int
+    meaning: str
+
+
+class NumerologySynthesis(BaseModel):
+    """Deterministic narrative summary built from the numerology payload."""
+
+    summary: str
+    strengths: List[str]
+    growth_edges: List[str]
+    current_focus: str
+    affirmation: str
+    dominant_numbers: List[NumerologyHighlight]
+
+
 class NumerologyData(BaseModel):
     """Full numerology analysis response."""
 
@@ -59,6 +95,10 @@ class NumerologyData(BaseModel):
     lucky_numbers: List[int]
     auspicious_days: List[int]
     numerology_insights: Dict[str, str]
+    pinnacles: List[PinnacleData] = []
+    challenges: List[ChallengeData] = []
+    karmic_debts: List[Dict] = []
+    synthesis: Optional[NumerologySynthesis] = None
     generated_at: datetime
 
 
@@ -113,20 +153,28 @@ PERSONAL_YEAR_FOCUS = {
 
 def _generate_life_path_traits(number: int) -> List[str]:
     """Generate traits for a life path number."""
-    return LIFE_PATH_TRAITS.get(number, LIFE_PATH_TRAITS.get(number % 9 or 9, ["Unique", "Balanced"]))
+    return LIFE_PATH_TRAITS.get(
+        number, LIFE_PATH_TRAITS.get(number % 9 or 9, ["Unique", "Balanced"])
+    )
 
 
 def _generate_life_purpose(number: int) -> str:
     """Generate life purpose for a life path number."""
-    return LIFE_PATH_PURPOSE.get(number, LIFE_PATH_PURPOSE.get(number % 9 or 9, "To find your unique path"))
+    return LIFE_PATH_PURPOSE.get(
+        number, LIFE_PATH_PURPOSE.get(number % 9 or 9, "To find your unique path")
+    )
 
 
 def _generate_focus_areas(number: int) -> List[str]:
     """Generate focus areas for a personal year."""
-    return PERSONAL_YEAR_FOCUS.get(number, PERSONAL_YEAR_FOCUS.get(number % 9 or 9, ["Growth", "Balance"]))
+    return PERSONAL_YEAR_FOCUS.get(
+        number, PERSONAL_YEAR_FOCUS.get(number % 9 or 9, ["Growth", "Balance"])
+    )
 
 
-def _generate_lucky_numbers(life_path: int, destiny: int, personal_year: int, personal_month: int) -> List[int]:
+def _generate_lucky_numbers(
+    life_path: int, destiny: int, personal_year: int, personal_month: int
+) -> List[int]:
     """Generate lucky numbers based on core numerology numbers.
     Includes personal_month so numbers update every calendar month.
     """
@@ -148,7 +196,10 @@ def _generate_auspicious_days(life_path: int, month: int, year: int) -> List[int
     # Personal month seed shifts the base days
     personal_month = (life_path + month) % 9 or 9
     base_days = [life_path, life_path + personal_month, life_path + 9]
-    compatible = [(life_path * personal_month) % 28 or 28, (personal_month * 2 + month) % 28 or 1]
+    compatible = [
+        (life_path * personal_month) % 28 or 28,
+        (personal_month * 2 + month) % 28 or 1,
+    ]
     all_days = [d for d in base_days + compatible if 1 <= d <= 31]
     return sorted(set(all_days))[:5]
 
@@ -160,6 +211,7 @@ def _generate_auspicious_days(life_path: int, month: int, year: int) -> List[int
 
 class CoreNumerologyRequest(BaseModel):
     """Request for core number calculation with method selection."""
+
     profile: ProfilePayload
     method: str = "pythagorean"  # 'pythagorean' or 'chaldean'
 
@@ -231,9 +283,8 @@ async def calculate_numerology_profile(
             )
 
         logger.info(
-            f"Calculating numerology profile for {req.profile.name}",
+            "Calculating numerology profile",
             request_id=request_id,
-            profile_name=req.profile.name,
         )
 
         # Calculate numerology
@@ -252,16 +303,16 @@ async def calculate_numerology_profile(
         life_path_raw = core.get("life_path", {})
         life_path_num = life_path_raw.get("number", 1)
         life_path_meaning = life_path_raw.get("meaning", "")
-        
+
         # Expression = Destiny in traditional numerology
         expression_raw = core.get("expression", {})
         destiny_num = expression_raw.get("number", 1)
         destiny_meaning = expression_raw.get("meaning", "")
-        
+
         # Soul urge and personality for traits
         soul_urge_raw = core.get("soul_urge", {})
         personality_raw = core.get("personality", {})
-        
+
         # Personal year cycle
         personal_year_raw = cycles.get("personal_year", {})
         personal_year_num = personal_year_raw.get("number", 1)
@@ -293,7 +344,9 @@ async def calculate_numerology_profile(
         personal_month_num = personal_month_raw.get("number", 1)
 
         # Generate lucky numbers including personal month (changes monthly)
-        lucky_nums = _generate_lucky_numbers(life_path_num, destiny_num, personal_year_num, personal_month_num)
+        lucky_nums = _generate_lucky_numbers(
+            life_path_num, destiny_num, personal_year_num, personal_month_num
+        )
 
         # Build insights from all core numbers
         insights = {
@@ -302,6 +355,45 @@ async def calculate_numerology_profile(
             "personal_month": personal_month_raw.get("meaning", ""),
             "personal_day": cycles.get("personal_day", {}).get("meaning", ""),
         }
+        pinnacles = [
+            PinnacleData(
+                number=item.get("number", 0),
+                ages=item.get("period"),
+                meaning=f"{item.get('keyword', '')}: {item.get('description', '')}".strip(
+                    ": "
+                ),
+            )
+            for item in numerology.get("pinnacles", [])
+        ]
+        challenges = [
+            ChallengeData(
+                number=item.get("number", 0),
+                ages=item.get("label"),
+                meaning=f"{item.get('keyword', '')}: {item.get('description', '')}".strip(
+                    ": "
+                ),
+            )
+            for item in numerology.get("challenges", [])
+        ]
+        synthesis_raw = numerology.get("synthesis") or {}
+        synthesis = None
+        if synthesis_raw:
+            synthesis = NumerologySynthesis(
+                summary=synthesis_raw.get("summary", ""),
+                strengths=synthesis_raw.get("strengths", []),
+                growth_edges=synthesis_raw.get("growth_edges", []),
+                current_focus=synthesis_raw.get("current_focus", ""),
+                affirmation=synthesis_raw.get("affirmation", ""),
+                dominant_numbers=[
+                    NumerologyHighlight(
+                        key=item.get("key", ""),
+                        label=item.get("label", ""),
+                        number=item.get("number", 0),
+                        meaning=item.get("meaning", ""),
+                    )
+                    for item in synthesis_raw.get("dominant_numbers", [])
+                ],
+            )
 
         response_data = NumerologyData(
             profile=req.profile,
@@ -312,8 +404,14 @@ async def calculate_numerology_profile(
             compatibility_number=None,
             compatibility_interpretation=None,
             lucky_numbers=lucky_nums,
-            auspicious_days=_generate_auspicious_days(life_path_num, current_month, current_year),
+            auspicious_days=_generate_auspicious_days(
+                life_path_num, current_month, current_year
+            ),
             numerology_insights=insights,
+            pinnacles=pinnacles,
+            challenges=challenges,
+            karmic_debts=numerology.get("karmic_debts", []),
+            synthesis=synthesis,
             generated_at=datetime.now(timezone.utc),
         )
 
@@ -336,6 +434,7 @@ async def calculate_numerology_profile(
         )
     except Exception as e:
         import traceback
+
         tb = traceback.format_exc()
         logger.error(
             f"Numerology calculation error: {str(e)}\n{tb}",
@@ -380,10 +479,8 @@ async def calculate_numerology_compatibility(
                 )
 
         logger.info(
-            f"Calculating numerology compatibility",
+            "Calculating numerology compatibility",
             request_id=request_id,
-            person_a=req.profile.name,
-            person_b=req.person_b.name,
         )
 
         # Calculate numerology for both
@@ -401,14 +498,10 @@ async def calculate_numerology_compatibility(
 
         # Calculate compatibility score
         life_path_a = (
-            numerology_a.get("core_numbers", {})
-            .get("life_path", {})
-            .get("number", 1)
+            numerology_a.get("core_numbers", {}).get("life_path", {}).get("number", 1)
         )
         life_path_b = (
-            numerology_b.get("core_numbers", {})
-            .get("life_path", {})
-            .get("number", 1)
+            numerology_b.get("core_numbers", {}).get("life_path", {}).get("number", 1)
         )
 
         # Simple compatibility algorithm: numbers that match or complement are more compatible

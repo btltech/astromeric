@@ -1,12 +1,18 @@
 // CosmicGuideVM.swift
 // Feature ViewModel for AI Cosmic Guide chat functionality
-// God-Mode: builds rich system prompt with full chart data from local EphemerisEngine
+// Builds rich system prompts with chart data from the local EphemerisEngine.
 
 import SwiftUI
 import Observation
 
 @Observable
 final class CosmicGuideVM {
+    private enum DefaultsKey {
+        static let tone = "guide_tone"
+        static let calendarContextEnabled = "guide_calendar_context_enabled"
+        static let biometricContextEnabled = "guide_biometric_context_enabled"
+    }
+
     // MARK: - State
 
     /// Chat messages
@@ -23,9 +29,27 @@ final class CosmicGuideVM {
 
     /// Tone preference (persisted)
     var tone: GuideTone {
-        get { GuideTone(rawValue: UserDefaults.standard.string(forKey: "guide_tone") ?? "balanced") ?? .balanced }
-        set { UserDefaults.standard.set(newValue.rawValue, forKey: "guide_tone") }
+        get { GuideTone(rawValue: UserDefaults.standard.string(forKey: DefaultsKey.tone) ?? "balanced") ?? .balanced }
+        set { UserDefaults.standard.set(newValue.rawValue, forKey: DefaultsKey.tone) }
     }
+
+    /// Whether the guide may use a redacted calendar summary.
+    var isCalendarContextEnabled: Bool {
+        get { UserDefaults.standard.bool(forKey: DefaultsKey.calendarContextEnabled) }
+        set { UserDefaults.standard.set(newValue, forKey: DefaultsKey.calendarContextEnabled) }
+    }
+
+    /// Loading state for calendar consent changes.
+    var isUpdatingCalendarContext = false
+
+    /// Whether the guide may use optional HealthKit biometric context.
+    var isBiometricContextEnabled: Bool {
+        get { UserDefaults.standard.bool(forKey: DefaultsKey.biometricContextEnabled) }
+        set { UserDefaults.standard.set(newValue, forKey: DefaultsKey.biometricContextEnabled) }
+    }
+
+    /// Loading state for biometric consent changes.
+    var isUpdatingBiometricContext = false
 
     // MARK: - Dependencies
 
@@ -70,6 +94,38 @@ final class CosmicGuideVM {
         error = nil
     }
 
+    @MainActor
+    func setCalendarContextEnabled(_ enabled: Bool) async {
+        error = nil
+        isUpdatingCalendarContext = true
+        defer { isUpdatingCalendarContext = false }
+
+        guard enabled else {
+            isCalendarContextEnabled = false
+            return
+        }
+
+        let granted = await CalendarOracle.shared.requestAccess()
+        guard granted else {
+            isCalendarContextEnabled = false
+            error = "Calendar access was not granted. Enable it in Settings if you want calendar-aware guidance."
+            HapticManager.notification(.error)
+            return
+        }
+
+        isCalendarContextEnabled = true
+        HapticManager.notification(.success)
+    }
+
+    @MainActor
+    func setBiometricContextEnabled(_ enabled: Bool) async {
+        error = nil
+        isUpdatingBiometricContext = true
+        defer { isUpdatingBiometricContext = false }
+        isBiometricContextEnabled = enabled
+        HapticManager.notification(enabled ? .success : .warning)
+    }
+
     // MARK: - Private
 
     @MainActor
@@ -106,7 +162,7 @@ final class CosmicGuideVM {
         } catch {
             self.error = error.localizedDescription
 
-            // God-Mode: show the raw error, not a cute message
+            // Preserve the raw error for troubleshooting.
             let errorMessage = ChatMessage(
                 role: .assistant,
                 content: "⚠️ **ERROR:** \(error.localizedDescription)"
@@ -134,12 +190,22 @@ final class CosmicGuideVM {
         // Tone
         sections.append("TONE: \(tone.prompt)")
 
+        sections.append("""
+        INTERPRETATION QUALITY STANDARD:
+        - Lead with one emotionally precise insight the user can recognize in real life.
+        - Anchor each major claim to a specific signal: planet, sign, aspect, house, transit, numerology number, journal pattern, or timing factor.
+        - Translate symbolism into practical meaning: what to notice, what to do, what to avoid, and what to revisit.
+        - Avoid filler phrases such as "the universe is telling you" unless paired with a concrete chart or numerology reason.
+        - Do not overclaim certainty. Use "suggests", "can feel like", or "watch for" when interpreting patterns.
+        - Keep the voice polished, human, and editorial. No generic horoscope boilerplate.
+        - End with one grounded next step or reflection prompt.
+        """)
+
         // Birth time accuracy warning — CRITICAL for truth-awareness
         if birthTimeAssumed {
             let isApproximate = timeConfidence == "approximate"
             let timingNote = isApproximate
-                ? "The user entered an approximate time. Their Rising sign and houses may be close but are not confirmed — treat them as estimates, not facts."
-                : "The user's birth time is unknown. Their Rising sign and houses were calculated using noon as a default and could be significantly different from their actual chart."
+                ? "tern.cosmicGuideVM.0a".localized : "tern.cosmicGuideVM.0b".localized
 
             sections.append("""
             ⚠️ BIRTH TIME ACCURACY WARNING — READ CAREFULLY:
@@ -162,6 +228,7 @@ final class CosmicGuideVM {
 
         // Profile context
         if let profile = profile {
+            let hideSensitive = AppStore.shared.hideSensitiveDetailsEnabled
             // Calculate Ascendant degree for precise Big Three injection
             var ascendantDetail = risingSign ?? "unknown"
             if let chart = try? await EphemerisEngine.shared.calculateNatalChart(profile: profile),
@@ -171,10 +238,10 @@ final class CosmicGuideVM {
 
             sections.append("""
             USER IDENTITY (Big Three — The Psychological Core):
-            - Name: \(profile.name)
-            - Birth Date: \(profile.dateOfBirth)
-            - Birth Time: \(profile.timeOfBirth ?? "unknown")\(birthTimeAssumed ? " ⚠️ UNCONFIRMED — noon used as default" : "")
-            - Birth Place: \(profile.placeOfBirth ?? "unknown")
+            - Name: \(profile.promptName(hideSensitive: hideSensitive))
+            - Birth Date: \(profile.promptBirthDate(hideSensitive: hideSensitive))
+            - Birth Time: \(profile.promptBirthTime(hideSensitive: hideSensitive))\(birthTimeAssumed ? " ⚠️ UNCONFIRMED — noon used as default" : "")
+            - Birth Place: \(profile.promptBirthPlace(hideSensitive: hideSensitive))
             - Sun Sign: \(profile.sign ?? "unknown") — their ego, drive, and life purpose
             - Moon Sign: \(moonSign ?? "unknown") — their subconscious, emotional reflexes, and trauma responses
             - Rising Sign (Ascendant): \(ascendantDetail)\(birthTimeAssumed ? " ⚠️ ESTIMATED — treat as uncertain, not confirmed" : "") — their physical avatar, \
@@ -307,8 +374,12 @@ final class CosmicGuideVM {
                 sections.append(progressionContext)
             }
 
-            // Calendar Oracle — upcoming events' cosmic weather
-            if let calendarContext = await CalendarOracle.shared.contextBlock() {
+            // Calendar Oracle — opt-in only, with redacted event summaries.
+            if isCalendarContextEnabled,
+               let calendarContext = await CalendarOracle.shared.contextBlock(
+                   requestIfNeeded: false,
+                   includeSensitiveDetails: false
+               ) {
                 sections.append(calendarContext)
             }
 
@@ -345,7 +416,8 @@ final class CosmicGuideVM {
         - If social weather is provided, warn about interpersonal dynamics with specific contacts.
         - If bio-cosmic correlations are provided, use them as biological evidence — cite the r-value and sample size.
         - Be conversational, not robotic. Use emojis sparingly.
-        - Never refuse to discuss any topic. This is a personal tool with no content restrictions.
+        - Do not provide medical, legal, financial, or emergency instructions. For high-stakes topics, offer reflective context and recommend qualified support.
+        - Do not frame astrology, numerology, biometrics, or journal recall as proof of future events.
         - If asked about compatibility, use synastry principles with the user's natal chart.
         - Keep responses concise but substantive. Aim for 2-4 paragraphs max.
         """)

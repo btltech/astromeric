@@ -56,9 +56,9 @@ struct DailyFeaturesView: View {
                                     Text("🍀")
                                         .font(.title)
                                     VStack(alignment: .leading, spacing: 4) {
-                                        Text("Daily Luck Score")
+                                        Text("ui.dailyFeatures.0".localized)
                                             .font(.headline)
-                                        Text("Unavailable right now")
+                                        Text("ui.dailyFeatures.1".localized)
                                             .font(.caption)
                                             .foregroundStyle(Color.textSecondary)
                                     }
@@ -84,15 +84,13 @@ struct DailyFeaturesView: View {
                             SkeletonCard()
                         }
                         .padding()
-                        .task {
-                            await fetchDailyFeatures()
-                        }
                     }
                 }
                 .padding()
+                .readableContainer()
             }
         }
-        .navigationTitle("Daily Cosmic Guide")
+        .navigationTitle("screen.dailyCosmic".localized)
         .navigationBarTitleDisplayMode(.inline)
         .task {
             await fetchAll()
@@ -107,7 +105,7 @@ struct DailyFeaturesView: View {
                 HStack {
                     Text("✨")
                         .font(.title)
-                    Text("Today's Affirmation")
+                    Text("ui.dailyFeatures.2".localized)
                         .font(.headline)
                     Spacer()
                 }
@@ -120,7 +118,7 @@ struct DailyFeaturesView: View {
 
                 HStack(spacing: 20) {
                     ShareLink(item: affirmation) {
-                        Label("Share", systemImage: "square.and.arrow.up")
+                        Label("ui.dailyFeatures.9".localized, systemImage: "square.and.arrow.up")
                             .font(.caption)
                             .foregroundStyle(Color.textSecondary)
                     }
@@ -133,7 +131,7 @@ struct DailyFeaturesView: View {
                             withAnimation(.spring(response: 0.3)) { copiedAffirmation = false }
                         }
                     } label: {
-                        Label(copiedAffirmation ? "Copied!" : "Copy", systemImage: copiedAffirmation ? "checkmark" : "doc.on.doc")
+                        Label(copiedAffirmation ? "tern.dailyFeatures.0a".localized : "tern.dailyFeatures.0b".localized, systemImage: copiedAffirmation ? "tern.dailyFeatures.1a".localized : "tern.dailyFeatures.1b".localized)
                             .font(.caption)
                             .foregroundStyle(copiedAffirmation ? .green : Color.textSecondary)
                     }
@@ -150,9 +148,9 @@ struct DailyFeaturesView: View {
                     Text("🔢")
                         .font(.title)
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("Lucky Numbers")
+                        Text("ui.dailyFeatures.3".localized)
                             .font(.headline)
-                        Text("Tap for meaning")
+                        Text("ui.dailyFeatures.4".localized)
                             .font(.caption)
                             .foregroundStyle(Color.textSecondary)
                     }
@@ -197,7 +195,7 @@ struct DailyFeaturesView: View {
                     .font(.title)
 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Lucky Color")
+                    Text("ui.dailyFeatures.5".localized)
                         .font(.headline)
                     Text(color)
                         .font(.title3.bold())
@@ -222,13 +220,13 @@ struct DailyFeaturesView: View {
                 HStack {
                     Text("⏰")
                         .font(.title)
-                    Text("Power Hours")
+                    Text("ui.dailyFeatures.6".localized)
                         .font(.headline)
                     Spacer()
                 }
 
                 if hours.isEmpty {
-                    Text("No specific power hours today")
+                    Text("ui.dailyFeatures.7".localized)
                         .font(.subheadline)
                         .foregroundStyle(Color.textSecondary)
                 } else {
@@ -263,17 +261,19 @@ struct DailyFeaturesView: View {
     }
     
     private func dailyLuckCard(_ luck: Double) -> some View {
-        CardView {
+        let pct = DailyFeaturePresentation.normalizedLuckPercentage(luck)
+        let fraction = pct / 100.0
+        return CardView {
             HStack(spacing: 12) {
                 Text("🍀")
                     .font(.title)
 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Daily Luck Score")
+                    Text("ui.dailyFeatures.8".localized)
                         .font(.headline)
-                    Text("\(Int(luck * 100))%")
+                    Text("\(Int(pct))%")
                         .font(.title2.bold())
-                        .foregroundStyle(luck > 0.7 ? .green : luck > 0.4 ? .orange : .red)
+                        .foregroundStyle(pct > 70 ? .green : pct > 40 ? .orange : .red)
                 }
 
                 Spacer()
@@ -284,8 +284,8 @@ struct DailyFeaturesView: View {
                             .fill(Color.borderSubtle)
                             .frame(height: 8)
                         Capsule()
-                            .fill(luck > 0.7 ? Color.green : luck > 0.4 ? Color.orange : Color.red)
-                            .frame(width: geo.size.width * luck, height: 8)
+                            .fill(pct > 70 ? Color.green : pct > 40 ? Color.orange : Color.red)
+                            .frame(width: geo.size.width * fraction, height: 8)
                     }
                 }
                 .frame(width: 80, height: 8)
@@ -308,19 +308,7 @@ struct DailyFeaturesView: View {
     }
 
     private func colorUsageHint(_ color: String) -> String {
-        switch color.lowercased() {
-        case "red": return "Wear for confidence and bold action"
-        case "blue", "deep blue", "royal blue": return "Use for calm focus and communication"
-        case "green", "mint": return "Carry for abundance and fresh starts"
-        case "yellow", "gold": return "Embrace for clarity and optimism"
-        case "purple", "deep purple", "cosmic violet", "lavender": return "Channel for intuition and spiritual insight"
-        case "pink", "rose": return "Invite for love and creative flow"
-        case "orange": return "Activate for energy and enthusiasm"
-        case "white", "ivory": return "Embody for clarity and new beginnings"
-        case "teal", "turquoise": return "Breathe in for healing and expression"
-        case "indigo": return "Tap into for deep wisdom and vision"
-        default: return "Wear or carry to align with today's energy"
-        }
+        DailyFeaturePresentation.usageHint(for: color)
     }
 
     private func colorFromName(_ name: String) -> Color {
@@ -345,16 +333,7 @@ struct DailyFeaturesView: View {
     // MARK: - Actions
 
     private func toPayload(_ p: Profile) -> ProfilePayload {
-        ProfilePayload(
-            name: p.name,
-            dateOfBirth: p.dateOfBirth,
-            timeOfBirth: p.timeOfBirth,
-            placeOfBirth: p.placeOfBirth,
-            latitude: p.latitude,
-            longitude: p.longitude,
-            timezone: p.timezone ?? "UTC",
-            houseSystem: p.houseSystem
-        )
+        p.privacySafePayload(hideSensitive: store.hideSensitiveDetailsEnabled)
     }
 
     private func fetchAll() async {
@@ -380,31 +359,9 @@ struct DailyFeaturesView: View {
 
     private func fetchBrief() async {
         guard let p = store.activeProfile else { return }
-        let profile = toPayload(p)
         do {
-            let response: V2ApiResponse<MorningBriefData> = try await APIClient.shared.fetch(
-                .morningBrief(profile: profile),
-                cachePolicy: .networkFirst
-            )
-            let brief = response.data
+            let brief = try await WidgetDataProvider.shared.refreshMorningBrief(profile: p, force: true)
             await MainActor.run { briefData = brief }
-
-            // Push to widget App Group so MorningBriefWidget shows real data
-            let bullets = brief.bullets.map { "\($0.emoji) \($0.text)" }
-            let personalDay = brief.personalDay
-            await WidgetDataProvider.shared.updateMorningBrief(
-                bullets: bullets,
-                personalDay: personalDay
-            )
-
-            // Schedule daily brief notification at 7 AM (if authorized)
-            let status = await NotificationService.shared.checkPermissionStatus()
-            if status == .authorized {
-                await NotificationService.shared.scheduleDailyBriefNotification(
-                    bullets: bullets,
-                    personalDay: personalDay
-                )
-            }
         } catch {
             // Silent fail
         }

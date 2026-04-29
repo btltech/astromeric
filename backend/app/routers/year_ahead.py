@@ -30,8 +30,11 @@ def _profile_to_dict(payload: ProfilePayload) -> Dict:
 
 class YearAheadRequest(BaseModel):
     """Request for year-ahead forecast."""
+
     profile: ProfilePayload
-    year: Optional[int] = Field(None, description="Year for forecast (defaults to current year)")
+    year: Optional[int] = Field(
+        None, description="Year for forecast (defaults to current year)"
+    )
 
 
 @router.post("/forecast", response_model=ApiResponse[Dict[str, Any]])
@@ -41,14 +44,14 @@ async def year_ahead_forecast(
 ):
     """
     Get comprehensive year-ahead forecast.
-    
+
     ## Includes
     - Personal Year number and themes
     - Solar Return date
     - Monthly breakdowns
     - Eclipse impacts
     - Major planetary ingresses
-    
+
     ## Parameters
     - **profile**: Birth data
     - **year**: Target year (optional, defaults to current)
@@ -58,8 +61,29 @@ async def year_ahead_forecast(
     year = req.year or datetime.now().year
 
     forecast = build_year_ahead_forecast(profile, natal, year)
-    
+
+    return ApiResponse(status=ResponseStatus.SUCCESS, data=forecast)
+
+
+@router.post("/life-phase", response_model=ApiResponse[Dict[str, Any]])
+async def get_current_life_phase(
+    request: Request,
+    profile: ProfilePayload,
+):
+    """
+    Get the user's current astrological life phase.
+
+    Returns the named life phase cycle they're in (e.g. 'The Saturn Return',
+    'The Midlife Crossing'), with narrative, duration, keyword tags,
+    progress through the phase, and a preview of the next phase.
+
+    Results are deterministic from date of birth — no heavy chart calculation needed.
+    """
+    from ..engine.year_ahead import get_life_phase
+
+    result = get_life_phase(profile.date_of_birth)
     return ApiResponse(
         status=ResponseStatus.SUCCESS,
-        data=forecast
+        data=result,
+        message="Life phase calculated",
     )

@@ -3,23 +3,22 @@ API v2 - Chart Endpoints
 Raw natal chart data, synastry, and chart visualization endpoints.
 """
 
+import re
+import traceback
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Request
-from pydantic import BaseModel, Field
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, HTTPException, Request
+from pydantic import BaseModel
 
-from ..auth import get_current_user_optional
 from ..cache import cached_build_chart
-from datetime import datetime, timedelta
-import re
-from ..chart_service import build_natal_chart
-from ..models import Profile as DBProfile
-from ..models import SessionLocal, User
+from ..chart_service import build_natal_chart, build_progressed_chart
+from ..exceptions import StructuredLogger
+from ..models import SessionLocal
 from ..products import build_compatibility
 from ..schemas import ApiResponse, ProfilePayload, ResponseStatus
 
 router = APIRouter(prefix="/v2/charts", tags=["Charts"])
+logger = StructuredLogger(__name__)
 
 _TZ_OFFSET_RE = re.compile(
     r"^(?:UTC|GMT)?\s*([+-])\s*(\d{1,2})(?::?(\d{2}))?$", re.IGNORECASE
@@ -106,20 +105,32 @@ def _midpoint_degree(a: float, b: float) -> float:
 def _degree_to_sign(deg: float) -> Dict[str, Any]:
     sign_index = int(deg // 30)
     sign = [
-        "Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo",
-        "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"
+        "Aries",
+        "Taurus",
+        "Gemini",
+        "Cancer",
+        "Leo",
+        "Virgo",
+        "Libra",
+        "Scorpio",
+        "Sagittarius",
+        "Capricorn",
+        "Aquarius",
+        "Pisces",
     ][sign_index]
     return {"sign": sign, "degree": round(deg % 30, 4)}
 
 
 class NatalChartRequest(BaseModel):
     """Request for natal chart calculation."""
+
     profile: ProfilePayload
     lang: Optional[str] = "en"
 
 
 class CompatibilityRequest(BaseModel):
     """Request for synastry/compatibility chart."""
+
     person_a: ProfilePayload
     person_b: ProfilePayload
     lang: Optional[str] = "en"
@@ -127,6 +138,7 @@ class CompatibilityRequest(BaseModel):
 
 class PlanetPosition(BaseModel):
     """Planetary position data."""
+
     name: str
     longitude: float
     sign: str
@@ -136,6 +148,7 @@ class PlanetPosition(BaseModel):
 
 class HouseCusp(BaseModel):
     """House cusp data."""
+
     house: int
     longitude: float
     sign: str
@@ -143,6 +156,7 @@ class HouseCusp(BaseModel):
 
 class Aspect(BaseModel):
     """Aspect between planets."""
+
     planet1: str
     planet2: str
     aspect: str
@@ -152,7 +166,9 @@ class Aspect(BaseModel):
 
 class NatalChartData(BaseModel):
     """Full natal chart response."""
+
     planets: List[Dict[str, Any]]
+    points: List[Dict[str, Any]] = []
     houses: List[Dict[str, Any]]
     aspects: List[Dict[str, Any]]
     metadata: Dict[str, Any]
@@ -160,6 +176,7 @@ class NatalChartData(BaseModel):
 
 class SynastryData(BaseModel):
     """Synastry chart response."""
+
     person_a: Dict[str, Any]
     person_b: Dict[str, Any]
     synastry_aspects: List[Dict[str, Any]]
@@ -188,33 +205,42 @@ async def get_natal_chart(
 ):
     """
     Get raw natal chart data for visualization.
-    
+
     ## Response
     Returns planetary positions, house cusps, and aspects.
     Results are cached for 1 hour for performance.
-    
+
     ## Use Cases
     - Chart wheel visualization
     - Custom chart analysis
     - Raw position data for calculations
     """
+    request_id = getattr(request.state, "request_id", None)
     _require_chart_inputs(req.profile)
     profile = _profile_to_dict(req.profile)
     try:
         chart_data = cached_build_chart(profile, "natal", build_natal_chart)
     except Exception as _debug_exc:
-        import traceback, sys
         tb = traceback.format_exc()
-        print(f"[NATAL_CHART_ERROR] {type(_debug_exc).__name__}: {_debug_exc}", file=sys.stderr, flush=True)
-        print(f"[NATAL_CHART_TB] {tb}", file=sys.stderr, flush=True)
-        logger.error(f"Natal chart failed: {type(_debug_exc).__name__}: {_debug_exc}")
-        logger.error(f"Traceback: {tb}")
-        raise HTTPException(status_code=500, detail={"debug_error": str(_debug_exc), "tb": tb[-800:]})
+        logger.error(
+            "Natal chart failed",
+            request_id=request_id,
+            error_type=type(_debug_exc).__name__,
+            error=str(_debug_exc),
+            traceback=tb[-4000:],
+        )
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "code": "NATAL_CHART_ERROR",
+                "message": "Failed to calculate natal chart",
+            },
+        )
     birth_time_assumed = req.profile.time_of_birth is None
     data_quality = "full" if not birth_time_assumed else "date_and_place"
     logger.info(
         "Natal chart calculated",
-        profile_name=profile.get("name"),
+        request_id=request_id,
         birth_time_assumed=birth_time_assumed,
         data_quality=data_quality,
     )
@@ -222,6 +248,7 @@ async def get_natal_chart(
         status=ResponseStatus.SUCCESS,
         data=NatalChartData(
             planets=chart_data.get("planets", []),
+            points=chart_data.get("points", []),
             houses=chart_data.get("houses", []),
             aspects=chart_data.get("aspects", []),
             metadata={
@@ -233,8 +260,8 @@ async def get_natal_chart(
                 "data_quality": data_quality,
                 "timezone": profile.get("timezone", "UTC"),
                 "house_system": profile.get("house_system", "Placidus"),
-            }
-        )
+            },
+        ),
     )
 
 
@@ -245,17 +272,17 @@ async def get_synastry_chart(
 ):
     """
     Get synastry chart data for two people.
-    
+
     ## Response
     Returns both natal charts plus inter-chart aspects and compatibility scores.
-    
+
     ## Use Cases
     - Relationship chart visualization
     - Synastry aspect analysis
     - Compatibility assessment
     """
     from ..transit_alerts import find_transit_aspects
-    
+
     _require_chart_inputs(req.person_a)
     _require_chart_inputs(req.person_b)
     person_a = _profile_to_dict(req.person_a)
@@ -277,8 +304,8 @@ async def get_synastry_chart(
             person_a={"name": person_a["name"], "chart": chart_a},
             person_b={"name": person_b["name"], "chart": chart_b},
             synastry_aspects=synastry_aspects,
-            compatibility=compat
-        )
+            compatibility=compat,
+        ),
     )
 
 
@@ -289,52 +316,47 @@ async def get_progressed_chart(
 ):
     """
     Get a secondary progressed chart for a target date.
+
+    Secondary progressions use the symbolic key of 1 day after birth = 1 year
+    of life, anchored on the natal birth time and location.
     """
+    request_id = getattr(request.state, "request_id", None)
     _require_chart_inputs(req.profile)
     profile = _profile_to_dict(req.profile)
 
-    # Parse dates
-    birth_dt = datetime.fromisoformat(
-        f"{profile['date_of_birth']}T{profile.get('time_of_birth', '12:00')}"
-    )
-    target_dt = datetime.utcnow()
-    if req.target_date:
-        target_dt = datetime.fromisoformat(f"{req.target_date}T00:00")
+    try:
+        chart_data = build_progressed_chart(profile, target_date=req.target_date)
+    except Exception as exc:
+        tb = traceback.format_exc()
+        logger.error(
+            "Progressed chart failed",
+            request_id=request_id,
+            error_type=type(exc).__name__,
+            error=str(exc),
+            traceback=tb[-4000:],
+        )
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "code": "PROGRESSED_CHART_ERROR",
+                "message": "Failed to calculate progressed chart",
+            },
+        )
 
-    # Secondary progression: 1 day after birth per year of life
-    delta_years = (target_dt - birth_dt).days / 365.25
-    progressed_dt = birth_dt + timedelta(days=delta_years)
-
-    progressed_profile = dict(profile)
-    progressed_profile["date_of_birth"] = progressed_dt.strftime("%Y-%m-%d")
-    progressed_profile["time_of_birth"] = birth_dt.strftime("%H:%M")
-
-    chart_data = build_natal_chart(progressed_profile)
-
-    # Propagate truth-awareness from original profile
+    meta = chart_data.get("metadata", {})
     birth_time_assumed = req.profile.time_of_birth is None
-    time_confidence = req.profile.time_confidence or ("exact" if not birth_time_assumed else "unknown")
-    if time_confidence == "exact":
-        data_quality = "full"
-    elif time_confidence == "approximate":
-        data_quality = "date_and_place"
-    else:
-        data_quality = "date_and_place"
 
     return ApiResponse(
         status=ResponseStatus.SUCCESS,
         data=NatalChartData(
             planets=chart_data.get("planets", []),
+            points=chart_data.get("points", []),
             houses=chart_data.get("houses", []),
             aspects=chart_data.get("aspects", []),
             metadata={
+                **meta,
                 "name": profile["name"],
-                "progressed_date": progressed_dt.strftime("%Y-%m-%d"),
-                "target_date": target_dt.strftime("%Y-%m-%d"),
-                "house_system": profile.get("house_system", "Placidus"),
                 "birth_time_assumed": birth_time_assumed,
-                "data_quality": data_quality,
-                "assumed_time_of_birth": "12:00" if birth_time_assumed else None,
             },
         ),
     )
@@ -364,7 +386,9 @@ async def get_composite_chart(
         pb = planets_b.get(name)
         if not pb:
             continue
-        mid = _midpoint_degree(pa.get("absolute_degree", 0), pb.get("absolute_degree", 0))
+        mid = _midpoint_degree(
+            pa.get("absolute_degree", 0), pb.get("absolute_degree", 0)
+        )
         sign_info = _degree_to_sign(mid)
         composite_planets.append(
             {

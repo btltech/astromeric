@@ -6,14 +6,16 @@ Uses the 6-dimension weighted scoring system (Moon, Venus, Modality, Element, Li
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
 from typing import Any, Dict, List
 
 from ..engine.compatibility import calculate_combined_compatibility
 
 
 def build_compatibility(
-    person_a: Dict, person_b: Dict, lang: str = "en", relationship_type: str = "romantic"
+    person_a: Dict,
+    person_b: Dict,
+    lang: str = "en",
+    relationship_type: str = "romantic",
 ) -> Dict[str, Any]:
     """
     Build a full compatibility report using Pro-Level engine.

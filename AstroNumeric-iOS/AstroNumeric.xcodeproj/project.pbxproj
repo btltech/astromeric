@@ -1,0 +1,1630 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 63;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0294D1CCDB97FA745915EF51 /* seleapsec.txt in Resources */ = {isa = PBXBuildFile; fileRef = 14E73AE50849E9AF48A01820 /* seleapsec.txt */; };
+		0537B91774AF5C4BADC5A204 /* TLDRBoxView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27FD1DC17E5975AB92C8F54E /* TLDRBoxView.swift */; };
+		06190B7561E11840CE2401B0 /* OracleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A597391D3D3DC2BF25700234 /* OracleView.swift */; };
+		0A4DDA65B8645389B0B4EA5E /* MoonEventsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 371F9CAD32D9B868ED9276EE /* MoonEventsView.swift */; };
+		0C2D5718569AB0D35F1DDFA2 /* sweph.c in Sources */ = {isa = PBXBuildFile; fileRef = 6D0484011DE4001B5AD71A11 /* sweph.c */; settings = {COMPILER_FLAGS = "-w"; }; };
+		0CC8382DFE5EF5B7E6262B38 /* CardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 336F4C20B7F799B7F8B690D6 /* CardView.swift */; };
+		113731A3DF924445550EEC21 /* CompatibilityView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98E81A88F64B2417F0C60083 /* CompatibilityView.swift */; };
+		124727EF38E8489C18C438F5 /* PredictiveScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30AE39C3DCD7BEF793176B5C /* PredictiveScanner.swift */; };
+		138C4BC3B24BD068C2F6560B /* AppStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4225C349ECBD11A7517D5688 /* AppStore.swift */; };
+		159471E635A6FD2B2FBE5CB7 /* YearAheadView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40CA23FD5809B49944CCDC92 /* YearAheadView.swift */; };
+		16C5E06D3515A869A75B23F4 /* ChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02544FBDA3DF289193C1269C /* ChartView.swift */; };
+		1F706ADD402B55054B8C40EA /* Endpoints.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02270122358D0115E6790EED /* Endpoints.swift */; };
+		1F9DF7B3E403F61A122FFDF0 /* AppGroupStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EFC89FD15530AA6F24898D5 /* AppGroupStore.swift */; };
+		206EA878C478236E420C2F73 /* UserGuideView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6342FCFC5194926EF7D0DA16 /* UserGuideView.swift */; };
+		228CB3E046462C27CC22D3B6 /* LearnView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0350F7601CFB0098D186F23F /* LearnView.swift */; };
+		235A62C881E428B75761DBF4 /* SectionGridView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1016A7A99EC9807521544C6 /* SectionGridView.swift */; };
+		25DFC7382D4F9C3038FA2E4A /* PremiumHeroBlock.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3487460C1023ED322C9394AB /* PremiumHeroBlock.swift */; };
+		260A412DC6BA6B3D6B383D05 /* BioCosmicCorrelator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E4A2DBC5E602ED826763E51 /* BioCosmicCorrelator.swift */; };
+		26FC3A2A76850362EB6DC66D /* sepl_18.se1 in Resources */ = {isa = PBXBuildFile; fileRef = EC876BA87201DE6B442247AF /* sepl_18.se1 */; };
+		28BAA1CB39A3199F5FA287D5 /* EmbeddedChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF461FD43C0597316AECCA62 /* EmbeddedChartView.swift */; };
+		297B4FB5CD9112A6F894367C /* DailySummaryWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F535EE7994D4202BB3E9090 /* DailySummaryWidget.swift */; };
+		2A8E9A3C72156AEF771F2623 /* ReadingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4104382A65E0F82A5CFCA8C9 /* ReadingView.swift */; };
+		2BF48BF0701F2977001A4FDF /* AstroWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 30D9D96221354E12D536D817 /* AstroWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		2EF192A37998B5C92D04920C /* sweephe4.c in Sources */ = {isa = PBXBuildFile; fileRef = 00253AA37D1792D6C1FE2222 /* sweephe4.c */; settings = {COMPILER_FLAGS = "-w"; }; };
+		330273C5F350CC51482374DE /* FriendsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 836E269D04D0496A35386653 /* FriendsView.swift */; };
+		3407A05CA0BCAFCAE6309B98 /* swejpl.c in Sources */ = {isa = PBXBuildFile; fileRef = A3B92A58628A15393A5C057C /* swejpl.c */; settings = {COMPILER_FLAGS = "-w"; }; };
+		35B99D7471DBA42D40151E39 /* swemmoon.c in Sources */ = {isa = PBXBuildFile; fileRef = ED1D490FC25EA77761D367B6 /* swemmoon.c */; settings = {COMPILER_FLAGS = "-w"; }; };
+		35FAA85888C1BFC2BE7542E7 /* JournalVMTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D92986A4EC55C9E9E1126BD /* JournalVMTests.swift */; };
+		37D39B36104835A6F9168A40 /* NotificationSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DA5E346124AA726D4B58C03 /* NotificationSettingsView.swift */; };
+		393EFEF3A50FA0735E13B405 /* ToolsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A070AAA13B95BA8D02F89620 /* ToolsView.swift */; };
+		3A02EA2859BF557C7E285C2B /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9820D943E46088D1245283B /* APIClient.swift */; };
+		3A5AC362099CEF6B0E033D04 /* RevealAnimations.swift in Sources */ = {isa = PBXBuildFile; fileRef = A96E720F3EBDAB01700D9109 /* RevealAnimations.swift */; };
+		3B076C2B05C2ED7327F4ECC5 /* PremiumSkeleton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05C7D6F612542489AFD27C9D /* PremiumSkeleton.swift */; };
+		3B74770456AF6646B616D2A0 /* LearningModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = D367FF1FE2F8BD446D9241F0 /* LearningModels.swift */; };
+		3BDA521AEAEA2C8170CA9E0C /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD8C24D5B5A1BD21D212DD41 /* ContentView.swift */; };
+		3D1CDE6CFCDFC6EA73A86AC6 /* BiometricLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8B1B3DD7A96F884BE3F4352 /* BiometricLogger.swift */; };
+		3D4B84E9875677262DB004D3 /* ProgressionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06F99CB072F98E4A203CD1C9 /* ProgressionsView.swift */; };
+		3F7A3C2A89B51DBEF11EB945 /* RelationshipsVM.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DFAAAA009F004A6EFBA7565 /* RelationshipsVM.swift */; };
+		409733BCB4191533CC53A7FB /* swehel.c in Sources */ = {isa = PBXBuildFile; fileRef = 4B4D5C13360879DCC6E7E0DB /* swehel.c */; settings = {COMPILER_FLAGS = "-w"; }; };
+		422FCE98BB0E2ED2541AD0DC /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21BC13513E2DCCD00572995E /* HomeView.swift */; };
+		43EFE5E22772D923A238C4B5 /* HabitsVM.swift in Sources */ = {isa = PBXBuildFile; fileRef = 019D04CE9F723B40A9E9B1AC /* HabitsVM.swift */; };
+		457250848F8C346B3BEED5D5 /* AdvancedEphemeris.swift in Sources */ = {isa = PBXBuildFile; fileRef = 922B91C9657313D453B099A3 /* AdvancedEphemeris.swift */; };
+		4A41A015ADD331A6EC8C2953 /* ResponseCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10EC38AE733A85894FA849FC /* ResponseCache.swift */; };
+		4B024059B754C07DB87FAC23 /* TabSelectedDot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D05C9514031A391F87B6F76 /* TabSelectedDot.swift */; };
+		4C313DF88D6E4D834F2DC485 /* GlossaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CB4569C92CCFAF543D05ECD /* GlossaryView.swift */; };
+		4CA6D00006797DB10BF252C5 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A7840008267ED5FE0C80C323 /* Assets.xcassets */; };
+		4CEBC18254707EC9ACE2ACEC /* JournalModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0FAE63C4C18810AF4A818B4 /* JournalModels.swift */; };
+		4DC3401138F3B090E5F69E73 /* MorningBriefWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F7849558EF475BFD90EB816 /* MorningBriefWidget.swift */; };
+		4F00D46A256A26417BB9F0A8 /* HomeVM.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2062AB2D1CF664F14995D5FE /* HomeVM.swift */; };
+		4FA29BF8B7756947FE1CBE08 /* ReadingVM.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E4738CA216A76C7DA20E564 /* ReadingVM.swift */; };
+		5080842081FA5FA15AA7E2C1 /* JournalEmbedder.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8AD691BAF0CCBB659C876FB /* JournalEmbedder.swift */; };
+		5676B3FB67EF30D63F523985 /* PlanetaryHourWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE3FCCDD5D8704AAD6253666 /* PlanetaryHourWidget.swift */; };
+		57CEE0F0E7760AA598DB140E /* seas_18.se1 in Resources */ = {isa = PBXBuildFile; fileRef = BC3590EA1EB79B35EE070950 /* seas_18.se1 */; };
+		585048C2F1757A00EB7B7D5B /* DebugLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9F598B86C523C91F89F98BB /* DebugLog.swift */; };
+		5DD1364240CE10B5CE7C4E70 /* CalendarOracle.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C5DCB730F089FCA4CBCE83 /* CalendarOracle.swift */; };
+		5E5DCFAD5CD33EC66A1B5D9F /* AdvancedChartsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 993CDC63819847C6B56F518C /* AdvancedChartsView.swift */; };
+		61283FE82A5D6D4584E512FD /* ReadingResultView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5135A82CAFDB163A8F3640A /* ReadingResultView.swift */; };
+		61C3128C5A02DFEF10DB11FD /* Products.storekit in Resources */ = {isa = PBXBuildFile; fileRef = 9152839B6D7A7FEFB054B372 /* Products.storekit */; };
+		6591345880895A723B228B45 /* AstroWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = B731518D85EC91648B35E9F1 /* AstroWidgetBundle.swift */; };
+		664DD138DFE8CF13E3E070F2 /* MoonPhaseWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5AE7ACED1B7513142018098 /* MoonPhaseWidget.swift */; };
+		6902DE7B2914B57962ED08E9 /* PrivacyRedaction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 821039B0B46F06E026A0EF33 /* PrivacyRedaction.swift */; };
+		6B75D92A6C46EB144B5DA5B7 /* swehouse.c in Sources */ = {isa = PBXBuildFile; fileRef = 34DE915B3CF65A83FF05AF34 /* swehouse.c */; settings = {COMPILER_FLAGS = "-w"; }; };
+		6C53B1C4EFB528915B36DCAF /* ReadingModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97BDCABE93004190609E7516 /* ReadingModels.swift */; };
+		6EC64A4FF19086A91EFA2F0E /* PremiumSurface.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B129D14AB488CCD19BB676 /* PremiumSurface.swift */; };
+		6F81A7EABDEDFD2F80C2044E /* AccessibilityHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2BEB15995D8256A028857A3 /* AccessibilityHelpers.swift */; };
+		700E53222CF5F2EC5C922770 /* swecl.c in Sources */ = {isa = PBXBuildFile; fileRef = E49BA5A6F95DF5D46131C6BD /* swecl.c */; settings = {COMPILER_FLAGS = "-w"; }; };
+		702C4BD9AC43B485DFCC1600 /* CompatibilityModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6623B648C6759EE84346E7E2 /* CompatibilityModels.swift */; };
+		7205E9696D747914B8AB3382 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41A52EB8480EDB8EBD75EB69 /* ProfileView.swift */; };
+		732F64F69BD4F655EA116D23 /* AIModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 582703CEB159BC96EBFCE710 /* AIModels.swift */; };
+		75AA55CC75D61CE3F16CCC2C /* CoreModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = F959CA7F381C942022B8AA66 /* CoreModels.swift */; };
+		7C485069B0A8BF4FAEDF8D57 /* NumerologyVM.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF81EF9819D3050966AABB99 /* NumerologyVM.swift */; };
+		7F68F61AF53A6B80FC60D558 /* LifePhaseCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = BEBEA5BF67D0DDAFFB72535B /* LifePhaseCard.swift */; };
+		804667322644AAAC0A983EB2 /* TarotView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63372495E238B9450D49D569 /* TarotView.swift */; };
+		83B23DA5A97AD4613871C31D /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = F09C2808FC34C2EFED35DA76 /* PrivacyInfo.xcprivacy */; };
+		83F059993470434A5B762D1B /* semo_18.se1 in Resources */ = {isa = PBXBuildFile; fileRef = 4EFBBDEBEA008FAB6EF4BFF4 /* semo_18.se1 */; };
+		8699B955FEB1CBA6503BE94F /* CosmicGuideVM.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0DA2F6E0F97889A2E475D90 /* CosmicGuideVM.swift */; };
+		8949B75323D05BC1AA4C68C5 /* SynastryChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2ABCECA545ED9FB3BADD0F5 /* SynastryChartView.swift */; };
+		8971D5B727867353F0058FBE /* LegalConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9790CEC1B3433061ECF1DE2D /* LegalConfig.swift */; };
+		899D065F80AF64FD2C7F289E /* BirthstoneGuidanceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FC932E54EA0DFCBDFEDD20D /* BirthstoneGuidanceView.swift */; };
+		8A18EAE64D4BEEF85B8606AC /* ChartsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 475327C5824A0A7A4FB0442E /* ChartsView.swift */; };
+		8A2B179992E7A03B620ABDF5 /* HealthKitBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 150930888F6D562A6E7FE10A /* HealthKitBridge.swift */; };
+		8A411BA992A01A7F1A2D93EC /* CompatibilityVM.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7A196AB65E31671F7973A84 /* CompatibilityVM.swift */; };
+		8B4576B8D00A40B826869164 /* NumerologyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1A2C7279CECC1F644B50748 /* NumerologyView.swift */; };
+		9157BFF2930C5C1F8A5A2B66 /* Color+Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2D87E82F540D74879B740C7 /* Color+Theme.swift */; };
+		95F6A61618FE8439653D393B /* RelationshipsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EFA41050FA4DAF6C3B2E8E5B /* RelationshipsView.swift */; };
+		9BE00806DD441EFDAEF2970D /* CosmicIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A79E6CEBCCAC1564483C0DF /* CosmicIntents.swift */; };
+		9C04B03F4D04AC3028CA8BCC /* PrivacyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C70157E2D9A9A4CEB63A829E /* PrivacyView.swift */; };
+		9CE4F5ACE574A7F85679A7F7 /* TimingEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 932EF7E45FAB8BF4B75E8FE8 /* TimingEngine.swift */; };
+		9DF10A7325B36AFC9DC4E9FC /* ShareCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F4B3F3163BF5048DF81ED65 /* ShareCardView.swift */; };
+		A1CBD85B26D9766F61AA773E /* TimeScrubber.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4FC1461757BA0F5E61277AD9 /* TimeScrubber.swift */; };
+		A722E6E27D0D6105065623C1 /* CompositeChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F9BB0CA010B2861B5946AED /* CompositeChartView.swift */; };
+		A86A924615A75B4810CEBD4F /* HabitsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58D1DC45EDBAE4C9B2D4FFF9 /* HabitsView.swift */; };
+		ABB5E03A0F65C0636350CF84 /* TransitNotificationScheduler.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7E3C5236662033660D81B65 /* TransitNotificationScheduler.swift */; };
+		AD6F2ADD2EA29DAC3832EDC3 /* ZodiacSign.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2955762CFB5B1B232E7D3AC /* ZodiacSign.swift */; };
+		ADFBAE983BCF9A875C518B2A /* LearningProgressManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A6C96BB6FFA164F2DB55BB5 /* LearningProgressManagerTests.swift */; };
+		AF0EC9EF670EF5BD4E08BA06 /* ChartVM.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708DE5A291EDE30233434A46 /* ChartVM.swift */; };
+		B16A1D37EB71031BADF7215F /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 3061133121CB1FF71A8259C5 /* Localizable.strings */; };
+		B2B14ADFA585BE45EB6BE046 /* MoonPhaseActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9FA99E598E2DCE7C202972D /* MoonPhaseActivity.swift */; };
+		B47DCA37173C23BA68B4D80F /* RetryPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E89EB87FD0969B23D1BDA04 /* RetryPolicy.swift */; };
+		B519F623EF801281BD28346B /* CachePrewarmScheduler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59CD924F04731CC58944AB19 /* CachePrewarmScheduler.swift */; };
+		B62898709FB70B62B6235D20 /* ToolModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D61DFE7DEFECFD4E82BECFF /* ToolModels.swift */; };
+		B64B6C4EC3E6D95F4CD9855B /* DoDontCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = B294406A85E6EAF03994AFC2 /* DoDontCard.swift */; };
+		B7106D078A9A1793CCC71104 /* LearnVM.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84191312FEBFC44CD5BD3F01 /* LearnVM.swift */; };
+		B77806E68091D1A1C5E0CC3D /* ProfileExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5F4C7DD7085FF3B557420AE /* ProfileExporter.swift */; };
+		B87F7B13A17F4AB1EF2DA897 /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6290B3A519BF309E4B99BC5D /* NotificationService.swift */; };
+		B8BFC8A6C3049171C050873E /* Profile+Astrology.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A4D43B139C5DDBCE3E31A1E /* Profile+Astrology.swift */; };
+		B8EFDFB8243FF31B245979BB /* ExploreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B36AF0D59DCD7060389AD83 /* ExploreView.swift */; };
+		BABF7FC1D3F1D49D850DCD46 /* swephlib.c in Sources */ = {isa = PBXBuildFile; fileRef = 60446688BA3F482C4E4E8466 /* swephlib.c */; settings = {COMPILER_FLAGS = "-w"; }; };
+		BCF84DE97D79C372808ADD14 /* MarkdownTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EE76541473587CCADC32878 /* MarkdownTextView.swift */; };
+		BE959E8223D48E8EA719CED2 /* LoadingOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8657D306BB4E6AA8BED5E832 /* LoadingOverlay.swift */; };
+		BF16F78B62115A4685276D1E /* AppGroupStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EFC89FD15530AA6F24898D5 /* AppGroupStore.swift */; };
+		BF389290F493A1A0C32F9380 /* swemplan.c in Sources */ = {isa = PBXBuildFile; fileRef = 1ECC0C01D920E7CA0ADD6BC7 /* swemplan.c */; settings = {COMPILER_FLAGS = "-w"; }; };
+		BF6CAFEEA338A0D21DC4CA77 /* EditProfileVM.swift in Sources */ = {isa = PBXBuildFile; fileRef = E34DD16546BC583E0F7DBA8D /* EditProfileVM.swift */; };
+		C25FB1E15DC18D8E9DBC4495 /* swedate.c in Sources */ = {isa = PBXBuildFile; fileRef = F64FA00F412D1933FD143E93 /* swedate.c */; settings = {COMPILER_FLAGS = "-w"; }; };
+		C3421DF73CE7A8F48B541B44 /* JournalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E79A811CE4CC1E439CB4402E /* JournalView.swift */; };
+		C523EE3D677A49D110FEAA25 /* WidgetDataProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DD8EFA88E26A3F943A5EBB4 /* WidgetDataProvider.swift */; };
+		C995B46E3B4E6836430798B3 /* DailyFeaturePresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D880BB2B3889041942FEB6E /* DailyFeaturePresentation.swift */; };
+		CB964883D4D53D9DDEC69378 /* AdaptiveLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD962C0FFF60C30AF445B044 /* AdaptiveLayout.swift */; };
+		CEAED566787630E7C72665D5 /* ProfileModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BA1908F263F948AFE6955B0 /* ProfileModels.swift */; };
+		CF3D879247DD859DE37A84FC /* SynastryRadar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41EFFB8D89AB9E55D335D203 /* SynastryRadar.swift */; };
+		D19F9707E64736EC0D61001C /* TimingAdvisorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95BEA9212C5BBE923902A47D /* TimingAdvisorView.swift */; };
+		D1E2178651869442AF7FDF66 /* DailyFeaturesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CB460A8726AE82BE04C194E /* DailyFeaturesView.swift */; };
+		D3BCC4F809B43020ADB6ADEF /* DesignTokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C9F22045833513D737643A2 /* DesignTokens.swift */; };
+		D50883E903F4AD85ACB5C0D1 /* NumerologyModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E15120B5FEC6F96E5CE8791 /* NumerologyModels.swift */; };
+		D5DEDF782326BCA13F957973 /* LocalizationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA9A71ED1D0CB07E68F6A114 /* LocalizationService.swift */; };
+		D767D017DD7EAAE65227200C /* JournalVM.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A32F82205699C01CF6236F0 /* JournalVM.swift */; };
+		D8785524E2AEF0EB069D6093 /* AstroNumericTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CE125FE7FAF1229A10C3A24 /* AstroNumericTests.swift */; };
+		DA683EC6B964F4122EB04DF3 /* MysticModeToggle.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0FF9EF0D4B926BA5E620D60 /* MysticModeToggle.swift */; };
+		DE27AEB3BA72D2F6ABF19254 /* CosmicScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3058B0E2D7ADB647F057F36 /* CosmicScene.swift */; };
+		E03487104BA762B14918A7D7 /* LearningProgressManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13BE0211C558394004950A10 /* LearningProgressManager.swift */; };
+		E155DF36D610A2195C02FDFD /* AstroNumericUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E14B0758D73B90FA70BB2A78 /* AstroNumericUITests.swift */; };
+		E4A4E2F8CBA1424FC3F5DDC7 /* AstroNumericApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8EA606A79473C7901379D0F3 /* AstroNumericApp.swift */; };
+		E8BF9FF74CD43A7C6236E5C5 /* DataQualityEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5DF664A877B4C3D75695624 /* DataQualityEngine.swift */; };
+		E8F0E44A787B81CB044DB856 /* GradientButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CE57DD6BEA9D85EF0FF4178 /* GradientButton.swift */; };
+		E8FD0DB77FD234AA9A597130 /* ChartModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF6314B17F6917E5C4F9794B /* ChartModels.swift */; };
+		EAC4AE1F2DACC074FF381BEC /* MoonPhaseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F8EF6E13BFABBC076E91D2C /* MoonPhaseView.swift */; };
+		ECC5A35DAA33E4CD3FBF3E2E /* ErrorStateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A04460B8D83132EB2C24DE35 /* ErrorStateView.swift */; };
+		ECD05BE76704EDAFBFB82DDE /* DailyGuidanceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 38D29711D5EB7F62B3D4A552 /* DailyGuidanceView.swift */; };
+		ECD8E0871F14C2FEAC213559 /* LessonDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 515CA1CBB617C7A2867A15FF /* LessonDetailView.swift */; };
+		EDEC5DF47560554677310E30 /* EphemerisEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 835D7DE2284BACD9D1903BB8 /* EphemerisEngine.swift */; };
+		EFD5BF22A34C736E8DE7F4D6 /* OrbitRingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39A36BFCCE4B37293D7520E6 /* OrbitRingView.swift */; };
+		F0FE2538838F0795839FC004 /* EditProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDFAE36C5BEF50DE52375F71 /* EditProfileView.swift */; };
+		F1D76A6869C99BEAD52AC422 /* HelpView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 814DE77E259EFAA027C72FBE /* HelpView.swift */; };
+		F24B4D849566A2389CE75BF5 /* EphemerisEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9EE460EB01AD0CCF82D41DB4 /* EphemerisEngineTests.swift */; };
+		F460E8855B8FBEA24FC45A06 /* WeeklyVibeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33584D8C4B118E9F5DCBEC5A /* WeeklyVibeView.swift */; };
+		F4F56A9DA95212F1ADC3CE51 /* AffirmationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB5A3BFC50283DC804AB81B2 /* AffirmationView.swift */; };
+		F76BEAEFC06D8E148D45DBFE /* FloatingAIButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1CD7F0F7FE8A611149718AA /* FloatingAIButton.swift */; };
+		F871F2B8A45AAB64CA0E962B /* CosmicBackgroundView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3370DF59EB493B6BFF96ACD2 /* CosmicBackgroundView.swift */; };
+		FC6D71259E457503D85E4CE1 /* VoiceRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 532DAFEB1BAE9F95E5CE5766 /* VoiceRecorder.swift */; };
+		FD1C5FE63B7B50A8C8D799B0 /* TemporalMatrixView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7FBED050F7756051300A343C /* TemporalMatrixView.swift */; };
+		FD5F871B49AC1FA6453030C2 /* CosmicGuideView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1FA3CC4323AE868414CB3E10 /* CosmicGuideView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		2F686584593A834BABCD97A8 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 6776972D801A8B20E2730FA5 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A5150DEB4247938F485FFECE;
+			remoteInfo = AstroNumeric;
+		};
+		BEE91942424581D55E736776 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 6776972D801A8B20E2730FA5 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = BAF7BCE209DD2B4F8D1ED3BF;
+			remoteInfo = AstroWidget;
+		};
+		DE364720EB90AF3CCE9CC495 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 6776972D801A8B20E2730FA5 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A5150DEB4247938F485FFECE;
+			remoteInfo = AstroNumeric;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		CB54C6615F2DFF5BB2C7B170 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				2BF48BF0701F2977001A4FDF /* AstroWidget.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		00253AA37D1792D6C1FE2222 /* sweephe4.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = sweephe4.c; sourceTree = "<group>"; };
+		019D04CE9F723B40A9E9B1AC /* HabitsVM.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HabitsVM.swift; sourceTree = "<group>"; };
+		02270122358D0115E6790EED /* Endpoints.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Endpoints.swift; sourceTree = "<group>"; };
+		02544FBDA3DF289193C1269C /* ChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChartView.swift; sourceTree = "<group>"; };
+		0350F7601CFB0098D186F23F /* LearnView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LearnView.swift; sourceTree = "<group>"; };
+		05C7D6F612542489AFD27C9D /* PremiumSkeleton.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PremiumSkeleton.swift; sourceTree = "<group>"; };
+		06F99CB072F98E4A203CD1C9 /* ProgressionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressionsView.swift; sourceTree = "<group>"; };
+		0A79E6CEBCCAC1564483C0DF /* CosmicIntents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CosmicIntents.swift; sourceTree = "<group>"; };
+		0CE57DD6BEA9D85EF0FF4178 /* GradientButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GradientButton.swift; sourceTree = "<group>"; };
+		0D880BB2B3889041942FEB6E /* DailyFeaturePresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyFeaturePresentation.swift; sourceTree = "<group>"; };
+		0D92986A4EC55C9E9E1126BD /* JournalVMTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JournalVMTests.swift; sourceTree = "<group>"; };
+		0F7849558EF475BFD90EB816 /* MorningBriefWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MorningBriefWidget.swift; sourceTree = "<group>"; };
+		0F9BB0CA010B2861B5946AED /* CompositeChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompositeChartView.swift; sourceTree = "<group>"; };
+		0FBDDFC912970EAC55064F20 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		10EC38AE733A85894FA849FC /* ResponseCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResponseCache.swift; sourceTree = "<group>"; };
+		13BE0211C558394004950A10 /* LearningProgressManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LearningProgressManager.swift; sourceTree = "<group>"; };
+		14E73AE50849E9AF48A01820 /* seleapsec.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = seleapsec.txt; sourceTree = "<group>"; };
+		150930888F6D562A6E7FE10A /* HealthKitBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthKitBridge.swift; sourceTree = "<group>"; };
+		1954D3D0C299B11DE2180998 /* AstroNumeric-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "AstroNumeric-Bridging-Header.h"; sourceTree = "<group>"; };
+		1A6C96BB6FFA164F2DB55BB5 /* LearningProgressManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LearningProgressManagerTests.swift; sourceTree = "<group>"; };
+		1D05C9514031A391F87B6F76 /* TabSelectedDot.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TabSelectedDot.swift; sourceTree = "<group>"; };
+		1DD8EFA88E26A3F943A5EBB4 /* WidgetDataProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetDataProvider.swift; sourceTree = "<group>"; };
+		1E4738CA216A76C7DA20E564 /* ReadingVM.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReadingVM.swift; sourceTree = "<group>"; };
+		1ECC0C01D920E7CA0ADD6BC7 /* swemplan.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = swemplan.c; sourceTree = "<group>"; };
+		1F4B3F3163BF5048DF81ED65 /* ShareCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareCardView.swift; sourceTree = "<group>"; };
+		1F535EE7994D4202BB3E9090 /* DailySummaryWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailySummaryWidget.swift; sourceTree = "<group>"; };
+		1F8EF6E13BFABBC076E91D2C /* MoonPhaseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoonPhaseView.swift; sourceTree = "<group>"; };
+		1FA3CC4323AE868414CB3E10 /* CosmicGuideView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CosmicGuideView.swift; sourceTree = "<group>"; };
+		2062AB2D1CF664F14995D5FE /* HomeVM.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeVM.swift; sourceTree = "<group>"; };
+		21BC13513E2DCCD00572995E /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+		26E6AD5BE79AC068C2AE3165 /* swenut2000a.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = swenut2000a.h; sourceTree = "<group>"; };
+		27B802AB567FC6B8DCCF3BCE /* AstroNumericTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = AstroNumericTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		27FD1DC17E5975AB92C8F54E /* TLDRBoxView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TLDRBoxView.swift; sourceTree = "<group>"; };
+		2DFAAAA009F004A6EFBA7565 /* RelationshipsVM.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RelationshipsVM.swift; sourceTree = "<group>"; };
+		30AE39C3DCD7BEF793176B5C /* PredictiveScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PredictiveScanner.swift; sourceTree = "<group>"; };
+		30D9D96221354E12D536D817 /* AstroWidget.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = AstroWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		33584D8C4B118E9F5DCBEC5A /* WeeklyVibeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeeklyVibeView.swift; sourceTree = "<group>"; };
+		336F4C20B7F799B7F8B690D6 /* CardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardView.swift; sourceTree = "<group>"; };
+		3370DF59EB493B6BFF96ACD2 /* CosmicBackgroundView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CosmicBackgroundView.swift; sourceTree = "<group>"; };
+		3487460C1023ED322C9394AB /* PremiumHeroBlock.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PremiumHeroBlock.swift; sourceTree = "<group>"; };
+		34DE915B3CF65A83FF05AF34 /* swehouse.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = swehouse.c; sourceTree = "<group>"; };
+		371F9CAD32D9B868ED9276EE /* MoonEventsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoonEventsView.swift; sourceTree = "<group>"; };
+		38D29711D5EB7F62B3D4A552 /* DailyGuidanceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyGuidanceView.swift; sourceTree = "<group>"; };
+		39A36BFCCE4B37293D7520E6 /* OrbitRingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrbitRingView.swift; sourceTree = "<group>"; };
+		3A1B14D6182F7229CF56638E /* ne */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ne; path = ne.lproj/Localizable.strings; sourceTree = "<group>"; };
+		3B36AF0D59DCD7060389AD83 /* ExploreView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExploreView.swift; sourceTree = "<group>"; };
+		3CB4569C92CCFAF543D05ECD /* GlossaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlossaryView.swift; sourceTree = "<group>"; };
+		3EE76541473587CCADC32878 /* MarkdownTextView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownTextView.swift; sourceTree = "<group>"; };
+		40CA23FD5809B49944CCDC92 /* YearAheadView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YearAheadView.swift; sourceTree = "<group>"; };
+		4104382A65E0F82A5CFCA8C9 /* ReadingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReadingView.swift; sourceTree = "<group>"; };
+		41A52EB8480EDB8EBD75EB69 /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
+		41EFFB8D89AB9E55D335D203 /* SynastryRadar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SynastryRadar.swift; sourceTree = "<group>"; };
+		4225C349ECBD11A7517D5688 /* AppStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStore.swift; sourceTree = "<group>"; };
+		436E50D452D56D26A7A96055 /* swedate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = swedate.h; sourceTree = "<group>"; };
+		475327C5824A0A7A4FB0442E /* ChartsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChartsView.swift; sourceTree = "<group>"; };
+		4758569DCB40F236C1B1DD4D /* AstroNumericDebug.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = AstroNumericDebug.entitlements; sourceTree = "<group>"; };
+		4A4D43B139C5DDBCE3E31A1E /* Profile+Astrology.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Profile+Astrology.swift"; sourceTree = "<group>"; };
+		4B0BCA509A3FA1EEA8F1E3AC /* swedll.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = swedll.h; sourceTree = "<group>"; };
+		4B4D5C13360879DCC6E7E0DB /* swehel.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = swehel.c; sourceTree = "<group>"; };
+		4E4A2DBC5E602ED826763E51 /* BioCosmicCorrelator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BioCosmicCorrelator.swift; sourceTree = "<group>"; };
+		4E71C45975682851279603BE /* AstroWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = AstroWidget.entitlements; sourceTree = "<group>"; };
+		4E9D054B7FE838E85A1BB2D6 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
+		4EFBBDEBEA008FAB6EF4BFF4 /* semo_18.se1 */ = {isa = PBXFileReference; lastKnownFileType = file; path = semo_18.se1; sourceTree = "<group>"; };
+		4EFC89FD15530AA6F24898D5 /* AppGroupStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppGroupStore.swift; sourceTree = "<group>"; };
+		4FC1461757BA0F5E61277AD9 /* TimeScrubber.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TimeScrubber.swift; sourceTree = "<group>"; };
+		515CA1CBB617C7A2867A15FF /* LessonDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LessonDetailView.swift; sourceTree = "<group>"; };
+		532DAFEB1BAE9F95E5CE5766 /* VoiceRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceRecorder.swift; sourceTree = "<group>"; };
+		582703CEB159BC96EBFCE710 /* AIModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIModels.swift; sourceTree = "<group>"; };
+		58D1DC45EDBAE4C9B2D4FFF9 /* HabitsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HabitsView.swift; sourceTree = "<group>"; };
+		59CD924F04731CC58944AB19 /* CachePrewarmScheduler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CachePrewarmScheduler.swift; sourceTree = "<group>"; };
+		60446688BA3F482C4E4E8466 /* swephlib.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = swephlib.c; sourceTree = "<group>"; };
+		6290B3A519BF309E4B99BC5D /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
+		63372495E238B9450D49D569 /* TarotView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TarotView.swift; sourceTree = "<group>"; };
+		6342FCFC5194926EF7D0DA16 /* UserGuideView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserGuideView.swift; sourceTree = "<group>"; };
+		6623B648C6759EE84346E7E2 /* CompatibilityModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompatibilityModels.swift; sourceTree = "<group>"; };
+		6D0484011DE4001B5AD71A11 /* sweph.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = sweph.c; sourceTree = "<group>"; };
+		6E89EB87FD0969B23D1BDA04 /* RetryPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RetryPolicy.swift; sourceTree = "<group>"; };
+		708DE5A291EDE30233434A46 /* ChartVM.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChartVM.swift; sourceTree = "<group>"; };
+		7105E67300E27B5AA39C974C /* swejpl.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = swejpl.h; sourceTree = "<group>"; };
+		7B534491E1948F86B55A992E /* ro */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ro; path = ro.lproj/Localizable.strings; sourceTree = "<group>"; };
+		7CB460A8726AE82BE04C194E /* DailyFeaturesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyFeaturesView.swift; sourceTree = "<group>"; };
+		7CE9E26C6DB0AE0E34D79CCC /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/Localizable.strings; sourceTree = "<group>"; };
+		7FBED050F7756051300A343C /* TemporalMatrixView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TemporalMatrixView.swift; sourceTree = "<group>"; };
+		8056E627CAD4D1D0C5D06235 /* AstroNumeric.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = AstroNumeric.entitlements; sourceTree = "<group>"; };
+		814DE77E259EFAA027C72FBE /* HelpView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelpView.swift; sourceTree = "<group>"; };
+		821039B0B46F06E026A0EF33 /* PrivacyRedaction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivacyRedaction.swift; sourceTree = "<group>"; };
+		835D7DE2284BACD9D1903BB8 /* EphemerisEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EphemerisEngine.swift; sourceTree = "<group>"; };
+		836E269D04D0496A35386653 /* FriendsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FriendsView.swift; sourceTree = "<group>"; };
+		84191312FEBFC44CD5BD3F01 /* LearnVM.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LearnVM.swift; sourceTree = "<group>"; };
+		848FEFD97CFFA41AC508B2C2 /* AstroNumericUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = AstroNumericUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		8657D306BB4E6AA8BED5E832 /* LoadingOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoadingOverlay.swift; sourceTree = "<group>"; };
+		8CE125FE7FAF1229A10C3A24 /* AstroNumericTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AstroNumericTests.swift; sourceTree = "<group>"; };
+		8D61DFE7DEFECFD4E82BECFF /* ToolModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolModels.swift; sourceTree = "<group>"; };
+		8DA5E346124AA726D4B58C03 /* NotificationSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationSettingsView.swift; sourceTree = "<group>"; };
+		8E15120B5FEC6F96E5CE8791 /* NumerologyModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NumerologyModels.swift; sourceTree = "<group>"; };
+		8E38B18833AA7F6ADF937A1E /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/Localizable.strings; sourceTree = "<group>"; };
+		8E4631BBDE89B15DE73E71C4 /* swehouse.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = swehouse.h; sourceTree = "<group>"; };
+		8EA606A79473C7901379D0F3 /* AstroNumericApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AstroNumericApp.swift; sourceTree = "<group>"; };
+		9152839B6D7A7FEFB054B372 /* Products.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = Products.storekit; sourceTree = "<group>"; };
+		922B91C9657313D453B099A3 /* AdvancedEphemeris.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdvancedEphemeris.swift; sourceTree = "<group>"; };
+		932EF7E45FAB8BF4B75E8FE8 /* TimingEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimingEngine.swift; sourceTree = "<group>"; };
+		95BEA9212C5BBE923902A47D /* TimingAdvisorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimingAdvisorView.swift; sourceTree = "<group>"; };
+		9790CEC1B3433061ECF1DE2D /* LegalConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegalConfig.swift; sourceTree = "<group>"; };
+		97BDCABE93004190609E7516 /* ReadingModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReadingModels.swift; sourceTree = "<group>"; };
+		98E81A88F64B2417F0C60083 /* CompatibilityView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompatibilityView.swift; sourceTree = "<group>"; };
+		993CDC63819847C6B56F518C /* AdvancedChartsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdvancedChartsView.swift; sourceTree = "<group>"; };
+		9A32F82205699C01CF6236F0 /* JournalVM.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JournalVM.swift; sourceTree = "<group>"; };
+		9BA1908F263F948AFE6955B0 /* ProfileModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileModels.swift; sourceTree = "<group>"; };
+		9C3DDAB64F1CAEB25115163B /* AstroNumeric.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = AstroNumeric.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		9C9F22045833513D737643A2 /* DesignTokens.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DesignTokens.swift; sourceTree = "<group>"; };
+		9EE460EB01AD0CCF82D41DB4 /* EphemerisEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EphemerisEngineTests.swift; sourceTree = "<group>"; };
+		9FC932E54EA0DFCBDFEDD20D /* BirthstoneGuidanceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BirthstoneGuidanceView.swift; sourceTree = "<group>"; };
+		A04460B8D83132EB2C24DE35 /* ErrorStateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ErrorStateView.swift; sourceTree = "<group>"; };
+		A070AAA13B95BA8D02F89620 /* ToolsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolsView.swift; sourceTree = "<group>"; };
+		A2BEB15995D8256A028857A3 /* AccessibilityHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityHelpers.swift; sourceTree = "<group>"; };
+		A3B92A58628A15393A5C057C /* swejpl.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = swejpl.c; sourceTree = "<group>"; };
+		A597391D3D3DC2BF25700234 /* OracleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OracleView.swift; sourceTree = "<group>"; };
+		A5AE7ACED1B7513142018098 /* MoonPhaseWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoonPhaseWidget.swift; sourceTree = "<group>"; };
+		A7840008267ED5FE0C80C323 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		A7A196AB65E31671F7973A84 /* CompatibilityVM.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompatibilityVM.swift; sourceTree = "<group>"; };
+		A96E720F3EBDAB01700D9109 /* RevealAnimations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RevealAnimations.swift; sourceTree = "<group>"; };
+		A9FA99E598E2DCE7C202972D /* MoonPhaseActivity.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MoonPhaseActivity.swift; sourceTree = "<group>"; };
+		AF52D413D30C4366557131B8 /* swephexp.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = swephexp.h; sourceTree = "<group>"; };
+		AF81EF9819D3050966AABB99 /* NumerologyVM.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NumerologyVM.swift; sourceTree = "<group>"; };
+		B294406A85E6EAF03994AFC2 /* DoDontCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoDontCard.swift; sourceTree = "<group>"; };
+		B2955762CFB5B1B232E7D3AC /* ZodiacSign.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZodiacSign.swift; sourceTree = "<group>"; };
+		B2ABCECA545ED9FB3BADD0F5 /* SynastryChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SynastryChartView.swift; sourceTree = "<group>"; };
+		B2C02EEB058888B82AF56EF8 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		B5135A82CAFDB163A8F3640A /* ReadingResultView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReadingResultView.swift; sourceTree = "<group>"; };
+		B731518D85EC91648B35E9F1 /* AstroWidgetBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AstroWidgetBundle.swift; sourceTree = "<group>"; };
+		B9820D943E46088D1245283B /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
+		B9F598B86C523C91F89F98BB /* DebugLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugLog.swift; sourceTree = "<group>"; };
+		BA9A71ED1D0CB07E68F6A114 /* LocalizationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalizationService.swift; sourceTree = "<group>"; };
+		BC3590EA1EB79B35EE070950 /* seas_18.se1 */ = {isa = PBXFileReference; lastKnownFileType = file; path = seas_18.se1; sourceTree = "<group>"; };
+		BD8201AD3D54C5266BCDFFC4 /* sweodef.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = sweodef.h; sourceTree = "<group>"; };
+		BD962C0FFF60C30AF445B044 /* AdaptiveLayout.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AdaptiveLayout.swift; sourceTree = "<group>"; };
+		BEBEA5BF67D0DDAFFB72535B /* LifePhaseCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LifePhaseCard.swift; sourceTree = "<group>"; };
+		C1016A7A99EC9807521544C6 /* SectionGridView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SectionGridView.swift; sourceTree = "<group>"; };
+		C2D87E82F540D74879B740C7 /* Color+Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+Theme.swift"; sourceTree = "<group>"; };
+		C5DF664A877B4C3D75695624 /* DataQualityEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataQualityEngine.swift; sourceTree = "<group>"; };
+		C70157E2D9A9A4CEB63A829E /* PrivacyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivacyView.swift; sourceTree = "<group>"; };
+		C8AD691BAF0CCBB659C876FB /* JournalEmbedder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JournalEmbedder.swift; sourceTree = "<group>"; };
+		C8B1B3DD7A96F884BE3F4352 /* BiometricLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BiometricLogger.swift; sourceTree = "<group>"; };
+		CD8C24D5B5A1BD21D212DD41 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		D0FF9EF0D4B926BA5E620D60 /* MysticModeToggle.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MysticModeToggle.swift; sourceTree = "<group>"; };
+		D1CDA2E62D5E90BDE4AB3717 /* sweephe4.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = sweephe4.h; sourceTree = "<group>"; };
+		D367FF1FE2F8BD446D9241F0 /* LearningModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LearningModels.swift; sourceTree = "<group>"; };
+		D4C5DCB730F089FCA4CBCE83 /* CalendarOracle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarOracle.swift; sourceTree = "<group>"; };
+		D8732AD478D927CE06BFCD69 /* swemptab.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = swemptab.h; sourceTree = "<group>"; };
+		DDFAE36C5BEF50DE52375F71 /* EditProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditProfileView.swift; sourceTree = "<group>"; };
+		DF6314B17F6917E5C4F9794B /* ChartModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChartModels.swift; sourceTree = "<group>"; };
+		E0DA2F6E0F97889A2E475D90 /* CosmicGuideVM.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CosmicGuideVM.swift; sourceTree = "<group>"; };
+		E14B0758D73B90FA70BB2A78 /* AstroNumericUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AstroNumericUITests.swift; sourceTree = "<group>"; };
+		E3058B0E2D7ADB647F057F36 /* CosmicScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CosmicScene.swift; sourceTree = "<group>"; };
+		E34DD16546BC583E0F7DBA8D /* EditProfileVM.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditProfileVM.swift; sourceTree = "<group>"; };
+		E49BA5A6F95DF5D46131C6BD /* swecl.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = swecl.c; sourceTree = "<group>"; };
+		E79A811CE4CC1E439CB4402E /* JournalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JournalView.swift; sourceTree = "<group>"; };
+		E7E3C5236662033660D81B65 /* TransitNotificationScheduler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransitNotificationScheduler.swift; sourceTree = "<group>"; };
+		EC876BA87201DE6B442247AF /* sepl_18.se1 */ = {isa = PBXFileReference; lastKnownFileType = file; path = sepl_18.se1; sourceTree = "<group>"; };
+		ED1D490FC25EA77761D367B6 /* swemmoon.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = swemmoon.c; sourceTree = "<group>"; };
+		EE3FCCDD5D8704AAD6253666 /* PlanetaryHourWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanetaryHourWidget.swift; sourceTree = "<group>"; };
+		EF461FD43C0597316AECCA62 /* EmbeddedChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmbeddedChartView.swift; sourceTree = "<group>"; };
+		EFA41050FA4DAF6C3B2E8E5B /* RelationshipsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RelationshipsView.swift; sourceTree = "<group>"; };
+		F09C2808FC34C2EFED35DA76 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		F0FAE63C4C18810AF4A818B4 /* JournalModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JournalModels.swift; sourceTree = "<group>"; };
+		F1A2C7279CECC1F644B50748 /* NumerologyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NumerologyView.swift; sourceTree = "<group>"; };
+		F1CD7F0F7FE8A611149718AA /* FloatingAIButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloatingAIButton.swift; sourceTree = "<group>"; };
+		F4CD9492CDE3F542144F0136 /* sweph.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = sweph.h; sourceTree = "<group>"; };
+		F5B129D14AB488CCD19BB676 /* PremiumSurface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PremiumSurface.swift; sourceTree = "<group>"; };
+		F5F4C7DD7085FF3B557420AE /* ProfileExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileExporter.swift; sourceTree = "<group>"; };
+		F64FA00F412D1933FD143E93 /* swedate.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = swedate.c; sourceTree = "<group>"; };
+		F959CA7F381C942022B8AA66 /* CoreModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreModels.swift; sourceTree = "<group>"; };
+		FB5A3BFC50283DC804AB81B2 /* AffirmationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AffirmationView.swift; sourceTree = "<group>"; };
+		FE0463C05FB09223C5C58961 /* swephlib.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = swephlib.h; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		006E6CFEBC1E547D6C5C4917 = {
+			isa = PBXGroup;
+			children = (
+				EF528A7E51E6A6DA0A60E51A /* AstroNumeric */,
+				859B4A6EE273B35E3AEF194C /* AstroNumericTests */,
+				CEB07BB36EEAFC56DCBE952D /* AstroNumericUITests */,
+				72A57EE5201223A07ACBB966 /* AstroWidget */,
+				937A1344BA46A6DA5A489239 /* Shared */,
+				0DE5F3B3536B10B11C9CCA9E /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		00E5FC7E7C26D9BB3162805D /* Oracle */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Oracle;
+			sourceTree = "<group>";
+		};
+		0DE5F3B3536B10B11C9CCA9E /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				9C3DDAB64F1CAEB25115163B /* AstroNumeric.app */,
+				27B802AB567FC6B8DCCF3BCE /* AstroNumericTests.xctest */,
+				848FEFD97CFFA41AC508B2C2 /* AstroNumericUITests.xctest */,
+				30D9D96221354E12D536D817 /* AstroWidget.appex */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		12C2A3D3073B6900DFE7A3DB /* Learn */ = {
+			isa = PBXGroup;
+			children = (
+				3CB4569C92CCFAF543D05ECD /* GlossaryView.swift */,
+				0350F7601CFB0098D186F23F /* LearnView.swift */,
+				84191312FEBFC44CD5BD3F01 /* LearnVM.swift */,
+				515CA1CBB617C7A2867A15FF /* LessonDetailView.swift */,
+			);
+			path = Learn;
+			sourceTree = "<group>";
+		};
+		229721E6C013AB79F949BDCA /* Numerology */ = {
+			isa = PBXGroup;
+			children = (
+				F1A2C7279CECC1F644B50748 /* NumerologyView.swift */,
+				AF81EF9819D3050966AABB99 /* NumerologyVM.swift */,
+			);
+			path = Numerology;
+			sourceTree = "<group>";
+		};
+		2E0D5495BA3F32A0886D0C12 /* Particles */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Particles;
+			sourceTree = "<group>";
+		};
+		303DC70FE06DFA9D5B2B1574 /* Auth */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Auth;
+			sourceTree = "<group>";
+		};
+		37E6E8679E1C8BDF0F9538A6 /* SharedComponents */ = {
+			isa = PBXGroup;
+			children = (
+				336F4C20B7F799B7F8B690D6 /* CardView.swift */,
+				3370DF59EB493B6BFF96ACD2 /* CosmicBackgroundView.swift */,
+				E3058B0E2D7ADB647F057F36 /* CosmicScene.swift */,
+				A04460B8D83132EB2C24DE35 /* ErrorStateView.swift */,
+				F1CD7F0F7FE8A611149718AA /* FloatingAIButton.swift */,
+				0CE57DD6BEA9D85EF0FF4178 /* GradientButton.swift */,
+				8657D306BB4E6AA8BED5E832 /* LoadingOverlay.swift */,
+				3EE76541473587CCADC32878 /* MarkdownTextView.swift */,
+				39A36BFCCE4B37293D7520E6 /* OrbitRingView.swift */,
+				F5B129D14AB488CCD19BB676 /* PremiumSurface.swift */,
+				A96E720F3EBDAB01700D9109 /* RevealAnimations.swift */,
+				9C9F22045833513D737643A2 /* DesignTokens.swift */,
+				D0FF9EF0D4B926BA5E620D60 /* MysticModeToggle.swift */,
+				4FC1461757BA0F5E61277AD9 /* TimeScrubber.swift */,
+				3487460C1023ED322C9394AB /* PremiumHeroBlock.swift */,
+				1D05C9514031A391F87B6F76 /* TabSelectedDot.swift */,
+				05C7D6F612542489AFD27C9D /* PremiumSkeleton.swift */,
+				BD962C0FFF60C30AF445B044 /* AdaptiveLayout.swift */,
+			);
+			path = SharedComponents;
+			sourceTree = "<group>";
+		};
+		38F61FFFA79B3811097CCEB2 /* Onboarding */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Onboarding;
+			sourceTree = "<group>";
+		};
+		3CAA9A95009990F46AC8AD44 /* Home */ = {
+			isa = PBXGroup;
+			children = (
+				21BC13513E2DCCD00572995E /* HomeView.swift */,
+				2062AB2D1CF664F14995D5FE /* HomeVM.swift */,
+				A9FA99E598E2DCE7C202972D /* MoonPhaseActivity.swift */,
+			);
+			path = Home;
+			sourceTree = "<group>";
+		};
+		41D03BC8BA62E71B316DB639 /* Journal */ = {
+			isa = PBXGroup;
+			children = (
+				C8AD691BAF0CCBB659C876FB /* JournalEmbedder.swift */,
+				E79A811CE4CC1E439CB4402E /* JournalView.swift */,
+				9A32F82205699C01CF6236F0 /* JournalVM.swift */,
+				532DAFEB1BAE9F95E5CE5766 /* VoiceRecorder.swift */,
+			);
+			path = Journal;
+			sourceTree = "<group>";
+		};
+		49E3C4773EA30DC5D1525B47 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				972535A71BDE46119680288C /* Ephemeris */,
+				BEC0C0E146A914206F74B2B0 /* Localizable */,
+				2E0D5495BA3F32A0886D0C12 /* Particles */,
+				DD344ED74BD58F420C6884FB /* StoreKit */,
+				A7840008267ED5FE0C80C323 /* Assets.xcassets */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		4CA8C8538E0BE60247CEEBC4 /* DailyFeatures */ = {
+			isa = PBXGroup;
+			children = (
+				B294406A85E6EAF03994AFC2 /* DoDontCard.swift */,
+			);
+			path = DailyFeatures;
+			sourceTree = "<group>";
+		};
+		550767D1E5A42CC0407E30A8 /* Compatibility */ = {
+			isa = PBXGroup;
+			children = (
+				98E81A88F64B2417F0C60083 /* CompatibilityView.swift */,
+				A7A196AB65E31671F7973A84 /* CompatibilityVM.swift */,
+			);
+			path = Compatibility;
+			sourceTree = "<group>";
+		};
+		5F41EA70E6E602248DC5B007 /* Chart */ = {
+			isa = PBXGroup;
+			children = (
+				02544FBDA3DF289193C1269C /* ChartView.swift */,
+				708DE5A291EDE30233434A46 /* ChartVM.swift */,
+				EF461FD43C0597316AECCA62 /* EmbeddedChartView.swift */,
+			);
+			path = Chart;
+			sourceTree = "<group>";
+		};
+		641D273201464717B2E02906 /* Utilities */ = {
+			isa = PBXGroup;
+			children = (
+				A2BEB15995D8256A028857A3 /* AccessibilityHelpers.swift */,
+				B9F598B86C523C91F89F98BB /* DebugLog.swift */,
+				821039B0B46F06E026A0EF33 /* PrivacyRedaction.swift */,
+			);
+			path = Utilities;
+			sourceTree = "<group>";
+		};
+		6B51065FA91DFFF01FDE2E7F /* Features */ = {
+			isa = PBXGroup;
+			children = (
+				303DC70FE06DFA9D5B2B1574 /* Auth */,
+				5F41EA70E6E602248DC5B007 /* Chart */,
+				E7EA8EFB372049D7F456BEBB /* Charts */,
+				550767D1E5A42CC0407E30A8 /* Compatibility */,
+				FB94F9D24A222DF25FA5189C /* CosmicGuide */,
+				7D3DB439065CE6F9B3403F7B /* Explore */,
+				855CFEF14DD5CA794D81F77F /* Habits */,
+				3CAA9A95009990F46AC8AD44 /* Home */,
+				CB7D22FAB3F398D0F3EC70F7 /* Intents */,
+				41D03BC8BA62E71B316DB639 /* Journal */,
+				12C2A3D3073B6900DFE7A3DB /* Learn */,
+				229721E6C013AB79F949BDCA /* Numerology */,
+				38F61FFFA79B3811097CCEB2 /* Onboarding */,
+				BC282CD13C7E3E11077371A6 /* Premium */,
+				8D8FFF4DF8AA8422DA3621D3 /* Profile */,
+				BE683D4C202BB67C7C8C8AF8 /* Reading */,
+				76771295882036314DF6A0EB /* Relationships */,
+				7E5BA5611F8C30A84842AB9F /* Tools */,
+			);
+			path = Features;
+			sourceTree = "<group>";
+		};
+		72A57EE5201223A07ACBB966 /* AstroWidget */ = {
+			isa = PBXGroup;
+			children = (
+				4E71C45975682851279603BE /* AstroWidget.entitlements */,
+				B731518D85EC91648B35E9F1 /* AstroWidgetBundle.swift */,
+				1F535EE7994D4202BB3E9090 /* DailySummaryWidget.swift */,
+				B2C02EEB058888B82AF56EF8 /* Info.plist */,
+				A5AE7ACED1B7513142018098 /* MoonPhaseWidget.swift */,
+				0F7849558EF475BFD90EB816 /* MorningBriefWidget.swift */,
+				EE3FCCDD5D8704AAD6253666 /* PlanetaryHourWidget.swift */,
+			);
+			path = AstroWidget;
+			sourceTree = "<group>";
+		};
+		7403A1533C39ECA315EABB79 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				582703CEB159BC96EBFCE710 /* AIModels.swift */,
+				DF6314B17F6917E5C4F9794B /* ChartModels.swift */,
+				6623B648C6759EE84346E7E2 /* CompatibilityModels.swift */,
+				F959CA7F381C942022B8AA66 /* CoreModels.swift */,
+				F0FAE63C4C18810AF4A818B4 /* JournalModels.swift */,
+				D367FF1FE2F8BD446D9241F0 /* LearningModels.swift */,
+				8E15120B5FEC6F96E5CE8791 /* NumerologyModels.swift */,
+				9BA1908F263F948AFE6955B0 /* ProfileModels.swift */,
+				97BDCABE93004190609E7516 /* ReadingModels.swift */,
+				8D61DFE7DEFECFD4E82BECFF /* ToolModels.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		76771295882036314DF6A0EB /* Relationships */ = {
+			isa = PBXGroup;
+			children = (
+				836E269D04D0496A35386653 /* FriendsView.swift */,
+				EFA41050FA4DAF6C3B2E8E5B /* RelationshipsView.swift */,
+				2DFAAAA009F004A6EFBA7565 /* RelationshipsVM.swift */,
+			);
+			path = Relationships;
+			sourceTree = "<group>";
+		};
+		7D3DB439065CE6F9B3403F7B /* Explore */ = {
+			isa = PBXGroup;
+			children = (
+				3B36AF0D59DCD7060389AD83 /* ExploreView.swift */,
+			);
+			path = Explore;
+			sourceTree = "<group>";
+		};
+		7E5BA5611F8C30A84842AB9F /* Tools */ = {
+			isa = PBXGroup;
+			children = (
+				4CA8C8538E0BE60247CEEBC4 /* DailyFeatures */,
+				00E5FC7E7C26D9BB3162805D /* Oracle */,
+				8245995D3E383CA3685845F6 /* Tarot */,
+				C26D0D619A639F77DA4B5E41 /* Timing */,
+				FB5A3BFC50283DC804AB81B2 /* AffirmationView.swift */,
+				9FC932E54EA0DFCBDFEDD20D /* BirthstoneGuidanceView.swift */,
+				0D880BB2B3889041942FEB6E /* DailyFeaturePresentation.swift */,
+				7CB460A8726AE82BE04C194E /* DailyFeaturesView.swift */,
+				BEBEA5BF67D0DDAFFB72535B /* LifePhaseCard.swift */,
+				371F9CAD32D9B868ED9276EE /* MoonEventsView.swift */,
+				1F8EF6E13BFABBC076E91D2C /* MoonPhaseView.swift */,
+				8DA5E346124AA726D4B58C03 /* NotificationSettingsView.swift */,
+				A597391D3D3DC2BF25700234 /* OracleView.swift */,
+				63372495E238B9450D49D569 /* TarotView.swift */,
+				7FBED050F7756051300A343C /* TemporalMatrixView.swift */,
+				95BEA9212C5BBE923902A47D /* TimingAdvisorView.swift */,
+				A070AAA13B95BA8D02F89620 /* ToolsView.swift */,
+				40CA23FD5809B49944CCDC92 /* YearAheadView.swift */,
+			);
+			path = Tools;
+			sourceTree = "<group>";
+		};
+		7F3CDB1EEC2638D143B63056 /* Extensions */ = {
+			isa = PBXGroup;
+			children = (
+				C2D87E82F540D74879B740C7 /* Color+Theme.swift */,
+				4A4D43B139C5DDBCE3E31A1E /* Profile+Astrology.swift */,
+			);
+			path = Extensions;
+			sourceTree = "<group>";
+		};
+		8245995D3E383CA3685845F6 /* Tarot */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Tarot;
+			sourceTree = "<group>";
+		};
+		855CFEF14DD5CA794D81F77F /* Habits */ = {
+			isa = PBXGroup;
+			children = (
+				58D1DC45EDBAE4C9B2D4FFF9 /* HabitsView.swift */,
+				019D04CE9F723B40A9E9B1AC /* HabitsVM.swift */,
+			);
+			path = Habits;
+			sourceTree = "<group>";
+		};
+		859B4A6EE273B35E3AEF194C /* AstroNumericTests */ = {
+			isa = PBXGroup;
+			children = (
+				8CE125FE7FAF1229A10C3A24 /* AstroNumericTests.swift */,
+				9EE460EB01AD0CCF82D41DB4 /* EphemerisEngineTests.swift */,
+				0D92986A4EC55C9E9E1126BD /* JournalVMTests.swift */,
+				1A6C96BB6FFA164F2DB55BB5 /* LearningProgressManagerTests.swift */,
+			);
+			path = AstroNumericTests;
+			sourceTree = "<group>";
+		};
+		8D8FFF4DF8AA8422DA3621D3 /* Profile */ = {
+			isa = PBXGroup;
+			children = (
+				DDFAE36C5BEF50DE52375F71 /* EditProfileView.swift */,
+				E34DD16546BC583E0F7DBA8D /* EditProfileVM.swift */,
+				814DE77E259EFAA027C72FBE /* HelpView.swift */,
+				C70157E2D9A9A4CEB63A829E /* PrivacyView.swift */,
+				41A52EB8480EDB8EBD75EB69 /* ProfileView.swift */,
+				6342FCFC5194926EF7D0DA16 /* UserGuideView.swift */,
+			);
+			path = Profile;
+			sourceTree = "<group>";
+		};
+		8E03564A13B487A9A12ED8F0 /* Utilities */ = {
+			isa = PBXGroup;
+			children = (
+				B2955762CFB5B1B232E7D3AC /* ZodiacSign.swift */,
+			);
+			path = Utilities;
+			sourceTree = "<group>";
+		};
+		937A1344BA46A6DA5A489239 /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				4EFC89FD15530AA6F24898D5 /* AppGroupStore.swift */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		972535A71BDE46119680288C /* Ephemeris */ = {
+			isa = PBXGroup;
+			children = (
+				BC3590EA1EB79B35EE070950 /* seas_18.se1 */,
+				14E73AE50849E9AF48A01820 /* seleapsec.txt */,
+				4EFBBDEBEA008FAB6EF4BFF4 /* semo_18.se1 */,
+				EC876BA87201DE6B442247AF /* sepl_18.se1 */,
+			);
+			path = Ephemeris;
+			sourceTree = "<group>";
+		};
+		9A6E252FB5E6C3FCF3359485 /* API */ = {
+			isa = PBXGroup;
+			children = (
+				C0172142E5C7D6DF010163DC /* Generated */,
+				7403A1533C39ECA315EABB79 /* Models */,
+				B9820D943E46088D1245283B /* APIClient.swift */,
+				02270122358D0115E6790EED /* Endpoints.swift */,
+				10EC38AE733A85894FA849FC /* ResponseCache.swift */,
+				6E89EB87FD0969B23D1BDA04 /* RetryPolicy.swift */,
+			);
+			path = API;
+			sourceTree = "<group>";
+		};
+		B139449443EA080B0D5E931E /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				9790CEC1B3433061ECF1DE2D /* LegalConfig.swift */,
+			);
+			path = Config;
+			sourceTree = "<group>";
+		};
+		BC282CD13C7E3E11077371A6 /* Premium */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Premium;
+			sourceTree = "<group>";
+		};
+		BE683D4C202BB67C7C8C8AF8 /* Reading */ = {
+			isa = PBXGroup;
+			children = (
+				FEA2B59841C856D7D34BECC1 /* Components */,
+				38D29711D5EB7F62B3D4A552 /* DailyGuidanceView.swift */,
+				B5135A82CAFDB163A8F3640A /* ReadingResultView.swift */,
+				4104382A65E0F82A5CFCA8C9 /* ReadingView.swift */,
+				1E4738CA216A76C7DA20E564 /* ReadingVM.swift */,
+				C1016A7A99EC9807521544C6 /* SectionGridView.swift */,
+				1F4B3F3163BF5048DF81ED65 /* ShareCardView.swift */,
+				33584D8C4B118E9F5DCBEC5A /* WeeklyVibeView.swift */,
+			);
+			path = Reading;
+			sourceTree = "<group>";
+		};
+		BEC0C0E146A914206F74B2B0 /* Localizable */ = {
+			isa = PBXGroup;
+			children = (
+				3061133121CB1FF71A8259C5 /* Localizable.strings */,
+			);
+			path = Localizable;
+			sourceTree = "<group>";
+		};
+		C0172142E5C7D6DF010163DC /* Generated */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Generated;
+			sourceTree = "<group>";
+		};
+		C26D0D619A639F77DA4B5E41 /* Timing */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Timing;
+			sourceTree = "<group>";
+		};
+		C341B918DEACDEAE16B2BA08 /* Persistence */ = {
+			isa = PBXGroup;
+			children = (
+				4225C349ECBD11A7517D5688 /* AppStore.swift */,
+				13BE0211C558394004950A10 /* LearningProgressManager.swift */,
+			);
+			path = Persistence;
+			sourceTree = "<group>";
+		};
+		CB7D22FAB3F398D0F3EC70F7 /* Intents */ = {
+			isa = PBXGroup;
+			children = (
+				0A79E6CEBCCAC1564483C0DF /* CosmicIntents.swift */,
+			);
+			path = Intents;
+			sourceTree = "<group>";
+		};
+		CEB07BB36EEAFC56DCBE952D /* AstroNumericUITests */ = {
+			isa = PBXGroup;
+			children = (
+				E14B0758D73B90FA70BB2A78 /* AstroNumericUITests.swift */,
+			);
+			path = AstroNumericUITests;
+			sourceTree = "<group>";
+		};
+		DD344ED74BD58F420C6884FB /* StoreKit */ = {
+			isa = PBXGroup;
+			children = (
+				9152839B6D7A7FEFB054B372 /* Products.storekit */,
+			);
+			path = StoreKit;
+			sourceTree = "<group>";
+		};
+		E7EA8EFB372049D7F456BEBB /* Charts */ = {
+			isa = PBXGroup;
+			children = (
+				993CDC63819847C6B56F518C /* AdvancedChartsView.swift */,
+				475327C5824A0A7A4FB0442E /* ChartsView.swift */,
+				0F9BB0CA010B2861B5946AED /* CompositeChartView.swift */,
+				06F99CB072F98E4A203CD1C9 /* ProgressionsView.swift */,
+				B2ABCECA545ED9FB3BADD0F5 /* SynastryChartView.swift */,
+			);
+			path = Charts;
+			sourceTree = "<group>";
+		};
+		E804AB3BB6E7FEEE10754422 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				59CD924F04731CC58944AB19 /* CachePrewarmScheduler.swift */,
+				BA9A71ED1D0CB07E68F6A114 /* LocalizationService.swift */,
+				6290B3A519BF309E4B99BC5D /* NotificationService.swift */,
+				E7E3C5236662033660D81B65 /* TransitNotificationScheduler.swift */,
+				1DD8EFA88E26A3F943A5EBB4 /* WidgetDataProvider.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		EC9317A85AF40D1099B935CC /* EphemerisEngine */ = {
+			isa = PBXGroup;
+			children = (
+				F2A977B6DB688BD2E59E54C8 /* swisseph */,
+				922B91C9657313D453B099A3 /* AdvancedEphemeris.swift */,
+				4E4A2DBC5E602ED826763E51 /* BioCosmicCorrelator.swift */,
+				C8B1B3DD7A96F884BE3F4352 /* BiometricLogger.swift */,
+				D4C5DCB730F089FCA4CBCE83 /* CalendarOracle.swift */,
+				835D7DE2284BACD9D1903BB8 /* EphemerisEngine.swift */,
+				150930888F6D562A6E7FE10A /* HealthKitBridge.swift */,
+				30AE39C3DCD7BEF793176B5C /* PredictiveScanner.swift */,
+				41EFFB8D89AB9E55D335D203 /* SynastryRadar.swift */,
+				932EF7E45FAB8BF4B75E8FE8 /* TimingEngine.swift */,
+			);
+			path = EphemerisEngine;
+			sourceTree = "<group>";
+		};
+		EF528A7E51E6A6DA0A60E51A /* AstroNumeric */ = {
+			isa = PBXGroup;
+			children = (
+				F4E0672366C88FA49A01991D /* Core */,
+				EC9317A85AF40D1099B935CC /* EphemerisEngine */,
+				7F3CDB1EEC2638D143B63056 /* Extensions */,
+				6B51065FA91DFFF01FDE2E7F /* Features */,
+				49E3C4773EA30DC5D1525B47 /* Resources */,
+				37E6E8679E1C8BDF0F9538A6 /* SharedComponents */,
+				8E03564A13B487A9A12ED8F0 /* Utilities */,
+				1954D3D0C299B11DE2180998 /* AstroNumeric-Bridging-Header.h */,
+				8056E627CAD4D1D0C5D06235 /* AstroNumeric.entitlements */,
+				8EA606A79473C7901379D0F3 /* AstroNumericApp.swift */,
+				4758569DCB40F236C1B1DD4D /* AstroNumericDebug.entitlements */,
+				CD8C24D5B5A1BD21D212DD41 /* ContentView.swift */,
+				0FBDDFC912970EAC55064F20 /* Info.plist */,
+				F09C2808FC34C2EFED35DA76 /* PrivacyInfo.xcprivacy */,
+			);
+			path = AstroNumeric;
+			sourceTree = "<group>";
+		};
+		F2A977B6DB688BD2E59E54C8 /* swisseph */ = {
+			isa = PBXGroup;
+			children = (
+				E49BA5A6F95DF5D46131C6BD /* swecl.c */,
+				F64FA00F412D1933FD143E93 /* swedate.c */,
+				436E50D452D56D26A7A96055 /* swedate.h */,
+				4B0BCA509A3FA1EEA8F1E3AC /* swedll.h */,
+				00253AA37D1792D6C1FE2222 /* sweephe4.c */,
+				D1CDA2E62D5E90BDE4AB3717 /* sweephe4.h */,
+				4B4D5C13360879DCC6E7E0DB /* swehel.c */,
+				34DE915B3CF65A83FF05AF34 /* swehouse.c */,
+				8E4631BBDE89B15DE73E71C4 /* swehouse.h */,
+				A3B92A58628A15393A5C057C /* swejpl.c */,
+				7105E67300E27B5AA39C974C /* swejpl.h */,
+				ED1D490FC25EA77761D367B6 /* swemmoon.c */,
+				1ECC0C01D920E7CA0ADD6BC7 /* swemplan.c */,
+				D8732AD478D927CE06BFCD69 /* swemptab.h */,
+				26E6AD5BE79AC068C2AE3165 /* swenut2000a.h */,
+				BD8201AD3D54C5266BCDFFC4 /* sweodef.h */,
+				6D0484011DE4001B5AD71A11 /* sweph.c */,
+				F4CD9492CDE3F542144F0136 /* sweph.h */,
+				AF52D413D30C4366557131B8 /* swephexp.h */,
+				60446688BA3F482C4E4E8466 /* swephlib.c */,
+				FE0463C05FB09223C5C58961 /* swephlib.h */,
+			);
+			path = swisseph;
+			sourceTree = "<group>";
+		};
+		F4E0672366C88FA49A01991D /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				9A6E252FB5E6C3FCF3359485 /* API */,
+				B139449443EA080B0D5E931E /* Config */,
+				C341B918DEACDEAE16B2BA08 /* Persistence */,
+				E804AB3BB6E7FEEE10754422 /* Services */,
+				641D273201464717B2E02906 /* Utilities */,
+				C5DF664A877B4C3D75695624 /* DataQualityEngine.swift */,
+				F5F4C7DD7085FF3B557420AE /* ProfileExporter.swift */,
+			);
+			path = Core;
+			sourceTree = "<group>";
+		};
+		FB94F9D24A222DF25FA5189C /* CosmicGuide */ = {
+			isa = PBXGroup;
+			children = (
+				1FA3CC4323AE868414CB3E10 /* CosmicGuideView.swift */,
+				E0DA2F6E0F97889A2E475D90 /* CosmicGuideVM.swift */,
+			);
+			path = CosmicGuide;
+			sourceTree = "<group>";
+		};
+		FEA2B59841C856D7D34BECC1 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				27FD1DC17E5975AB92C8F54E /* TLDRBoxView.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		437379BECB75269795BC4905 /* AstroNumericTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = DAC7B2ADBEFF3A930A4ABAD4 /* Build configuration list for PBXNativeTarget "AstroNumericTests" */;
+			buildPhases = (
+				53BF7586A4F4E55DAF35DE5F /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				EE026F70B37FF1B62D8B6897 /* PBXTargetDependency */,
+			);
+			name = AstroNumericTests;
+			productName = AstroNumericTests;
+			productReference = 27B802AB567FC6B8DCCF3BCE /* AstroNumericTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		A5150DEB4247938F485FFECE /* AstroNumeric */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9DEAB423A6E903E179539A2B /* Build configuration list for PBXNativeTarget "AstroNumeric" */;
+			buildPhases = (
+				C53816E10D8FB46A95012835 /* Sources */,
+				2734888958C5C82D619963AD /* Resources */,
+				CB54C6615F2DFF5BB2C7B170 /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				731085E38AC3D9DE02D32067 /* PBXTargetDependency */,
+			);
+			name = AstroNumeric;
+			productName = AstroNumeric;
+			productReference = 9C3DDAB64F1CAEB25115163B /* AstroNumeric.app */;
+			productType = "com.apple.product-type.application";
+		};
+		BAF7BCE209DD2B4F8D1ED3BF /* AstroWidget */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 19C2F7F14C63DDB0819E98FD /* Build configuration list for PBXNativeTarget "AstroWidget" */;
+			buildPhases = (
+				3B583910A7ACCE6FA8DD1662 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = AstroWidget;
+			productName = AstroWidget;
+			productReference = 30D9D96221354E12D536D817 /* AstroWidget.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		F45C7AFF53930F75699B9C7F /* AstroNumericUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 37D427C5E0EAA9E83E910959 /* Build configuration list for PBXNativeTarget "AstroNumericUITests" */;
+			buildPhases = (
+				359E7A51504E47F4A8895A96 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				9CAC0333132907588D3E8A54 /* PBXTargetDependency */,
+			);
+			name = AstroNumericUITests;
+			productName = AstroNumericUITests;
+			productReference = 848FEFD97CFFA41AC508B2C2 /* AstroNumericUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		6776972D801A8B20E2730FA5 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 2640;
+				TargetAttributes = {
+					437379BECB75269795BC4905 = {
+						DevelopmentTeam = 8L5LTN9LMB;
+					};
+					A5150DEB4247938F485FFECE = {
+						DevelopmentTeam = 8L5LTN9LMB;
+					};
+					BAF7BCE209DD2B4F8D1ED3BF = {
+						DevelopmentTeam = 8L5LTN9LMB;
+					};
+					F45C7AFF53930F75699B9C7F = {
+						DevelopmentTeam = 8L5LTN9LMB;
+						TestTargetID = A5150DEB4247938F485FFECE;
+					};
+				};
+			};
+			buildConfigurationList = 678E687FAD1D7477D1F9C8CD /* Build configuration list for PBXProject "AstroNumeric" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+				es,
+				fr,
+				ne,
+				ro,
+			);
+			mainGroup = 006E6CFEBC1E547D6C5C4917;
+			minimizedProjectReferenceProxies = 1;
+			productRefGroup = 0DE5F3B3536B10B11C9CCA9E /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				A5150DEB4247938F485FFECE /* AstroNumeric */,
+				437379BECB75269795BC4905 /* AstroNumericTests */,
+				F45C7AFF53930F75699B9C7F /* AstroNumericUITests */,
+				BAF7BCE209DD2B4F8D1ED3BF /* AstroWidget */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		2734888958C5C82D619963AD /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4CA6D00006797DB10BF252C5 /* Assets.xcassets in Resources */,
+				B16A1D37EB71031BADF7215F /* Localizable.strings in Resources */,
+				83B23DA5A97AD4613871C31D /* PrivacyInfo.xcprivacy in Resources */,
+				61C3128C5A02DFEF10DB11FD /* Products.storekit in Resources */,
+				57CEE0F0E7760AA598DB140E /* seas_18.se1 in Resources */,
+				0294D1CCDB97FA745915EF51 /* seleapsec.txt in Resources */,
+				83F059993470434A5B762D1B /* semo_18.se1 in Resources */,
+				26FC3A2A76850362EB6DC66D /* sepl_18.se1 in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		359E7A51504E47F4A8895A96 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E155DF36D610A2195C02FDFD /* AstroNumericUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3B583910A7ACCE6FA8DD1662 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BF16F78B62115A4685276D1E /* AppGroupStore.swift in Sources */,
+				6591345880895A723B228B45 /* AstroWidgetBundle.swift in Sources */,
+				297B4FB5CD9112A6F894367C /* DailySummaryWidget.swift in Sources */,
+				664DD138DFE8CF13E3E070F2 /* MoonPhaseWidget.swift in Sources */,
+				4DC3401138F3B090E5F69E73 /* MorningBriefWidget.swift in Sources */,
+				5676B3FB67EF30D63F523985 /* PlanetaryHourWidget.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		53BF7586A4F4E55DAF35DE5F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D8785524E2AEF0EB069D6093 /* AstroNumericTests.swift in Sources */,
+				F24B4D849566A2389CE75BF5 /* EphemerisEngineTests.swift in Sources */,
+				35FAA85888C1BFC2BE7542E7 /* JournalVMTests.swift in Sources */,
+				ADFBAE983BCF9A875C518B2A /* LearningProgressManagerTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C53816E10D8FB46A95012835 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				732F64F69BD4F655EA116D23 /* AIModels.swift in Sources */,
+				3A02EA2859BF557C7E285C2B /* APIClient.swift in Sources */,
+				6F81A7EABDEDFD2F80C2044E /* AccessibilityHelpers.swift in Sources */,
+				5E5DCFAD5CD33EC66A1B5D9F /* AdvancedChartsView.swift in Sources */,
+				457250848F8C346B3BEED5D5 /* AdvancedEphemeris.swift in Sources */,
+				F4F56A9DA95212F1ADC3CE51 /* AffirmationView.swift in Sources */,
+				1F9DF7B3E403F61A122FFDF0 /* AppGroupStore.swift in Sources */,
+				138C4BC3B24BD068C2F6560B /* AppStore.swift in Sources */,
+				E4A4E2F8CBA1424FC3F5DDC7 /* AstroNumericApp.swift in Sources */,
+				260A412DC6BA6B3D6B383D05 /* BioCosmicCorrelator.swift in Sources */,
+				3D1CDE6CFCDFC6EA73A86AC6 /* BiometricLogger.swift in Sources */,
+				899D065F80AF64FD2C7F289E /* BirthstoneGuidanceView.swift in Sources */,
+				B519F623EF801281BD28346B /* CachePrewarmScheduler.swift in Sources */,
+				5DD1364240CE10B5CE7C4E70 /* CalendarOracle.swift in Sources */,
+				0CC8382DFE5EF5B7E6262B38 /* CardView.swift in Sources */,
+				E8FD0DB77FD234AA9A597130 /* ChartModels.swift in Sources */,
+				AF0EC9EF670EF5BD4E08BA06 /* ChartVM.swift in Sources */,
+				16C5E06D3515A869A75B23F4 /* ChartView.swift in Sources */,
+				8A18EAE64D4BEEF85B8606AC /* ChartsView.swift in Sources */,
+				9157BFF2930C5C1F8A5A2B66 /* Color+Theme.swift in Sources */,
+				702C4BD9AC43B485DFCC1600 /* CompatibilityModels.swift in Sources */,
+				8A411BA992A01A7F1A2D93EC /* CompatibilityVM.swift in Sources */,
+				113731A3DF924445550EEC21 /* CompatibilityView.swift in Sources */,
+				A722E6E27D0D6105065623C1 /* CompositeChartView.swift in Sources */,
+				3BDA521AEAEA2C8170CA9E0C /* ContentView.swift in Sources */,
+				75AA55CC75D61CE3F16CCC2C /* CoreModels.swift in Sources */,
+				F871F2B8A45AAB64CA0E962B /* CosmicBackgroundView.swift in Sources */,
+				8699B955FEB1CBA6503BE94F /* CosmicGuideVM.swift in Sources */,
+				FD5F871B49AC1FA6453030C2 /* CosmicGuideView.swift in Sources */,
+				9BE00806DD441EFDAEF2970D /* CosmicIntents.swift in Sources */,
+				DE27AEB3BA72D2F6ABF19254 /* CosmicScene.swift in Sources */,
+				C995B46E3B4E6836430798B3 /* DailyFeaturePresentation.swift in Sources */,
+				D1E2178651869442AF7FDF66 /* DailyFeaturesView.swift in Sources */,
+				ECD05BE76704EDAFBFB82DDE /* DailyGuidanceView.swift in Sources */,
+				E8BF9FF74CD43A7C6236E5C5 /* DataQualityEngine.swift in Sources */,
+				585048C2F1757A00EB7B7D5B /* DebugLog.swift in Sources */,
+				B64B6C4EC3E6D95F4CD9855B /* DoDontCard.swift in Sources */,
+				BF6CAFEEA338A0D21DC4CA77 /* EditProfileVM.swift in Sources */,
+				F0FE2538838F0795839FC004 /* EditProfileView.swift in Sources */,
+				28BAA1CB39A3199F5FA287D5 /* EmbeddedChartView.swift in Sources */,
+				1F706ADD402B55054B8C40EA /* Endpoints.swift in Sources */,
+				EDEC5DF47560554677310E30 /* EphemerisEngine.swift in Sources */,
+				ECC5A35DAA33E4CD3FBF3E2E /* ErrorStateView.swift in Sources */,
+				B8EFDFB8243FF31B245979BB /* ExploreView.swift in Sources */,
+				F76BEAEFC06D8E148D45DBFE /* FloatingAIButton.swift in Sources */,
+				330273C5F350CC51482374DE /* FriendsView.swift in Sources */,
+				4C313DF88D6E4D834F2DC485 /* GlossaryView.swift in Sources */,
+				E8F0E44A787B81CB044DB856 /* GradientButton.swift in Sources */,
+				43EFE5E22772D923A238C4B5 /* HabitsVM.swift in Sources */,
+				A86A924615A75B4810CEBD4F /* HabitsView.swift in Sources */,
+				8A2B179992E7A03B620ABDF5 /* HealthKitBridge.swift in Sources */,
+				F1D76A6869C99BEAD52AC422 /* HelpView.swift in Sources */,
+				4F00D46A256A26417BB9F0A8 /* HomeVM.swift in Sources */,
+				422FCE98BB0E2ED2541AD0DC /* HomeView.swift in Sources */,
+				5080842081FA5FA15AA7E2C1 /* JournalEmbedder.swift in Sources */,
+				4CEBC18254707EC9ACE2ACEC /* JournalModels.swift in Sources */,
+				D767D017DD7EAAE65227200C /* JournalVM.swift in Sources */,
+				C3421DF73CE7A8F48B541B44 /* JournalView.swift in Sources */,
+				B7106D078A9A1793CCC71104 /* LearnVM.swift in Sources */,
+				228CB3E046462C27CC22D3B6 /* LearnView.swift in Sources */,
+				3B74770456AF6646B616D2A0 /* LearningModels.swift in Sources */,
+				E03487104BA762B14918A7D7 /* LearningProgressManager.swift in Sources */,
+				8971D5B727867353F0058FBE /* LegalConfig.swift in Sources */,
+				ECD8E0871F14C2FEAC213559 /* LessonDetailView.swift in Sources */,
+				7F68F61AF53A6B80FC60D558 /* LifePhaseCard.swift in Sources */,
+				BE959E8223D48E8EA719CED2 /* LoadingOverlay.swift in Sources */,
+				D5DEDF782326BCA13F957973 /* LocalizationService.swift in Sources */,
+				BCF84DE97D79C372808ADD14 /* MarkdownTextView.swift in Sources */,
+				0A4DDA65B8645389B0B4EA5E /* MoonEventsView.swift in Sources */,
+				EAC4AE1F2DACC074FF381BEC /* MoonPhaseView.swift in Sources */,
+				B87F7B13A17F4AB1EF2DA897 /* NotificationService.swift in Sources */,
+				37D39B36104835A6F9168A40 /* NotificationSettingsView.swift in Sources */,
+				D50883E903F4AD85ACB5C0D1 /* NumerologyModels.swift in Sources */,
+				7C485069B0A8BF4FAEDF8D57 /* NumerologyVM.swift in Sources */,
+				8B4576B8D00A40B826869164 /* NumerologyView.swift in Sources */,
+				06190B7561E11840CE2401B0 /* OracleView.swift in Sources */,
+				EFD5BF22A34C736E8DE7F4D6 /* OrbitRingView.swift in Sources */,
+				124727EF38E8489C18C438F5 /* PredictiveScanner.swift in Sources */,
+				6EC64A4FF19086A91EFA2F0E /* PremiumSurface.swift in Sources */,
+				6902DE7B2914B57962ED08E9 /* PrivacyRedaction.swift in Sources */,
+				9C04B03F4D04AC3028CA8BCC /* PrivacyView.swift in Sources */,
+				B8BFC8A6C3049171C050873E /* Profile+Astrology.swift in Sources */,
+				B77806E68091D1A1C5E0CC3D /* ProfileExporter.swift in Sources */,
+				CEAED566787630E7C72665D5 /* ProfileModels.swift in Sources */,
+				7205E9696D747914B8AB3382 /* ProfileView.swift in Sources */,
+				3D4B84E9875677262DB004D3 /* ProgressionsView.swift in Sources */,
+				6C53B1C4EFB528915B36DCAF /* ReadingModels.swift in Sources */,
+				61283FE82A5D6D4584E512FD /* ReadingResultView.swift in Sources */,
+				4FA29BF8B7756947FE1CBE08 /* ReadingVM.swift in Sources */,
+				2A8E9A3C72156AEF771F2623 /* ReadingView.swift in Sources */,
+				3F7A3C2A89B51DBEF11EB945 /* RelationshipsVM.swift in Sources */,
+				95F6A61618FE8439653D393B /* RelationshipsView.swift in Sources */,
+				4A41A015ADD331A6EC8C2953 /* ResponseCache.swift in Sources */,
+				B47DCA37173C23BA68B4D80F /* RetryPolicy.swift in Sources */,
+				3A5AC362099CEF6B0E033D04 /* RevealAnimations.swift in Sources */,
+				235A62C881E428B75761DBF4 /* SectionGridView.swift in Sources */,
+				9DF10A7325B36AFC9DC4E9FC /* ShareCardView.swift in Sources */,
+				8949B75323D05BC1AA4C68C5 /* SynastryChartView.swift in Sources */,
+				CF3D879247DD859DE37A84FC /* SynastryRadar.swift in Sources */,
+				0537B91774AF5C4BADC5A204 /* TLDRBoxView.swift in Sources */,
+				804667322644AAAC0A983EB2 /* TarotView.swift in Sources */,
+				FD1C5FE63B7B50A8C8D799B0 /* TemporalMatrixView.swift in Sources */,
+				D19F9707E64736EC0D61001C /* TimingAdvisorView.swift in Sources */,
+				9CE4F5ACE574A7F85679A7F7 /* TimingEngine.swift in Sources */,
+				B62898709FB70B62B6235D20 /* ToolModels.swift in Sources */,
+				393EFEF3A50FA0735E13B405 /* ToolsView.swift in Sources */,
+				ABB5E03A0F65C0636350CF84 /* TransitNotificationScheduler.swift in Sources */,
+				206EA878C478236E420C2F73 /* UserGuideView.swift in Sources */,
+				FC6D71259E457503D85E4CE1 /* VoiceRecorder.swift in Sources */,
+				F460E8855B8FBEA24FC45A06 /* WeeklyVibeView.swift in Sources */,
+				C523EE3D677A49D110FEAA25 /* WidgetDataProvider.swift in Sources */,
+				159471E635A6FD2B2FBE5CB7 /* YearAheadView.swift in Sources */,
+				AD6F2ADD2EA29DAC3832EDC3 /* ZodiacSign.swift in Sources */,
+				700E53222CF5F2EC5C922770 /* swecl.c in Sources */,
+				C25FB1E15DC18D8E9DBC4495 /* swedate.c in Sources */,
+				2EF192A37998B5C92D04920C /* sweephe4.c in Sources */,
+				409733BCB4191533CC53A7FB /* swehel.c in Sources */,
+				6B75D92A6C46EB144B5DA5B7 /* swehouse.c in Sources */,
+				3407A05CA0BCAFCAE6309B98 /* swejpl.c in Sources */,
+				35B99D7471DBA42D40151E39 /* swemmoon.c in Sources */,
+				BF389290F493A1A0C32F9380 /* swemplan.c in Sources */,
+				0C2D5718569AB0D35F1DDFA2 /* sweph.c in Sources */,
+				BABF7FC1D3F1D49D850DCD46 /* swephlib.c in Sources */,
+				D3BCC4F809B43020ADB6ADEF /* DesignTokens.swift in Sources */,
+				DA683EC6B964F4122EB04DF3 /* MysticModeToggle.swift in Sources */,
+				A1CBD85B26D9766F61AA773E /* TimeScrubber.swift in Sources */,
+				25DFC7382D4F9C3038FA2E4A /* PremiumHeroBlock.swift in Sources */,
+				4B024059B754C07DB87FAC23 /* TabSelectedDot.swift in Sources */,
+				B2B14ADFA585BE45EB6BE046 /* MoonPhaseActivity.swift in Sources */,
+				3B076C2B05C2ED7327F4ECC5 /* PremiumSkeleton.swift in Sources */,
+				CB964883D4D53D9DDEC69378 /* AdaptiveLayout.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		731085E38AC3D9DE02D32067 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = BAF7BCE209DD2B4F8D1ED3BF /* AstroWidget */;
+			targetProxy = BEE91942424581D55E736776 /* PBXContainerItemProxy */;
+		};
+		9CAC0333132907588D3E8A54 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A5150DEB4247938F485FFECE /* AstroNumeric */;
+			targetProxy = 2F686584593A834BABCD97A8 /* PBXContainerItemProxy */;
+		};
+		EE026F70B37FF1B62D8B6897 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A5150DEB4247938F485FFECE /* AstroNumeric */;
+			targetProxy = DE364720EB90AF3CCE9CC495 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin PBXVariantGroup section */
+		3061133121CB1FF71A8259C5 /* Localizable.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				4E9D054B7FE838E85A1BB2D6 /* en */,
+				8E38B18833AA7F6ADF937A1E /* es */,
+				7CE9E26C6DB0AE0E34D79CCC /* fr */,
+				3A1B14D6182F7229CF56638E /* ne */,
+				7B534491E1948F86B55A992E /* ro */,
+			);
+			name = Localizable.strings;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		02AD9B57B12D7B7C5BD8816D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES = YES;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = AstroNumeric/AstroNumeric.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_PREVIEWS = YES;
+				INFOPLIST_FILE = AstroNumeric/Info.plist;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.astromeric.app;
+				SDKROOT = iphoneos;
+				SWIFT_OBJC_BRIDGING_HEADER = "AstroNumeric/AstroNumeric-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		306CF6398E7FD5C8C13850D6 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 4;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = 8L5LTN9LMB;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = AstroNumeric;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.lifestyle";
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.0.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.9;
+			};
+			name = Release;
+		};
+		4A260B1D1BCEDF202628EB00 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.astromeric.app.tests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/AstroNumeric.app/AstroNumeric";
+			};
+			name = Debug;
+		};
+		4B6E51D68D33A5D125CC74E1 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 4;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = 8L5LTN9LMB;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = AstroNumeric;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.lifestyle";
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.0.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.9;
+			};
+			name = Debug;
+		};
+		538F0F2CF5DB97FB74FDE4CD /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES = YES;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = AstroNumeric/AstroNumeric.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_PREVIEWS = YES;
+				INFOPLIST_FILE = AstroNumeric/Info.plist;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.astromeric.app;
+				SDKROOT = iphoneos;
+				SWIFT_OBJC_BRIDGING_HEADER = "AstroNumeric/AstroNumeric-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		75400221F0F32CD21E53C932 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.astromeric.app.tests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/AstroNumeric.app/AstroNumeric";
+			};
+			name = Release;
+		};
+		896C3D7618CBD33AEAC78BD9 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.astromeric.app.uitests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = AstroNumeric;
+			};
+			name = Debug;
+		};
+		8C9C91EA06C29304BF1AAE6A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = AstroWidget/AstroWidget.entitlements;
+				DEVELOPMENT_TEAM = 8L5LTN9LMB;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = AstroWidget/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.astromeric.app.widget;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.9;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		ACAFA24BE3D61C11DB5352CD /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.astromeric.app.uitests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = AstroNumeric;
+			};
+			name = Release;
+		};
+		D248860986270CED43CB1B94 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = AstroWidget/AstroWidget.entitlements;
+				DEVELOPMENT_TEAM = 8L5LTN9LMB;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = AstroWidget/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.astromeric.app.widget;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.9;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		19C2F7F14C63DDB0819E98FD /* Build configuration list for PBXNativeTarget "AstroWidget" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D248860986270CED43CB1B94 /* Debug */,
+				8C9C91EA06C29304BF1AAE6A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		37D427C5E0EAA9E83E910959 /* Build configuration list for PBXNativeTarget "AstroNumericUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				896C3D7618CBD33AEAC78BD9 /* Debug */,
+				ACAFA24BE3D61C11DB5352CD /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		678E687FAD1D7477D1F9C8CD /* Build configuration list for PBXProject "AstroNumeric" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4B6E51D68D33A5D125CC74E1 /* Debug */,
+				306CF6398E7FD5C8C13850D6 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		9DEAB423A6E903E179539A2B /* Build configuration list for PBXNativeTarget "AstroNumeric" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				538F0F2CF5DB97FB74FDE4CD /* Debug */,
+				02AD9B57B12D7B7C5BD8816D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		DAC7B2ADBEFF3A930A4ABAD4 /* Build configuration list for PBXNativeTarget "AstroNumericTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4A260B1D1BCEDF202628EB00 /* Debug */,
+				75400221F0F32CD21E53C932 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 6776972D801A8B20E2730FA5 /* Project object */;
+}

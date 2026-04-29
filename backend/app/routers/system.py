@@ -4,7 +4,7 @@ Standardized request/response format for system health and status.
 """
 
 from datetime import datetime, timezone
-from typing import Any, Dict, Optional
+from typing import Dict
 
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel

@@ -2,8 +2,7 @@ import React, { useMemo, useRef, useState, useEffect } from 'react';
 import * as THREE from 'three';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Float, Sparkles, Stars, Html } from '@react-three/drei';
-
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+import { API_BASE_URL } from '../api/config';
 
 interface PlanetPos {
   name: string;
@@ -61,7 +60,7 @@ function Planetarium({ isMobile }: { isMobile: boolean }) {
   useEffect(() => {
     const fetchPlanets = async () => {
       try {
-        const res = await fetch(`${API_BASE}/v2/sky/planets`);
+        const res = await fetch(`${API_BASE_URL}/v2/sky/planets`);
         const data = await res.json();
         if (data.status === 'success') {
           setPlanets(data.data);

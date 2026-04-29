@@ -2,9 +2,34 @@
 
 from datetime import datetime
 from typing import Dict, List
+
 from app.interpretation.translations import get_translation
 
 from .constants import LETTER_VALUES, VOWELS, reduce_number
+
+# Karmic debt numbers and their core meanings
+KARMIC_DEBT_NUMBERS: Dict[int, Dict] = {
+    13: {
+        "label": "Karmic Debt 13/4",
+        "theme": "Laziness redeemed through discipline",
+        "description": "Past-life tendencies toward laziness or off-loading burdens onto others. This life demands hard work, responsibility, and building solid foundations from the ground up.",
+    },
+    14: {
+        "label": "Karmic Debt 14/5",
+        "theme": "Excess redeemed through moderation",
+        "description": "Past-life overindulgence in sensory pleasures or abuse of freedom. This life calls for adaptability, temperance, and embracing change without escapism or addiction.",
+    },
+    16: {
+        "label": "Karmic Debt 16/7",
+        "theme": "Ego dissolved through humility",
+        "description": "Past-life misuse of love, trust, or spiritual power. This life brings unexpected ego collapses that clear the way for genuine spiritual growth and inner truth.",
+    },
+    19: {
+        "label": "Karmic Debt 19/1",
+        "theme": "Selfishness redeemed through compassionate independence",
+        "description": "Past-life abuse of power and self-centeredness. This life requires true self-reliance without trampling others — independence balanced with empathy and cooperation.",
+    },
+}
 
 NUMBER_MEANINGS = {
     1: {
@@ -72,6 +97,53 @@ def calculate_soul_urge_number(full_name: str) -> int:
     return reduce_number(total)
 
 
+def _find_karmic_debts(name: str, dob: str) -> List[Dict]:
+    """Detect karmic debt numbers (13, 14, 16, 19) in pre-reduction intermediates of core numbers."""
+    found: Dict[int, List[str]] = {}
+
+    def _check(label: str, raw_sum: int) -> None:
+        """Walk the reduction chain and flag any karmic debt intermediate."""
+        n = abs(raw_sum)
+        while n > 9 and n not in {11, 22, 33}:
+            if n in KARMIC_DEBT_NUMBERS:
+                found.setdefault(n, [])
+                if label not in found[n]:
+                    found[n].append(label)
+            n = sum(int(d) for d in str(n))
+
+    # Life Path: check the sum of reduced month + day + year components
+    parts = dob.split("-")
+    year, month, day = int(parts[0]), int(parts[1]), int(parts[2])
+    month_r = reduce_number(month, keep_master=False)
+    day_r = reduce_number(day, keep_master=False)
+    year_r = reduce_number(year, keep_master=False)
+    _check("life_path", month_r + day_r + year_r)
+
+    # Expression: raw sum of all letter values
+    clean = name.lower().replace(" ", "").replace("-", "")
+    _check("expression", sum(LETTER_VALUES.get(c, 0) for c in clean if c.isalpha()))
+
+    # Soul Urge: raw sum of vowel letter values
+    _check(
+        "soul_urge", sum(LETTER_VALUES.get(c, 0) for c in name.lower() if c in VOWELS)
+    )
+
+    # Personality: raw sum of consonant letter values
+    _check(
+        "personality",
+        sum(
+            LETTER_VALUES.get(c, 0)
+            for c in name.lower()
+            if c.isalpha() and c not in VOWELS
+        ),
+    )
+
+    return [
+        {"raw": n, "sources": sources, **KARMIC_DEBT_NUMBERS[n]}
+        for n, sources in sorted(found.items())
+    ]
+
+
 def calculate_personality_number(full_name: str) -> int:
     """Personality Number: Sum of consonants only."""
     name = full_name.lower()
@@ -127,7 +199,7 @@ def calculate_pinnacles(dob: str, lang: str = "en") -> List[Dict]:
     # Pinnacle timing (36 - Life Path = end of first pinnacle)
     first_end = 36 - life_path
     birth_year = year
-    
+
     # Localize period strings
     if lang == "en":
         period1 = f"Birth to age {first_end}"
@@ -136,10 +208,19 @@ def calculate_pinnacles(dob: str, lang: str = "en") -> List[Dict]:
         period4 = f"Age {first_end + 19} onwards"
     else:
         # Templates
-        t_birth = get_translation(lang, "numerology_periods", "birth_to_age") or "Birth to age {age}"
-        t_range = get_translation(lang, "numerology_periods", "age_range") or "Age {start} to {end}"
-        t_onwards = get_translation(lang, "numerology_periods", "age_onwards") or "Age {start} onwards"
-        
+        t_birth = (
+            get_translation(lang, "numerology_periods", "birth_to_age")
+            or "Birth to age {age}"
+        )
+        t_range = (
+            get_translation(lang, "numerology_periods", "age_range")
+            or "Age {start} to {end}"
+        )
+        t_onwards = (
+            get_translation(lang, "numerology_periods", "age_onwards")
+            or "Age {start} onwards"
+        )
+
         period1 = t_birth.format(age=first_end)
         period2 = t_range.format(start=first_end + 1, end=first_end + 9)
         period3 = t_range.format(start=first_end + 10, end=first_end + 18)
@@ -185,19 +266,37 @@ def calculate_challenges(dob: str, lang: str = "en") -> List[Dict]:
     c1 = abs(month_r - day_r)
     c2 = abs(day_r - year_r)
     c3 = abs(c1 - c2)
-    
+
     # Localize labels and descriptions
     if lang == "en":
         l1, d1 = "First Challenge", "Early life lesson"
         l2, d2 = "Second Challenge", "Middle life lesson"
         l3, d3 = "Main Challenge", "Lifelong lesson"
     else:
-        l1 = get_translation(lang, "numerology_challenges", "first_label") or "First Challenge"
-        d1 = get_translation(lang, "numerology_challenges", "first_desc") or "Early life lesson"
-        l2 = get_translation(lang, "numerology_challenges", "second_label") or "Second Challenge"
-        d2 = get_translation(lang, "numerology_challenges", "second_desc") or "Middle life lesson"
-        l3 = get_translation(lang, "numerology_challenges", "main_label") or "Main Challenge"
-        d3 = get_translation(lang, "numerology_challenges", "main_desc") or "Lifelong lesson"
+        l1 = (
+            get_translation(lang, "numerology_challenges", "first_label")
+            or "First Challenge"
+        )
+        d1 = (
+            get_translation(lang, "numerology_challenges", "first_desc")
+            or "Early life lesson"
+        )
+        l2 = (
+            get_translation(lang, "numerology_challenges", "second_label")
+            or "Second Challenge"
+        )
+        d2 = (
+            get_translation(lang, "numerology_challenges", "second_desc")
+            or "Middle life lesson"
+        )
+        l3 = (
+            get_translation(lang, "numerology_challenges", "main_label")
+            or "Main Challenge"
+        )
+        d3 = (
+            get_translation(lang, "numerology_challenges", "main_desc")
+            or "Lifelong lesson"
+        )
 
     return [
         {"number": c1, "label": l1, "description": d1},
@@ -215,25 +314,25 @@ def get_number_meaning(num: int, lang: str = "en") -> Dict:
     base_data = NUMBER_MEANINGS.get(
         num, {"keyword": "Unknown", "description": "Unique energy."}
     )
-    
+
     if lang == "en":
         return base_data
-        
+
     keyword_key = f"numerology_number_{num}_keyword"
     description_key = f"numerology_number_{num}_description"
-    
+
     keyword = get_translation(lang, "numerology_meanings", keyword_key)
     description = get_translation(lang, "numerology_meanings", description_key)
-    
+
     return {
         "keyword": keyword if keyword else base_data["keyword"],
-        "description": description if description else base_data["description"]
+        "description": description if description else base_data["description"],
     }
 
 
 def get_full_numerology_profile(name: str, dob: str, lang: str = "en") -> Dict:
     """Generate complete numerology profile."""
-    from .numerology import calculate_life_path_number, get_life_path_data
+    from .numerology import calculate_life_path_number
 
     life_path = calculate_life_path_number(dob)
     expression = calculate_expression_number(name)
@@ -251,10 +350,22 @@ def get_full_numerology_profile(name: str, dob: str, lang: str = "en") -> Dict:
 
     return {
         "core_numbers": {
-            "life_path": {"number": life_path, **get_number_meaning(life_path, lang=lang)},
-            "expression": {"number": expression, **get_number_meaning(expression, lang=lang)},
-            "soul_urge": {"number": soul_urge, **get_number_meaning(soul_urge, lang=lang)},
-            "personality": {"number": personality, **get_number_meaning(personality, lang=lang)},
+            "life_path": {
+                "number": life_path,
+                **get_number_meaning(life_path, lang=lang),
+            },
+            "expression": {
+                "number": expression,
+                **get_number_meaning(expression, lang=lang),
+            },
+            "soul_urge": {
+                "number": soul_urge,
+                **get_number_meaning(soul_urge, lang=lang),
+            },
+            "personality": {
+                "number": personality,
+                **get_number_meaning(personality, lang=lang),
+            },
             "maturity": {"number": maturity, **get_number_meaning(maturity, lang=lang)},
         },
         "cycles": {
@@ -287,6 +398,7 @@ def get_full_numerology_profile(name: str, dob: str, lang: str = "en") -> Dict:
             }
             for c in challenges
         ],
+        "karmic_debts": _find_karmic_debts(name, dob),
     }
 
 
@@ -298,7 +410,13 @@ def analyze_name(name: str, lang: str = "en") -> Dict:
 
     return {
         "name": name,
-        "expression": {"number": expression, **get_number_meaning(expression, lang=lang)},
+        "expression": {
+            "number": expression,
+            **get_number_meaning(expression, lang=lang),
+        },
         "soul_urge": {"number": soul_urge, **get_number_meaning(soul_urge, lang=lang)},
-        "personality": {"number": personality, **get_number_meaning(personality, lang=lang)},
+        "personality": {
+            "number": personality,
+            **get_number_meaning(personality, lang=lang),
+        },
     }

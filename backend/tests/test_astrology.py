@@ -1,6 +1,7 @@
-import pytest
-from unittest.mock import patch, MagicMock
-from app.engine.astrology import get_zodiac_sign, get_element, get_sign_traits, SIGN_TRAITS
+from unittest.mock import patch
+
+from app.engine.astrology import get_element, get_sign_traits, get_zodiac_sign
+
 
 class TestAstrology:
     def test_get_zodiac_sign(self):
@@ -32,7 +33,7 @@ class TestAstrology:
     def test_get_sign_traits_content(self):
         traits = get_sign_traits("Aries")
         assert "Bold energy" in traits["general"]
-        
+
         traits = get_sign_traits("Taurus")
         assert "Steady presence" in traits["general"]
 
@@ -40,21 +41,25 @@ class TestAstrology:
         traits = get_sign_traits("InvalidSign")
         assert traits == {"love": [], "money": [], "career": []}
 
+
 class TestAstrologyLocalization:
-    @patch('app.engine.astrology.get_translation')
+    @patch("app.engine.astrology.get_translation")
     def test_get_sign_traits_localized(self, mock_get_translation):
         # Setup mock to return a translated string for a specific key
         def side_effect(lang, category, key):
-            if lang == "es" and category == "astrology_traits" and key == "Aries_general_0":
+            if (
+                lang == "es"
+                and category == "astrology_traits"
+                and key == "Aries_general_0"
+            ):
                 return "Energía audaz"
             return None
-            
+
         mock_get_translation.side_effect = side_effect
-        
+
         traits = get_sign_traits("Aries", lang="es")
-        
+
         # Check if the first trait in 'general' is translated
         assert traits["general"][0] == "Energía audaz"
         # Check if other traits fall back to English (since mock returns None)
         assert traits["general"][1] == "Direct action"
-

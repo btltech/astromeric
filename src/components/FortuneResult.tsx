@@ -7,6 +7,7 @@ import { useStore } from '../store/useStore';
 import { useProfiles } from '../hooks';
 import { toast } from './Toast';
 import { CosmicCard } from './CosmicCard';
+import { MarkdownText } from './MarkdownText';
 
 interface Props {
   data: PredictionData;
@@ -61,14 +62,19 @@ export function FortuneResult({ data, onReset }: Props) {
   // Get user and token from store for paid check
   const { user, token } = useStore();
   const { selectedProfile } = useProfiles();
-  const isPaid = !!user?.is_paid;
+  const isPaid = true; // All features are free now
+
+  const scopeLabel =
+    typeof data.scope === 'string' && data.scope.length > 0
+      ? data.scope.charAt(0).toUpperCase() + data.scope.slice(1)
+      : 'Daily';
 
   // Derive sign from charts if not explicitly provided
   const sunSign = data.sign || data.charts?.natal?.planets?.find((p) => p.name === 'Sun')?.sign;
 
   // Get birth month for birthstone
-  const birthMonth = data.numerology?.birth_date
-    ? new Date(data.numerology.birth_date).getMonth() + 1
+  const birthMonth = selectedProfile?.date_of_birth
+    ? new Date(selectedProfile.date_of_birth).getMonth() + 1
     : null;
 
   // Get zodiac stones data
@@ -78,6 +84,7 @@ export function FortuneResult({ data, onReset }: Props) {
   // Use theme as headline if summary is missing
   const headline = data.summary?.headline || data.theme;
   const [aiInsight, setAiInsight] = useState<string | null>(null);
+  const [aiInsightProvider, setAiInsightProvider] = useState<string | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [showUpgradeMessage, setShowUpgradeMessage] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
@@ -201,13 +208,7 @@ export function FortuneResult({ data, onReset }: Props) {
       };
       const response = await fetchAiExplanation(payload, token ?? undefined);
       setAiInsight(response.summary);
-    } catch (err) {
-      if (err instanceof ApiError && (err.status === 401 || err.status === 403)) {
-        setAiInsight('Please sign in with a paid account to use AI insights.');
-      } else {
-        console.error('AI assist failed', err);
-        setAiInsight('AI assist encountered a hiccup. Please try again soon.');
-      }
+      setAiInsightProvider(response.provider);
     } finally {
       setAiLoading(false);
     }
@@ -232,13 +233,11 @@ export function FortuneResult({ data, onReset }: Props) {
       const moonSign = data.charts?.natal?.planets?.find((p) => p.name === 'Moon')?.sign;
 
       const response = await chatWithCosmicGuide(
-        {
-          message: userMessage,
-          sun_sign: sunSign,
-          moon_sign: moonSign,
-          rising_sign: risingSign,
-          history: messages,
-        },
+        userMessage,
+        sunSign,
+        moonSign,
+        risingSign,
+        messages as any, // Cast for now if types mismatch slightly
         token ?? undefined
       );
 
@@ -271,9 +270,7 @@ export function FortuneResult({ data, onReset }: Props) {
         {data.element === 'Air' && '🌬️'}
         {data.element === 'Earth' && '🌱'}
       </div>
-      <h1 className="text-center mb-1">
-        {data.scope.charAt(0).toUpperCase() + data.scope.slice(1)} Reading
-      </h1>
+      <h1 className="text-center mb-1">{scopeLabel} Reading</h1>
       {sunSign && data.numerology?.core_numbers?.life_path && (
         <h3 className="reading-subtitle">
           {sunSign} • Life Path {data.numerology.core_numbers.life_path.number}
@@ -361,20 +358,15 @@ export function FortuneResult({ data, onReset }: Props) {
         </div>
       )}
 
-      {aiInsight && <div className="tldr-box ai-insight">{aiInsight}</div>}
-      {showUpgradeMessage && (
-        <div className="tldr-box upgrade-message">
-          ✨ <strong>Premium Feature</strong> — AI insights are available for premium members.
-          Upgrade to unlock personalized cosmic explanations, longer guidance, and saved insight
-          history.
-        </div>
-      )}
-      {!isPaid && (
-        <div className="upgrade-ribbon" role="note">
-          <p className="eyebrow">Premium locked</p>
-          <p style={{ margin: 0 }}>
-            Unlock AI explanations, richer affirmations, and cloud backup for your readings.
+      {aiInsight && (
+        <div className="tldr-box ai-insight">
+          <p className="reading-meta" style={{ marginBottom: '0.5rem' }}>
+            Source:{' '}
+            {aiInsightProvider === 'gemini-flash' || aiInsightProvider === 'gemini'
+              ? 'AI'
+              : 'Structured'}
           </p>
+          <MarkdownText text={aiInsight} />
         </div>
       )}
 
@@ -441,11 +433,11 @@ export function FortuneResult({ data, onReset }: Props) {
           onClick={handleAiExplain}
           className={`btn-secondary btn-wide ${!isPaid ? 'locked' : ''}`}
           disabled={aiLoading}
-          aria-label="Explain this reading with AI"
+          aria-label="Explain this reading"
           aria-busy={aiLoading}
           type="button"
         >
-          {aiLoading ? 'Thinking…' : isPaid ? '✨ Explain with AI' : '🔒 Premium AI Insight'}
+          {aiLoading ? 'Thinking…' : '✨ Explain This Reading'}
         </button>
         <button
           onClick={onReset}

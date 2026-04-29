@@ -50,3 +50,36 @@ docker-compose.override.yml
 .DS_Store
 .cache
 
+# Xcode / SwiftPM (iOS)
+*.xcresult
+*.xcarchive
+*.xcodeproj/xcuserdata/
+*.xcworkspace/xcuserdata/
+.swiftpm/
+.build/
+AstroNumeric-iOS/build/
+AstroNumeric-iOS/.swiftpm/
+AstroNumeric-iOS/.build/
+
+# Xcode / iOS
+*.xcuserstate
+xcuserdata/
+*.xcworkspace/xcuserdata/
+build/
+DerivedData/
+Pods/
+*.pbxproj.fix*
+*.pbxproj.tmp*
+
+# Android
+local.properties
+.gradle/
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Secrets
+*.keystore
+*.jks
+google-services.json.local
+GoogleService-Info.plist.local

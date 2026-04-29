@@ -4,6 +4,7 @@
  */
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getApiBaseUrl } from '../api/config';
 
 interface LocationResult {
   display_name: string;
@@ -115,7 +116,7 @@ export function LocationAutocomplete({
   // Get timezone from coordinates using backend
   const getTimezone = useCallback(async (lat: number, lon: number): Promise<string> => {
     try {
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      const baseUrl = getApiBaseUrl();
       const response = await fetch(`${baseUrl}/geocode/timezone?lat=${lat}&lon=${lon}`);
       if (response.ok) {
         const data = await response.json();

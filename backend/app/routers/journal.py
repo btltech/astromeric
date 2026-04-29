@@ -4,7 +4,7 @@ Reading journal, outcomes tracking, and accountability reports.
 """
 
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, Field
@@ -40,12 +40,14 @@ def get_db():
 
 class JournalEntryRequest(BaseModel):
     """Request to add or update a journal entry."""
+
     reading_id: int
     entry: str = Field(..., min_length=1, max_length=5000)
 
 
 class OutcomeRequest(BaseModel):
     """Request to record prediction outcome."""
+
     reading_id: int
     outcome: str = Field(..., pattern="^(yes|no|partial|neutral)$")
     notes: Optional[str] = None
@@ -53,6 +55,7 @@ class OutcomeRequest(BaseModel):
 
 class AccountabilityReportRequest(BaseModel):
     """Request for accountability report."""
+
     profile_id: int
     period: str = Field(default="month", pattern="^(week|month|year)$")
 
@@ -66,10 +69,10 @@ async def add_journal_entry_endpoint(
 ):
     """
     Add or update a journal entry for a reading.
-    
+
     ## Authentication
     Requires valid JWT token.
-    
+
     ## Response
     Returns confirmation with entry data.
     """
@@ -79,7 +82,9 @@ async def add_journal_entry_endpoint(
 
     profile = db.query(DBProfile).filter(DBProfile.id == reading.profile_id).first()
     if not profile or profile.user_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not authorized to edit this reading")
+        raise HTTPException(
+            status_code=403, detail="Not authorized to edit this reading"
+        )
 
     reading.journal = req.entry
     db.commit()
@@ -88,7 +93,7 @@ async def add_journal_entry_endpoint(
 
     return ApiResponse(
         status=ResponseStatus.SUCCESS,
-        data={"message": "Journal entry saved", "entry": entry_data}
+        data={"message": "Journal entry saved", "entry": entry_data},
     )
 
 
@@ -101,7 +106,7 @@ async def record_outcome_endpoint(
 ):
     """
     Record whether a prediction came true.
-    
+
     ## Outcome Values
     - **yes**: Prediction was accurate
     - **no**: Prediction was incorrect
@@ -114,7 +119,9 @@ async def record_outcome_endpoint(
 
     profile = db.query(DBProfile).filter(DBProfile.id == reading.profile_id).first()
     if not profile or profile.user_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not authorized to edit this reading")
+        raise HTTPException(
+            status_code=403, detail="Not authorized to edit this reading"
+        )
 
     reading.feedback = req.outcome
     db.commit()
@@ -123,7 +130,7 @@ async def record_outcome_endpoint(
 
     return ApiResponse(
         status=ResponseStatus.SUCCESS,
-        data={"message": "Outcome recorded", "outcome": outcome_data}
+        data={"message": "Outcome recorded", "outcome": outcome_data},
     )
 
 
@@ -138,14 +145,16 @@ async def get_journal_readings(
 ):
     """
     Get readings for journaling view with feedback and journal status.
-    
+
     ## Parameters
     - **limit**: Maximum results (1-100)
     - **offset**: Pagination offset
     """
     profile = db.query(DBProfile).filter(DBProfile.id == profile_id).first()
     if not profile or profile.user_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not authorized to view this profile")
+        raise HTTPException(
+            status_code=403, detail="Not authorized to view this profile"
+        )
 
     readings = (
         db.query(DBReading)
@@ -166,17 +175,19 @@ async def get_journal_readings(
             "limit": limit,
             "offset": offset,
             "readings": [
-                format_reading_for_journal({
-                    "id": r.id,
-                    "scope": r.scope,
-                    "date": r.date,
-                    "content": r.content,
-                    "feedback": r.feedback,
-                    "journal": r.journal or "",
-                })
+                format_reading_for_journal(
+                    {
+                        "id": r.id,
+                        "scope": r.scope,
+                        "date": r.date,
+                        "content": r.content,
+                        "feedback": r.feedback,
+                        "journal": r.journal or "",
+                    }
+                )
                 for r in readings
             ],
-        }
+        },
     )
 
 
@@ -196,7 +207,9 @@ async def get_single_reading_journal(
 
     profile = db.query(DBProfile).filter(DBProfile.id == reading.profile_id).first()
     if not profile or profile.user_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not authorized to view this reading")
+        raise HTTPException(
+            status_code=403, detail="Not authorized to view this reading"
+        )
 
     content = reading.content
     if isinstance(content, str):
@@ -214,8 +227,10 @@ async def get_single_reading_journal(
             "content": content,
             "feedback": reading.feedback,
             "journal": reading.journal or "",
-            "created_at": reading.created_at.isoformat() if reading.created_at else None,
-        }
+            "created_at": reading.created_at.isoformat()
+            if reading.created_at
+            else None,
+        },
     )
 
 
@@ -229,7 +244,9 @@ async def get_journal_stats(
     """Get accuracy statistics for a profile's readings."""
     profile = db.query(DBProfile).filter(DBProfile.id == profile_id).first()
     if not profile or profile.user_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not authorized to view this profile")
+        raise HTTPException(
+            status_code=403, detail="Not authorized to view this profile"
+        )
 
     readings = db.query(DBReading).filter(DBReading.profile_id == profile_id).all()
 
@@ -249,7 +266,7 @@ async def get_journal_stats(
 
     return ApiResponse(
         status=ResponseStatus.SUCCESS,
-        data={"profile_id": profile_id, "stats": stats, "insights": insights}
+        data={"profile_id": profile_id, "stats": stats, "insights": insights},
     )
 
 
@@ -263,7 +280,9 @@ async def get_reading_patterns(
     """Analyze prediction patterns over time."""
     profile = db.query(DBProfile).filter(DBProfile.id == profile_id).first()
     if not profile or profile.user_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not authorized to view this profile")
+        raise HTTPException(
+            status_code=403, detail="Not authorized to view this profile"
+        )
 
     readings = db.query(DBReading).filter(DBReading.profile_id == profile_id).all()
 
@@ -276,7 +295,7 @@ async def get_reading_patterns(
 
     return ApiResponse(
         status=ResponseStatus.SUCCESS,
-        data={"profile_id": profile_id, "patterns": patterns}
+        data={"profile_id": profile_id, "patterns": patterns},
     )
 
 
@@ -290,7 +309,9 @@ async def get_accountability_report(
     """Generate comprehensive accountability report."""
     profile = db.query(DBProfile).filter(DBProfile.id == req.profile_id).first()
     if not profile or profile.user_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not authorized to view this profile")
+        raise HTTPException(
+            status_code=403, detail="Not authorized to view this profile"
+        )
 
     now = datetime.now(timezone.utc)
     if req.period == "week":
@@ -325,7 +346,7 @@ async def get_accountability_report(
 
     return ApiResponse(
         status=ResponseStatus.SUCCESS,
-        data={"profile_id": req.profile_id, "report": report}
+        data={"profile_id": req.profile_id, "report": report},
     )
 
 
@@ -337,13 +358,12 @@ async def get_prompts(
 ):
     """
     Get journal prompts for reflection.
-    
+
     No authentication required.
     """
     theme_list = themes.split(",") if themes else None
     prompts = get_journal_prompts(scope, theme_list)
 
     return ApiResponse(
-        status=ResponseStatus.SUCCESS,
-        data={"scope": scope, "prompts": prompts}
+        status=ResponseStatus.SUCCESS, data={"scope": scope, "prompts": prompts}
     )

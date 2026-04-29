@@ -3,17 +3,49 @@ API v2 - Learning Content Endpoint
 Standardized request/response format for educational astrology content.
 """
 
-from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Dict, Generic, List, Optional, TypeVar
 
 from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel
 
-from ..exceptions import InvalidCoordinatesError, StructuredLogger
-from ..schemas import ApiResponse, PaginatedResponse, PaginationParams, ResponseStatus
+from ..engine.glossary import get_sign_info
+from ..exceptions import StructuredLogger
+from ..schemas import ApiResponse, PaginationParams, ResponseStatus
 
 logger = StructuredLogger(__name__)
 router = APIRouter(prefix="/v2/learning", tags=["Learning"])
+PageT = TypeVar("PageT")
+
+ELEMENT_COMPATIBILITY = {
+    "Fire": {
+        "leo": 0.95,
+        "sagittarius": 0.92,
+        "gemini": 0.84,
+        "libra": 0.8,
+        "aquarius": 0.78,
+    },
+    "Earth": {
+        "virgo": 0.94,
+        "capricorn": 0.92,
+        "cancer": 0.82,
+        "pisces": 0.8,
+        "scorpio": 0.77,
+    },
+    "Air": {
+        "libra": 0.95,
+        "aquarius": 0.92,
+        "aries": 0.84,
+        "leo": 0.8,
+        "sagittarius": 0.78,
+    },
+    "Water": {
+        "scorpio": 0.95,
+        "pisces": 0.92,
+        "taurus": 0.82,
+        "virgo": 0.8,
+        "capricorn": 0.77,
+    },
+}
 
 
 # ============================================================================
@@ -57,18 +89,52 @@ class GlossaryEntry(BaseModel):
     related_terms: List[str] = []
 
 
+class LegacyCompatiblePage(BaseModel, Generic[PageT]):
+    """Pagination payload that preserves old iOS keys and new v2 metadata."""
+
+    data: List[PageT]
+    items: List[PageT]
+    total: int
+    page: int
+    page_size: int
+    pages: int
+    has_next: bool
+    has_prev: bool
+
+
+def _build_legacy_page(
+    items: List[PageT],
+    page: int,
+    page_size: int,
+    total: int,
+) -> LegacyCompatiblePage[PageT]:
+    total_pages = max(1, ((total - 1) // page_size) + 1) if page_size else 1
+    has_next = page < total_pages
+    has_prev = page > 1
+    return LegacyCompatiblePage(
+        data=items,
+        items=items,
+        total=total,
+        page=page,
+        page_size=page_size,
+        pages=total_pages,
+        has_next=has_next,
+        has_prev=has_prev,
+    )
+
+
 # ============================================================================
 # ENDPOINTS
 # ============================================================================
 
 
-@router.get("/modules", response_model=PaginatedResponse[LearningModule])
+@router.get("/modules", response_model=LegacyCompatiblePage[LearningModule])
 async def list_learning_modules(
     request: Request,
     category: Optional[str] = Query(None),
     difficulty: Optional[str] = Query(None),
     params: PaginationParams = None,
-) -> PaginatedResponse[LearningModule]:
+) -> LegacyCompatiblePage[LearningModule]:
     """
     List available learning modules with pagination.
 
@@ -127,12 +193,11 @@ async def list_learning_modules(
         start_idx = (page - 1) * page_size
         paginated = modules[start_idx : start_idx + page_size]
 
-        return PaginatedResponse(
-            data=paginated,
+        return _build_legacy_page(
+            items=paginated,
             page=page,
             page_size=page_size,
             total=len(modules),
-            pages=((len(modules) - 1) // page_size) + 1,
         )
     except Exception as e:
         logger.error(
@@ -231,21 +296,25 @@ async def get_zodiac_guidance(
             sign=sign_lower,
         )
 
-        # Mock zodiac data
+        sign_name = sign_lower.capitalize()
+        sign_info = get_sign_info(sign_name)
+        if not sign_info:
+            raise HTTPException(
+                status_code=404,
+                detail={
+                    "code": "ZODIAC_NOT_FOUND",
+                    "message": f"Unknown zodiac sign: {sign}",
+                },
+            )
+
         zodiac_data = ZodiacGuidance(
-            sign=sign_lower.capitalize(),
-            date_range="March 21 - April 19",
-            element="Fire",
-            ruling_planet="Mars",
-            characteristics=["Courageous", "Passionate", "Dynamic", "Pioneering"],
-            compatibility={
-                "leo": 0.95,
-                "sagittarius": 0.92,
-                "gemini": 0.80,
-                "libra": 0.75,
-                "capricorn": 0.60,
-            },
-            guidance="Channel your natural confidence toward new initiatives. Your courage is needed.",
+            sign=sign_name,
+            date_range=sign_info["dates"],
+            element=sign_info["element"],
+            ruling_planet=sign_info["ruler"],
+            characteristics=sign_info["traits"],
+            compatibility=ELEMENT_COMPATIBILITY.get(sign_info["element"], {}),
+            guidance=sign_info["description"],
         )
 
         return ApiResponse(
@@ -269,12 +338,12 @@ async def get_zodiac_guidance(
         )
 
 
-@router.get("/glossary", response_model=PaginatedResponse[GlossaryEntry])
+@router.get("/glossary", response_model=LegacyCompatiblePage[GlossaryEntry])
 async def list_glossary(
     request: Request,
     search: Optional[str] = Query(None),
     category: Optional[str] = Query(None),
-) -> PaginatedResponse[GlossaryEntry]:
+) -> LegacyCompatiblePage[GlossaryEntry]:
     """
     List glossary terms with optional filtering.
 
@@ -325,12 +394,11 @@ async def list_glossary(
         if category:
             entries = [e for e in entries if e.category == category]
 
-        return PaginatedResponse(
-            data=entries,
+        return _build_legacy_page(
+            items=entries,
             page=1,
             page_size=10,
             total=len(entries),
-            pages=1,
         )
     except Exception as e:
         logger.error(

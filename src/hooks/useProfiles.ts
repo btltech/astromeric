@@ -8,6 +8,14 @@ import { apiFetch } from '../api/client';
 import type { NewProfileForm, SavedProfile } from '../types';
 import { toast } from '../components/Toast';
 
+// API response wrapper type
+interface ApiResponse<T> {
+  status: 'success' | 'error';
+  data: T;
+  error?: string;
+  message?: string;
+}
+
 export function useProfiles() {
   const {
     profiles,
@@ -26,22 +34,31 @@ export function useProfiles() {
   useEffect(() => {
     if (!token) return;
     const headers: Record<string, string> = { Authorization: `Bearer ${token}` };
-    apiFetch<SavedProfile[]>('/profiles', { headers })
-      .then(setProfiles)
+    // Use trailing slash to avoid 307 redirect which loses auth headers
+    apiFetch<ApiResponse<SavedProfile[]>>('/v2/profiles/', { headers })
+      .then((res) => {
+        const profileList = res.data || [];
+        setProfiles(profileList);
+        // Auto-select first profile if none selected
+        if (profileList.length > 0 && !selectedProfileId && !sessionProfile) {
+          setSelectedProfileId(profileList[0].id);
+        }
+      })
       .catch((err) => console.error('Failed to auto-fetch profiles:', err));
-  }, [token, setProfiles]);
+  }, [token, setProfiles, selectedProfileId, sessionProfile, setSelectedProfileId]);
 
   // Get the active profile (session or saved)
   const selectedProfile =
-    sessionProfile || profiles.find((p) => p.id === selectedProfileId) || null;
+    sessionProfile || profiles.find((p) => p.id === selectedProfileId) || profiles[0] || null;
 
   const fetchProfiles = useCallback(async () => {
     try {
       const headers: Record<string, string> = {};
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      const data = await apiFetch<SavedProfile[]>('/profiles', { headers });
-      setProfiles(data);
+      // Use trailing slash to avoid 307 redirect which loses auth headers
+      const res = await apiFetch<ApiResponse<SavedProfile[]>>('/v2/profiles/', { headers });
+      setProfiles(res.data || []);
     } catch (err) {
       console.error('Failed to fetch profiles:', err);
     }
@@ -70,7 +87,8 @@ export function useProfiles() {
           const headers: Record<string, string> = {};
           if (token) headers['Authorization'] = `Bearer ${token}`;
 
-          const savedData = await apiFetch<SavedProfile>('/profiles', {
+          // Use trailing slash to avoid 307 redirect which loses auth headers
+          const res = await apiFetch<ApiResponse<SavedProfile>>('/v2/profiles/', {
             method: 'POST',
             headers,
             body: JSON.stringify({
@@ -84,6 +102,7 @@ export function useProfiles() {
               house_system: formData.house_system,
             }),
           });
+          const savedData = res.data;
           addProfile(savedData);
           setSelectedProfileId(savedData.id);
           setSessionProfile(null); // Clear session profile

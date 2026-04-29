@@ -16,6 +16,39 @@ enum AppConfig {
     }
 }
 
+enum ReadingTone: String {
+    case veryPractical = "very_practical"
+    case balancedPractical = "balanced_practical"
+    case balancedMystical = "balanced_mystical"
+    case veryMystical = "very_mystical"
+
+    var label: String {
+        switch self {
+        case .veryPractical:
+            return "Very Practical"
+        case .balancedPractical:
+            return "Balanced Practical"
+        case .balancedMystical:
+            return "Balanced Mystical"
+        case .veryMystical:
+            return "Very Mystical"
+        }
+    }
+
+    var framingDescription: String {
+        switch self {
+        case .veryPractical:
+            return "Direct language with minimal symbolism."
+        case .balancedPractical:
+            return "Clear advice with light symbolic framing."
+        case .balancedMystical:
+            return "Astrology-forward language with grounded takeaways."
+        case .veryMystical:
+            return "Most symbolic and atmospheric reading style."
+        }
+    }
+}
+
 @Observable
 final class AppStore {
     static let shared = AppStore()
@@ -55,6 +88,9 @@ final class AppStore {
     var activeProfile: Profile? {
         selectedProfile
     }
+
+    /// True after persisted local profiles have been loaded.
+    var hasCompletedInitialLoad = false
     
     // MARK: - Natal Chart Sign Cache
     
@@ -72,7 +108,7 @@ final class AppStore {
         return natalSignsCache[id]?.risingSign
     }
     
-    // MARK: - Auth Stub (God-Mode: always unauthenticated → all local)
+    // MARK: - Auth Status (local-first mode keeps all profile data on device)
     var isAuthenticated: Bool { false }
     
     // MARK: - Preferences
@@ -81,15 +117,32 @@ final class AppStore {
     var theme: AppTheme = .default
     
     /// Tone preference (0 = Practical, 100 = Mystical)
-    var tonePreference: Double {
-        get { UserDefaults.standard.double(forKey: "tonePreference") }
-        set { UserDefaults.standard.set(newValue, forKey: "tonePreference") }
+    /// Stored property so `@Observable` tracks it. UserDefaults is the durable store.
+    var tonePreference: Double = UserDefaults.standard.object(forKey: "tonePreference") as? Double ?? 50 {
+        didSet { UserDefaults.standard.set(tonePreference, forKey: "tonePreference") }
+    }
+
+    var readingTone: ReadingTone {
+        switch tonePreference {
+        case 0..<25:
+            return .veryPractical
+        case 25..<50:
+            return .balancedPractical
+        case 50..<75:
+            return .balancedMystical
+        default:
+            return .veryMystical
+        }
     }
     
     /// Daily reminder enabled
-    var dailyReminderEnabled: Bool {
-        get { UserDefaults.standard.bool(forKey: "dailyReminderEnabled") }
-        set { UserDefaults.standard.set(newValue, forKey: "dailyReminderEnabled") }
+    var dailyReminderEnabled: Bool = UserDefaults.standard.bool(forKey: "dailyReminderEnabled") {
+        didSet { UserDefaults.standard.set(dailyReminderEnabled, forKey: "dailyReminderEnabled") }
+    }
+
+    /// Hide identifying birth/profile details in the UI and sharing surfaces.
+    var hideSensitiveDetailsEnabled: Bool = UserDefaults.standard.bool(forKey: "hideSensitiveDetailsEnabled") {
+        didSet { UserDefaults.standard.set(hideSensitiveDetailsEnabled, forKey: "hideSensitiveDetailsEnabled") }
     }
     
     /// Reminder cadence
@@ -98,29 +151,25 @@ final class AppStore {
     // MARK: - Accessibility
     
     /// High contrast mode for better visibility
-    var highContrastEnabled: Bool {
-        get { UserDefaults.standard.bool(forKey: "highContrastEnabled") }
-        set { UserDefaults.standard.set(newValue, forKey: "highContrastEnabled") }
+    var highContrastEnabled: Bool = UserDefaults.standard.bool(forKey: "highContrastEnabled") {
+        didSet { UserDefaults.standard.set(highContrastEnabled, forKey: "highContrastEnabled") }
     }
     
     /// Large text mode for better readability
-    var largeTextEnabled: Bool {
-        get { UserDefaults.standard.bool(forKey: "largeTextEnabled") }
-        set { UserDefaults.standard.set(newValue, forKey: "largeTextEnabled") }
+    var largeTextEnabled: Bool = UserDefaults.standard.bool(forKey: "largeTextEnabled") {
+        didSet { UserDefaults.standard.set(largeTextEnabled, forKey: "largeTextEnabled") }
     }
     
     // MARK: - Streak
     
     /// Current streak count
-    var streakCount: Int {
-        get { UserDefaults.standard.integer(forKey: "streakCount") }
-        set { UserDefaults.standard.set(newValue, forKey: "streakCount") }
+    var streakCount: Int = UserDefaults.standard.integer(forKey: "streakCount") {
+        didSet { UserDefaults.standard.set(streakCount, forKey: "streakCount") }
     }
     
     /// Last visit date
-    var lastVisitDate: Date? {
-        get { UserDefaults.standard.object(forKey: "lastVisitDate") as? Date }
-        set { UserDefaults.standard.set(newValue, forKey: "lastVisitDate") }
+    var lastVisitDate: Date? = UserDefaults.standard.object(forKey: "lastVisitDate") as? Date {
+        didSet { UserDefaults.standard.set(lastVisitDate, forKey: "lastVisitDate") }
     }
     
     // MARK: - Initialization
@@ -143,11 +192,6 @@ final class AppStore {
             selectedProfileId = savedId
         }
         
-        // Set default tone if not set
-        if UserDefaults.standard.object(forKey: "tonePreference") == nil {
-            tonePreference = 50
-        }
-        
         // Profiles are hydrated lazily from disk in loadInitialData() to avoid
         // blocking launch on UserDefaults or file IO.
 
@@ -168,6 +212,8 @@ final class AppStore {
             profiles = []
             selectedProfileId = nil
         }
+
+        hideSensitiveDetailsEnabled = args.contains("-ui_testing_hide_sensitive")
 
         let wantsTwoProfiles = args.contains("-ui_testing_profiles_2")
         let wantsOneProfile = args.contains("-ui_testing_profile") || args.contains("-ui_testing_profiles_1") || !wantsTwoProfiles
@@ -208,7 +254,7 @@ final class AppStore {
             selectedProfileId = nil
         }
 
-        // God-Mode: no onboarding gate
+        // UI tests seed profiles directly.
         profilesHydrated = true
     }
 #endif
@@ -287,8 +333,9 @@ final class AppStore {
     
     func loadInitialData() async {
         await ensureProfilesHydrated()
-        // God-Mode: No auth, no token, no server profiles.
-        // Just update streak and fetch natal signs.
+        hasCompletedInitialLoad = true
+
+        // Local-first mode does not require auth, tokens, or server profiles.
         updateStreak()
         
         // Fetch natal signs for active profile
@@ -303,6 +350,10 @@ final class AppStore {
     func fetchNatalSigns(for profile: Profile) async {
         // Skip if already cached
         guard natalSignsCache[profile.id] == nil else { return }
+        let profileLabel = profile.displayName(
+            hideSensitive: hideSensitiveDetailsEnabled,
+            role: .activeUser
+        )
         
         // LOCAL-FIRST: Try Swiss Ephemeris on-device
         do {
@@ -313,7 +364,7 @@ final class AppStore {
                     risingSign: signs.risingSign
                 )
             }
-            DebugLog.log("Natal signs (local) cached for \(profile.name): Moon=\(signs.moonSign ?? "nil"), Rising=\(signs.risingSign ?? "nil")")
+            DebugLog.trace("Natal signs (local) cached for \(profileLabel): Moon=\(signs.moonSign ?? "nil"), Rising=\(signs.risingSign ?? "nil")")
             return
         } catch {
             DebugLog.log("Local ephemeris failed for natal signs, falling back to API: \(error)")
@@ -336,9 +387,9 @@ final class AppStore {
                     risingSign: risingSign
                 )
             }
-            DebugLog.log("Natal signs (API) cached for \(profile.name): Moon=\(moonSign ?? "nil"), Rising=\(risingSign ?? "nil")")
+            DebugLog.trace("Natal signs (API) cached for \(profileLabel): Moon=\(moonSign ?? "nil"), Rising=\(risingSign ?? "nil")")
         } catch {
-            DebugLog.log("Failed to fetch natal signs for \(profile.name): \(error)")
+            DebugLog.log("Failed to fetch natal signs for \(profileLabel): \(error)")
         }
     }
     

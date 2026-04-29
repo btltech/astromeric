@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
-    "build:prod": "VITE_API_URL=https://astromeric-backend-production.up.railway.app vite build",
+    "build": "vite build --mode production",
+    "build:dev": "vite build --mode development",
     "lint": "eslint --ext .ts,.tsx .",
     "lint:ci": "eslint --ext .ts,.tsx --max-warnings 0 .",
     "lint:fix": "eslint --ext .ts,.tsx --fix .",
@@ -16,13 +16,12 @@
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:ui": "vitest --ui",
-    "deploy:frontend": "npm run build:prod && npx wrangler pages deploy dist --branch main",
+    "generate:api": "openapi-typescript http://localhost:8000/openapi.json -o src/api/generated.ts",
+    "generate:api:prod": "openapi-typescript https://astromeric-backend-production.up.railway.app/openapi.json -o src/api/generated.ts",
+    "deploy": "npm run build && wrangler pages deploy dist --project-name=astromeric --commit-dirty",
     "deploy:backend": "railway up",
-    "deploy:backend:logs": "railway logs -f",
-    "deploy:healthcheck": "curl -sf $VITE_API_URL/health || (echo 'Backend health check failed!' && exit 1)",
-    "deploy:frontend:safe": "npm run deploy:check-env && npm run deploy:healthcheck && npm run deploy:frontend",
-    "deploy:all": "npm run deploy:backend && npm run deploy:frontend:safe",
-    "deploy": "npm run deploy:frontend"
+    "deploy:backend:logs": "railway logs",
+    "deploy:all": "npm run deploy:backend && npm run deploy"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.7",
@@ -38,7 +37,9 @@
     "react-dom": "^19.2.0",
     "react-helmet": "^6.1.0",
     "react-i18next": "^16.4.0",
+    "react-markdown": "^10.1.0",
     "react-router-dom": "^7.9.6",
+    "remark-gfm": "^4.0.1",
     "three": "0.160.0",
     "zustand": "^5.0.9"
   },
@@ -55,6 +56,7 @@
     "eslint-plugin-prettier": "^4.1.0",
     "eslint-plugin-react": "^7.33.2",
     "jsdom": "^27.2.0",
+    "openapi-typescript": "^7.0.0",
     "prettier": "^2.8.8",
     "rollup-plugin-visualizer": "^5.12.0",
     "sharp": "^0.34.5",

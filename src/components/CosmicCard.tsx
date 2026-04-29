@@ -77,7 +77,14 @@ export const CosmicCard: React.FC<Props> = ({ data, userName }) => {
             </div>
 
             <div className="aura-quote">
-              <p>&quot;{data.summary?.headline || data.advice?.slice(0, 100) + '...'}&quot;</p>
+              <p>
+                &quot;
+                {data.summary?.headline ||
+                  (data.advice
+                    ? data.advice.slice(0, 100) + '...'
+                    : 'Your cosmic path is unfolding with purpose.')}
+                &quot;
+              </p>
             </div>
           </main>
 

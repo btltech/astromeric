@@ -8,6 +8,11 @@ actor EphemerisEngine {
     static let shared = EphemerisEngine()
 
     private var isInitialized = false
+    private nonisolated static let requiredEphemerisFiles = [
+        "seas_18.se1",
+        "semo_18.se1",
+        "sepl_18.se1",
+    ]
 
     // MARK: - Transit Cache (5-min TTL)
     // Planets move slowly — no need to call the C library more than once per 5 minutes.
@@ -29,7 +34,12 @@ actor EphemerisEngine {
         (SE_URANUS,    "Uranus"),
         (SE_NEPTUNE,   "Neptune"),
         (SE_PLUTO,     "Pluto"),
+    ]
+
+    /// Sensitive points to calculate locally for parity with the backend chart API.
+    private static let chartPoints: [(id: Int32, name: String)] = [
         (SE_MEAN_NODE, "North Node"),
+        (SE_CHIRON,    "Chiron"),
     ]
 
     /// Zodiac signs in order (0° Aries = index 0)
@@ -49,21 +59,111 @@ actor EphemerisEngine {
         "Regiomontanus": Int32(Character("R").asciiValue!),
     ]
 
+    /// Traditional + modern essential dignities. Mirrors backend chart_service.py.
+    private static let dignities: [String: [String: String]] = [
+        "Sun": ["Leo": "domicile", "Aries": "exaltation", "Aquarius": "detriment", "Libra": "fall"],
+        "Moon": ["Cancer": "domicile", "Taurus": "exaltation", "Capricorn": "detriment", "Scorpio": "fall"],
+        "Mercury": ["Gemini": "domicile", "Virgo": "domicile", "Sagittarius": "detriment", "Pisces": "fall"],
+        "Venus": ["Taurus": "domicile", "Libra": "domicile", "Pisces": "exaltation", "Aries": "detriment", "Scorpio": "detriment", "Virgo": "fall"],
+        "Mars": ["Aries": "domicile", "Scorpio": "domicile", "Capricorn": "exaltation", "Taurus": "detriment", "Libra": "detriment", "Cancer": "fall"],
+        "Jupiter": ["Sagittarius": "domicile", "Pisces": "domicile", "Cancer": "exaltation", "Gemini": "detriment", "Virgo": "detriment", "Capricorn": "fall"],
+        "Saturn": ["Capricorn": "domicile", "Aquarius": "domicile", "Libra": "exaltation", "Cancer": "detriment", "Leo": "detriment", "Aries": "fall"],
+        "Uranus": ["Aquarius": "domicile"],
+        "Neptune": ["Pisces": "domicile"],
+        "Pluto": ["Scorpio": "domicile"],
+    ]
+
     // MARK: - Initialization
 
     private init() {}
+
+    private final class BundleMarker {}
 
     /// Initialize the Swiss Ephemeris with the correct data file path.
     /// CRITICAL: Must be called before any calculations.
     private func ensureInitialized() {
         guard !isInitialized else { return }
 
-        // Point swisseph to the ephemeris data files in the App Bundle
-        if let resourcePath = Bundle.main.resourcePath {
+        if let ephemerisDirectory = Self.resolveEphemerisDirectory() {
+            swe_set_ephe_path(ephemerisDirectory.path)
+            DebugLog.trace("[Ephemeris] Using data path: \(ephemerisDirectory.path)")
+        } else if let resourcePath = Bundle.main.resourcePath {
+            // Best-effort fallback so the engine still attempts bundled resources.
             swe_set_ephe_path(resourcePath)
+            DebugLog.trace("[Ephemeris] Falling back to Bundle.main.resourcePath: \(resourcePath)")
+        } else {
+            DebugLog.log("[Ephemeris] No ephemeris resource path found")
         }
 
         isInitialized = true
+    }
+
+    private nonisolated static func resolveEphemerisDirectory() -> URL? {
+        let fileManager = FileManager.default
+
+        func hasRequiredFiles(at directory: URL) -> Bool {
+            requiredEphemerisFiles.allSatisfy { file in
+                fileManager.fileExists(atPath: directory.appendingPathComponent(file).path)
+            }
+        }
+
+        var seen = Set<String>()
+        var candidates: [URL] = []
+
+        func addCandidate(_ url: URL?) {
+            guard let url else { return }
+            let standardized = url.standardizedFileURL
+            let path = standardized.path
+            guard !path.isEmpty, seen.insert(path).inserted else { return }
+            candidates.append(standardized)
+        }
+
+        let bundles = [Bundle.main, Bundle(for: BundleMarker.self)] + Bundle.allBundles + Bundle.allFrameworks
+        for bundle in bundles {
+            let roots = [bundle.resourceURL, bundle.bundleURL].compactMap { $0 }
+            for root in roots {
+                addCandidate(root)
+                addCandidate(root.appendingPathComponent("Ephemeris", isDirectory: true))
+                addCandidate(root.appendingPathComponent("Resources", isDirectory: true))
+                addCandidate(root.appendingPathComponent("Resources/Ephemeris", isDirectory: true))
+
+                let parent = root.deletingLastPathComponent()
+                addCandidate(parent)
+                addCandidate(parent.appendingPathComponent("Ephemeris", isDirectory: true))
+                addCandidate(parent.appendingPathComponent("Resources/Ephemeris", isDirectory: true))
+            }
+        }
+
+        if let envPath = ProcessInfo.processInfo.environment["EPHEMERIS_PATH"], !envPath.isEmpty {
+            addCandidate(URL(fileURLWithPath: envPath, isDirectory: true))
+        }
+
+        for candidate in candidates where hasRequiredFiles(at: candidate) {
+            return candidate
+        }
+
+        for bundle in bundles {
+            guard let resourceURL = bundle.resourceURL else { continue }
+            let enumerator = fileManager.enumerator(
+                at: resourceURL,
+                includingPropertiesForKeys: [.isDirectoryKey],
+                options: [.skipsHiddenFiles]
+            )
+
+            while let url = enumerator?.nextObject() as? URL {
+                let relative = url.path.replacingOccurrences(of: resourceURL.path, with: "")
+                let depth = relative.split(separator: "/").count
+                if depth > 4 {
+                    enumerator?.skipDescendants()
+                    continue
+                }
+
+                guard hasRequiredFiles(at: url) else { continue }
+                return url
+            }
+        }
+
+        return nil
     }
 
     // MARK: - Public API
@@ -90,23 +190,23 @@ actor EphemerisEngine {
         let month = dateParts[1]
         let day = dateParts[2]
 
-        // Parse birth time (default to noon if missing)
-        var hour: Double = 12.0
-        if let timeStr = profile.timeOfBirth {
-            let timeParts = timeStr.split(separator: ":").compactMap { Double($0) }
-            if timeParts.count >= 2 {
-                hour = timeParts[0] + timeParts[1] / 60.0
-                if timeParts.count >= 3 {
-                    hour += timeParts[2] / 3600.0
-                }
-            }
-        }
+        // Convert local birth date/time to UTC correctly, preserving date rollovers.
+        let birthUTC = try birthUTCComponents(
+            year: year,
+            month: month,
+            day: day,
+            timeString: profile.timeOfBirth,
+            timezone: tz
+        )
 
-        // Convert local time to UTC using timezone
-        let utHour = localToUT(hour: hour, timezone: tz)
-
-        // Calculate Julian Day
-        let jd = swe_julday(Int32(year), Int32(month), Int32(day), utHour, SE_GREG_CAL)
+        // Calculate Julian Day using UTC components.
+        let jd = swe_julday(
+            Int32(birthUTC.year),
+            Int32(birthUTC.month),
+            Int32(birthUTC.day),
+            birthUTC.hour,
+            SE_GREG_CAL
+        )
 
         // Calculate planet positions
         let planets = calculatePlanets(julianDay: jd)
@@ -114,10 +214,11 @@ actor EphemerisEngine {
         // Calculate houses
         let houseSystem = profile.houseSystem ?? "Placidus"
         let houses = calculateHouses(julianDay: jd, latitude: lat, longitude: lon, system: houseSystem)
+        let planetPlacements = assignHouses(to: planets, using: houses)
 
         // Calculate ascendant from ascmc[0] (exact Ascendant degree)
         // and Midheaven from ascmc[1] — NOT from cusps array
-        var allPlanets = planets
+        var allPlanets = planetPlacements
         let ascDegree = calculateAscendant(julianDayUT: jd, latitude: lat, longitude: lon, houseSystem: houseSystem)
         let ascSign = Self.signs[Int(ascDegree / 30.0) % 12]
         allPlanets.append(PlanetPlacement(
@@ -126,7 +227,8 @@ actor EphemerisEngine {
             degree: ascDegree.truncatingRemainder(dividingBy: 30.0),
             absoluteDegree: ascDegree,
             house: 1,
-            retrograde: false
+            retrograde: false,
+            dignity: nil
         ))
 
         let mcDegree = calculateMidheaven(julianDayUT: jd, latitude: lat, longitude: lon, houseSystem: houseSystem)
@@ -137,14 +239,24 @@ actor EphemerisEngine {
             degree: mcDegree.truncatingRemainder(dividingBy: 30.0),
             absoluteDegree: mcDegree,
             house: 10,
-            retrograde: false
+            retrograde: false,
+            dignity: nil
         ))
+
+        // Calculate chart points with the same shape as the backend API.
+        let points = calculatePoints(
+            julianDay: jd,
+            houses: houses,
+            ascDegree: ascDegree,
+            planets: planetPlacements
+        )
 
         // Calculate aspects
         let aspects = calculateAspects(planets: allPlanets)
 
         return ChartData(
             planets: allPlanets,
+            points: points,
             houses: houses,
             aspects: aspects,
             metadata: ChartMetadata(
@@ -153,8 +265,8 @@ actor EphemerisEngine {
                 houseSystem: houseSystem,
                 provider: "SwissEphemeris-Local",
                 birthTimeAssumed: profile.timeConfidence.map { $0 != "exact" } ?? true,
-                moonSignUncertain: nil,
-                dataQuality: profile.dataQuality.rawValue,
+                moonSignUncertain: moonChangesSignOnDate(profile: profile),
+                dataQuality: metadataDataQuality(for: profile.dataQuality),
                 timeConfidence: profile.timeConfidence
             )
         )
@@ -419,12 +531,120 @@ actor EphemerisEngine {
                     degree: degreeInSign,
                     absoluteDegree: longitude,
                     house: nil, // assigned after house calculation
-                    retrograde: speed < 0
+                    retrograde: speed < 0,
+                    dignity: Self.dignities[planet.name]?[Self.signs[signIndex]]
                 ))
             }
         }
 
         return results
+    }
+
+    private func assignHouses(to planets: [PlanetPlacement], using houses: [HousePlacement]) -> [PlanetPlacement] {
+        let cusps = houses.compactMap(\ .degree)
+        guard cusps.count == 12 else { return planets }
+
+        return planets.map { planet in
+            guard let longitude = planet.absoluteDegree else { return planet }
+            return PlanetPlacement(
+                name: planet.name,
+                sign: planet.sign,
+                degree: planet.degree,
+                absoluteDegree: planet.absoluteDegree,
+                house: houseForLongitude(longitude, houseCusps: cusps),
+                retrograde: planet.retrograde,
+                dignity: planet.dignity
+            )
+        }
+    }
+
+    private func calculatePoints(julianDay jd: Double, houses: [HousePlacement], ascDegree: Double, planets: [PlanetPlacement]) -> [ChartPoint] {
+        let iflag = SEFLG_SWIEPH | SEFLG_SPEED
+        let houseCusps = houses.compactMap(\ .degree)
+        var points: [ChartPoint] = []
+
+        for point in Self.chartPoints {
+            var xx = [Double](repeating: 0, count: 6)
+            var serr = [CChar](repeating: 0, count: 256)
+            let ret = swe_calc_ut(jd, point.id, iflag, &xx, &serr)
+            guard ret >= 0 else { continue }
+
+            let longitude = xx[0]
+            let signIndex = Int(longitude / 30.0) % 12
+            let sign = Self.signs[signIndex]
+            let degreeInSign = longitude.truncatingRemainder(dividingBy: 30.0)
+            points.append(
+                ChartPoint(
+                    name: point.name,
+                    sign: sign,
+                    degree: degreeInSign,
+                    absoluteDegree: longitude,
+                    house: houseForLongitude(longitude, houseCusps: houseCusps),
+                    retrograde: xx[3] < 0,
+                    chartType: nil
+                )
+            )
+        }
+
+        if let northNode = points.first(where: { $0.name == "North Node" }) {
+            let southLongitude = (northNode.absoluteDegree ?? 0 + 180.0).truncatingRemainder(dividingBy: 360.0)
+            let signIndex = Int(southLongitude / 30.0) % 12
+            points.append(
+                ChartPoint(
+                    name: "South Node",
+                    sign: Self.signs[signIndex],
+                    degree: southLongitude.truncatingRemainder(dividingBy: 30.0),
+                    absoluteDegree: southLongitude,
+                    house: houseForLongitude(southLongitude, houseCusps: houseCusps),
+                    retrograde: northNode.retrograde,
+                    chartType: nil
+                )
+            )
+        }
+
+        if let sun = planets.first(where: { $0.name == "Sun" })?.absoluteDegree,
+           let moon = planets.first(where: { $0.name == "Moon" })?.absoluteDegree {
+            let dayDelta = normalizeDegrees(sun - ascDegree)
+            let isDayChart = dayDelta >= 180.0
+            let normalizedLongitude = isDayChart
+                ? normalizeDegrees(ascDegree + moon - sun)
+                : normalizeDegrees(ascDegree + sun - moon)
+            let signIndex = Int(normalizedLongitude / 30.0) % 12
+            points.append(
+                ChartPoint(
+                    name: "Part of Fortune",
+                    sign: Self.signs[signIndex],
+                    degree: normalizedLongitude.truncatingRemainder(dividingBy: 30.0),
+                    absoluteDegree: normalizedLongitude,
+                    house: houseForLongitude(normalizedLongitude, houseCusps: houseCusps),
+                    retrograde: false,
+                    chartType: isDayChart ? "tern.ephemerisEngine.0a".localized : "tern.ephemerisEngine.0b".localized
+                )
+            )
+        }
+
+        return points
+    }
+
+    private func normalizeDegrees(_ value: Double) -> Double {
+        let normalized = value.truncatingRemainder(dividingBy: 360.0)
+        return normalized >= 0 ? normalized : normalized + 360.0
+    }
+
+    private func houseForLongitude(_ longitude: Double, houseCusps: [Double]) -> Int {
+        guard houseCusps.count == 12 else { return 1 }
+        for index in 0..<12 {
+            let start = houseCusps[index]
+            let end = houseCusps[(index + 1) % 12]
+            if start > end {
+                if longitude >= start || longitude < end {
+                    return index + 1
+                }
+            } else if start <= longitude && longitude < end {
+                return index + 1
+            }
+        }
+        return 1
     }
 
     private func calculateHouses(julianDay jd: Double, latitude: Double, longitude: Double, system: String) -> [HousePlacement] {
@@ -491,13 +711,89 @@ actor EphemerisEngine {
 
     // MARK: - Timezone Helpers
 
-    /// Convert local time to UT (UTC) using Apple's TimeZone.
-    private func localToUT(hour: Double, timezone: String) -> Double {
-        // Use Apple's TimeZone to get the correct offset
-        guard let tz = TimeZone(identifier: timezone) else { return hour }
-        let offsetSeconds = tz.secondsFromGMT()
-        let offsetHours = Double(offsetSeconds) / 3600.0
-        return hour - offsetHours
+    private func birthUTCComponents(year: Int, month: Int, day: Int, timeString: String?, timezone: String) throws -> (year: Int, month: Int, day: Int, hour: Double) {
+        guard let timeZone = TimeZone(identifier: timezone) else {
+            throw EphemerisError.missingTimezone
+        }
+
+        let timeParts = (timeString ?? "12:00:00").split(separator: ":").compactMap { Int($0) }
+        let hour = timeParts.indices.contains(0) ? timeParts[0] : 12
+        let minute = timeParts.indices.contains(1) ? timeParts[1] : 0
+        let second = timeParts.indices.contains(2) ? timeParts[2] : 0
+
+        var localCalendar = Calendar(identifier: .gregorian)
+        localCalendar.timeZone = timeZone
+
+        let localDate = localCalendar.date(from: DateComponents(
+            timeZone: timeZone,
+            year: year,
+            month: month,
+            day: day,
+            hour: hour,
+            minute: minute,
+            second: second
+        ))
+
+        guard let localDate else {
+            throw EphemerisError.invalidDate
+        }
+
+        var utcCalendar = Calendar(identifier: .gregorian)
+        utcCalendar.timeZone = TimeZone(secondsFromGMT: 0) ?? .current
+        let utc = utcCalendar.dateComponents([.year, .month, .day, .hour, .minute, .second], from: localDate)
+
+        let utcHour = Double(utc.hour ?? 0)
+            + Double(utc.minute ?? 0) / 60.0
+            + Double(utc.second ?? 0) / 3600.0
+
+        return (utc.year ?? year, utc.month ?? month, utc.day ?? day, utcHour)
+    }
+
+    private func moonChangesSignOnDate(profile: Profile) -> Bool {
+        guard let tz = profile.timezone,
+              let timeZone = TimeZone(identifier: tz) else { return false }
+
+        let dateParts = profile.dateOfBirth.split(separator: "-").compactMap { Int($0) }
+        guard dateParts.count == 3 else { return false }
+        let year = dateParts[0]
+        let month = dateParts[1]
+        let day = dateParts[2]
+
+        func moonSign(localHour: Int) -> String? {
+            do {
+                let utc = try birthUTCComponents(
+                    year: year,
+                    month: month,
+                    day: day,
+                    timeString: String(format: "%02d:00:00", localHour),
+                    timezone: timeZone.identifier
+                )
+                let jd = swe_julday(Int32(utc.year), Int32(utc.month), Int32(utc.day), utc.hour, SE_GREG_CAL)
+                var xx = [Double](repeating: 0, count: 6)
+                var serr = [CChar](repeating: 0, count: 256)
+                let ret = swe_calc_ut(jd, SE_MOON, SEFLG_SWIEPH | SEFLG_SPEED, &xx, &serr)
+                guard ret >= 0 else { return nil }
+                return Self.signs[Int(xx[0] / 30.0) % 12]
+            } catch {
+                return nil
+            }
+        }
+
+        guard let startSign = moonSign(localHour: 0), let endSign = moonSign(localHour: 23) else {
+            return false
+        }
+        return startSign != endSign
+    }
+
+    private func metadataDataQuality(for quality: DataQuality) -> String {
+        switch quality {
+        case .full:
+            return "full"
+        case .dateAndPlace:
+            return "date_and_place"
+        case .dateOnly:
+            return "date_only"
+        }
     }
 
     // MARK: - Solar Return

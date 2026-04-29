@@ -8,36 +8,22 @@ struct ShareCardView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            // Header with gradient
-            ZStack {
-                LinearGradient(
-                    colors: [.purple, .indigo, .blue],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                
-                VStack(spacing: 8) {
-                    Image(systemName: "sparkles")
-                        .font(.system(size: 32))
-                        .foregroundStyle(.white)
-                    
-                    Text("AstroNumeric")
-                        .font(.title3.bold())
-                        .foregroundStyle(.white)
-                }
-                .padding(.vertical, 24)
-            }
-            .frame(height: 100)
+            shareCardHeader(icon: "sparkles", title: "AstroNumeric")
             
             // Content
             VStack(spacing: 16) {
                 // Scope and date
-                Text("\(reading.scope.capitalized) Reading")
+                Text(String(format: "fmt.shareCard.1".localized, "\(reading.scope.capitalized)"))
                     .font(.headline)
                 
                 Text(reading.date)
                     .font(.caption)
                     .foregroundStyle(Color.textSecondary)
+
+                Text("ui.shareCard.0".localized)
+                    .font(.caption)
+                    .foregroundStyle(Color.textSecondary)
+                    .multilineTextAlignment(.center)
                 
                 // Score
                 ZStack {
@@ -84,15 +70,7 @@ struct ShareCardView: View {
             .padding()
             .background(Color(.systemBackground))
             
-            // Footer
-            HStack {
-                Text("✨ Generated with AstroNumeric")
-                    .font(.caption2)
-                    .foregroundStyle(Color.textSecondary)
-            }
-            .padding(.vertical, 8)
-            .frame(maxWidth: .infinity)
-            .background(Color(.secondarySystemBackground))
+            shareCardFooter
         }
         .frame(width: 300)
         .clipShape(RoundedRectangle(cornerRadius: 16))
@@ -114,7 +92,8 @@ struct ShareCardGenerator {
     
     // Numerology share card
     static func generateImage(for numerology: NumerologyData, profileName: String) -> UIImage? {
-        let view = NumerologyShareCard(data: numerology, profileName: profileName)
+        let safeName = AppStore.shared.hideSensitiveDetailsEnabled ? PrivacyRedaction.privateProfile : profileName
+        let view = NumerologyShareCard(data: numerology, profileName: safeName)
         let renderer = ImageRenderer(content: view)
         renderer.scale = 3.0
         return renderer.uiImage
@@ -130,7 +109,8 @@ struct ShareCardGenerator {
     
     // Chart share card
     static func generateImage(for chart: ChartData, profileName: String, birthTimeAssumed: Bool = false) -> UIImage? {
-        let view = ChartShareCard(data: chart, profileName: profileName, birthTimeAssumed: birthTimeAssumed)
+        let safeName = AppStore.shared.hideSensitiveDetailsEnabled ? PrivacyRedaction.privateProfile : profileName
+        let view = ChartShareCard(data: chart, profileName: safeName, birthTimeAssumed: birthTimeAssumed)
         let renderer = ImageRenderer(content: view)
         renderer.scale = 3.0
         return renderer.uiImage
@@ -155,12 +135,12 @@ struct NumerologyShareCard: View {
                 
                 if let lifePath = data.lifePath {
                     VStack(spacing: 8) {
-                        Text("Life Path Number")
+                        Text("ui.shareCard.1".localized)
                             .font(.caption)
                             .foregroundStyle(Color.textSecondary)
                         
                         Text("\(lifePath.number)")
-                            .font(.system(size: 48, weight: .bold))
+                            .font(.system(.largeTitle)).fontWeight(.bold)
                             .foregroundStyle(.purple)
                         
                         if let meaning = lifePath.meaning {
@@ -174,7 +154,7 @@ struct NumerologyShareCard: View {
                 
                 if let luckyNumbers = data.luckyNumbers, !luckyNumbers.isEmpty {
                     HStack(spacing: 8) {
-                        Text("Lucky:")
+                        Text("ui.shareCard.2".localized)
                             .font(.caption)
                             .foregroundStyle(Color.textSecondary)
                         ForEach(luckyNumbers.prefix(5), id: \.self) { num in
@@ -212,7 +192,7 @@ struct TimingShareCard: View {
                 
                 if let best = data.bestTimes.first {
                     VStack(spacing: 4) {
-                        Text("Optimal Time")
+                        Text("ui.shareCard.3".localized)
                             .font(.caption)
                             .foregroundStyle(Color.textSecondary)
                         
@@ -271,12 +251,12 @@ struct ChartShareCard: View {
 
                 // More planets summary
                 let planetCount = data.planets.count
-                Text("\(planetCount) planetary placements calculated")
+                Text(String(format: "fmt.shareCard.0".localized, "\(planetCount)"))
                     .font(.caption)
                     .foregroundStyle(Color.textSecondary)
 
                 if birthTimeAssumed {
-                    Text("⚠️ Rising sign & houses estimated — birth time unconfirmed")
+                    Text("ui.shareCard.4".localized)
                         .font(.caption2)
                         .foregroundStyle(.orange)
                         .multilineTextAlignment(.center)
@@ -306,8 +286,8 @@ struct BigThreeShareItem: View {
                 .font(.caption.bold())
                 .foregroundStyle(estimated ? .orange : .purple)
             if estimated {
-                Text("est.")
-                    .font(.system(size: 9))
+                Text("ui.shareCard.5".localized)
+                    .font(.system(.caption2))
                     .foregroundStyle(.orange.opacity(0.8))
             }
         }
@@ -320,19 +300,23 @@ struct BigThreeShareItem: View {
 private func shareCardHeader(icon: String, title: String) -> some View {
     ZStack {
         LinearGradient(
-            colors: [.purple, .indigo, .blue],
+            colors: [Color(hex: "20123a"), Color(hex: "6241b5"), Color(hex: "187f8a")],
             startPoint: .topLeading,
             endPoint: .bottomTrailing
         )
         
         VStack(spacing: 8) {
             Image(systemName: icon)
-                .font(.system(size: 28))
+                .font(.system(.title))
                 .foregroundStyle(.white)
             
             Text(title)
                 .font(.title3.bold())
                 .foregroundStyle(.white)
+
+            Text("ui.shareCard.6".localized)
+                .font(.caption2.weight(.medium))
+                .foregroundStyle(.white.opacity(0.75))
         }
         .padding(.vertical, 20)
     }
@@ -340,10 +324,13 @@ private func shareCardHeader(icon: String, title: String) -> some View {
 }
 
 private var shareCardFooter: some View {
-    HStack {
-        Text("✨ Generated with AstroNumeric")
-            .font(.caption2)
+    VStack(spacing: 4) {
+        Text("ui.shareCard.7".localized)
+            .font(.caption2.weight(.semibold))
             .foregroundStyle(Color.textSecondary)
+        Text("ui.shareCard.8".localized)
+            .font(.system(.caption2, design: .monospaced)).fontWeight(.medium)
+            .foregroundStyle(Color.textMuted)
     }
     .padding(.vertical, 8)
     .frame(maxWidth: .infinity)

@@ -4,6 +4,7 @@ import './PrivacyPolicy.css';
 
 export function PrivacyPolicy() {
   const currentYear = new Date().getFullYear();
+  const lastUpdated = '2026-02-04';
 
   return (
     <>
@@ -19,7 +20,7 @@ export function PrivacyPolicy() {
       <main className="privacy-policy-container">
         <header className="policy-header">
           <h1>Privacy Policy</h1>
-          <p className="last-updated">Last updated: {new Date().toLocaleDateString()}</p>
+          <p className="last-updated">Last updated: {lastUpdated}</p>
         </header>
 
         <nav className="policy-toc">
@@ -35,13 +36,16 @@ export function PrivacyPolicy() {
               <a href="#information-use">How We Use Information</a>
             </li>
             <li>
-              <a href="#cookies">Cookies & Tracking</a>
+              <a href="#sharing">Sharing</a>
             </li>
             <li>
               <a href="#security">Data Security</a>
             </li>
             <li>
               <a href="#rights">Your Rights</a>
+            </li>
+            <li>
+              <a href="#retention">Retention & Deletion</a>
             </li>
             <li>
               <a href="#contact">Contact Us</a>
@@ -53,10 +57,9 @@ export function PrivacyPolicy() {
           <section id="introduction">
             <h2>1. Introduction</h2>
             <p>
-              Astromeric (&quot;we,&quot; &quot;us,&quot; &quot;our,&quot; or &quot;Company&quot;)
-              is committed to protecting your privacy. This Privacy Policy explains how we collect,
-              use, disclose, and safeguard your information when you visit our website
-              astromeric.com and our applications.
+              Astromeric (&quot;we,&quot; &quot;us,&quot; or &quot;our&quot;) is committed to
+              protecting your privacy. This policy explains how we collect, use, and protect
+              information when you use our website and iOS app.
             </p>
             <p>
               Please read this Privacy Policy carefully. If you do not agree with our policies and
@@ -70,37 +73,40 @@ export function PrivacyPolicy() {
             <h3>2.1 Information You Provide</h3>
             <ul>
               <li>
-                <strong>Account Information:</strong> Name, email address, date of birth, birth
-                time, birth location
+                <strong>Profile information:</strong> Name, date of birth, and (if you provide it)
+                birth time and birthplace (including latitude/longitude and timezone). This is used
+                to generate charts, numerology, and readings.
               </li>
               <li>
-                <strong>Payment Information:</strong> Processed securely through third-party payment
-                providers
+                <strong>Account information (optional):</strong> If you create an account, we store
+                your email address and an internal user ID. Apple Sign‑In may provide your email
+                (sometimes via a private relay address).
               </li>
               <li>
-                <strong>Communications:</strong> Messages, feedback, and support inquiries
+                <strong>Journal entries (optional):</strong> Notes you write in the journal feature
+                are stored on-device and may be stored on our servers if you are signed in and use
+                server-backed features.
               </li>
               <li>
-                <strong>Profile Data:</strong> Saved charts, readings, and preferences
+                <strong>Communications:</strong> Messages, feedback, and support requests you send
+                us.
               </li>
             </ul>
 
             <h3>2.2 Information Collected Automatically</h3>
             <ul>
               <li>
-                <strong>Device Information:</strong> IP address, device type, operating system
+                <strong>Basic technical data:</strong> IP address and basic request metadata needed
+                to operate and secure the service (e.g., rate limiting and abuse prevention).
               </li>
               <li>
-                <strong>Usage Data:</strong> Pages visited, time spent, features used, clicks and
-                interactions
+                <strong>Website storage:</strong> We may store essential preferences (like cookie
+                consent) in your browser&apos;s local storage. We do not run advertising trackers by
+                default.
               </li>
               <li>
-                <strong>Location Data:</strong> Approximate location derived from IP address (if
-                consent given)
-              </li>
-              <li>
-                <strong>Cookies & Pixels:</strong> Persistent and session cookies, web beacons,
-                local storage
+                <strong>Notifications (iOS):</strong> If you enable notifications, the app may
+                register an Apple Push Notification token with our backend to deliver alerts.
               </li>
             </ul>
           </section>
@@ -111,58 +117,30 @@ export function PrivacyPolicy() {
             <ul>
               <li>Providing and improving our services</li>
               <li>Creating and managing your account</li>
-              <li>Processing transactions and sending related information</li>
-              <li>Sending promotional communications (with your consent)</li>
-              <li>Analyzing usage patterns to enhance user experience</li>
-              <li>Complying with legal obligations</li>
+              <li>Generating charts, readings, numerology, and related outputs</li>
+              <li>Providing notifications you request</li>
               <li>Preventing fraud and ensuring security</li>
+              <li>Complying with legal obligations</li>
             </ul>
           </section>
 
-          <section id="cookies">
-            <h2>4. Cookies & Tracking Technologies</h2>
-
-            <h3>4.1 Types of Cookies</h3>
-            <p>We use three categories of cookies:</p>
-            <ul>
-              <li>
-                <strong>Essential Cookies:</strong> Required for site functionality (authentication,
-                preferences)
-              </li>
-              <li>
-                <strong>Analytics Cookies:</strong> Help us understand user behavior (Google
-                Analytics, Mixpanel)
-              </li>
-              <li>
-                <strong>Marketing Cookies:</strong> Enable personalized advertising (Facebook Pixel,
-                Google Ads)
-              </li>
-            </ul>
-
-            <h3>4.2 Cookie Management</h3>
+          <section id="sharing">
+            <h2>4. Sharing</h2>
             <p>
-              You can manage cookie preferences through our cookie consent banner. You can also
-              disable cookies in your browser settings, though this may affect functionality.
+              We do not sell your personal information. We may share information with service
+              providers that help us operate the app (for example hosting providers). When you use
+              AI explanations (if available), the content you request to explain may be processed by
+              an AI provider to generate a response.
             </p>
-
-            <h3>4.3 Third-Party Pixels</h3>
-            <p>We use pixels from third-party services including:</p>
-            <ul>
-              <li>Google Analytics (analytics@google.com)</li>
-              <li>Facebook Pixel (facebook.com)</li>
-              <li>Cloudflare Web Analytics</li>
-            </ul>
           </section>
 
           <section id="security">
             <h2>5. Data Security</h2>
-            <p>We implement industry-standard security measures including:</p>
+            <p>We use reasonable security measures including:</p>
             <ul>
               <li>HTTPS encryption for all data in transit</li>
-              <li>AES-256 encryption for sensitive data at rest</li>
-              <li>Regular security audits and penetration testing</li>
               <li>Strict access controls and authentication</li>
-              <li>Secure password policies and two-factor authentication</li>
+              <li>Secure password hashing for password-based accounts</li>
             </ul>
             <p>
               However, no security system is completely impenetrable. We cannot guarantee absolute
@@ -203,8 +181,19 @@ export function PrivacyPolicy() {
             </p>
           </section>
 
+          <section id="retention">
+            <h2>7. Retention &amp; Deletion</h2>
+            <p>
+              We keep server-stored data for as long as your account is active or as needed to
+              provide services. You can delete your account from within the iOS app (Profile →
+              Account → Delete Account) which removes your server account and associated
+              profiles/readings. Data stored locally on your device (like local profiles and journal
+              entries) can be removed by deleting those items in-app or uninstalling the app.
+            </p>
+          </section>
+
           <section id="contact">
-            <h2>7. Contact Us</h2>
+            <h2>8. Contact Us</h2>
             <p>
               If you have questions about this Privacy Policy or our privacy practices, please
               contact us:
@@ -213,14 +202,13 @@ export function PrivacyPolicy() {
               <li>
                 Email: <a href="mailto:privacy@astromeric.com">privacy@astromeric.com</a>
               </li>
-              <li>Address: Astromeric, Inc., Privacy Team</li>
             </ul>
           </section>
 
           <footer className="policy-footer">
             <p>
-              © {currentYear} Astromeric, Inc. All rights reserved. This policy is subject to change
-              at any time. We will notify you of significant changes via email.
+              © {currentYear} Astromeric. All rights reserved. This policy may change; we will post
+              updates here.
             </p>
           </footer>
         </article>

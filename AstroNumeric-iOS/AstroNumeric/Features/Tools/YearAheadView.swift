@@ -23,6 +23,14 @@ struct YearAheadView: View {
                 
                 ScrollView {
                     VStack(spacing: 16) {
+                        PremiumHeroCard(
+                            eyebrow: "hero.yearAhead.eyebrow".localized,
+                            title: "hero.yearAhead.title".localized,
+                            bodyText: "hero.yearAhead.body".localized,
+                            accent: [Color(hex: "18203a"), Color(hex: "4060bf"), Color(hex: "8a4cb3")],
+                            chips: ["hero.yearAhead.chip.0".localized, "hero.yearAhead.chip.1".localized, "hero.yearAhead.chip.2".localized]
+                        )
+
                         // Warn when birth time unknown — Solar Return depends on exact time
                         if store.activeProfile?.dataQuality != .full {
                             DataQualityBanner(
@@ -34,6 +42,11 @@ struct YearAheadView: View {
                         }
 
                         if let forecast = vm.forecast {
+                            PremiumSectionHeader(
+                title: "section.yearAhead.0.title".localized,
+                subtitle: "section.yearAhead.0.subtitle".localized
+            )
+
                             Button {
                                 Task { @MainActor in
                                     await explain(forecast)
@@ -46,7 +59,7 @@ struct YearAheadView: View {
                                     } else {
                                         Image(systemName: "sparkles")
                                     }
-                                    Text(isExplaining ? "Generating..." : "Explain This Year")
+                                    Text(isExplaining ? "tern.yearAhead.0a".localized : "tern.yearAhead.0b".localized)
                                         .font(.subheadline.weight(.medium))
                                 }
                                 .foregroundStyle(.purple)
@@ -64,9 +77,9 @@ struct YearAheadView: View {
 
                             CardView {
                                 VStack(alignment: .leading, spacing: 8) {
-                                    Text("Year Ahead \(forecast.year)")
+                                    Text(String(format: "fmt.yearAhead.3".localized, "\(forecast.year)"))
                                         .font(.headline)
-                                    Text("Personal Year \(forecast.personalYear.number): \(forecast.personalYear.theme)")
+                                    Text(String(format: "fmt.yearAhead.2".localized, "\(forecast.personalYear.number)", "\(forecast.personalYear.theme)"))
                                         .font(.subheadline)
                                     Text(forecast.personalYear.description ?? "")
                                         .font(.caption)
@@ -76,7 +89,7 @@ struct YearAheadView: View {
                             
                             CardView {
                                 VStack(alignment: .leading, spacing: 8) {
-                                    Text("Solar Return")
+                                    Text("ui.yearAhead.0".localized)
                                         .font(.headline)
                                     Text(forecast.solarReturn.date)
                                         .font(.subheadline)
@@ -85,11 +98,100 @@ struct YearAheadView: View {
                                         .foregroundStyle(Color.textSecondary)
                                 }
                             }
+
+                            if !forecast.eclipses.all.isEmpty {
+                                CardView {
+                                    VStack(alignment: .leading, spacing: 10) {
+                                        Text("ui.yearAhead.1".localized)
+                                            .font(.headline)
+                                        ForEach(forecast.eclipses.all) { eclipse in
+                                            VStack(alignment: .leading, spacing: 4) {
+                                                HStack(alignment: .firstTextBaseline) {
+                                                    Text(eclipseTypeSymbol(eclipse.type))
+                                                    Text(eclipseDisplayTitle(eclipse))
+                                                        .font(.subheadline.weight(.semibold))
+                                                    Spacer()
+                                                    Text(eclipse.date)
+                                                        .font(.caption.monospaced())
+                                                        .foregroundStyle(Color.textSecondary)
+                                                }
+                                                Text("ui.yearAhead.2".localized)
+                                                    .font(.caption)
+                                                    .foregroundStyle(Color.textSecondary)
+                                            }
+                                            if eclipse.id != forecast.eclipses.all.last?.id {
+                                                Divider()
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            if !forecast.eclipses.personalImpacts.isEmpty {
+                                CardView {
+                                    VStack(alignment: .leading, spacing: 10) {
+                                        Text("ui.yearAhead.3".localized)
+                                            .font(.headline)
+                                        Text("ui.yearAhead.4".localized)
+                                            .font(.caption)
+                                            .foregroundStyle(Color.textSecondary)
+
+                                        ForEach(Array(forecast.eclipses.personalImpacts.enumerated()), id: \.offset) { _, impact in
+                                            VStack(alignment: .leading, spacing: 6) {
+                                                HStack(alignment: .firstTextBaseline) {
+                                                    Text(eclipseTypeSymbol(impact.eclipse.type))
+                                                    Text(eclipseDisplayTitle(impact.eclipse))
+                                                        .font(.subheadline.weight(.semibold))
+                                                    Spacer()
+                                                    Text(impact.significance)
+                                                        .font(.caption.weight(.semibold))
+                                                        .foregroundStyle(.purple)
+                                                }
+
+                                                if !impact.impacts.isEmpty {
+                                                    ForEach(Array(impact.impacts.enumerated()), id: \.offset) { _, detail in
+                                                        Text("• \(detail.name) \(detail.aspect)\(orbText(detail.orb))")
+                                                            .font(.caption)
+                                                            .foregroundStyle(Color.textSecondary)
+                                                    }
+                                                }
+                                            }
+                                            if impact.eclipse.id != forecast.eclipses.personalImpacts.last?.eclipse.id {
+                                                Divider()
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            if !forecast.ingresses.isEmpty {
+                                CardView {
+                                    VStack(alignment: .leading, spacing: 8) {
+                                        Text("ui.yearAhead.5".localized)
+                                            .font(.headline)
+                                        ForEach(Array(forecast.ingresses.prefix(6).enumerated()), id: \.offset) { _, ingress in
+                                            VStack(alignment: .leading, spacing: 2) {
+                                                HStack(alignment: .firstTextBaseline) {
+                                                    Text("• \(ingress.planet) → \(ingress.sign)")
+                                                        .font(.subheadline)
+                                                    Spacer()
+                                                    Text(ingress.date)
+                                                        .font(.caption.monospaced())
+                                                        .foregroundStyle(Color.textSecondary)
+                                                }
+                                                Text(ingress.impact)
+                                                    .font(.caption)
+                                                    .foregroundStyle(Color.textSecondary)
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                             
                             if !forecast.keyThemes.isEmpty {
                                 CardView {
                                     VStack(alignment: .leading, spacing: 8) {
-                                        Text("Key Themes")
+                                        Text("ui.yearAhead.6".localized)
                                             .font(.headline)
                                         ForEach(forecast.keyThemes, id: \.self) { theme in
                                             Text("• \(theme)")
@@ -103,7 +205,7 @@ struct YearAheadView: View {
                             if !forecast.advice.isEmpty {
                                 CardView {
                                     VStack(alignment: .leading, spacing: 8) {
-                                        Text("Year Advice")
+                                        Text("ui.yearAhead.7".localized)
                                             .font(.headline)
                                         ForEach(forecast.advice, id: \.self) { tip in
                                             Text("• \(tip)")
@@ -116,9 +218,10 @@ struct YearAheadView: View {
                             
                             if !forecast.monthlyForecasts.isEmpty {
                                 VStack(alignment: .leading, spacing: 8) {
-                                    Text("Monthly Highlights")
-                                        .font(.headline)
-                                        .padding(.horizontal, 4)
+                                    PremiumSectionHeader(
+                title: "section.yearAhead.1.title".localized,
+                subtitle: "section.yearAhead.1.subtitle".localized
+            )
                                     ForEach(forecast.monthlyForecasts, id: \.month) { month in
                                         CardView {
                                             VStack(alignment: .leading, spacing: 6) {
@@ -126,12 +229,22 @@ struct YearAheadView: View {
                                                     Text("\(month.monthName) \(month.year)")
                                                         .font(.headline)
                                                     Spacer()
-                                                    Text("Personal Month \(month.personalMonth)")
+                                                    Text(String(format: "fmt.yearAhead.1".localized, "\(month.personalMonth)"))
                                                         .font(.caption)
                                                         .foregroundStyle(Color.textSecondary)
                                                 }
                                                 Text(month.focus)
                                                     .font(.subheadline)
+                                                if !month.eclipses.isEmpty {
+                                                    Text(String(format: "fmt.yearAhead.0".localized, "\(month.eclipses.map { eclipseDisplayTitle($0) }.joined(separator: " • "))"))
+                                                        .font(.caption)
+                                                        .foregroundStyle(.purple)
+                                                }
+                                                if !month.ingresses.isEmpty {
+                                                    Text("Ingresses: \(month.ingresses.map { "\($0.planet) → \($0.sign)" }.joined(separator: " • "))")
+                                                        .font(.caption)
+                                                        .foregroundStyle(.blue)
+                                                }
                                                 if !month.highlights.isEmpty {
                                                     ForEach(month.highlights, id: \.self) { highlight in
                                                         Text("• \(highlight)")
@@ -154,9 +267,9 @@ struct YearAheadView: View {
                         } else {
                             CardView {
                                 VStack(alignment: .leading, spacing: 8) {
-                                    Text("Year Ahead")
+                                    Text("ui.yearAhead.8".localized)
                                         .font(.headline)
-                                    Text(store.activeProfile == nil ? "Select a profile to generate your forecast." : "Tap the year in the top-right to refresh.")
+                                    Text(store.activeProfile == nil ? "tern.yearAhead.1a".localized : "tern.yearAhead.1b".localized)
                                         .font(.caption)
                                         .foregroundStyle(Color.textSecondary)
                                 }
@@ -164,9 +277,10 @@ struct YearAheadView: View {
                         }
                     }
                     .padding()
+                    .readableContainer()
                 }
             }
-            .navigationTitle("Year Ahead")
+            .navigationTitle("screen.yearAhead".localized)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -238,7 +352,7 @@ struct YearAheadView: View {
                 cachePolicy: forceRefresh ? .networkOnly : .cacheFirst
             )
             explanationMarkdown = response.data.summary
-            explanationSource = .ai
+            explanationSource = AIInsightSource(provider: response.data.provider)
             explanationGeneratedAt = Date()
         } catch {
             var fallback = "## TL;DR\n\n"
@@ -270,16 +384,7 @@ struct YearAheadView: View {
     private func fetchLifePhase() async {
         guard let profile = store.activeProfile else { return }
         do {
-            let payload = ProfilePayload(
-                name: profile.name,
-                dateOfBirth: profile.dateOfBirth,
-                timeOfBirth: profile.timeOfBirth,
-                placeOfBirth: profile.placeOfBirth,
-                latitude: profile.latitude,
-                longitude: profile.longitude,
-                timezone: profile.timezone ?? "UTC",
-                houseSystem: profile.houseSystem
-            )
+            let payload = profile.privacySafePayload(hideSensitive: store.hideSensitiveDetailsEnabled)
             let response: V2ApiResponse<LifePhaseData> = try await APIClient.shared.fetch(
                 .lifePhase(profile: payload),
                 cachePolicy: .networkFirst
@@ -288,6 +393,25 @@ struct YearAheadView: View {
         } catch {
             // Silent — LifePhaseCard stays hidden if unavailable
         }
+    }
+
+    private func eclipseTypeSymbol(_ type: String) -> String {
+        let normalized = type.lowercased()
+        if normalized.contains("solar") { return "☀️" }
+        if normalized.contains("lunar") { return "🌕" }
+        return "🌀"
+    }
+
+    private func eclipseDisplayTitle(_ eclipse: EclipseEvent) -> String {
+        if let degree = eclipse.degree {
+            return "\(eclipse.type) in \(eclipse.sign) \(String(format: "%.1f°", degree))"
+        }
+        return "\(eclipse.type) in \(eclipse.sign)"
+    }
+
+    private func orbText(_ orb: Double?) -> String {
+        guard let orb else { return "" }
+        return " (\(String(format: "%.1f", orb))° orb)"
     }
 }
 

@@ -33,19 +33,19 @@ export function useGlossary() {
 
       try {
         const zodiacRes = await apiFetch<PaginatedResponse<{ key: string; data: unknown }>>(
-          `/learn/zodiac?limit=${PAGE_SIZE}&offset=0`
+          `/v2/learning/zodiac?limit=${PAGE_SIZE}&offset=0`
         );
         zodiacData = zodiacRes.items.reduce((acc, item) => ({ ...acc, [item.key]: item.data }), {});
         setHasMoreZodiac(zodiacRes.has_more);
       } catch {
         // Fallback to legacy endpoint
-        zodiacData = await apiFetch<Record<string, unknown>>('/learn/zodiac');
+        zodiacData = await apiFetch<Record<string, unknown>>('/v2/learning/zodiac');
         setHasMoreZodiac(false);
       }
 
       try {
         const numRes = await apiFetch<PaginatedResponse<{ key: string; data: unknown }>>(
-          `/learn/numerology?limit=${PAGE_SIZE}&offset=0`
+          `/v2/learning/numerology?limit=${PAGE_SIZE}&offset=0`
         );
         numerologyData = numRes.items.reduce(
           (acc, item) => ({ ...acc, [item.key]: item.data }),
@@ -54,7 +54,7 @@ export function useGlossary() {
         setHasMoreNumerology(numRes.has_more);
       } catch {
         // Fallback to legacy endpoint
-        numerologyData = await apiFetch<Record<string, unknown>>('/learn/numerology');
+        numerologyData = await apiFetch<Record<string, unknown>>('/v2/learning/numerology');
         setHasMoreNumerology(false);
       }
 
@@ -75,7 +75,7 @@ export function useGlossary() {
     const newOffset = (zodiacPage + 1) * PAGE_SIZE;
     try {
       const res = await apiFetch<PaginatedResponse<{ key: string; data: unknown }>>(
-        `/learn/zodiac?limit=${PAGE_SIZE}&offset=${newOffset}`
+        `/v2/learning/zodiac?limit=${PAGE_SIZE}&offset=${newOffset}`
       );
       const newItems = res.items.reduce((acc, item) => ({ ...acc, [item.key]: item.data }), {});
 
@@ -96,7 +96,7 @@ export function useGlossary() {
     const newOffset = (numerologyPage + 1) * PAGE_SIZE;
     try {
       const res = await apiFetch<PaginatedResponse<{ key: string; data: unknown }>>(
-        `/learn/numerology?limit=${PAGE_SIZE}&offset=${newOffset}`
+        `/v2/learning/numerology?limit=${PAGE_SIZE}&offset=${newOffset}`
       );
       const newItems = res.items.reduce((acc, item) => ({ ...acc, [item.key]: item.data }), {});
 

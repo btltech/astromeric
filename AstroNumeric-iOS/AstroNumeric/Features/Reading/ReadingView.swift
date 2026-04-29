@@ -6,7 +6,6 @@ import SwiftUI
 struct ReadingView: View {
     @Environment(AppStore.self) private var store
     @State private var vm = ReadingVM()
-    @State private var showPaywall = false
     
     var body: some View {
         NavigationStack {
@@ -21,7 +20,10 @@ struct ReadingView: View {
                             // Show reading result
                             ReadingResultView(
                                 scope: vm.selectedScope,
-                                data: reading
+                                data: reading,
+                                onRefresh: {
+                                    await vm.fetchReading(for: profile)
+                                }
                             )
                         } else if vm.isLoading {
                             // Loading state
@@ -55,7 +57,7 @@ struct ReadingView: View {
                     }
                 }
             }
-            .navigationTitle("Reading")
+            .navigationTitle("screen.reading".localized)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 if store.selectedProfile != nil {
@@ -70,7 +72,7 @@ struct ReadingView: View {
     // MARK: - Components
     
     private var scopePicker: some View {
-        Picker("Scope", selection: $vm.selectedScope) {
+        Picker("ui.reading.2".localized, selection: $vm.selectedScope) {
             ForEach(ReadingScope.allCases, id: \.self) { scope in
                 Text(scope.displayName).tag(scope)
             }
@@ -89,12 +91,12 @@ struct ReadingView: View {
     private var noProfileView: some View {
         VStack(spacing: 20) {
             Text("🌟")
-                .font(.system(size: 64))
+                .font(.system(.largeTitle))
             
-            Text("Create Your Profile")
+            Text("ui.reading.0".localized)
                 .font(.title2.bold())
             
-            Text("Add your birth details to get personalized readings")
+            Text("ui.reading.1".localized)
                 .font(.subheadline)
                 .foregroundStyle(Color.textSecondary)
                 .multilineTextAlignment(.center)

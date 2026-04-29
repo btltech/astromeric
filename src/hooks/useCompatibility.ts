@@ -39,7 +39,7 @@ export function useCompatibility() {
         const headers: Record<string, string> = {};
         if (token) headers['Authorization'] = `Bearer ${token}`;
 
-        const data = await apiFetch<CompatibilityResult>('/compatibility', {
+        const data = await apiFetch<CompatibilityResult>('/v2/compatibility/romantic', {
           method: 'POST',
           headers,
           body: JSON.stringify({
@@ -83,7 +83,7 @@ export function useCompatibility() {
         const headers: Record<string, string> = {};
         if (token) headers['Authorization'] = `Bearer ${token}`;
 
-        const data = await apiFetch<CompatibilityResult>('/compatibility', {
+        const data = await apiFetch<CompatibilityResult>('/v2/compatibility/romantic', {
           method: 'POST',
           headers,
           body: JSON.stringify({

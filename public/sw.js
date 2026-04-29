@@ -1,7 +1,5 @@
-const CACHE_NAME = 'astronumeric-cache-v1';
+const CACHE_NAME = 'astronumeric-cache-v3';
 const STATIC_ASSETS = [
-  '/',
-  '/index.html',
   '/manifest.json',
   '/offline.html',
   '/favicon.svg',
@@ -27,9 +25,45 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
+self.addEventListener('message', (event) => {
+  if (event?.data?.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
+
 self.addEventListener('fetch', (event) => {
   // Only cache GET requests
   if (event.request.method !== 'GET') return;
+
+  // Network-first for navigations/HTML so deploys aren't stuck on cached index.html
+  const accept = event.request.headers.get('Accept') || '';
+  const isHtmlRequest = event.request.mode === 'navigate' || accept.includes('text/html');
+
+  if (isHtmlRequest) {
+    event.respondWith(
+      fetch(event.request)
+        .then((networkResponse) => {
+          if (networkResponse && networkResponse.ok) {
+            return caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, networkResponse.clone());
+              return networkResponse;
+            });
+          }
+          return networkResponse;
+        })
+        .catch(() =>
+          caches.open(CACHE_NAME).then((cache) =>
+            cache.match(event.request).then((cached) => {
+              if (cached) return cached;
+              return cache.match('/offline.html').then((offline) => {
+                return offline || new Response('Offline', { status: 503, statusText: 'Offline' });
+              });
+            })
+          )
+        )
+    );
+    return;
+  }
 
   // Stale-While-Revalidate strategy for static assets and HTML
   event.respondWith(
@@ -37,7 +71,12 @@ self.addEventListener('fetch', (event) => {
       return cache.match(event.request).then((cachedResponse) => {
         const fetchedResponse = fetch(event.request)
           .then((networkResponse) => {
-            if (networkResponse.ok) {
+            // Only cache if response is 200 OK and it's not a redirected HTML for a JS/CSS file
+            const contentType = networkResponse.headers.get('Content-Type');
+            const isHtml = contentType && contentType.includes('text/html');
+            const isAsset = event.request.url.match(/\.(js|css|png|jpg|svg|json|woff2)$/);
+
+            if (networkResponse.ok && !(isAsset && isHtml)) {
               cache.put(event.request, networkResponse.clone());
             }
             return networkResponse;

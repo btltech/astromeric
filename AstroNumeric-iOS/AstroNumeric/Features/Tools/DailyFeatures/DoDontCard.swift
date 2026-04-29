@@ -53,7 +53,7 @@ struct DoDontCard: View {
             VStack(spacing: 0) {
                 // Header with pill toggle
                 HStack {
-                    Text("Your Day's Guide")
+                    Text("ui.doDontCard.0".localized)
                         .font(.headline)
                     Spacer()
                     // Pill toggle
@@ -69,6 +69,12 @@ struct DoDontCard: View {
                     .clipShape(Capsule())
                 }
                 .padding(.bottom, 16)
+
+                PremiumSectionHeader(
+                title: showingDonts ? "tern.doDontCard.0a".localized : "tern.doDontCard.0b".localized,
+                subtitle: "section.doDontCard.0.subtitle".localized
+            )
+                .padding(.bottom, 12)
 
                 // Retrograde badges
                 if data.mercuryRetrograde || data.venusRetrograde {
@@ -120,7 +126,7 @@ struct DoDontCard: View {
 
                 HStack {
                     Text("🔢")
-                    Text("Personal Day \(data.personalDay) · \(data.moonPhase)")
+                    Text(String(format: "fmt.doDontCard.0".localized, "\(data.personalDay)", "\(data.moonPhase)"))
                         .font(.caption)
                         .foregroundStyle(Color.textSecondary)
                     Spacer()
@@ -170,7 +176,7 @@ struct MorningBriefCard: View {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(data.greeting)
                             .font(.title3.bold())
-                        Text("Here's your cosmic snapshot")
+                        Text("ui.doDontCard.1".localized)
                             .font(.caption)
                             .foregroundStyle(Color.textSecondary)
                     }
@@ -178,6 +184,11 @@ struct MorningBriefCard: View {
                     Text("⚡")
                         .font(.largeTitle)
                 }
+
+                PremiumSectionHeader(
+                title: "section.doDontCard.1.title".localized,
+                subtitle: "section.doDontCard.1.subtitle".localized
+            )
 
                 Divider()
 

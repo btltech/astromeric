@@ -63,7 +63,7 @@ Production-oriented stack that pairs a FastAPI engine (Railway) with a Vite + Re
   - `engine/compatibility.py`: astrology and numerology compatibility calculations.
   - `engine/glossary.py`: zodiac and numerology educational content.
   - `engine/fusion.py`: deterministic text/rating/lucky/theme generation.
-  - `Procfile`: Railway start command.
+  - `Dockerfile`: container image used by Railway (see `railway.json`).
   - `requirements.txt`: dependencies.
 
 ### Run Backend Locally

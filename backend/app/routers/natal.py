@@ -13,7 +13,6 @@ from sqlalchemy.orm import Session
 from ..auth import get_current_user
 from ..exceptions import (
     AstroError,
-    EphemerisError,
     InvalidCoordinatesError,
     InvalidDateError,
     StructuredLogger,
@@ -66,6 +65,7 @@ class NatalProfileResponse(BaseModel):
 # ENDPOINTS
 # ============================================================================
 
+
 def _profile_payload_to_dict(profile: ProfilePayload) -> Dict[str, Any]:
     if hasattr(profile, "model_dump"):
         data = profile.model_dump(exclude_none=True)
@@ -86,7 +86,9 @@ def _require_natal_inputs(profile: ProfilePayload) -> None:
                 "error": {
                     "code": "MISSING_PROFILE_FIELDS",
                     "message": "Both latitude and longitude must be provided together.",
-                    "missing": ["latitude" if profile.latitude is None else "longitude"],
+                    "missing": [
+                        "latitude" if profile.latitude is None else "longitude"
+                    ],
                 }
             },
         )
@@ -95,6 +97,7 @@ def _require_natal_inputs(profile: ProfilePayload) -> None:
     if tz and tz not in ("UTC", "GMT"):
         try:
             from zoneinfo import ZoneInfo
+
             ZoneInfo(tz)
         except Exception:
             raise HTTPException(
@@ -153,17 +156,18 @@ async def calculate_natal_profile(
 
         # Calculate natal profile
         logger.info(
-            f"Calculating natal profile for {req.profile.name}",
+            "Calculating natal profile",
             request_id=request_id,
-            profile_name=req.profile.name,
         )
 
         natal_data = build_natal_profile(_profile_payload_to_dict(req.profile))
-        birth_time_assumed = natal_data.get("metadata", {}).get("birth_time_assumed", False)
+        birth_time_assumed = natal_data.get("metadata", {}).get(
+            "birth_time_assumed", False
+        )
         data_quality = natal_data.get("metadata", {}).get("data_quality", "unknown")
 
         logger.info(
-            f"Natal profile calculated successfully",
+            "Natal profile calculated successfully",
             request_id=request_id,
             provider=natal_data.get("chart", {}).get("metadata", {}).get("provider"),
             birth_time_assumed=birth_time_assumed,

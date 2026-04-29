@@ -7,6 +7,7 @@ python-dotenv==1.2.1
 python-jose[cryptography]==3.3.0
 argon2-cffi>=21.0.0
 flatlib==0.2.3
+pyswisseph>=2.0.0
 sqlalchemy>=2.0.0
 email-validator>=2.0.0
 # Starlette 0.27 TestClient still uses httpx's legacy `app=` shortcut.
@@ -14,9 +15,11 @@ email-validator>=2.0.0
 # Pin below 0.27 to keep tests warning-free without forcing a FastAPI/Starlette upgrade.
 httpx>=0.25.0,<0.27.0
 reportlab>=4.0.0
-google-generativeai>=0.8.0
+google-genai>=1.0.0
 slowapi>=0.1.9
 psycopg2-binary>=2.9.0
 alembic>=1.12.0
 astral>=3.2
 pywebpush>=1.14.0
+firebase-admin==6.5.0
+resend

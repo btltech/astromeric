@@ -1,0 +1,161 @@
+name: AstroNumeric
+options:
+  bundleIdPrefix: com.astromeric
+  deploymentTarget:
+    iOS: "17.0"
+  xcodeVersion: "15.0"
+  generateEmptyDirectories: true
+  groupSortPosition: top
+  createIntermediateGroups: true
+  minimumXcodeGenVersion: "2.38.0"
+
+attributes:
+  LastUpgradeCheck: "2620"
+  BuildIndependentTargetsInParallel: "YES"
+
+settings:
+  base:
+    DEVELOPMENT_TEAM: "8L5LTN9LMB"
+    MARKETING_VERSION: "1.0.0"
+    CURRENT_PROJECT_VERSION: "4"
+    SWIFT_VERSION: "5.9"
+    GENERATE_INFOPLIST_FILE: YES
+    INFOPLIST_KEY_CFBundleDisplayName: AstroNumeric
+    INFOPLIST_KEY_LSApplicationCategoryType: "public.app-category.lifestyle"
+    INFOPLIST_KEY_UILaunchScreen_Generation: YES
+    INFOPLIST_KEY_UISupportedInterfaceOrientations: "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
+    INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad: "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
+    CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED: YES
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+    STRING_CATALOG_GENERATE_SYMBOLS: YES
+
+targets:
+  AstroNumeric:
+    type: application
+    platform: iOS
+    sources:
+      - path: Shared
+        excludes:
+          - "**/.DS_Store"
+      - path: AstroNumeric
+        excludes:
+          - "**/.DS_Store"
+          - "EphemerisEngine/swisseph/**"
+      - path: AstroNumeric/EphemerisEngine/swisseph
+        compilerFlags: "-w"
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.astromeric.app
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        ENABLE_PREVIEWS: YES
+        CODE_SIGN_ENTITLEMENTS: AstroNumeric/AstroNumeric.entitlements
+        SWIFT_OBJC_BRIDGING_HEADER: AstroNumeric/AstroNumeric-Bridging-Header.h
+        CLANG_ENABLE_MODULES: YES
+        CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES: YES
+      configs:
+        Debug:
+          SWIFT_OPTIMIZATION_LEVEL: "-Onone"
+          DEBUG_INFORMATION_FORMAT: "dwarf-with-dsym"
+          CODE_SIGN_ENTITLEMENTS: AstroNumeric/AstroNumericDebug.entitlements
+        Release:
+          SWIFT_OPTIMIZATION_LEVEL: "-O"
+          DEBUG_INFORMATION_FORMAT: "dwarf-with-dsym"
+    info:
+      path: AstroNumeric/Info.plist
+      properties:
+        API_BASE_URL: "https://astromeric-backend-production.up.railway.app"
+        WEBSITE_BASE_URL: "https://astromeric.pages.dev"
+        CFBundleDisplayName: AstroNumeric
+        CFBundleName: AstroNumeric
+        BGTaskSchedulerPermittedIdentifiers:
+          - com.astromeric.app.transitScan
+          - com.astromeric.app.cachePrewarm
+        UIBackgroundModes:
+          - remote-notification
+          - fetch
+        NSLocationWhenInUseUsageDescription: "We need your location to determine your birthplace timezone."
+        NSHealthShareUsageDescription: "AstroNumeric reads health data (heart rate, sleep, steps) to correlate your biometrics with cosmic transits and provide personalized insights."
+        NSMicrophoneUsageDescription: "AstroNumeric uses your microphone to record voice journal entries using live speech-to-text transcription."
+        NSSpeechRecognitionUsageDescription: "AstroNumeric transcribes your voice journal entries into text using on-device speech recognition."
+        ITSAppUsesNonExemptEncryption: false
+    entitlements:
+      path: AstroNumeric/AstroNumeric.entitlements
+      properties:
+        aps-environment: production
+        com.apple.developer.healthkit: true
+        com.apple.security.application-groups:
+          - group.com.astromeric.shared
+    dependencies:
+      - target: AstroWidget
+
+  AstroWidget:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: Shared
+        excludes:
+          - "**/.DS_Store"
+      - path: AstroWidget
+        excludes:
+          - "**/.DS_Store"
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.astromeric.app.widget
+        DEVELOPMENT_TEAM: "8L5LTN9LMB"
+        CODE_SIGN_ENTITLEMENTS: AstroWidget/AstroWidget.entitlements
+        INFOPLIST_FILE: AstroWidget/Info.plist
+        SWIFT_VERSION: "5.9"
+        GENERATE_INFOPLIST_FILE: NO
+        SKIP_INSTALL: YES
+        LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks"
+    entitlements:
+      path: AstroWidget/AstroWidget.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.astromeric.shared
+
+  AstroNumericTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: AstroNumericTests
+    dependencies:
+      - target: AstroNumeric
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.astromeric.app.tests
+
+  AstroNumericUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: AstroNumericUITests
+    dependencies:
+      - target: AstroNumeric
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.astromeric.app.uitests
+
+schemes:
+  AstroNumeric:
+    build:
+      targets:
+        AstroNumeric: all
+        AstroWidget: all
+        AstroNumericTests: [test]
+        AstroNumericUITests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - AstroNumericTests
+        - AstroNumericUITests
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release

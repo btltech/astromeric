@@ -3,7 +3,6 @@
 import uuid
 
 from fastapi import Request
-from starlette.middleware.base import BaseHTTPMiddleware
 
 
 async def request_id_middleware(request: Request, call_next):

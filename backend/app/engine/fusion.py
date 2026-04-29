@@ -1,8 +1,9 @@
 import hashlib
 import json
 import os
-from functools import lru_cache
+from datetime import datetime, timezone
 from typing import Any, Dict, List
+
 from app.interpretation.translations import get_translation
 
 try:
@@ -195,6 +196,17 @@ REDIS_URL = os.getenv("REDIS_URL")
 FUSION_CACHE_TTL = int(os.getenv("FUSION_CACHE_TTL", "86400"))
 _redis_client = None
 
+
+def _seconds_until_midnight() -> int:
+    """Returns seconds remaining until UTC midnight — used to expire daily caches at day boundary."""
+    now = datetime.now(timezone.utc)
+    next_midnight = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    from datetime import timedelta
+
+    next_midnight += timedelta(days=1)
+    return max(60, int((next_midnight - now).total_seconds()))
+
+
 LUCKY_NUMBERS_POOL = [1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 22, 33, 12, 15, 18, 21, 24, 27, 30]
 LUCKY_COLORS_POOL = [
     "#FF5252",
@@ -248,10 +260,53 @@ def generate_deterministic_index(seed: str, pool_size: int) -> int:
     return hash_int % pool_size
 
 
-def compute_rising_sign(time_of_birth: str) -> str:
-    """Approximate rising sign based on hour bucket (placeholder for real astro)."""
+def compute_rising_sign(
+    time_of_birth: str,
+    dob: str = None,
+    latitude: float = None,
+    longitude: float = None,
+) -> str:
+    """Compute the true Ascendant (rising sign) using the flatlib ephemeris.
+
+    Requires birth time, date, latitude and longitude for an accurate result.
+    Falls back to a rough hour-bucket estimate when flatlib is unavailable or
+    location data is missing — this fallback is clearly imprecise (±1 sign) and
+    should only trigger for users who have not provided birth location.
+    """
+    # --- Attempt real calculation via flatlib ---
     try:
-        # Expect HH:MM or HH:MM:SS
+        if dob and latitude is not None and longitude is not None and time_of_birth:
+            from flatlib import const as fl_const
+            from flatlib.chart import Chart as FLChart
+            from flatlib.datetime import Datetime as FLDatetime
+            from flatlib.geopos import GeoPos
+
+            # Parse date
+            parts = dob.split("-")
+            year, month, day = int(parts[0]), int(parts[1]), int(parts[2])
+
+            # Parse time — accept HH:MM or HH:MM:SS
+            t_parts = time_of_birth.split(":")
+            hour = int(t_parts[0])
+            minute = int(t_parts[1]) if len(t_parts) > 1 else 0
+
+            # flatlib uses "+HH:MM" UTC offset; assume UTC when we don't have tz
+            fl_dt = FLDatetime(
+                f"{year}/{month:02d}/{day:02d}", f"{hour:02d}:{minute:02d}", "+00:00"
+            )
+            fl_pos = GeoPos(str(latitude), str(longitude))
+            fl_chart = FLChart(fl_dt, fl_pos)
+
+            # House 1 cusp = Ascendant
+            asc = fl_chart.get(fl_const.ASC)
+            return asc.sign
+    except Exception:
+        pass  # Fall through to stub
+
+    # --- Stub fallback (hour-bucket approximation) ---
+    # This is intentionally imprecise — it only activates when flatlib fails or
+    # birth location is unavailable. It is NOT presented as accurate.
+    try:
         hour = int(time_of_birth.split(":")[0])
         bucket = (hour // 2) % 12
         return RISING_BY_HOUR[bucket]
@@ -277,7 +332,7 @@ def get_localized_pool(pool_name: str, default_pool: List[str], lang: str) -> Li
     """Get localized pool content."""
     if lang == "en":
         return default_pool
-    
+
     localized_pool = []
     for i, item in enumerate(default_pool):
         key = f"fusion_{pool_name}_{i}"
@@ -293,11 +348,19 @@ def fuse_prediction(
     scope: str = "daily",
     time_of_birth: str = None,
     place_of_birth: str = None,
+    latitude: float = None,
+    longitude: float = None,
     lang: str = "en",
 ) -> Dict[str, Any]:
-    """Public fused prediction with optional Redis caching + in-memory LRU."""
+    """Public fused prediction with optional Redis caching.
+
+    Daily scope TTL expires at UTC midnight so each day's reading is fresh.
+    Weekly/monthly scope use the configured FUSION_CACHE_TTL.
+    """
     cache_client = _get_redis_client()
-    cache_key = _fusion_cache_key(name, dob, date, scope, time_of_birth, place_of_birth, lang)
+    cache_key = _fusion_cache_key(
+        name, dob, date, scope, time_of_birth, place_of_birth, lang
+    )
     if cache_client:
         cached = cache_client.get(cache_key)
         if cached:
@@ -306,13 +369,17 @@ def fuse_prediction(
             except Exception:
                 cache_client.delete(cache_key)
 
-    result = _fuse_prediction(name, dob, date, scope, time_of_birth, place_of_birth, lang)
+    result = _fuse_prediction(
+        name, dob, date, scope, time_of_birth, place_of_birth, latitude, longitude, lang
+    )
     if cache_client:
-        cache_client.setex(cache_key, FUSION_CACHE_TTL, json.dumps(result))
+        # Daily readings expire at midnight so tomorrow's reading is always fresh.
+        # Weekly/monthly readings use the configured TTL.
+        ttl = _seconds_until_midnight() if scope == "daily" else FUSION_CACHE_TTL
+        cache_client.setex(cache_key, ttl, json.dumps(result))
     return result
 
 
-@lru_cache(maxsize=4096)
 def _fuse_prediction(
     name: str,
     dob: str,
@@ -320,12 +387,14 @@ def _fuse_prediction(
     scope: str,
     time_of_birth: str = None,
     place_of_birth: str = None,
+    latitude: float = None,
+    longitude: float = None,
     lang: str = "en",
 ) -> Dict[str, Any]:
     """Internal fusion logic for scopes and tracks."""
     sign = get_zodiac_sign(dob)
     element = get_element(sign)
-    
+
     # Localize element for display
     element_display = element
     if lang != "en":
@@ -344,7 +413,7 @@ def _fuse_prediction(
     # TL;DR summary
     scope_summaries = SCOPE_SUMMARIES.get(scope, SCOPE_SUMMARIES["daily"])
     scope_summaries = get_localized_pool(f"scope_{scope}", scope_summaries, lang)
-    
+
     tldr_idx = generate_deterministic_index(seed + "tldr", len(scope_summaries))
     tldr = scope_summaries[tldr_idx].format(
         sign=sign, life_path=life_path, element=element_display
@@ -355,7 +424,7 @@ def _fuse_prediction(
     ratings = {}
     for track_name, track_data in TRACK_POOLS.items():
         pools = get_localized_pool(f"track_{track_name}", track_data["pools"], lang)
-        
+
         traits_key = f"{track_name}_traits"
         if track_name in sign_traits:
             traits = sign_traits[track_name][
@@ -383,19 +452,28 @@ def _fuse_prediction(
     lucky_numbers = _pick_unique(LUCKY_NUMBERS_POOL, seed, num_count, "num")
     color_count = 1 + generate_deterministic_index(seed + "color_count", 3)
     lucky_colors = _pick_unique(LUCKY_COLORS_POOL, seed, color_count, "color")
-    
+
     theme_words_pool = get_localized_pool("theme_words", THEME_WORDS, lang)
     theme_word = theme_words_pool[
         generate_deterministic_index(seed + "theme", len(theme_words_pool))
     ]
-    
+
     advice_pool = get_localized_pool("advice", ADVICE_POOLS, lang)
     advice = advice_pool[
         generate_deterministic_index(seed + "advice", len(advice_pool))
     ]
 
-    # Rising and place
-    rising_sign = compute_rising_sign(time_of_birth) if time_of_birth else ""
+    # Rising sign — use real flatlib Ascendant when birth time + location are available
+    rising_sign = (
+        compute_rising_sign(
+            time_of_birth,
+            dob=dob,
+            latitude=latitude,
+            longitude=longitude,
+        )
+        if time_of_birth
+        else ""
+    )
     place_vibe = None
     if place_of_birth:
         place_vibes_pool = get_localized_pool("place_vibes", PLACE_VIBES, lang)
@@ -408,7 +486,7 @@ def _fuse_prediction(
     affirmation = affirmation_pool[
         generate_deterministic_index(seed + "affirmation", len(affirmation_pool))
     ]
-    
+
     daily_actions_pool = get_localized_pool("daily_actions", DAILY_ACTIONS, lang)
     daily_action = daily_actions_pool[
         generate_deterministic_index(seed + "action", len(daily_actions_pool))

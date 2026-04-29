@@ -4,14 +4,13 @@ Standardized request/response format for daily readings, tarot, moon phases, and
 """
 
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
-from ..engine.timing_advisor import ACTIVITY_PROFILES, get_timing_advice
-from ..exceptions import InvalidDateError, StructuredLogger
+from ..exceptions import StructuredLogger
 from ..schemas import ApiResponse, ProfilePayload, ResponseStatus
 
 logger = StructuredLogger(__name__)
@@ -126,33 +125,18 @@ class MorningBriefResponse(BaseModel):
     vibe: str
 
 
-def _profile_timezone_name(profile: Optional[ProfilePayload]) -> str:
-    tz_name = profile.timezone if profile and profile.timezone else "UTC"
-    return tz_name or "UTC"
-
-
-def _profile_zone(profile: Optional[ProfilePayload]) -> ZoneInfo:
-    try:
-        return ZoneInfo(_profile_timezone_name(profile))
-    except Exception:
-        return ZoneInfo("UTC")
-
-
 def _resolve_profile_now(
     profile: Optional[ProfilePayload],
-    *,
     now_utc: Optional[datetime] = None,
 ) -> tuple[datetime, datetime]:
-    current_utc = (
-        now_utc.astimezone(timezone.utc) if now_utc else datetime.now(timezone.utc)
-    )
-    return current_utc, current_utc.astimezone(_profile_zone(profile))
-
-
-def _profile_day_start(reference_date, profile: Optional[ProfilePayload]) -> datetime:
-    return datetime.combine(
-        reference_date, datetime.min.time(), tzinfo=_profile_zone(profile)
-    )
+    """Return `(utc_now, profile_local_now)` using the profile timezone when available."""
+    utc_now = now_utc or datetime.now(timezone.utc)
+    timezone_name = profile.timezone if profile and profile.timezone else "UTC"
+    try:
+        local_now = utc_now.astimezone(ZoneInfo(timezone_name))
+    except Exception:
+        local_now = utc_now
+    return utc_now, local_now
 
 
 # ============================================================================
@@ -175,17 +159,15 @@ async def get_daily_do_dont(
     request_id = request.state.request_id
     try:
         from ..chart_service import build_natal_chart, build_transit_chart
-        from ..engine.astrology import get_zodiac_sign
         from ..engine.do_dont import build_do_dont
-        from ..engine.moon_phases import calculate_moon_phase, estimate_moon_sign
-        from ..engine.numerology import calculate_life_path_number
+        from ..engine.moon_phases import calculate_moon_phase
         from ..engine.numerology_extended import (
             calculate_personal_day,
             calculate_personal_month,
             calculate_personal_year,
         )
 
-        now_utc, local_now = _resolve_profile_now(profile)
+        now, profile_now = _resolve_profile_now(profile)
         dob = profile.date_of_birth
 
         # Build charts for transit analysis
@@ -201,7 +183,7 @@ async def get_daily_do_dont(
         natal_chart, transit_chart = None, None
         try:
             natal_chart = build_natal_chart(profile_dict)
-            transit_chart = build_transit_chart(profile_dict, now_utc)
+            transit_chart = build_transit_chart(profile_dict, now)
         except Exception as chart_err:
             logger.warning(
                 f"Chart build failed, using text-only do/dont: {chart_err}",
@@ -209,13 +191,13 @@ async def get_daily_do_dont(
             )
 
         # Moon phase
-        moon_res = calculate_moon_phase(now_utc)
+        moon_res = calculate_moon_phase(now)
         moon_phase = moon_res.get("phase_name", "Waxing Crescent")
 
         # Personal day
-        py = calculate_personal_year(dob, local_now.year)
-        pm = calculate_personal_month(py, local_now.month)
-        pd = calculate_personal_day(pm, local_now.day)
+        py = calculate_personal_year(dob, profile_now.year)
+        pm = calculate_personal_month(py, profile_now.month)
+        pd = calculate_personal_day(pm, profile_now.day)
 
         # Retrograde checks
         mercury_rx = False
@@ -223,12 +205,7 @@ async def get_daily_do_dont(
         try:
             import swisseph as swe
 
-            jd = swe.julday(
-                now_utc.year,
-                now_utc.month,
-                now_utc.day,
-                now_utc.hour + now_utc.minute / 60.0,
-            )
+            jd = swe.julday(now.year, now.month, now.day, now.hour + now.minute / 60.0)
             merc_res, _ = swe.calc_ut(jd, swe.MERCURY, 2)
             mercury_rx = merc_res[3] < 0
             venus_res, _ = swe.calc_ut(jd, swe.VENUS, 2)
@@ -273,28 +250,26 @@ async def get_morning_brief(
     """
     request_id = request.state.request_id
     try:
-        from ..engine.astrology import get_zodiac_sign
         from ..engine.moon_phases import calculate_moon_phase, estimate_moon_sign
-        from ..engine.numerology import calculate_life_path_number
         from ..engine.numerology_extended import (
             calculate_personal_day,
             calculate_personal_month,
             calculate_personal_year,
         )
 
-        now_utc, local_now = _resolve_profile_now(profile)
+        now, profile_now = _resolve_profile_now(profile)
         dob = profile.date_of_birth
 
         # Moon
-        moon_res = calculate_moon_phase(now_utc)
+        moon_res = calculate_moon_phase(now)
         moon_phase = moon_res.get("phase_name", "Waxing Crescent")
-        moon_sign = estimate_moon_sign(now_utc)
+        moon_sign = estimate_moon_sign(now)
         moon_illumination = int(moon_res.get("illumination", 50))
 
         # Personal day
-        py = calculate_personal_year(dob, local_now.year)
-        pm = calculate_personal_month(py, local_now.month)
-        pd = calculate_personal_day(pm, local_now.day)
+        py = calculate_personal_year(dob, profile_now.year)
+        pm = calculate_personal_month(py, profile_now.month)
+        pd = calculate_personal_day(pm, profile_now.day)
 
         _pd_energy = {
             1: "leadership energy",
@@ -313,7 +288,7 @@ async def get_morning_brief(
         import hashlib
 
         seed_val = int.from_bytes(
-            hashlib.sha256(f"{dob}-{local_now.date().isoformat()}".encode()).digest()[
+            hashlib.sha256(f"{dob}-{profile_now.date().isoformat()}".encode()).digest()[
                 :4
             ],
             "big",
@@ -328,7 +303,7 @@ async def get_morning_brief(
         vibe = vibe_options[seed_val % len(vibe_options)]
 
         # Hour-based greeting
-        hour = local_now.hour
+        hour = profile_now.hour
         if hour < 12:
             greeting_prefix = "Good morning"
         elif hour < 17:
@@ -355,7 +330,7 @@ async def get_morning_brief(
         return ApiResponse(
             status=ResponseStatus.SUCCESS,
             data=MorningBriefResponse(
-                date=now_utc,
+                date=now,
                 greeting=greeting,
                 bullets=bullets,
                 moon_phase=moon_phase,
@@ -628,7 +603,8 @@ async def get_daily_reading(
         dob = profile.date_of_birth if profile else "1990-01-01"
 
         # Use date if provided in payload
-        reference_date = _resolve_profile_now(profile)[1].date()
+        _, profile_now = _resolve_profile_now(profile)
+        reference_date = profile_now.date()
         if profile and profile.date:
             try:
                 reference_date = datetime.strptime(profile.date, "%Y-%m-%d").date()
@@ -660,7 +636,9 @@ async def get_daily_reading(
         longitude = profile.longitude if profile else 0.0
         tz = profile.timezone if profile and profile.timezone else "UTC"
         power_hours_raw = get_power_hours(
-            _profile_day_start(reference_date, profile),
+            datetime.combine(reference_date, datetime.min.time()).replace(
+                tzinfo=timezone.utc
+            ),
             latitude=latitude,
             longitude=longitude,
             timezone=tz,
@@ -687,7 +665,9 @@ async def get_daily_reading(
                 lucky_color = first
 
         reading = SimplifiedDailyData(
-            date=_profile_day_start(reference_date, profile).astimezone(timezone.utc),
+            date=datetime.combine(reference_date, datetime.min.time()).replace(
+                tzinfo=timezone.utc
+            ),
             affirmation=res["affirmation"]["text"],
             advice=res["mood_forecast"]["description"],
             lucky_numbers=res["lucky_numbers"],
@@ -732,8 +712,6 @@ async def get_weekly_vibe_forecast(
     try:
         from datetime import timedelta
 
-        from ..engine.astrology import get_element, get_zodiac_sign
-        from ..engine.numerology import calculate_life_path_number
         from ..engine.numerology_extended import (
             calculate_personal_day,
             calculate_personal_month,
@@ -778,12 +756,13 @@ async def get_weekly_vibe_forecast(
             "Reflective": "Conserve energy. Best for inner work.",
         }
 
-        _, today_local = _resolve_profile_now(profile)
+        _, profile_now = _resolve_profile_now(profile)
+        today = profile_now.replace(hour=12, minute=0, second=0, microsecond=0)
         days_forecast = []
 
         for i in range(7):
-            forecast_day = today_local.date() + timedelta(days=i)
-            date_str = forecast_day.isoformat()
+            forecast_date = today + timedelta(days=i)
+            date_str = forecast_date.date().isoformat()
 
             try:
                 # Real forecast using transit aspects + numerology cycles
@@ -804,10 +783,10 @@ async def get_weekly_vibe_forecast(
                 # Fallback: deterministic score from personal-day numerology (always unique per user+date)
                 try:
                     py = calculate_personal_year(
-                        profile.date_of_birth, forecast_day.year
+                        profile.date_of_birth, forecast_date.year
                     )
-                    pm = calculate_personal_month(py, forecast_day.month)
-                    pd = calculate_personal_day(pm, forecast_day.day)
+                    pm = calculate_personal_month(py, forecast_date.month)
+                    pd = calculate_personal_day(pm, forecast_date.day)
                     # Personal day 1,3,5,9 = higher energy; 4,7 = lower — map to 35-85 range
                     pd_boost = {
                         1: 30,
@@ -851,202 +830,4 @@ async def get_weekly_vibe_forecast(
         )
         raise HTTPException(
             status_code=500, detail={"code": "FORECAST_ERROR", "message": str(e)}
-        )
-
-
-# =============================================================================
-# NEW v2 GUIDANCE ENDPOINTS — Astrology-informed symbolic guidance
-# =============================================================================
-
-
-# ── Response models ──────────────────────────────────────────────────────────
-
-
-class ReasonFactor(BaseModel):
-    type: str
-    value: object
-
-
-class GuidanceFeature(BaseModel):
-    """Standard output contract for all five guidance features."""
-
-    headline: str
-    selection: object
-    why_it_matches: str
-    how_to_use: str
-    basis: str
-    trust_level: str
-    reason_factors: List[ReasonFactor]
-
-
-class BirthstoneStone(BaseModel):
-    name: str
-    emoji: Optional[str] = None
-    why_chosen: str
-    when_to_use: str
-    basis: str
-
-
-class BirthstoneGuidance(GuidanceFeature):
-    trust_note: Optional[str] = None
-
-
-class TarotGuidance(GuidanceFeature):
-    keywords: Optional[List[str]] = None
-    message: Optional[str] = None
-    honesty_note: Optional[str] = None
-    reflect_on: Optional[str] = None
-    avoid: Optional[str] = None
-    transit_theme: Optional[str] = None
-
-
-class AllGuidanceResponse(BaseModel):
-    """All five astrology-informed guidance features."""
-
-    date: str
-    lucky_number: object
-    lucky_color: object
-    affirmation: object
-    tarot: object
-    birthstone: object
-    context_summary: object
-
-
-@router.post("/guidance", response_model=ApiResponse[AllGuidanceResponse])
-async def get_all_guidance(
-    request: Request,
-    profile: ProfilePayload,
-) -> ApiResponse[AllGuidanceResponse]:
-    """
-    Get all five astrology-informed symbolic guidance features in one call.
-
-    Returns Lucky Number, Lucky Color, Affirmation, Tarot, and Birthstone —
-    all derived from a single shared AstroContext for consistency.
-
-    ## Features
-    - **Lucky Number**: 3-tier numerology (core, support, resonance) with explanation
-    - **Lucky Color**: Day ruler × element × Moon sign palette with why-today text
-    - **Affirmation**: Structured template from element + Moon mood + personal day
-    - **Tarot**: Deterministic card draw + astro-informed interpretation layer
-    - **Birthstone**: Chart-informed ranking (ruler → natal Moon → element → life path)
-
-    ## Trust Rules
-    - `birth_time_trusted = false` disables Ascendant/chart-ruler logic
-    - `location_trusted = false` disables local-sky timing claims
-    """
-    request_id = request.state.request_id
-    try:
-        from datetime import date as date_t
-
-        from ..engine.astro_context import build_astro_context
-        from ..engine.daily_features import get_all_guidance as _all_guidance
-
-        # Resolve reference date (use profile.date if provided, else today in profile tz)
-        _, local_now = _resolve_profile_now(profile)
-        reference_date: date_t = local_now.date()
-        if profile.date:
-            try:
-                reference_date = date_t.fromisoformat(profile.date)
-            except ValueError:
-                pass
-
-        # Build shared context — single source of truth
-        context = build_astro_context(profile, reference_date)
-
-        # Generate all five features
-        guidance = _all_guidance(context)
-
-        # Build a summary of context inputs visible to the client
-        context_summary = {
-            "reference_date": str(reference_date),
-            "natal_sun": context["natal_sun"],
-            "dominant_element": context["dominant_element"],
-            "moon_sign": context["moon_sign"],
-            "moon_sign_basis": context["moon_sign_basis"],
-            "moon_phase": context["moon_phase"],
-            "day_ruler": context["day_ruler"],
-            "personal_day": context["personal_day"],
-            "personal_month": context["personal_month"],
-            "personal_year": context["personal_year"],
-            "life_path": context["life_path"],
-            "birth_time_trusted": context["birth_time_trusted"],
-            "location_trusted": context["location_trusted"],
-            "usable_inputs": context["usable_inputs"],
-        }
-
-        return ApiResponse(
-            status=ResponseStatus.SUCCESS,
-            data=AllGuidanceResponse(
-                date=str(reference_date),
-                lucky_number=guidance["lucky_number"],
-                lucky_color=guidance["lucky_color"],
-                affirmation=guidance["affirmation"],
-                tarot=guidance["tarot"],
-                birthstone=guidance["birthstone"],
-                context_summary=context_summary,
-            ),
-            message="Astrology-informed guidance generated",
-            request_id=request_id,
-        )
-    except Exception as e:
-        logger.error(
-            f"Guidance generation error: {e}",
-            request_id=request_id,
-            error_type=type(e).__name__,
-        )
-        raise HTTPException(
-            status_code=500,
-            detail={"code": "GUIDANCE_ERROR", "message": str(e)},
-        )
-
-
-@router.post("/birthstone", response_model=ApiResponse[object])
-async def get_birthstone(
-    request: Request,
-    profile: ProfilePayload,
-) -> ApiResponse[object]:
-    """
-    Get chart-informed birthstone guidance.
-
-    Returns primary stone (stable, chart-based) and support stone (today's emphasis).
-
-    ## Priority
-    1. Chart ruler (requires trusted birth time)
-    2. Natal Moon sign
-    3. Dominant element
-    4. Life path number
-    """
-    request_id = request.state.request_id
-    try:
-        from datetime import date as date_t
-
-        from ..engine.astro_context import build_astro_context
-        from ..engine.daily_features import get_birthstone_guidance
-
-        _, local_now = _resolve_profile_now(profile)
-        reference_date = local_now.date()
-        if profile.date:
-            try:
-                reference_date = date_t.fromisoformat(profile.date)
-            except ValueError:
-                pass
-
-        context = build_astro_context(profile, reference_date)
-        result = get_birthstone_guidance(context)
-
-        return ApiResponse(
-            status=ResponseStatus.SUCCESS,
-            data=result,
-            message="Birthstone guidance generated",
-            request_id=request_id,
-        )
-    except Exception as e:
-        logger.error(
-            f"Birthstone error: {e}",
-            request_id=request_id,
-            error_type=type(e).__name__,
-        )
-        raise HTTPException(
-            status_code=500,
-            detail={"code": "BIRTHSTONE_ERROR", "message": str(e)},
         )

@@ -16,6 +16,14 @@ struct ProgressionsView: View {
                 
                 ScrollView {
                     VStack(spacing: 16) {
+                        PremiumHeroCard(
+                            eyebrow: "hero.progressions.eyebrow".localized,
+                            title: "hero.progressions.title".localized,
+                            bodyText: "hero.progressions.body".localized,
+                            accent: [Color(hex: "181f39"), Color(hex: "3e5ebf"), Color(hex: "8950b8")],
+                            chips: ["hero.progressions.chip.0".localized, "hero.progressions.chip.1".localized, "hero.progressions.chip.2".localized]
+                        )
+
                         // Warn when birth time is unknown — progressions depend on exact time
                         if store.activeProfile?.dataQuality != .full {
                             DataQualityBanner(
@@ -31,6 +39,11 @@ struct ProgressionsView: View {
                                 Task { await vm.load(profile: store.activeProfile, targetDate: targetDate) }
                             }
                             .padding(.horizontal)
+
+                        PremiumSectionHeader(
+                title: "section.progressions.0.title".localized,
+                subtitle: "section.progressions.0.subtitle".localized
+            )
                         
                         if vm.isLoading {
                             ProgressView("Calculating progressions...")
@@ -38,9 +51,9 @@ struct ProgressionsView: View {
                         } else if let chart = vm.chart {
                             CardView {
                                 VStack(alignment: .leading, spacing: 8) {
-                                    Text("Progressed Chart")
+                                    Text("ui.progressions.0".localized)
                                         .font(.headline)
-                                    Text("Progressed Date: \(chart.metadata.progressedDate)")
+                                    Text(String(format: "fmt.progressions.0".localized, "\(chart.metadata.progressedDate)"))
                                         .font(.subtext)
                                         .foregroundStyle(Color.textSecondary)
                                 }
@@ -50,7 +63,7 @@ struct ProgressionsView: View {
                             if !insights.isEmpty {
                                 CardView {
                                     VStack(alignment: .leading, spacing: 6) {
-                                        Text("Interpretation")
+                                        Text("ui.progressions.1".localized)
                                             .font(.headline)
                                         ForEach(insights, id: \.self) { item in
                                             Text("• \(item)")
@@ -75,16 +88,17 @@ struct ProgressionsView: View {
                             }
                         } else {
                             CardView {
-                                Text("Select a profile to view progressions.")
+                                Text("ui.progressions.2".localized)
                                     .font(.subtext)
                                     .foregroundStyle(Color.textSecondary)
                             }
                         }
                     }
                     .padding()
+                    .readableContainer()
                 }
             }
-            .navigationTitle("Progressions")
+            .navigationTitle("screen.progressions".localized)
             .navigationBarTitleDisplayMode(.inline)
             .task(id: store.activeProfile?.id) {
                 await vm.load(profile: store.activeProfile, targetDate: targetDate)

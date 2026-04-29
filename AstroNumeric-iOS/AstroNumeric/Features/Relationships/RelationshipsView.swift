@@ -17,6 +17,16 @@ struct RelationshipsView: View {
                 
                 ScrollView {
                     VStack(spacing: 20) {
+                        PremiumHeroCard(
+                            eyebrow: "hero.relationships.eyebrow".localized,
+                            title: "hero.relationships.title".localized,
+                            bodyText: "hero.relationships.body".localized,
+                            accent: [Color(hex: "301230"), Color(hex: "9a3f78"), Color(hex: "5b46b7")],
+                            chips: ["hero.relationships.chip.0".localized, "hero.relationships.chip.1".localized, "hero.relationships.chip.2".localized]
+                        )
+
+                        storageCard
+
                         // Stats header
                         if !viewModel.savedRelationships.isEmpty {
                             statsCard
@@ -26,14 +36,22 @@ struct RelationshipsView: View {
                         if !viewModel.savedRelationships.isEmpty {
                             filterChips
                         }
+
+                        if !viewModel.savedRelationships.isEmpty {
+                            PremiumSectionHeader(
+                title: "section.relationships.0.title".localized,
+                subtitle: "section.relationships.0.subtitle".localized
+            )
+                        }
                         
                         // Relationships list
                         relationshipsList
                     }
                     .padding()
+                    .readableContainer()
                 }
             }
-            .navigationTitle("Relationships")
+            .navigationTitle("screen.relationships".localized)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -44,6 +62,9 @@ struct RelationshipsView: View {
                             .font(.title2)
                             .foregroundStyle(.purple)
                     }
+                    .buttonStyle(AccessibleButtonStyle())
+                    .accessibilityLabel("Add relationship")
+                    .accessibilityHint("Opens compatibility to create a new relationship")
                 }
             }
             .sheet(item: $selectedRelationship) { relationship in
@@ -56,13 +77,29 @@ struct RelationshipsView: View {
     }
     
     // MARK: - Stats Card
-    
+
+    private var storageCard: some View {
+        CardView {
+            VStack(alignment: .leading, spacing: 10) {
+                Label("ui.relationships.13".localized, systemImage: "internaldrive.fill")
+                    .font(.headline)
+                    .foregroundStyle(.orange)
+                Text("ui.relationships.0".localized)
+                    .font(.subheadline)
+                    .foregroundStyle(Color.textSecondary)
+                Text("ui.relationships.1".localized)
+                    .font(.subheadline)
+                    .foregroundStyle(Color.textSecondary)
+            }
+        }
+    }
+
     private var statsCard: some View {
         HStack(spacing: 16) {
             VStack(spacing: 4) {
                 Text("\(viewModel.savedRelationships.count)")
                     .font(.title.bold())
-                Text("Saved")
+                Text("ui.relationships.2".localized)
                     .font(.label)
                     .foregroundStyle(Color.textSecondary)
             }
@@ -75,7 +112,7 @@ struct RelationshipsView: View {
                 Text("\(Int(viewModel.averageCompatibility))%")
                     .font(.title.bold())
                     .foregroundStyle(.purple)
-                Text("Avg Score")
+                Text("ui.relationships.3".localized)
                     .font(.label)
                     .foregroundStyle(Color.textSecondary)
             }
@@ -87,7 +124,7 @@ struct RelationshipsView: View {
             VStack(spacing: 4) {
                 Text(highestScoreEmoji)
                     .font(.title)
-                Text("Best Match")
+                Text("ui.relationships.4".localized)
                     .font(.label)
                     .foregroundStyle(Color.textSecondary)
             }
@@ -97,6 +134,10 @@ struct RelationshipsView: View {
         .background(
             RoundedRectangle(cornerRadius: 16)
                 .fill(.ultraThinMaterial)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                )
         )
     }
     
@@ -166,20 +207,20 @@ struct RelationshipsView: View {
                         Button {
                             selectedRelationship = relationship
                         } label: {
-                            Label("View Details", systemImage: "info.circle")
+                            Label("ui.relationships.14".localized, systemImage: "info.circle")
                         }
                         Divider()
                         Button(role: .destructive) {
                             viewModel.deleteRelationship(relationship)
                         } label: {
-                            Label("Delete", systemImage: "trash")
+                            Label("ui.relationships.15".localized, systemImage: "trash")
                         }
                     }
                     .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                         Button(role: .destructive) {
                             viewModel.deleteRelationship(relationship)
                         } label: {
-                            Label("Delete", systemImage: "trash")
+                            Label("ui.relationships.16".localized, systemImage: "trash")
                         }
                     }
                 }
@@ -198,13 +239,13 @@ struct RelationshipsView: View {
         CardView {
             VStack(spacing: 16) {
                 Image(systemName: "heart.circle")
-                    .font(.system(size: 48))
+                    .font(.system(.largeTitle))
                     .foregroundStyle(Color.textSecondary)
                 
-                Text("No relationships saved")
+                Text("ui.relationships.5".localized)
                     .font(.headline)
-                
-                Text("Calculate compatibility and save relationships to track them here")
+
+                Text("ui.relationships.6".localized)
                     .font(.subheadline)
                     .foregroundStyle(Color.textSecondary)
                     .multilineTextAlignment(.center)
@@ -214,7 +255,7 @@ struct RelationshipsView: View {
                 } label: {
                     HStack {
                         Image(systemName: "heart.fill")
-                        Text("Check Compatibility")
+                        Text("ui.relationships.7".localized)
                     }
                     .font(.subheadline.bold())
                     .foregroundStyle(.white)
@@ -232,6 +273,7 @@ struct RelationshipsView: View {
 // MARK: - Relationship Card
 
 struct RelationshipCard: View {
+    @Environment(AppStore.self) private var store
     let relationship: SavedRelationship
     let onTap: () -> Void
     
@@ -254,7 +296,7 @@ struct RelationshipCard: View {
                 
                 // Names
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("\(relationship.personAName) & \(relationship.personBName)")
+                    Text(relationship.displayPair(hideSensitive: store.hideSensitiveDetailsEnabled))
                         .font(.subheadline.bold())
                         .foregroundStyle(.primary)
                     
@@ -311,6 +353,7 @@ struct RelationshipCard: View {
 // MARK: - Relationship Detail Sheet
 
 struct RelationshipDetailSheet: View {
+    @Environment(AppStore.self) private var store
     let relationship: SavedRelationship
     @Bindable var viewModel: RelationshipsVM
     @Environment(\.dismiss) private var dismiss
@@ -346,11 +389,11 @@ struct RelationshipDetailSheet: View {
                     .padding()
                 }
             }
-            .navigationTitle("Details")
+            .navigationTitle("screen.details".localized)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") {
+                    Button("action.done".localized) {
                         dismiss()
                     }
                 }
@@ -374,9 +417,9 @@ struct RelationshipDetailSheet: View {
                 VStack {
                     Text("👤")
                         .font(.title)
-                    Text(relationship.personAName)
+                    Text(relationship.displayPersonAName(hideSensitive: store.hideSensitiveDetailsEnabled))
                         .font(.subheadline.bold())
-                    Text(relationship.personADOB)
+                    Text(relationship.displayPersonADOB(hideSensitive: store.hideSensitiveDetailsEnabled))
                         .font(.meta)
                         .foregroundStyle(Color.textSecondary)
                 }
@@ -387,20 +430,29 @@ struct RelationshipDetailSheet: View {
                 VStack {
                     Text("👤")
                         .font(.title)
-                    Text(relationship.personBName)
+                    Text(relationship.displayPersonBName(hideSensitive: store.hideSensitiveDetailsEnabled))
                         .font(.subheadline.bold())
-                    Text(relationship.personBDOB)
+                    Text(relationship.displayPersonBDOB(hideSensitive: store.hideSensitiveDetailsEnabled))
                         .font(.meta)
                         .foregroundStyle(Color.textSecondary)
                 }
             }
             
-            Text(relationship.type.displayName)
-                .font(.caption)
-                .foregroundStyle(relationship.type.color)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 4)
-                .background(Capsule().fill(relationship.type.color.opacity(0.2)))
+            HStack(spacing: 8) {
+                Text("ui.relationships.8".localized)
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 4)
+                    .background(Capsule().fill(.orange.opacity(0.16)))
+
+                Text(relationship.type.displayName)
+                    .font(.caption)
+                    .foregroundStyle(relationship.type.color)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 4)
+                    .background(Capsule().fill(relationship.type.color.opacity(0.2)))
+            }
         }
     }
     
@@ -423,7 +475,7 @@ struct RelationshipDetailSheet: View {
                 Text(relationship.formattedScore)
                     .font(.title.bold())
                     .foregroundStyle(relationship.scoreColor)
-                Text("Overall")
+                Text("ui.relationships.9".localized)
                     .font(.label)
                     .foregroundStyle(Color.textSecondary)
             }
@@ -433,7 +485,7 @@ struct RelationshipDetailSheet: View {
     private var categoriesSection: some View {
         CardView {
             VStack(alignment: .leading, spacing: 12) {
-                Text("Categories")
+                Text("ui.relationships.10".localized)
                     .font(.headline)
                 
                 ForEach(relationship.categories, id: \.name) { category in
@@ -456,7 +508,7 @@ struct RelationshipDetailSheet: View {
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
                     Text("💪")
-                    Text("Strengths")
+                    Text("ui.relationships.11".localized)
                         .font(.headline)
                 }
                 
@@ -478,7 +530,7 @@ struct RelationshipDetailSheet: View {
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
                     Text("⚡")
-                    Text("Challenges")
+                    Text("ui.relationships.12".localized)
                         .font(.headline)
                 }
                 

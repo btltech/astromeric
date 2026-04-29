@@ -7,14 +7,17 @@ Checks for major transits hitting natal chart positions.
 
 from __future__ import annotations
 
+import logging
 import os
 import smtplib
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from typing import Any, Dict, List, Optional
 
 from .chart_service import build_natal_chart, build_transit_chart
+
+logger = logging.getLogger(__name__)
 
 # Aspect orbs for transit alerts (tighter than natal)
 TRANSIT_ORBS = {
@@ -270,6 +273,163 @@ def check_daily_transits(profile: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
+def find_future_exact_transits(
+    profile: Dict[str, Any],
+    days_ahead: int = 7,
+) -> List[Dict[str, Any]]:
+    """
+    Find exact future transit-to-natal aspects within the next N days.
+
+    Mirrors the iOS PredictiveScanner behavior closely enough for Android to
+    schedule precise local alarms without shipping an ephemeris engine in-app.
+    """
+    import swisseph as swe
+
+    natal = build_natal_chart(profile)
+    natal_planets = {
+        planet["name"]: get_absolute_degree(planet["sign"], planet["degree"])
+        for planet in natal.get("planets", [])
+        if planet.get("name") in NATAL_POINTS
+    }
+
+    if not natal_planets:
+        return []
+
+    aspect_defs = [
+        ("conjunction", 0.0, "major"),
+        ("opposition", 180.0, "major"),
+        ("trine", 120.0, "major"),
+        ("square", 90.0, "major"),
+        ("sextile", 60.0, "minor"),
+    ]
+    transit_planets = [
+        (swe.MARS, "Mars"),
+        (swe.JUPITER, "Jupiter"),
+        (swe.SATURN, "Saturn"),
+        (swe.URANUS, "Uranus"),
+        (swe.NEPTUNE, "Neptune"),
+        (swe.PLUTO, "Pluto"),
+    ]
+
+    def julian_day_for(date: datetime) -> float:
+        utc_date = date.astimezone(timezone.utc)
+        hour = utc_date.hour + utc_date.minute / 60.0 + utc_date.second / 3600.0
+        return swe.julday(utc_date.year, utc_date.month, utc_date.day, hour)
+
+    def calculate_positions_at(date: datetime) -> List[Dict[str, Any]]:
+        jd = julian_day_for(date)
+        positions: List[Dict[str, Any]] = []
+        for planet_id, name in transit_planets:
+            result, _ = swe.calc_ut(jd, planet_id)
+            positions.append(
+                {"id": planet_id, "name": name, "degree": result[0] % 360.0}
+            )
+        return positions
+
+    def normalized_orb(degree1: float, degree2: float, aspect_angle: float) -> float:
+        diff = abs(degree1 - degree2)
+        if diff > 180:
+            diff = 360 - diff
+        return abs(diff - aspect_angle)
+
+    def refine_to_exact(
+        transit_planet_id: int,
+        natal_degree: float,
+        aspect_angle: float,
+        start_date: datetime,
+        hours_range: int = 24,
+    ) -> Optional[datetime]:
+        best_date = start_date
+        best_orb = 999.0
+
+        for hour_offset in range(hours_range):
+            check_date = start_date + timedelta(hours=hour_offset)
+            result, _ = swe.calc_ut(julian_day_for(check_date), transit_planet_id)
+            orb = normalized_orb(result[0] % 360.0, natal_degree, aspect_angle)
+            if orb < best_orb:
+                best_orb = orb
+                best_date = check_date
+
+        minute_start = best_date - timedelta(minutes=30)
+        for minute_offset in range(60):
+            check_date = minute_start + timedelta(minutes=minute_offset)
+            result, _ = swe.calc_ut(julian_day_for(check_date), transit_planet_id)
+            orb = normalized_orb(result[0] % 360.0, natal_degree, aspect_angle)
+            if orb < best_orb:
+                best_orb = orb
+                best_date = check_date
+
+        return best_date if best_orb < 1.0 else None
+
+    results: List[Dict[str, Any]] = []
+    now = datetime.now(timezone.utc)
+
+    for day_offset in range(days_ahead):
+        scan_date = now + timedelta(days=day_offset)
+        transit_positions = calculate_positions_at(scan_date)
+        for transit in transit_positions:
+            for natal_name, natal_degree in natal_planets.items():
+                if transit["name"] == natal_name:
+                    continue
+
+                for aspect_name, aspect_angle, significance in aspect_defs:
+                    orb = normalized_orb(transit["degree"], natal_degree, aspect_angle)
+                    if orb > 1.5:
+                        continue
+
+                    exact_date = refine_to_exact(
+                        transit_planet_id=transit["id"],
+                        natal_degree=natal_degree,
+                        aspect_angle=aspect_angle,
+                        start_date=scan_date,
+                    )
+                    if exact_date is None:
+                        continue
+
+                    is_duplicate = any(
+                        existing["transit_planet"] == transit["name"]
+                        and existing["natal_point"] == natal_name
+                        and existing["aspect"] == aspect_name
+                        and abs(
+                            datetime.fromisoformat(existing["exact_date"]).timestamp()
+                            - exact_date.timestamp()
+                        )
+                        < 86400
+                        for existing in results
+                    )
+                    if is_duplicate:
+                        continue
+
+                    next_day = exact_date + timedelta(days=1)
+                    next_day_result, _ = swe.calc_ut(
+                        julian_day_for(next_day), transit["id"]
+                    )
+                    next_day_orb = normalized_orb(
+                        next_day_result[0] % 360.0, natal_degree, aspect_angle
+                    )
+
+                    results.append(
+                        {
+                            "transit_planet": transit["name"],
+                            "natal_point": natal_name,
+                            "aspect": aspect_name,
+                            "exact_date": exact_date.isoformat(),
+                            "orb": round(orb, 2),
+                            "is_applying": next_day_orb > orb,
+                            "significance": significance,
+                            "interpretation": get_transit_interpretation(
+                                {
+                                    "transit_planet": transit["name"],
+                                    "natal_point": natal_name,
+                                    "aspect": aspect_name,
+                                }
+                            ),
+                        }
+                    )
+
+    return sorted(results, key=lambda transit: transit["exact_date"])
+
+
 def format_transit_email(transit_data: Dict[str, Any]) -> tuple[str, str]:
     """
     Format transit data as email subject and HTML body.
@@ -417,8 +577,9 @@ def is_mercury_retrograde(jd: float) -> bool:
 
 def check_global_events():
     """Check for major events like retrograde transitions."""
-    import swisseph as swe
     from datetime import datetime, timezone
+
+    import swisseph as swe
 
     from .routers.alerts import broadcast_transit_alert
 

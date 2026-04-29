@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { App } from './src/App';
 import './src/i18n'; // Initialize i18n
 import './styles.css';
+console.log('App starting...');
 
 // Unregister any service worker during local development to avoid stale caches.
 const _meta = import.meta as unknown as { env?: { DEV?: boolean } };

@@ -13,8 +13,6 @@ import os
 import sys
 from datetime import date
 
-import pytest
-
 # Make sure the app package is importable
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -314,7 +312,7 @@ class TestAffirmationGuidance:
     def test_theme_changes_with_personal_day(self):
         """Different dates → potentially different personal_day → different theme."""
         from app.engine.astro_context import build_astro_context
-        from app.engine.daily_features import _PD_THEME_V2, get_affirmation_guidance
+        from app.engine.daily_features import get_affirmation_guidance
 
         # Find two dates that produce different personal days for the same profile
         d1 = date(2024, 4, 5)

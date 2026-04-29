@@ -16,22 +16,40 @@ struct SynastryChartView: View {
                 
                 ScrollView {
                     VStack(spacing: 16) {
+                        PremiumHeroCard(
+                            eyebrow: "hero.synastryChart.eyebrow".localized,
+                            title: "hero.synastryChart.title".localized,
+                            bodyText: "hero.synastryChart.body".localized,
+                            accent: [Color(hex: "2c1530"), Color(hex: "97457c"), Color(hex: "5052ba")],
+                            chips: ["hero.synastryChart.chip.0".localized, "hero.synastryChart.chip.1".localized, "hero.synastryChart.chip.2".localized, "hero.synastryChart.chip.3".localized]
+                        )
+
                         if store.profiles.count < 2 {
                             CardView {
-                                Text("Add at least two profiles to view synastry aspects.")
+                                Text("ui.synastryChart.0".localized)
                                     .font(.subtext)
                                     .foregroundStyle(Color.textSecondary)
                             }
                         } else {
-                            Picker("Partner", selection: $selectedPartnerId) {
-                                ForEach(store.profiles.filter { $0.id != store.activeProfile?.id }) { profile in
-                                    Text(profile.name).tag(Optional(profile.id))
+                            Picker("ui.synastryChart.7".localized, selection: $selectedPartnerId) {
+                                ForEach(Array(store.profiles.filter { $0.id != store.activeProfile?.id }.enumerated()), id: \.element.id) { index, profile in
+                                    Text(profile.displayName(
+                                        hideSensitive: store.hideSensitiveDetailsEnabled,
+                                        role: .genericProfile,
+                                        index: index
+                                    ))
+                                    .tag(Optional(profile.id))
                                 }
                             }
                             .pickerStyle(.menu)
                             .onChange(of: selectedPartnerId) { _, _ in
                                 Task { await vm.load(store: store, partnerId: selectedPartnerId) }
                             }
+
+                            PremiumSectionHeader(
+                title: "section.synastryChart.0.title".localized,
+                subtitle: "section.synastryChart.0.subtitle".localized
+            )
 
                             // Data quality warning when either profile lacks exact birth time
                             let personA = store.activeProfile
@@ -42,7 +60,7 @@ struct SynastryChartView: View {
                                 DataQualityBanner(
                                     icon: "person.2.slash",
                                     message: bothExact ? "" :
-                                        "Synastry accuracy is reduced — \(personA?.dataQuality != .full && personB?.dataQuality != .full ? "neither profile has" : "one profile lacks") a confirmed birth time. Rising sign and house overlaps are estimated.",
+                                        "Synastry accuracy is reduced — \(personA?.dataQuality != .full && personB?.dataQuality != .full ? "tern.synastryChart.0a".localized : "tern.synastryChart.0b".localized) a confirmed birth time. Rising sign and house overlaps are estimated.",
                                     color: .orange
                                 )
                             }
@@ -56,7 +74,7 @@ struct SynastryChartView: View {
                                         Image(systemName: "exclamationmark.triangle.fill")
                                             .font(.title)
                                             .foregroundStyle(.red)
-                                        Text("⚠️ ERROR")
+                                        Text("ui.synastryChart.1".localized)
                                             .font(.headline)
                                         Text(error)
                                             .font(.caption.monospaced())
@@ -69,7 +87,7 @@ struct SynastryChartView: View {
                                 if !summary.isEmpty {
                                     CardView {
                                         VStack(alignment: .leading, spacing: 6) {
-                                            Text("Integration")
+                                            Text("ui.synastryChart.2".localized)
                                                 .font(.headline)
                                             Text(summary)
                                                 .font(.subtext)
@@ -81,7 +99,7 @@ struct SynastryChartView: View {
                                 if !result.compatibility.strengths.isEmpty {
                                     CardView {
                                         VStack(alignment: .leading, spacing: 6) {
-                                            Text("Strengths")
+                                            Text("ui.synastryChart.3".localized)
                                                 .font(.headline)
                                             ForEach(result.compatibility.strengths, id: \.self) { item in
                                                 Text("• \(item)")
@@ -95,7 +113,7 @@ struct SynastryChartView: View {
                                 if !result.compatibility.challenges.isEmpty {
                                     CardView {
                                         VStack(alignment: .leading, spacing: 6) {
-                                            Text("Challenges")
+                                            Text("ui.synastryChart.4".localized)
                                                 .font(.headline)
                                             ForEach(result.compatibility.challenges, id: \.self) { item in
                                                 Text("• \(item)")
@@ -109,7 +127,7 @@ struct SynastryChartView: View {
                                 if !result.compatibility.advice.isEmpty {
                                     CardView {
                                         VStack(alignment: .leading, spacing: 6) {
-                                            Text("Guidance")
+                                            Text("ui.synastryChart.5".localized)
                                                 .font(.headline)
                                             ForEach(result.compatibility.advice, id: \.self) { item in
                                                 Text("• \(item)")
@@ -122,7 +140,7 @@ struct SynastryChartView: View {
                                 
                                 if !result.synastryAspects.isEmpty {
                                     VStack(alignment: .leading, spacing: 8) {
-                                        Text("Key Aspects")
+                                        Text("ui.synastryChart.6".localized)
                                             .font(.headline)
                                             .padding(.horizontal, 4)
                                         ForEach(result.synastryAspects) { aspect in
@@ -130,7 +148,7 @@ struct SynastryChartView: View {
                                                 VStack(alignment: .leading, spacing: 4) {
                                                     Text("\(aspect.planet1) \(aspect.aspect) \(aspect.planet2)")
                                                         .font(.headline)
-                                                    Text("Orb: \(aspect.orb, specifier: "%.1f")°")
+                                                    Text(String(format: "fmt.synastryChart.0".localized, String(format: "%.1f", aspect.orb)))
                                                         .font(.subtext)
                                                         .foregroundStyle(Color.textSecondary)
                                                 }
@@ -142,9 +160,10 @@ struct SynastryChartView: View {
                         }
                     }
                     .padding()
+                    .readableContainer()
                 }
             }
-            .navigationTitle("Synastry")
+            .navigationTitle("screen.synastry".localized)
             .navigationBarTitleDisplayMode(.inline)
             .task(id: "\(store.activeProfile?.id ?? 0)-\(store.profiles.count)") {
                 if selectedPartnerId == nil {
@@ -184,14 +203,7 @@ final class SynastryChartVM {
         error = nil
         defer { isLoading = false }
         
-        let payload = ProfilePayload(
-            name: personBProfile.name,
-            dateOfBirth: personBProfile.dateOfBirth,
-            timeOfBirth: personBProfile.timeOfBirth,
-            latitude: personBProfile.latitude,
-            longitude: personBProfile.longitude,
-            timezone: personBProfile.timezone
-        )
+        let payload = personBProfile.privacySafePayload(hideSensitive: store.hideSensitiveDetailsEnabled)
         do {
             let response: V2ApiResponse<SynastryChartResponse> = try await api.fetch(
                 .synastryChart(personA: personA, personB: payload),

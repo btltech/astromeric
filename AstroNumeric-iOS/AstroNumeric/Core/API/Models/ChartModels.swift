@@ -23,10 +23,28 @@ struct PlanetPlacement: Codable, Identifiable {
     let absoluteDegree: Double?
     let house: Int?
     let retrograde: Bool?
+    let dignity: String?
     
+    enum CodingKeys: String, CodingKey {
+        case name, sign, degree, house, retrograde, dignity
+        case absoluteDegree = "absolute_degree"
+    }
+}
+
+struct ChartPoint: Codable, Identifiable {
+    var id: String { name }
+    let name: String
+    let sign: String
+    let degree: Double
+    let absoluteDegree: Double?
+    let house: Int?
+    let retrograde: Bool?
+    let chartType: String?   // "day" or "night" (Part of Fortune only)
+
     enum CodingKeys: String, CodingKey {
         case name, sign, degree, house, retrograde
         case absoluteDegree = "absolute_degree"
+        case chartType = "chart_type"
     }
 }
 
@@ -52,16 +70,7 @@ struct NatalChartRequest: Encodable {
     let lang: String
     
     init(profile: Profile) {
-        self.profile = ProfilePayload(
-            name: profile.name,
-            dateOfBirth: profile.dateOfBirth,
-            timeOfBirth: profile.timeOfBirth,
-            placeOfBirth: profile.placeOfBirth,
-            latitude: profile.latitude,
-            longitude: profile.longitude,
-            timezone: profile.timezone,
-            houseSystem: profile.houseSystem
-        )
+        self.profile = profile.privacySafePayload(hideSensitive: AppStore.shared.hideSensitiveDetailsEnabled)
         self.lang = "en"
     }
 }
@@ -71,16 +80,7 @@ struct ProgressedChartRequest: Encodable {
     let targetDate: String?
     
     init(profile: Profile, targetDate: String?) {
-        self.profile = ProfilePayload(
-            name: profile.name,
-            dateOfBirth: profile.dateOfBirth,
-            timeOfBirth: profile.timeOfBirth,
-            placeOfBirth: profile.placeOfBirth,
-            latitude: profile.latitude,
-            longitude: profile.longitude,
-            timezone: profile.timezone,
-            houseSystem: profile.houseSystem
-        )
+        self.profile = profile.privacySafePayload(hideSensitive: AppStore.shared.hideSensitiveDetailsEnabled)
         self.targetDate = targetDate
     }
     
@@ -95,16 +95,7 @@ struct CompositeChartRequest: Encodable {
     let personB: ProfilePayload
     
     init(personA: Profile, personB: ProfilePayload) {
-        self.personA = ProfilePayload(
-            name: personA.name,
-            dateOfBirth: personA.dateOfBirth,
-            timeOfBirth: personA.timeOfBirth,
-            placeOfBirth: personA.placeOfBirth,
-            latitude: personA.latitude,
-            longitude: personA.longitude,
-            timezone: personA.timezone,
-            houseSystem: personA.houseSystem
-        )
+        self.personA = personA.privacySafePayload(hideSensitive: AppStore.shared.hideSensitiveDetailsEnabled)
         self.personB = personB
     }
     
@@ -120,7 +111,7 @@ struct SynastryChartRequest: Encodable {
     
     init(personA: Profile, personB: ProfilePayload) {
         self.personA = NatalProfileData(
-            name: personA.name,
+            name: AppStore.shared.hideSensitiveDetailsEnabled ? PrivacyRedaction.privateUser : personA.name,
             dateOfBirth: personA.dateOfBirth,
             timeOfBirth: personA.timeOfBirth,
             latitude: personA.latitude ?? 0,
@@ -141,6 +132,7 @@ struct SynastryChartRequest: Encodable {
 
 struct ChartData: Codable {
     let planets: [PlanetPlacement]
+    let points: [ChartPoint]?
     let houses: [HousePlacement]?
     let aspects: [ChartAspect]?
     let metadata: ChartMetadata?

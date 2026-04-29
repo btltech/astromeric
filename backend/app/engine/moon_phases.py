@@ -4,10 +4,10 @@ moon_phases.py
 Moon Phase calculations and personalized ritual recommendations.
 """
 
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple
-from zoneinfo import ZoneInfo
 import math
+from datetime import datetime, timedelta
+from typing import Dict, List, Optional
+
 from app.interpretation.translations import get_translation
 
 # Moon phase constants
@@ -16,8 +16,18 @@ KNOWN_NEW_MOON = datetime(2000, 1, 6, 18, 14)  # Known new moon reference
 
 # Zodiac signs in order
 ZODIAC_ORDER = [
-    "Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo",
-    "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"
+    "Aries",
+    "Taurus",
+    "Gemini",
+    "Cancer",
+    "Leo",
+    "Virgo",
+    "Libra",
+    "Scorpio",
+    "Sagittarius",
+    "Capricorn",
+    "Aquarius",
+    "Pisces",
 ]
 
 # Element groupings
@@ -39,6 +49,38 @@ MOON_PHASES = [
     {"name": "Last Quarter", "angle_start": 270, "angle_end": 315, "emoji": "🌗"},
     {"name": "Waning Crescent", "angle_start": 315, "angle_end": 360, "emoji": "🌘"},
 ]
+
+
+def _estimate_moon_longitude(date: datetime) -> float:
+    """
+    Estimate the Moon's tropical longitude (0-360).
+
+    Prefer Swiss Ephemeris when available; otherwise fall back to a deterministic
+    sidereal-month approximation so downstream consumers still receive a stable
+    sign-degree estimate.
+    """
+    if hasattr(date, "tzinfo") and date.tzinfo is not None:
+        date = date.replace(tzinfo=None)
+
+    try:
+        import swisseph as swe
+
+        jd = swe.julday(
+            date.year,
+            date.month,
+            date.day,
+            date.hour + date.minute / 60.0 + date.second / 3600.0,
+        )
+        result, _ = swe.calc_ut(jd, 1, 2)  # Moon + Swiss ephemeris flag
+        return result[0] % 360.0
+    except Exception:
+        pass
+
+    reference_date = datetime(2024, 1, 11, 0, 0)
+    sidereal_month_days = 27.321661
+    days_diff = (date - reference_date).total_seconds() / (24 * 3600)
+    return ((days_diff / sidereal_month_days) * 360.0) % 360.0
+
 
 # Ritual recommendations by phase
 PHASE_RITUALS = {
@@ -276,42 +318,48 @@ def calculate_moon_phase(date: datetime = None) -> Dict:
     """
     if date is None:
         date = datetime.now()
-    
+
     # Convert offset-aware datetime to offset-naive for comparison
-    if hasattr(date, 'tzinfo') and date.tzinfo is not None:
+    if hasattr(date, "tzinfo") and date.tzinfo is not None:
         date = date.replace(tzinfo=None)
-    
+
     # Calculate days since known new moon
     diff = date - KNOWN_NEW_MOON
     days_since = diff.total_seconds() / (24 * 3600)
-    
+
     # Calculate phase angle (0-360)
     cycle_position = (days_since % LUNAR_CYCLE_DAYS) / LUNAR_CYCLE_DAYS
     phase_angle = cycle_position * 360
-    
+
     # Calculate illumination (0-100%)
     illumination = round((1 - math.cos(math.radians(phase_angle))) * 50, 1)
-    
+
     # Determine phase name
     phase_info = None
     for phase in MOON_PHASES:
         if phase["angle_start"] <= phase_angle < phase["angle_end"]:
             phase_info = phase
             break
-    
+
     if phase_info is None:
         phase_info = MOON_PHASES[0]  # New Moon (wraps around)
-    
+
     # Calculate days into current phase and days until next
     phase_start_angle = phase_info["angle_start"]
     phase_end_angle = phase_info["angle_end"]
     phase_length_days = (phase_end_angle - phase_start_angle) / 360 * LUNAR_CYCLE_DAYS
-    
+
     days_in_phase = (phase_angle - phase_start_angle) / 360 * LUNAR_CYCLE_DAYS
     days_until_next = phase_length_days - days_in_phase
-    
+
+    moon_longitude = _estimate_moon_longitude(date)
+    moon_sign_index = int(moon_longitude / 30.0) % 12
+    moon_sign = ZODIAC_ORDER[moon_sign_index]
+    degrees_in_sign = round(moon_longitude % 30.0, 1)
+
     return {
         "phase_name": phase_info["name"],
+        "phase": phase_info["name"],  # backward-compatible alias
         "emoji": phase_info["emoji"],
         "illumination": illumination,
         "phase_angle": round(phase_angle, 1),
@@ -319,33 +367,23 @@ def calculate_moon_phase(date: datetime = None) -> Dict:
         "days_until_next_phase": round(days_until_next, 1),
         "is_waxing": phase_angle < 180,
         "is_waning": phase_angle >= 180,
+        "moon_sign": moon_sign,
+        "moon_longitude": round(moon_longitude, 1),
+        "degrees_in_sign": degrees_in_sign,
     }
 
 
 def estimate_moon_sign(date: datetime = None) -> str:
     """
-    Estimate the Moon's sign based on date.
-    Moon changes signs approximately every 2.5 days.
-    Note: This is an approximation - for accurate placement use ephemeris.
+    Calculate the Moon's current zodiac sign using Swiss Ephemeris when available,
+    falling back to a rough synodic-cycle approximation.
     """
     if date is None:
         date = datetime.now()
-    
-    # Convert offset-aware datetime to offset-naive for comparison
-    if hasattr(date, 'tzinfo') and date.tzinfo is not None:
-        date = date.replace(tzinfo=None)
-    
-    # Known Moon position reference (Moon in Aries at midnight)
-    reference_date = datetime(2024, 1, 1, 0, 0)
-    reference_sign_idx = 0  # Aries
-    
-    # Moon moves through zodiac in ~27.3 days
-    days_diff = (date - reference_date).total_seconds() / (24 * 3600)
-    signs_moved = (days_diff / 27.3) * 12
-    
-    current_sign_idx = int((reference_sign_idx + signs_moved) % 12)
-    
-    return ZODIAC_ORDER[current_sign_idx]
+
+    moon_longitude = _estimate_moon_longitude(date)
+    sign_index = int(moon_longitude / 30.0) % 12
+    return ZODIAC_ORDER[sign_index]
 
 
 def get_upcoming_moon_events(days: int = 30) -> List[Dict]:
@@ -354,42 +392,46 @@ def get_upcoming_moon_events(days: int = 30) -> List[Dict]:
     """
     events = []
     now = datetime.now()
-    
+
     # Calculate days since known new moon
     diff = now - KNOWN_NEW_MOON
     days_since = diff.total_seconds() / (24 * 3600)
     cycle_position = days_since % LUNAR_CYCLE_DAYS
-    
+
     # Find next New Moon
     days_to_new = LUNAR_CYCLE_DAYS - cycle_position
     if days_to_new <= days:
         new_moon_date = now + timedelta(days=days_to_new)
-        events.append({
-            "type": "New Moon",
-            "date": new_moon_date.strftime("%Y-%m-%d"),
-            "emoji": "🌑",
-            "days_away": round(days_to_new, 1),
-            "sign": estimate_moon_sign(new_moon_date),
-        })
-    
+        events.append(
+            {
+                "type": "New Moon",
+                "date": new_moon_date.strftime("%Y-%m-%d"),
+                "emoji": "🌑",
+                "days_away": round(days_to_new, 1),
+                "sign": estimate_moon_sign(new_moon_date),
+            }
+        )
+
     # Find next Full Moon
     days_to_full = (LUNAR_CYCLE_DAYS / 2) - cycle_position
     if days_to_full < 0:
         days_to_full += LUNAR_CYCLE_DAYS
-    
+
     if days_to_full <= days:
         full_moon_date = now + timedelta(days=days_to_full)
-        events.append({
-            "type": "Full Moon",
-            "date": full_moon_date.strftime("%Y-%m-%d"),
-            "emoji": "🌕",
-            "days_away": round(days_to_full, 1),
-            "sign": estimate_moon_sign(full_moon_date),
-        })
-    
+        events.append(
+            {
+                "type": "Full Moon",
+                "date": full_moon_date.strftime("%Y-%m-%d"),
+                "emoji": "🌕",
+                "days_away": round(days_to_full, 1),
+                "sign": estimate_moon_sign(full_moon_date),
+            }
+        )
+
     # Sort by days away
     events.sort(key=lambda x: x["days_away"])
-    
+
     return events
 
 
@@ -409,33 +451,43 @@ def get_personalized_ritual(
     """
     phase_ritual = PHASE_RITUALS.get(phase_name, PHASE_RITUALS["New Moon"])
     sign_focus = SIGN_RITUAL_FOCUS.get(moon_sign, SIGN_RITUAL_FOCUS["Aries"])
-    
+
     # Localize Phase Ritual
     phase_key_base = f"moon_phase_{phase_name.lower().replace(' ', '_')}"
-    
+
     phase_theme_trans = get_translation(lang, f"{phase_key_base}_theme")
-    phase_theme = phase_theme_trans[0] if phase_theme_trans else phase_ritual['theme']
-    
+    phase_theme = phase_theme_trans[0] if phase_theme_trans else phase_ritual["theme"]
+
     phase_energy_trans = get_translation(lang, f"{phase_key_base}_energy")
-    phase_energy = phase_energy_trans[0] if phase_energy_trans else phase_ritual['energy']
-    
+    phase_energy = (
+        phase_energy_trans[0] if phase_energy_trans else phase_ritual["energy"]
+    )
+
     phase_affirmation_trans = get_translation(lang, f"{phase_key_base}_affirmation")
-    phase_affirmation = phase_affirmation_trans[0] if phase_affirmation_trans else phase_ritual['affirmation']
+    phase_affirmation = (
+        phase_affirmation_trans[0]
+        if phase_affirmation_trans
+        else phase_ritual["affirmation"]
+    )
 
     # Localize Sign Focus
     sign_key_base = f"moon_sign_{moon_sign.lower()}"
-    
+
     sign_theme_trans = get_translation(lang, f"{sign_key_base}_theme")
-    sign_theme = sign_theme_trans[0] if sign_theme_trans else sign_focus['theme']
-    
+    sign_theme = sign_theme_trans[0] if sign_theme_trans else sign_focus["theme"]
+
     sign_focus_desc_trans = get_translation(lang, f"{sign_key_base}_focus")
-    sign_focus_desc = sign_focus_desc_trans[0] if sign_focus_desc_trans else sign_focus['focus']
-    
+    sign_focus_desc = (
+        sign_focus_desc_trans[0] if sign_focus_desc_trans else sign_focus["focus"]
+    )
+
     sign_element_trans = get_translation(lang, f"{sign_key_base}_element")
-    sign_element = sign_element_trans[0] if sign_element_trans else sign_focus['element_boost']
-    
+    sign_element = (
+        sign_element_trans[0] if sign_element_trans else sign_focus["element_boost"]
+    )
+
     sign_body_trans = get_translation(lang, f"{sign_key_base}_body")
-    sign_body = sign_body_trans[0] if sign_body_trans else sign_focus['body_area']
+    sign_body = sign_body_trans[0] if sign_body_trans else sign_focus["body_area"]
 
     # Combine phase and sign recommendations
     ritual = {
@@ -452,29 +504,36 @@ def get_personalized_ritual(
         "colors": phase_ritual["colors"],
         "affirmation": phase_affirmation,
     }
-    
+
     # Add personalized natal insights if available
     if natal_chart:
         natal_moon = next(
-            (p for p in natal_chart.get("planets", []) if p["name"] == "Moon"),
-            None
+            (p for p in natal_chart.get("planets", []) if p["name"] == "Moon"), None
         )
         if natal_moon:
             natal_moon_sign = natal_moon.get("sign", "")
             if natal_moon_sign == moon_sign:
                 insight_trans = get_translation(lang, "moon_insight_return")
-                ritual["natal_insight"] = insight_trans[0] if insight_trans else "🌙 Lunar Return: Moon returns to your natal sign - heightened emotional awareness"
+                ritual["natal_insight"] = (
+                    insight_trans[0]
+                    if insight_trans
+                    else "🌙 Lunar Return: Moon returns to your natal sign - heightened emotional awareness"
+                )
             elif natal_moon_sign in ELEMENTS.get(_get_element(moon_sign), []):
                 insight_trans = get_translation(lang, "moon_insight_trine")
-                ritual["natal_insight"] = insight_trans[0] if insight_trans else "Moon trines your natal Moon - harmonious emotional energy"
-    
+                ritual["natal_insight"] = (
+                    insight_trans[0]
+                    if insight_trans
+                    else "Moon trines your natal Moon - harmonious emotional energy"
+                )
+
     # Add numerology insight if personal day provided
     if personal_day:
         pd_key = f"moon_pd_{personal_day}"
         pd_trans = get_translation(lang, pd_key)
-        
+
         if pd_trans:
-             ritual["numerology_insight"] = pd_trans[0]
+            ritual["numerology_insight"] = pd_trans[0]
         else:
             day_insights = {
                 1: "Amplify leadership in your ritual",
@@ -487,8 +546,10 @@ def get_personalized_ritual(
                 8: "Focus on abundance and manifestation",
                 9: "Include release and forgiveness work",
             }
-            ritual["numerology_insight"] = day_insights.get(personal_day, "Trust your intuition")
-    
+            ritual["numerology_insight"] = day_insights.get(
+                personal_day, "Trust your intuition"
+            )
+
     return ritual
 
 
@@ -512,12 +573,14 @@ def get_moon_phase_summary(
     phase = calculate_moon_phase(now)
     moon_sign = estimate_moon_sign(now)
     upcoming = get_upcoming_moon_events(30)
-    
+
     # Get personal day if numerology provided
     personal_day = None
     if numerology:
-        personal_day = numerology.get("cycles", {}).get("personal_day", {}).get("number")
-    
+        personal_day = (
+            numerology.get("cycles", {}).get("personal_day", {}).get("number")
+        )
+
     ritual = get_personalized_ritual(
         phase["phase_name"],
         moon_sign,
@@ -525,7 +588,7 @@ def get_moon_phase_summary(
         personal_day,
         lang=lang,
     )
-    
+
     return {
         "current_phase": phase,
         "moon_sign": moon_sign,

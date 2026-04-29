@@ -35,9 +35,15 @@ struct ChartView: View {
                         }
                     }
                     .padding()
+                    .readableContainer()
+                }
+                .refreshable {
+                    if let profile = store.activeProfile {
+                        await viewModel.fetchChart(for: profile)
+                    }
                 }
             }
-            .navigationTitle("Birth Chart")
+            .navigationTitle("charts.birthChart".localized)
             .navigationBarTitleDisplayMode(.inline)
             .task(id: store.activeProfile?.id) {
                 if let profile = store.activeProfile {
@@ -75,12 +81,19 @@ struct ChartView: View {
                 )
             }
 
+            chartAuthorityCard
+
             // Big Three Card
             bigThreeCard
             
             // Planet Placements
             placementsSection
             
+            // Sensitive Points (Nodes, Chiron, Part of Fortune)
+            if !viewModel.chartPoints.isEmpty {
+                sensitivePointsSection
+            }
+
             // Aspects (if any)
             if !viewModel.aspects.isEmpty {
                 aspectsSection
@@ -89,11 +102,56 @@ struct ChartView: View {
     }
     
     // MARK: - Big Three
+
+    private var chartAuthorityCard: some View {
+        CardView {
+            VStack(alignment: .leading, spacing: 14) {
+                HStack {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("ui.chart.0".localized)
+                            .font(.system(.caption2, design: .monospaced))
+                            .foregroundStyle(Color.textMuted)
+                        Text(chartAuthorityHeadline)
+                            .font(.title3.bold())
+                    }
+                    Spacer()
+                    Label(chartAuthorityBadge, systemImage: "checkmark.seal.fill")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.green)
+                }
+
+                Text(chartAuthoritySupport)
+                    .font(.subheadline)
+                    .foregroundStyle(Color.textSecondary)
+
+                HStack(spacing: 12) {
+                    authorityStat(title: "Planets", value: "\(viewModel.placements.count)")
+                    authorityStat(title: "Points", value: "\(viewModel.chartPoints.count)")
+                    authorityStat(title: "Dignities", value: "\(dignityCount)")
+                }
+            }
+        }
+    }
+
+    private func authorityStat(title: String, value: String) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title.uppercased())
+                .font(.system(.caption2, design: .monospaced))
+                .foregroundStyle(Color.textMuted)
+            Text(value)
+                .font(.headline)
+                .foregroundStyle(.white)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(12)
+        .background(Color.white.opacity(0.04))
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+    }
     
     private var bigThreeCard: some View {
         CardView {
             VStack(spacing: 16) {
-                Text("Your Big Three")
+                Text("ui.chart.1".localized)
                     .font(.headline)
                 
                 HStack(spacing: 0) {
@@ -113,19 +171,19 @@ struct ChartView: View {
 
                             // Reliability badge per Big Three planet
                             if item.name == "Sun" {
-                                Label("Exact", systemImage: "checkmark.circle.fill")
+                                Label("ui.chart.10".localized, systemImage: "checkmark.circle.fill")
                                     .font(.caption2)
                                     .foregroundStyle(.green)
                             } else if item.name == "Rising" && viewModel.birthTimeAssumed {
-                                Label("estimated", systemImage: "clock.badge.questionmark")
+                                Label("ui.chart.11".localized, systemImage: "clock.badge.questionmark")
                                     .font(.caption2)
                                     .foregroundStyle(.orange)
                             } else if item.name == "Moon" && viewModel.moonSignUncertain {
-                                Label("uncertain", systemImage: "questionmark.circle")
+                                Label("ui.chart.12".localized, systemImage: "questionmark.circle")
                                     .font(.caption2)
                                     .foregroundStyle(.blue)
                             } else {
-                                Label("Reliable", systemImage: "checkmark.circle.fill")
+                                Label("ui.chart.13".localized, systemImage: "checkmark.circle.fill")
                                     .font(.caption2)
                                     .foregroundStyle(.green)
                             }
@@ -139,7 +197,7 @@ struct ChartView: View {
                     HStack(spacing: 4) {
                         Image(systemName: "info.circle")
                             .foregroundStyle(.secondary)
-                        Text("Sun sign is always exact. Rising & Houses depend on birth time.")
+                        Text("ui.chart.2".localized)
                             .font(.caption2)
                             .foregroundStyle(Color.textSecondary)
                     }
@@ -154,11 +212,11 @@ struct ChartView: View {
         CardView {
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
-                    Text("Planet Placements")
+                    Text("ui.chart.3".localized)
                         .font(.headline)
                     Spacer()
                     if viewModel.birthTimeAssumed {
-                        Label("Houses estimated", systemImage: "clock.badge.questionmark")
+                        Label("ui.chart.14".localized, systemImage: "clock.badge.questionmark")
                             .font(.caption2)
                             .foregroundStyle(.orange)
                     }
@@ -167,9 +225,9 @@ struct ChartView: View {
                 // Legend when birth time is unknown
                 if viewModel.birthTimeAssumed {
                     HStack(spacing: 12) {
-                        Label("Exact", systemImage: "checkmark.circle.fill")
+                        Label("ui.chart.15".localized, systemImage: "checkmark.circle.fill")
                             .foregroundStyle(.green)
-                        Label("Estimated house", systemImage: "clock.badge.questionmark")
+                        Label("ui.chart.16".localized, systemImage: "clock.badge.questionmark")
                             .foregroundStyle(.orange)
                     }
                     .font(.caption2)
@@ -179,24 +237,36 @@ struct ChartView: View {
                 ForEach(viewModel.placements, id: \.name) { planet in
                     let isHouseDependent = viewModel.birthTimeAssumed &&
                         ["Ascendant", "Midheaven", "ASC", "MC"].contains(planet.name)
-                    HStack {
+                    HStack(alignment: .top) {
                         Text(planetEmoji(planet.name))
                             .font(.title3)
-                        
-                        Text(planet.name)
-                            .font(.subheadline)
-                            .foregroundStyle(isHouseDependent ? Color.textSecondary : Color.textPrimary)
-                        
+
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(planet.name)
+                                .font(.subheadline)
+                                .foregroundStyle(isHouseDependent ? Color.textSecondary : Color.textPrimary)
+
+                            if let dignity = planet.dignity {
+                                Text(dignityLabel(dignity))
+                                    .font(.caption2.weight(.semibold))
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 2)
+                                    .background(dignityColor(dignity).opacity(0.14))
+                                    .foregroundStyle(dignityColor(dignity))
+                                    .clipShape(Capsule())
+                            }
+                        }
+
                         Spacer()
-                        
+
                         VStack(alignment: .trailing) {
                             Text(planet.sign)
                                 .font(.subheadline.bold())
                                 .foregroundStyle(isHouseDependent ? .gray : .purple)
-                            
+
                             if let house = planet.house, house > 0 {
                                 HStack(spacing: 2) {
-                                    Text("House \(house)")
+                                    Text(String(format: "fmt.chart.1".localized, "\(house)"))
                                         .font(.caption)
                                     if viewModel.birthTimeAssumed {
                                         Image(systemName: "clock.badge.questionmark")
@@ -206,7 +276,7 @@ struct ChartView: View {
                                 .foregroundStyle(viewModel.birthTimeAssumed ? .orange : Color.textSecondary)
                             }
                         }
-                        
+
                         if planet.retrograde ?? false {
                             Text("℞")
                                 .font(.caption)
@@ -223,12 +293,64 @@ struct ChartView: View {
         }
     }
     
+    // MARK: - Sensitive Points
+
+    private var sensitivePointsSection: some View {
+        CardView {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("ui.chart.4".localized)
+                    .font(.headline)
+
+                ForEach(viewModel.chartPoints) { point in
+                    HStack {
+                        Text(pointEmoji(point.name))
+                            .font(.title3)
+
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(point.name)
+                                .font(.subheadline)
+                                .foregroundStyle(Color.textPrimary)
+                            if point.name == "Part of Fortune", let ct = point.chartType {
+                                Text(ct == "day" ? "tern.chart.0a".localized : "tern.chart.0b".localized)
+                                    .font(.caption2)
+                                    .foregroundStyle(Color.textSecondary)
+                            }
+                        }
+
+                        Spacer()
+
+                        VStack(alignment: .trailing) {
+                            Text(point.sign)
+                                .font(.subheadline.bold())
+                                .foregroundStyle(.purple)
+                            if let house = point.house, house > 0 {
+                                Text(String(format: "fmt.chart.0".localized, "\(house)"))
+                                    .font(.caption)
+                                    .foregroundStyle(Color.textSecondary)
+                            }
+                        }
+
+                        if point.retrograde == true {
+                            Text("℞")
+                                .font(.caption)
+                                .foregroundStyle(.orange)
+                        }
+                    }
+
+                    if point.id != viewModel.chartPoints.last?.id {
+                        Divider()
+                    }
+                }
+            }
+        }
+    }
+
     // MARK: - Aspects
     
     private var aspectsSection: some View {
         CardView {
             VStack(alignment: .leading, spacing: 12) {
-                Text("Key Aspects")
+                Text("ui.chart.5".localized)
                     .font(.headline)
                 
                 ForEach(viewModel.aspects.prefix(5), id: \.self) { aspect in
@@ -253,7 +375,7 @@ struct ChartView: View {
         VStack(spacing: 16) {
             ProgressView()
                 .scaleEffect(1.5)
-            Text("Calculating your chart...")
+            Text("ui.chart.6".localized)
                 .font(.subheadline)
                 .foregroundStyle(Color.textSecondary)
         }
@@ -267,7 +389,7 @@ struct ChartView: View {
                     .font(.largeTitle)
                     .foregroundStyle(.orange)
                 
-                Text("Error loading chart")
+                Text("ui.chart.7".localized)
                     .font(.headline)
                 
                 Text(message)
@@ -275,7 +397,7 @@ struct ChartView: View {
                     .foregroundStyle(Color.textSecondary)
                     .multilineTextAlignment(.center)
                 
-                Button("Retry") {
+                Button("action.retry".localized) {
                     Task {
                         if let profile = store.activeProfile {
                             await viewModel.fetchChart(for: profile)
@@ -294,10 +416,10 @@ struct ChartView: View {
                     .font(.largeTitle)
                     .foregroundStyle(.purple)
                 
-                Text("Create your birth chart")
+                Text("ui.chart.8".localized)
                     .font(.headline)
                 
-                Text("Add your birth details to see your chart")
+                Text("ui.chart.9".localized)
                     .font(.caption)
                     .foregroundStyle(Color.textSecondary)
             }
@@ -306,6 +428,34 @@ struct ChartView: View {
     
     // MARK: - Helpers
     
+    private func pointEmoji(_ name: String) -> String {
+        switch name {
+        case "North Node": return "☊"
+        case "South Node": return "☋"
+        case "Chiron": return "⚷"
+        case "Part of Fortune": return "⊕"
+        default: return "✦"
+        }
+    }
+
+    private func dignityLabel(_ dignity: String) -> String {
+        switch dignity.lowercased() {
+        case "domicile": return "Domicile"
+        case "exaltation": return "Exaltation"
+        case "detriment": return "Detriment"
+        case "fall": return "Fall"
+        default: return dignity.capitalized
+        }
+    }
+
+    private func dignityColor(_ dignity: String) -> Color {
+        switch dignity.lowercased() {
+        case "domicile", "exaltation": return .green
+        case "detriment", "fall": return .orange
+        default: return .secondary
+        }
+    }
+
     private func planetEmoji(_ name: String) -> String {
         switch name.lowercased() {
         case "sun": return "☀️"
@@ -320,6 +470,40 @@ struct ChartView: View {
         case "pluto": return "♇"
         default: return "⭐"
         }
+    }
+
+    private var dignityCount: Int {
+        viewModel.placements.compactMap(\ .dignity).count
+    }
+
+    private var chartAuthorityHeadline: String {
+        if viewModel.isLocationMissing {
+            return "Partial chart available"
+        }
+        if viewModel.birthTimeAssumed {
+            return "Strong chart, estimated angles"
+        }
+        return "Full chart, calculated from birth time"
+    }
+
+    private var chartAuthorityBadge: String {
+        if viewModel.isLocationMissing {
+            return "Sun-sign only"
+        }
+        if viewModel.birthTimeAssumed {
+            return "High confidence"
+        }
+        return "Full precision"
+    }
+
+    private var chartAuthoritySupport: String {
+        if viewModel.isLocationMissing {
+            return "You have enough data for a basic identity layer, but location is required for houses, angles, and the full interpretive picture."
+        }
+        if viewModel.birthTimeAssumed {
+            return "Planet signs remain useful, but houses and the Rising sign are being estimated because the birth time is missing or uncertain."
+        }
+        return "This chart is using birth date, location, exact birth time, chart points, and dignity markers so the interpretation reads as a full natal map rather than a horoscope shortcut."
     }
 }
 

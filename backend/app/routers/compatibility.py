@@ -4,7 +4,7 @@ Standardized request/response format for relationship compatibility analysis.
 """
 
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
@@ -91,10 +91,8 @@ async def calculate_romantic_compatibility(
                     )
 
         logger.info(
-            f"Calculating compatibility between {req.person_a.name} and {req.person_b.name}",
+            "Calculating compatibility",
             request_id=request_id,
-            person_a=req.person_a.name,
-            person_b=req.person_b.name,
         )
 
         # Build profile data for both people (preserve None for time to enable data quality detection)
@@ -149,7 +147,9 @@ async def calculate_romantic_compatibility(
             recommendations=compatibility.get("recommendations", [])[:3],
             generated_at=datetime.now(timezone.utc),
             confidence=data_conf.get("score") if isinstance(data_conf, dict) else None,
-            data_quality_note=data_conf.get("note") if isinstance(data_conf, dict) else None,
+            data_quality_note=data_conf.get("note")
+            if isinstance(data_conf, dict)
+            else None,
         )
 
         return ApiResponse(
@@ -213,10 +213,8 @@ async def calculate_friendship_compatibility(
                 )
 
         logger.info(
-            f"Calculating friendship compatibility between {req.person_a.name} and {req.person_b.name}",
+            "Calculating friendship compatibility",
             request_id=request_id,
-            person_a=req.person_a.name,
-            person_b=req.person_b.name,
         )
 
         # Build profile data (preserve None for time to enable data quality detection)
@@ -240,8 +238,10 @@ async def calculate_friendship_compatibility(
 
         # Calculate compatibility using Pro-Level engine
         compatibility = build_compatibility(
-            profile_a, profile_b, lang=getattr(req, "language", "en"),
-            relationship_type="friendship"
+            profile_a,
+            profile_b,
+            lang=getattr(req, "language", "en"),
+            relationship_type="friendship",
         )
 
         # Parse dimensions from engine output
@@ -274,7 +274,9 @@ async def calculate_friendship_compatibility(
             recommendations=compatibility.get("recommendations", [])[:3],
             generated_at=datetime.now(timezone.utc),
             confidence=data_conf.get("score") if isinstance(data_conf, dict) else None,
-            data_quality_note=data_conf.get("note") if isinstance(data_conf, dict) else None,
+            data_quality_note=data_conf.get("note")
+            if isinstance(data_conf, dict)
+            else None,
         )
 
         return ApiResponse(

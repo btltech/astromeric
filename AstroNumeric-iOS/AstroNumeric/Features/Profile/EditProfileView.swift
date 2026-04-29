@@ -23,6 +23,8 @@ struct EditProfileView: View {
                     VStack(spacing: 24) {
                         // Header
                         headerSection
+
+                        unlocksSection
                         
                         // Name field
                         nameSection
@@ -40,19 +42,20 @@ struct EditProfileView: View {
                         saveButton
                     }
                     .padding()
+                    .readableContainer()
                 }
             }
-            .navigationTitle(viewModel.isEditing ? "Edit Profile" : "Create Profile")
+            .navigationTitle(viewModel.isEditing ? "tern.editProfile.0a".localized : "tern.editProfile.0b".localized)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
+                    Button("action.cancel".localized) {
                         dismiss()
                     }
                 }
             }
-            .alert("Error", isPresented: $viewModel.showError) {
-                Button("OK") {}
+            .alert("ui.editProfile.11".localized, isPresented: $viewModel.showError) {
+                Button("action.ok".localized) {}
             } message: {
                 Text(viewModel.errorMessage)
             }
@@ -80,11 +83,40 @@ struct EditProfileView: View {
                     .foregroundStyle(.white)
             }
             
-            Text(viewModel.isEditing ? "Update your birth details" : "Enter your birth details")
+            Text(viewModel.isEditing ? "tern.editProfile.1a".localized : "tern.editProfile.1b".localized)
                 .font(.subheadline)
                 .foregroundStyle(Color.textSecondary)
+                .multilineTextAlignment(.center)
         }
         .padding(.top)
+    }
+
+    private var unlocksSection: some View {
+        CardView {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("ui.editProfile.0".localized)
+                    .font(.headline)
+
+                profileUnlockRow(icon: "sparkles.rectangle.stack.fill", title: "Full birth chart", detail: "Big Three, placements, aspects, points, and dignity context.")
+                profileUnlockRow(icon: "number.square.fill", title: "Flagship numerology", detail: "Life path, core numbers, cycles, pinnacles, and synthesis.")
+                profileUnlockRow(icon: "clock.badge.checkmark.fill", title: "Practical daily guidance", detail: "Forecasts, timing windows, moon context, and a year-ahead view.")
+            }
+        }
+    }
+
+    private func profileUnlockRow(icon: String, title: String, detail: String) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: icon)
+                .foregroundStyle(.purple)
+                .frame(width: 20)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.subheadline.weight(.semibold))
+                Text(detail)
+                    .font(.caption)
+                    .foregroundStyle(Color.textSecondary)
+            }
+        }
     }
     
     // MARK: - Name Section
@@ -92,11 +124,11 @@ struct EditProfileView: View {
     private var nameSection: some View {
         CardView {
             VStack(alignment: .leading, spacing: 12) {
-                Label("Name", systemImage: "person.fill")
+                Label("ui.editProfile.4".localized, systemImage: "person.fill")
                     .font(.headline)
                     .foregroundStyle(.purple)
                 
-                TextField("Your name", text: $viewModel.name)
+                TextField("ui.editProfile.9".localized, text: $viewModel.name)
                     .textFieldStyle(.plain)
                     .padding(12)
                     .background(.ultraThinMaterial)
@@ -110,7 +142,7 @@ struct EditProfileView: View {
     private var birthDateSection: some View {
         CardView {
             VStack(alignment: .leading, spacing: 12) {
-                Label("Birth Date", systemImage: "calendar")
+                Label("ui.editProfile.5".localized, systemImage: "calendar")
                     .font(.headline)
                     .foregroundStyle(.purple)
                 
@@ -131,7 +163,7 @@ struct EditProfileView: View {
     private var birthTimeSection: some View {
         CardView {
             VStack(alignment: .leading, spacing: 12) {
-                Label("Birth Time", systemImage: "clock.fill")
+                Label("ui.editProfile.6".localized, systemImage: "clock.fill")
                     .font(.headline)
                     .foregroundStyle(.purple)
 
@@ -143,8 +175,7 @@ struct EditProfileView: View {
                         } label: {
                             HStack {
                                 Image(systemName: viewModel.timeConfidence == option
-                                      ? "largecircle.fill.circle"
-                                      : "circle")
+                                      ? "tern.editProfile.2a".localized : "tern.editProfile.2b".localized)
                                     .foregroundStyle(.purple)
                                 Text(option.displayTitle)
                                     .font(.subheadline)
@@ -166,12 +197,12 @@ struct EditProfileView: View {
                     .labelsHidden()
 
                     if viewModel.timeConfidence == .approximate {
-                        Label("This time will be treated as approximate. Rising sign and houses will be shown as estimated.", systemImage: "info.circle")
+                        Label("ui.editProfile.7".localized, systemImage: "info.circle")
                             .font(.caption)
                             .foregroundStyle(.orange)
                     }
                 } else {
-                    Text("Calculations will use noon as a default. Rising sign and houses will be marked as estimated.")
+                    Text("ui.editProfile.1".localized)
                         .font(.label)
                         .foregroundStyle(Color.textSecondary)
                 }
@@ -185,7 +216,7 @@ struct EditProfileView: View {
         CardView {
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
-                    Label("Birth Place", systemImage: "mappin.circle.fill")
+                    Label("ui.editProfile.8".localized, systemImage: "mappin.circle.fill")
                         .font(.headline)
                         .foregroundStyle(.purple)
                     
@@ -202,7 +233,7 @@ struct EditProfileView: View {
                             } else {
                                 Image(systemName: "location.fill")
                             }
-                            Text("Current")
+                            Text("ui.editProfile.2".localized)
                                 .font(.label)
                         }
                         .foregroundStyle(.purple)
@@ -210,7 +241,7 @@ struct EditProfileView: View {
                     .disabled(viewModel.isUsingCurrentLocation)
                 }
                 
-                TextField("City, Country", text: $viewModel.placeQuery)
+                TextField("ui.editProfile.10".localized, text: $viewModel.placeQuery)
                     .textFieldStyle(.plain)
                     .padding(12)
                     .background(.ultraThinMaterial)
@@ -224,7 +255,7 @@ struct EditProfileView: View {
                     HStack {
                         ProgressView()
                             .scaleEffect(0.8)
-                        Text(viewModel.isGeocodingPlace ? "Getting location details..." : "Searching...")
+                        Text(viewModel.isGeocodingPlace ? "tern.editProfile.3a".localized : "tern.editProfile.3b".localized)
                             .font(.label)
                             .foregroundStyle(Color.textSecondary)
                     }
@@ -267,7 +298,7 @@ struct EditProfileView: View {
                     HStack {
                         Image(systemName: "checkmark.circle.fill")
                             .foregroundStyle(.green)
-                        Text("Location confirmed")
+                        Text("ui.editProfile.3".localized)
                             .font(.label)
                             .foregroundStyle(Color.textSecondary)
                         Spacer()
@@ -284,7 +315,7 @@ struct EditProfileView: View {
     
     private var saveButton: some View {
         GradientButton(
-            viewModel.isEditing ? "Save Changes" : "Create Profile",
+            viewModel.isEditing ? "tern.editProfile.4a".localized : "tern.editProfile.4b".localized,
             icon: "checkmark.circle.fill"
         ) {
             Task {

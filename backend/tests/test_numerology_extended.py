@@ -1,20 +1,20 @@
-import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
+
 from app.engine.numerology_extended import (
-    get_number_meaning,
+    analyze_name,
     calculate_challenges,
     calculate_pinnacles,
     get_full_numerology_profile,
-    analyze_name,
-    NUMBER_MEANINGS
+    get_number_meaning,
 )
+
 
 class TestNumerologyExtended:
     def test_get_number_meaning(self):
         meaning = get_number_meaning(1)
         assert meaning["keyword"] == "Leadership"
         assert meaning["description"] == "Independent pioneer. Forge your own path."
-        
+
         meaning = get_number_meaning(999)
         assert meaning["keyword"] == "Unknown"
 
@@ -48,7 +48,7 @@ class TestNumerologyExtended:
         assert "cycles" in profile
         assert "pinnacles" in profile
         assert "challenges" in profile
-        assert profile["core_numbers"]["life_path"]["keyword"] == "Analysis" # 7
+        assert profile["core_numbers"]["life_path"]["keyword"] == "Analysis"  # 7
 
     def test_analyze_name(self):
         analysis = analyze_name("John Doe")
@@ -56,8 +56,9 @@ class TestNumerologyExtended:
         assert "soul_urge" in analysis
         assert "personality" in analysis
 
+
 class TestNumerologyExtendedLocalization:
-    @patch('app.engine.numerology_extended.get_translation')
+    @patch("app.engine.numerology_extended.get_translation")
     def test_get_number_meaning_localized(self, mock_get_translation):
         def side_effect(lang, category, key):
             if lang == "es" and category == "numerology_meanings":
@@ -66,34 +67,39 @@ class TestNumerologyExtendedLocalization:
                 if key == "numerology_number_1_description":
                     return "Pionero independiente."
             return None
+
         mock_get_translation.side_effect = side_effect
-        
+
         meaning = get_number_meaning(1, lang="es")
         assert meaning["keyword"] == "Liderazgo"
         assert meaning["description"] == "Pionero independiente."
 
-    @patch('app.engine.numerology_extended.get_translation')
+    @patch("app.engine.numerology_extended.get_translation")
     def test_calculate_challenges_localized(self, mock_get_translation):
         def side_effect(lang, category, key):
             if lang == "es" and category == "numerology_challenges":
-                if key == "first_label": return "Primer Desafío"
-                if key == "first_desc": return "Lección temprana"
+                if key == "first_label":
+                    return "Primer Desafío"
+                if key == "first_desc":
+                    return "Lección temprana"
             return None
+
         mock_get_translation.side_effect = side_effect
-        
+
         challenges = calculate_challenges("1990-03-21", lang="es")
         assert challenges[0]["label"] == "Primer Desafío"
         assert challenges[0]["description"] == "Lección temprana"
 
-    @patch('app.engine.numerology_extended.get_translation')
+    @patch("app.engine.numerology_extended.get_translation")
     def test_calculate_pinnacles_localized(self, mock_get_translation):
         def side_effect(lang, category, key):
             if lang == "es" and category == "numerology_periods":
-                if key == "birth_to_age": return "Nacimiento a edad {age}"
+                if key == "birth_to_age":
+                    return "Nacimiento a edad {age}"
             return None
+
         mock_get_translation.side_effect = side_effect
-        
+
         pinnacles = calculate_pinnacles("1990-03-21", lang="es")
         # Life path 7, first end 29
         assert pinnacles[0]["period"] == "Nacimiento a edad 29"
-
