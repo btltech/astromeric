@@ -109,15 +109,15 @@ def birthday_number(dob: str) -> int:
 def personal_year(dob: str, ref: datetime) -> int:
     _, m, d = dob.split("-")
     total = int(m) + int(d) + ref.year
-    return reduce_number(total, keep_master=False)
+    return reduce_number(total, keep_master=True)
 
 
 def personal_month(py: int, ref: datetime) -> int:
-    return reduce_number(py + ref.month, keep_master=False)
+    return reduce_number(py + ref.month, keep_master=True)
 
 
 def personal_day(pm: int, ref: datetime) -> int:
-    return reduce_number(pm + ref.day, keep_master=False)
+    return reduce_number(pm + ref.day, keep_master=True)
 
 
 def _compact_text(text: str) -> str:

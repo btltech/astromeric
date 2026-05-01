@@ -159,22 +159,25 @@ def calculate_maturity_number(life_path: int, expression: int) -> int:
 
 
 def calculate_personal_year(dob: str, year: int = None) -> int:
-    """Personal Year: birth month + birth day + current year, reduced."""
+    """Personal Year: birth month + birth day + current year, reduced.
+    Master numbers 11 and 22 are preserved — most traditions treat these
+    as meaningful Personal Year vibrations, not plain 2 or 4.
+    """
     parts = dob.split("-")
     month, day = int(parts[1]), int(parts[2])
     if year is None:
         year = datetime.now().year
-    return reduce_number(month + day + year, keep_master=False)
+    return reduce_number(month + day + year, keep_master=True)
 
 
 def calculate_personal_month(personal_year: int, month: int) -> int:
     """Personal Month: Personal Year + calendar month, reduced."""
-    return reduce_number(personal_year + month, keep_master=False)
+    return reduce_number(personal_year + month, keep_master=True)
 
 
 def calculate_personal_day(personal_month: int, day: int) -> int:
     """Personal Day: Personal Month + calendar day, reduced."""
-    return reduce_number(personal_month + day, keep_master=False)
+    return reduce_number(personal_month + day, keep_master=True)
 
 
 def calculate_pinnacles(dob: str, lang: str = "en") -> List[Dict]:
@@ -187,8 +190,9 @@ def calculate_pinnacles(dob: str, lang: str = "en") -> List[Dict]:
     day_r = reduce_number(day, keep_master=False)
     year_r = reduce_number(year, keep_master=False)
 
-    # Life Path for timing
-    life_path = reduce_number(month + day + year, keep_master=False)
+    # Life Path for timing — must use same component-reduction method as the
+    # main life_path calculation to keep pinnacle ages accurate for master-number LPs.
+    life_path = reduce_number(month_r + day_r + year_r, keep_master=True)
 
     # Pinnacle numbers
     p1 = reduce_number(month_r + day_r)

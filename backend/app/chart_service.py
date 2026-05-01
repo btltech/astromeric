@@ -88,6 +88,11 @@ ASPECT_ANGLES = {
     "square": 90,
     "trine": 120,
     "opposition": 180,
+    # Minor aspects
+    "semi_sextile": 30,
+    "semi_square": 45,
+    "sesquiquadrate": 135,
+    "quincunx": 150,
 }
 
 ASPECT_ORBS = {
@@ -96,6 +101,27 @@ ASPECT_ORBS = {
     "square": 5.5,
     "trine": 5.5,
     "opposition": 7.0,
+    # Minor aspects use tighter orbs
+    "semi_sextile": 2.0,
+    "semi_square": 2.0,
+    "sesquiquadrate": 2.0,
+    "quincunx": 3.0,
+}
+
+# Luminaries and personal planets score higher; outer planets lower
+_PLANET_WEIGHT = {
+    "Sun": 1.4,
+    "Moon": 1.4,
+    "Mercury": 1.1,
+    "Venus": 1.1,
+    "Mars": 1.1,
+    "Jupiter": 1.0,
+    "Saturn": 1.0,
+    "Uranus": 0.9,
+    "Neptune": 0.9,
+    "Pluto": 0.9,
+    "Ascendant": 1.3,
+    "Midheaven": 1.2,
 }
 
 # Traditional + modern planetary dignities.
@@ -233,8 +259,9 @@ def build_progressed_chart(profile: Dict, target_date: Optional[str] = None) -> 
         if target_date
         else datetime.now().date()
     )
-    age_days = (ref_date - dob).days // 365  # 1 solar year ≈ 365 days progression
-    progressed_date = dob + timedelta(days=age_days)
+    # Use Julian year (365.25 days) so leap years don't accumulate ~1-day drift per 4 years.
+    age_years = int((ref_date - dob).days / 365.25)
+    progressed_date = dob + timedelta(days=age_years)
 
     profile_copy = dict(profile)
     profile_copy["date_of_birth"] = progressed_date.isoformat()
@@ -248,7 +275,7 @@ def build_progressed_chart(profile: Dict, target_date: Optional[str] = None) -> 
     chart["metadata"]["progressed_date"] = progressed_date.isoformat()
     chart["metadata"]["natal_date"] = profile["date_of_birth"]
     chart["metadata"]["reference_date"] = ref_date.isoformat()
-    chart["metadata"]["age_years"] = age_days
+    chart["metadata"]["age_years"] = age_years
     return chart
 
 
@@ -430,9 +457,6 @@ def _chart_with_flatlib(dt: datetime, profile: Dict, chart_type: str) -> Dict:
                 }
             )
 
-    # Calculate aspects
-    aspects = _compute_aspects(planets)
-
     # Get Ascendant and MC
     try:
         asc = chart.get(const.ASC)
@@ -450,6 +474,13 @@ def _chart_with_flatlib(dt: datetime, profile: Dict, chart_type: str) -> Dict:
     except Exception:
         asc_data = {"sign": "Aries", "degree": 0.0, "absolute_degree": 0.0}
         mc_data = {"sign": "Capricorn", "degree": 0.0, "absolute_degree": 0.0}
+
+    # Calculate aspects (planet-to-planet + planet-to-angle) — done AFTER ASC/MC extraction
+    angle_points = [
+        {"name": "Ascendant", "absolute_degree": asc_data.get("absolute_degree", 0.0)},
+        {"name": "Midheaven", "absolute_degree": mc_data.get("absolute_degree", 0.0)},
+    ]
+    aspects = _compute_aspects(planets, angles=angle_points)
 
     # Calculate Part of Fortune (Arabic Lot)
     # Day chart (Sun above horizon): PoF = ASC + Moon - Sun
@@ -638,23 +669,51 @@ def _chart_polar_fallback(dt: datetime, profile: Dict, chart_type: str) -> Dict:
     return base
 
 
-def _compute_aspects(planets: List[Dict]) -> List[Dict]:
+def _compute_aspects(
+    planets: List[Dict], angles: Optional[List[Dict]] = None
+) -> List[Dict]:
+    """Compute aspects between planets and optionally between planets and chart angles (ASC/MC)."""
     aspects: List[Dict] = []
+    angle_bodies = []
+    if angles:
+        for ang in angles:
+            angle_bodies.append(
+                {
+                    "name": ang.get("name", "Angle"),
+                    "absolute_degree": ang.get("absolute_degree", 0.0),
+                    "_angle_only": True,  # Only appears as planet_b, not initiating
+                }
+            )
+
+    # Planet-to-planet
     for i, pa in enumerate(planets):
         for pb in planets[i + 1 :]:
-            diff = _deg_diff(pa["absolute_degree"], pb["absolute_degree"])
-            aspect_type, orb = _closest_aspect(diff)
-            if aspect_type and orb <= ASPECT_ORBS[aspect_type]:
-                aspects.append(
-                    {
-                        "planet_a": pa["name"],
-                        "planet_b": pb["name"],
-                        "type": aspect_type,
-                        "orb": round(orb, 2),
-                        "strength": _score_aspect(aspect_type, orb),
-                    }
-                )
+            aspect = _check_aspect_pair(pa, pb)
+            if aspect:
+                aspects.append(aspect)
+
+    # Planet-to-angle
+    for pa in planets:
+        for pb in angle_bodies:
+            aspect = _check_aspect_pair(pa, pb)
+            if aspect:
+                aspects.append(aspect)
+
     return aspects
+
+
+def _check_aspect_pair(pa: Dict, pb: Dict) -> Optional[Dict]:
+    diff = _deg_diff(pa["absolute_degree"], pb["absolute_degree"])
+    aspect_type, orb = _closest_aspect(diff)
+    if aspect_type and orb <= ASPECT_ORBS[aspect_type]:
+        return {
+            "planet_a": pa["name"],
+            "planet_b": pb["name"],
+            "type": aspect_type,
+            "orb": round(orb, 2),
+            "strength": _score_aspect(aspect_type, orb, pa["name"], pb["name"]),
+        }
+    return None
 
 
 def _deg_diff(a: float, b: float) -> float:
@@ -672,12 +731,23 @@ def _closest_aspect(diff: float):
     return closest, min_orb
 
 
-def _score_aspect(aspect_type: str, orb: float) -> float:
+def _score_aspect(
+    aspect_type: str, orb: float, body_a: str = "", body_b: str = ""
+) -> float:
     max_orb = ASPECT_ORBS.get(aspect_type, 6.0)
     base = max(0.1, 1 - orb / max_orb)
-    weight = 1.2 if aspect_type in ["conjunction", "opposition"] else 1.0
-    weight = 1.1 if aspect_type in ["trine", "sextile"] else weight
-    return round(base * weight, 3)
+    # Aspect type weight
+    if aspect_type in ("conjunction", "opposition"):
+        weight = 1.2
+    elif aspect_type in ("trine", "sextile"):
+        weight = 1.1
+    else:
+        weight = 1.0
+    # Planet significance weight (geometric mean of both bodies)
+    wa = _PLANET_WEIGHT.get(body_a, 1.0)
+    wb = _PLANET_WEIGHT.get(body_b, 1.0)
+    planet_weight = (wa * wb) ** 0.5
+    return round(base * weight * planet_weight, 3)
 
 
 def _resolve_house_system(name: Optional[str]):
