@@ -1,7 +1,7 @@
 """Extended numerology calculations: Expression, Soul Urge, Personality, Maturity, Cycles, Pinnacles, Challenges."""
 
 from datetime import datetime
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from app.interpretation.translations import get_translation
 
@@ -403,6 +403,16 @@ def get_full_numerology_profile(name: str, dob: str, lang: str = "en") -> Dict:
             for c in challenges
         ],
         "karmic_debts": _find_karmic_debts(name, dob),
+        # --- Phase 4 additions ---
+        "essence": calculate_essence_cycles(name, dob, now.year),
+        "planes_of_expression": calculate_planes_of_expression(name),
+        "balance_number": calculate_balance_number(name),
+        "intensity_numbers": calculate_intensity_numbers(name),
+        "bridge_numbers": calculate_bridge_numbers(
+            life_path, expression, soul_urge, personality
+        ),
+        "hidden_passion": calculate_hidden_passion(name),
+        "name_transit": calculate_name_transit(name, dob, now.year),
     }
 
 
@@ -423,4 +433,305 @@ def analyze_name(name: str, lang: str = "en") -> Dict:
             "number": personality,
             **get_number_meaning(personality, lang=lang),
         },
+    }
+
+
+# ---------------------------------------------------------------------------
+# Phase 4 additions
+# ---------------------------------------------------------------------------
+
+# Planes of Expression letter assignments (26 letters, no overlap)
+_PLANE_LETTERS: Dict[str, set] = {
+    "physical": set("demvw"),  # D E M V W
+    "mental": set("ahjnp"),  # A H J N P
+    "emotional": set("biorst xz"),  # B I O R S T X Z  (space excluded implicitly)
+    "intuitive": set("cfgklquy"),  # C F G K L Q U Y
+}
+_PLANE_LETTERS["emotional"] = set("biorsttxz")  # tighten up (no space)
+
+_PLANE_DESCRIPTIONS = {
+    "physical": "Practical, hands-on, action-oriented — expresses through doing",
+    "mental": "Intellectual, analytical, communicative — expresses through thinking",
+    "emotional": "Feeling, empathetic, sensitive — expresses through emotion",
+    "intuitive": "Spiritual, creative, perceptive — expresses through knowing",
+}
+
+_BRIDGE_MEANINGS = {
+    0: "Numbers are in harmony — you naturally integrate these energies",
+    1: "Independence and initiative needed to bridge the gap",
+    2: "Cooperation, patience, and diplomacy bridge the gap",
+    3: "Creative self-expression and joy bridge the gap",
+    4: "Practical work and discipline bridge the gap",
+    5: "Flexibility, adaptability, and change bridge the gap",
+    6: "Service, responsibility, and love bridge the gap",
+    7: "Spiritual understanding and inner work bridge the gap",
+    8: "Material mastery, ambition, and authority bridge the gap",
+    9: "Universal compassion and humanitarian action bridge the gap",
+}
+
+
+def calculate_essence_cycles(
+    full_name: str, dob: str, ref_year: Optional[int] = None
+) -> Dict:
+    """
+    Essence number for a given year.
+
+    Each letter in a name has a duration equal to its Pythagorean value.
+    Letters cycle through the name; the active letter for each name part
+    at the reference age is the *transit*.  The Essence = sum of all
+    transits, reduced.
+    """
+    if ref_year is None:
+        ref_year = datetime.now().year
+
+    birth_year = int(dob.split("-")[0])
+    # Use whole-year age as of ref_year's birthday
+    age = ref_year - birth_year
+
+    parts = [p for p in full_name.split() if p]
+    essence_total = 0
+    transits: List[Dict] = []
+
+    for part in parts:
+        letters = [c.lower() for c in part if c.isalpha()]
+        if not letters:
+            continue
+
+        durations = [LETTER_VALUES.get(c, 9) or 9 for c in letters]  # value 0 → use 9
+        cycle_len = sum(durations)
+        if cycle_len == 0:
+            continue
+
+        pos_in_cycle = age % cycle_len
+        cumulative = 0
+        active_letter = letters[0]
+        active_value = LETTER_VALUES.get(letters[0], 0)
+        years_remaining = durations[0]
+
+        for letter, duration in zip(letters, durations):
+            if pos_in_cycle < cumulative + duration:
+                active_letter = letter
+                active_value = LETTER_VALUES.get(letter, 0)
+                years_remaining = duration - (pos_in_cycle - cumulative)
+                break
+            cumulative += duration
+
+        essence_total += active_value
+        transits.append(
+            {
+                "name_part": part,
+                "letter": active_letter.upper(),
+                "value": active_value,
+                "years_remaining": years_remaining,
+            }
+        )
+
+    essence = reduce_number(essence_total)
+    meaning = NUMBER_MEANINGS.get(essence, {})
+    return {
+        "essence": essence,
+        "year": ref_year,
+        "transits": transits,
+        "keyword": meaning.get("keyword", ""),
+        "description": meaning.get("description", ""),
+        "interpretation": (
+            f"Essence {essence} in {ref_year}: "
+            f"{meaning.get('description', 'Transformative energy in motion.')}"
+        ),
+    }
+
+
+def calculate_planes_of_expression(full_name: str) -> Dict:
+    """
+    Planes of Expression: Physical, Mental, Emotional, Intuitive.
+
+    Counts and sums letter values per plane to reveal how a person's
+    energy is most naturally expressed.
+    """
+    letters = [c.lower() for c in full_name if c.isalpha()]
+    counts: Dict[str, int] = {p: 0 for p in _PLANE_LETTERS}
+    totals: Dict[str, int] = {p: 0 for p in _PLANE_LETTERS}
+
+    for letter in letters:
+        for plane, letter_set in _PLANE_LETTERS.items():
+            if letter in letter_set:
+                counts[plane] += 1
+                totals[plane] += LETTER_VALUES.get(letter, 0)
+                break
+
+    dominant_plane = (
+        max(counts, key=lambda p: counts[p]) if any(counts.values()) else "balanced"
+    )
+
+    planes_out = {}
+    for plane in _PLANE_LETTERS:
+        reduced = reduce_number(totals[plane]) if totals[plane] > 0 else 0
+        planes_out[plane] = {
+            "count": counts[plane],
+            "total": totals[plane],
+            "reduced": reduced,
+            "description": _PLANE_DESCRIPTIONS[plane],
+        }
+
+    return {
+        "planes": planes_out,
+        "dominant_plane": dominant_plane,
+        "interpretation": (
+            f"Dominant plane: {dominant_plane.title()} — "
+            f"{_PLANE_DESCRIPTIONS.get(dominant_plane, 'Balanced across all planes')}."
+        ),
+    }
+
+
+def calculate_balance_number(full_name: str) -> Dict:
+    """
+    Balance Number: sum of the first letter of each name segment, reduced.
+
+    Reveals how a person handles stress and emotional imbalance.
+    """
+    parts = [p for p in full_name.split() if p and p[0].isalpha()]
+    first_letters = [p[0].lower() for p in parts]
+    total = sum(LETTER_VALUES.get(c, 0) for c in first_letters)
+    balance = reduce_number(total)
+    meaning = NUMBER_MEANINGS.get(
+        balance, {"keyword": "Unique", "description": "Unique balancing energy."}
+    )
+    return {
+        "number": balance,
+        "first_letters": [c.upper() for c in first_letters],
+        "keyword": meaning["keyword"],
+        "description": meaning["description"],
+    }
+
+
+def calculate_intensity_numbers(full_name: str) -> Dict:
+    """
+    Intensity Number Table: counts how many times each digit 1–9 appears
+    across all letter values in the full birth name.
+
+    - Most frequent digit(s) = intensities / strengths
+    - Absent digit(s) = missing energies / karmic challenges
+    """
+    letters = [c.lower() for c in full_name if c.isalpha()]
+    digit_counts: Dict[int, int] = {i: 0 for i in range(1, 10)}
+
+    for letter in letters:
+        val = LETTER_VALUES.get(letter, 0)
+        if val in digit_counts:
+            digit_counts[val] += 1
+
+    max_count = max(digit_counts.values()) if digit_counts else 0
+    intensities = [n for n, c in digit_counts.items() if c == max_count and c > 0]
+    missing = [n for n, c in digit_counts.items() if c == 0]
+
+    return {
+        "table": digit_counts,
+        "intensities": intensities,
+        "missing": missing,
+        "most_frequent_count": max_count,
+    }
+
+
+def calculate_bridge_numbers(
+    life_path: int,
+    expression: int,
+    soul_urge: Optional[int] = None,
+    personality: Optional[int] = None,
+) -> Dict:
+    """
+    Bridge Numbers: the numerical gap between core numbers.
+
+    Bridge 1 (Life Path ↔ Expression) — integrating who you are with your potential.
+    Bridge 2 (Soul Urge ↔ Personality) — integrating inner desires with outer image.
+    Bridge 0 means the energies already flow naturally together.
+    """
+
+    def _single(n: int) -> int:
+        """Reduce master numbers to single digit for bridge arithmetic."""
+        if n in (11, 22, 33):
+            return n % 9 or 9
+        return n
+
+    bridge1 = abs(_single(life_path) - _single(expression))
+    result: Dict = {
+        "life_path_expression_bridge": bridge1,
+        "life_path": life_path,
+        "expression": expression,
+        "interpretation_lp_exp": _BRIDGE_MEANINGS.get(bridge1, ""),
+    }
+
+    if soul_urge is not None and personality is not None:
+        bridge2 = abs(_single(soul_urge) - _single(personality))
+        result["soul_urge_personality_bridge"] = bridge2
+        result["soul_urge"] = soul_urge
+        result["personality"] = personality
+        result["interpretation_su_pers"] = _BRIDGE_MEANINGS.get(bridge2, "")
+
+    return result
+
+
+def calculate_hidden_passion(full_name: str) -> Dict:
+    """
+    Hidden Passion Number: the most frequently recurring digit in the name.
+
+    Unlike Expression (sum of all letters) this reveals an unconscious
+    drive or obsession — an energy that keeps showing up naturally.
+    """
+    intensity = calculate_intensity_numbers(full_name)
+    passions = intensity["intensities"]
+    table = intensity["table"]
+
+    meanings = [
+        {
+            "number": n,
+            **NUMBER_MEANINGS.get(
+                n, {"keyword": "Unique", "description": "Unique energy."}
+            ),
+        }
+        for n in passions
+    ]
+    return {
+        "numbers": passions,
+        "count": intensity["most_frequent_count"],
+        "table": table,
+        "meanings": meanings,
+        "interpretation": (
+            f"Hidden Passion {'/'.join(str(n) for n in passions)}: "
+            + " and ".join(m.get("description", "") for m in meanings)
+        ),
+    }
+
+
+def calculate_name_transit(
+    full_name: str, dob: str, ref_year: Optional[int] = None
+) -> Dict:
+    """
+    Name Transit: which letter in each name part is active for a given year.
+
+    Convention (when 3 name parts are present):
+      First name  → Physical transit
+      Middle name → Mental transit
+      Last name   → Spiritual transit
+
+    Returns the active letter, its value, and thematic focus for the year.
+    """
+    essence = calculate_essence_cycles(full_name, dob, ref_year)
+    transits = essence["transits"]
+
+    # Label physical/mental/spiritual when name has ≥2 parts
+    labels = ["physical", "mental", "spiritual", "fourth", "fifth"]
+    labelled = []
+    for i, t in enumerate(transits):
+        labelled.append(
+            {
+                **t,
+                "transit_type": labels[i] if i < len(labels) else f"part_{i + 1}",
+            }
+        )
+
+    return {
+        "year": essence["year"],
+        "transits": labelled,
+        "essence": essence["essence"],
+        "interpretation": essence["interpretation"],
     }
