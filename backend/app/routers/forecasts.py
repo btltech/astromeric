@@ -187,9 +187,10 @@ async def calculate_daily_forecast(
                     )
                 )
 
-        # Enrich with fusion transit data (non-blocking — degraded gracefully on failure)
+        # Enrich with fusion transit data and track summaries (non-blocking)
         fusion_tldr: Optional[str] = None
         fusion_transits: Optional[List[ActiveTransit]] = None
+        fusion_tracks: Dict[str, str] = {}
         try:
             from ..engine.fusion import fuse_prediction as _fuse
 
@@ -205,6 +206,7 @@ async def calculate_daily_forecast(
                 lang=getattr(req, "language", "en"),
             )
             fusion_tldr = fusion.get("tldr")
+            fusion_tracks = fusion.get("tracks") or {}
             raw_transits = fusion.get("active_transits") or []
             if raw_transits:
                 fusion_transits = [
@@ -218,6 +220,42 @@ async def calculate_daily_forecast(
                 ]
         except Exception:
             pass  # Never let fusion failure break the main forecast
+
+        # Replace section summaries with richer fusion track text
+        _TRACK_SECTION_MAP: Dict[str, object] = {
+            "Overview": "general",
+            "Love & Relationships": "love",
+            "Career & Money": ("career", "money"),
+            "Emotional & Spiritual": ("spiritual", "health"),
+        }
+        if fusion_tracks:
+            enriched: List[ForecastSection] = []
+            for sec in sections:
+                track_key = _TRACK_SECTION_MAP.get(sec.title)
+                if track_key is None:
+                    enriched.append(sec)
+                elif isinstance(track_key, tuple):
+                    parts = [fusion_tracks[k] for k in track_key if k in fusion_tracks]
+                    enriched.append(
+                        ForecastSection(
+                            title=sec.title,
+                            summary=" ".join(parts) if parts else sec.summary,
+                            topics=sec.topics,
+                            avoid=sec.avoid,
+                            embrace=sec.embrace,
+                        )
+                    )
+                else:
+                    enriched.append(
+                        ForecastSection(
+                            title=sec.title,
+                            summary=fusion_tracks.get(track_key) or sec.summary,
+                            topics=sec.topics,
+                            avoid=sec.avoid,
+                            embrace=sec.embrace,
+                        )
+                    )
+            sections = enriched
 
         response_data = ForecastData(
             profile=req.profile,
