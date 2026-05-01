@@ -32,6 +32,15 @@ class ForecastSection(BaseModel):
     embrace: List[str] = []
 
 
+class ActiveTransit(BaseModel):
+    """A single transit-to-natal aspect active today."""
+
+    transit_planet: str
+    natal_planet: str
+    aspect: str
+    orb: float
+
+
 class ForecastData(BaseModel):
     """Daily/weekly/monthly forecast response."""
 
@@ -41,6 +50,8 @@ class ForecastData(BaseModel):
     sections: List[ForecastSection]
     overall_score: float
     generated_at: datetime
+    tldr: Optional[str] = None
+    active_transits: Optional[List[ActiveTransit]] = None
 
 
 # ============================================================================
@@ -176,6 +187,38 @@ async def calculate_daily_forecast(
                     )
                 )
 
+        # Enrich with fusion transit data (non-blocking — degraded gracefully on failure)
+        fusion_tldr: Optional[str] = None
+        fusion_transits: Optional[List[ActiveTransit]] = None
+        try:
+            from ..engine.fusion import fuse_prediction as _fuse
+
+            fusion = _fuse(
+                name=req.profile.name,
+                dob=req.profile.date_of_birth,
+                date=req.date or datetime.now(timezone.utc).date().isoformat(),
+                scope="daily",
+                time_of_birth=req.profile.time_of_birth,
+                place_of_birth=getattr(req.profile, "place_of_birth", None),
+                latitude=req.profile.latitude,
+                longitude=req.profile.longitude,
+                lang=getattr(req, "language", "en"),
+            )
+            fusion_tldr = fusion.get("tldr")
+            raw_transits = fusion.get("active_transits") or []
+            if raw_transits:
+                fusion_transits = [
+                    ActiveTransit(
+                        transit_planet=t["transit_planet"],
+                        natal_planet=t["natal_planet"],
+                        aspect=t["aspect"],
+                        orb=t["orb"],
+                    )
+                    for t in raw_transits
+                ]
+        except Exception:
+            pass  # Never let fusion failure break the main forecast
+
         response_data = ForecastData(
             profile=req.profile,
             scope="daily",
@@ -184,6 +227,8 @@ async def calculate_daily_forecast(
             sections=sections,
             overall_score=forecast.get("overall_score", 0.5),
             generated_at=datetime.now(timezone.utc),
+            tldr=fusion_tldr,
+            active_transits=fusion_transits,
         )
 
         return ApiResponse(

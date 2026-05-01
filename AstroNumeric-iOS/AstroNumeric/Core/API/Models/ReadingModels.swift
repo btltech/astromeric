@@ -98,6 +98,41 @@ struct ForecastByIdRequest: Encodable {
 
 // MARK: - Prediction/Forecast Data
 
+struct ActiveTransit: Codable, Identifiable {
+    var id: String { "\(transitPlanet)-\(aspect)-\(natalPlanet)" }
+    let transitPlanet: String
+    let natalPlanet: String
+    let aspect: String
+    let orb: Float
+
+    enum CodingKeys: String, CodingKey {
+        case transitPlanet = "transit_planet"
+        case natalPlanet = "natal_planet"
+        case aspect
+        case orb
+    }
+
+    var aspectSymbol: String {
+        switch aspect {
+        case "conjunction":  return "☌"
+        case "opposition":   return "☍"
+        case "trine":        return "△"
+        case "square":       return "□"
+        case "sextile":      return "⚹"
+        default:             return "—"
+        }
+    }
+
+    var aspectColor: String {
+        switch aspect {
+        case "trine", "sextile":          return "green"
+        case "conjunction":               return "purple"
+        case "square", "opposition":      return "red"
+        default:                          return "gray"
+        }
+    }
+}
+
 struct PredictionData: Codable {
     let profile: ProfilePayload?
     let scope: String
@@ -105,7 +140,9 @@ struct PredictionData: Codable {
     let sections: [ForecastSection]
     let overallScore: Float
     let generatedAt: String
-    
+    let tldr: String? = nil
+    let activeTransits: [ActiveTransit]? = nil
+
     enum CodingKeys: String, CodingKey {
         case profile
         case scope
@@ -113,6 +150,8 @@ struct PredictionData: Codable {
         case sections
         case overallScore = "overall_score"
         case generatedAt = "generated_at"
+        case tldr
+        case activeTransits = "active_transits"
     }
 }
 

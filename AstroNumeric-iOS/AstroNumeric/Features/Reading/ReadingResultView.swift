@@ -27,61 +27,26 @@ struct ReadingResultView: View {
     
     var body: some View {
         ScrollView {
-            VStack(spacing: 20) {
-                // Header
-                VStack(spacing: 12) {
-                    Text(String(format: "fmt.readingResult.1".localized, "\(data.scope.capitalized)"))
-                        .font(.title.bold())
-                    
-                    Text(data.date)
-                        .font(.caption)
-                        .foregroundStyle(Color.textSecondary)
-                }
-                .padding(.top)
-                
-                // Overall Score
-                CardView {
-                    VStack(spacing: 8) {
-                        Text("ui.readingResult.0".localized)
-                            .font(.headline)
-                        Text(String(format: "%.1f", data.overallScore))
-                            .font(.system(.largeTitle)).fontWeight(.bold)
-                            .foregroundStyle(.purple)
-                        Text("ui.readingResult.1".localized)
-                            .font(.caption)
-                            .foregroundStyle(Color.textSecondary)
-                    }
-                }
+            VStack(alignment: .leading, spacing: Space.md) {
+                readingHeroCard
 
-                CardView {
-                    VStack(alignment: .leading, spacing: 14) {
-                        Text("ui.readingResult.2".localized)
-                            .font(.headline)
+                actionSignalsCard
 
-                        Text(todayMeaningSummary)
-                            .font(.subheadline)
-                            .foregroundStyle(.primary)
-
-                        HStack(alignment: .top, spacing: 12) {
-                            insightPill(title: "Lean Into", body: todayBestMove, color: .green)
-                            insightPill(title: "Watch For", body: todayWatchFor, color: .orange)
-                        }
-                    }
+                if let transits = data.activeTransits, !transits.isEmpty {
+                    activeTransitsCard(transits)
                 }
 
                 if !readingDrivers.isEmpty {
-                    CardView {
+                    CardView(padding: Space.sm, cornerRadius: Radius.md, materialOpacity: 0.04) {
                         VStack(alignment: .leading, spacing: 14) {
                             HStack {
-                                Text("ui.readingResult.3".localized)
-                                    .font(.headline)
+                                PremiumSectionHeader(
+                                    title: "ui.readingResult.3".localized,
+                                    subtitle: "ui.readingResult.4".localized
+                                )
                                 Spacer()
                                 FeatureProvenanceBadge(provenance: .calculated, compact: true)
                             }
-
-                            Text("ui.readingResult.4".localized)
-                                .font(.subheadline)
-                                .foregroundStyle(Color.textSecondary)
 
                             VStack(spacing: 10) {
                                 ForEach(readingDrivers) { driver in
@@ -102,95 +67,21 @@ struct ReadingResultView: View {
                     monthlyLuckyNumbersCard
                         .staggeredReveal(index: 1, isRevealing: isRevealing, baseDelay: 0.1, staggerDelay: 0.08)
                 }
-                
-                // AI Explain Button (for full reading)
-                Button {
-                    Task { await generateFullExplanation(forceRefresh: false) }
-                } label: {
-                    HStack(spacing: 8) {
-                        if isExplaining {
-                            ProgressView()
-                                .scaleEffect(0.8)
-                        } else {
-                            Image(systemName: "sparkles")
-                        }
-                        Text(isExplaining ? "tern.readingResult.0a".localized : "tern.readingResult.0b".localized)
-                            .font(.subheadline.weight(.medium))
-                    }
-                    .foregroundStyle(.purple)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 10)
-                    .background(Color.purple.opacity(0.15))
-                    .clipShape(Capsule())
-                }
-                .disabled(isExplaining)
-                
-                // Sections with staggered reveal
+
+                aiInsightsCard
+
                 ForEach(Array(data.sections.enumerated()), id: \.element.id) { index, section in
-                    CardView {
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text(section.title)
-                                .font(.headline)
-                            
-                            Text(section.summary)
-                                .font(.subheadline)
-                                .foregroundStyle(Color.textSecondary)
-
-                            if !topTopics(for: section).isEmpty {
-                                VStack(alignment: .leading, spacing: 6) {
-                                    Text("ui.readingResult.5".localized)
-                                        .font(.caption.weight(.medium))
-                                        .foregroundStyle(.purple)
-
-                                    ForEach(topTopics(for: section), id: \.key) { topic in
-                                        HStack {
-                                            Text(displayTopicName(topic.key))
-                                                .font(.caption)
-                                            Spacer()
-                                            Text(topicWeightLabel(topic.value))
-                                                .font(.caption.weight(.medium))
-                                                .foregroundStyle(Color.textSecondary)
-                                        }
-                                    }
-                                }
-                            }
-                            
-                            if !section.embrace.isEmpty {
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text("ui.readingResult.6".localized)
-                                        .font(.caption.weight(.medium))
-                                        .foregroundStyle(.green)
-                                    ForEach(section.embrace, id: \.self) { item in
-                                        Text("• \(item)")
-                                            .font(.caption)
-                                    }
-                                }
-                            }
-                            
-                            if !section.avoid.isEmpty {
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text("ui.readingResult.7".localized)
-                                        .font(.caption.weight(.medium))
-                                        .foregroundStyle(.orange)
-                                    ForEach(section.avoid, id: \.self) { item in
-                                        Text("• \(item)")
-                                            .font(.caption)
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    readingSectionCard(section)
                     .staggeredReveal(index: index, isRevealing: isRevealing, baseDelay: 0.1, staggerDelay: 0.08)
                 }
                 
-                // Share Button
                 SecondaryButton("action.share".localized, icon: "square.and.arrow.up") {
                     showShareSheet = true
                 }
-                .padding(.top)
                 .slideUpReveal(isRevealing: isRevealing, offset: 20, delay: 0.3)
             }
-            .padding()
+            .padding(.horizontal, Space.sm)
+            .padding(.vertical, Space.sm)
             .readableContainer()
         }
         .onAppear {
@@ -226,6 +117,149 @@ struct ReadingResultView: View {
         }
     }
 
+    private var readingHeroCard: some View {
+        PremiumHeroCard(
+            eyebrow: String(format: "fmt.readingResult.1".localized, "\(data.scope.capitalized)"),
+            title: todayHeroTitle,
+            bodyText: todayMeaningSummary,
+            accent: .accentPrimary,
+            chips: summaryChips
+        )
+    }
+
+    private var actionSignalsCard: some View {
+        CardView(padding: Space.sm, cornerRadius: Radius.md, materialOpacity: 0.04) {
+            VStack(alignment: .leading, spacing: Space.sm) {
+                HStack(alignment: .firstTextBaseline) {
+                    Text("ui.readingResult.11".localized)
+                        .font(.cardTitle)
+                        .foregroundStyle(Color.textPrimary)
+                    Spacer()
+                    PremiumBadge(text: "ui.readingResult.10".localized, tint: .accentSecondary)
+                }
+
+                HStack(alignment: .top, spacing: 12) {
+                    insightPill(title: "ui.readingResult.6".localized, body: todayBestMove, color: .positiveGreen)
+                    insightPill(title: "ui.readingResult.7".localized, body: todayWatchFor, color: .warningOrange)
+                }
+            }
+        }
+    }
+
+    private var aiInsightsCard: some View {
+        Button {
+            Task { await generateFullExplanation(forceRefresh: false) }
+        } label: {
+            PremiumActionCard(
+                title: "screen.aiInsights".localized,
+                subtitle: isExplaining ? "tern.readingResult.0a".localized : "tern.readingResult.0b".localized,
+                icon: "sparkles",
+                label: "label.advanced".localized,
+                accent: .accentSecondary,
+                emphasized: false,
+                showsChevron: !isExplaining
+            )
+            .overlay(alignment: .trailing) {
+                if isExplaining {
+                    ProgressView()
+                        .padding(.trailing, Space.sm)
+                }
+            }
+        }
+        .buttonStyle(ScaleButtonStyle())
+        .disabled(isExplaining)
+    }
+
+    private func readingSectionCard(_ section: ForecastSection) -> some View {
+        CardView(padding: Space.sm, cornerRadius: Radius.md, materialOpacity: 0.04) {
+            VStack(alignment: .leading, spacing: 12) {
+                PremiumSectionHeader(title: section.title, subtitle: section.summary)
+
+                if !topTopics(for: section).isEmpty {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("ui.readingResult.5".localized)
+                            .font(.caption.weight(.medium))
+                            .foregroundStyle(Color.accentPrimary)
+
+                        ForEach(topTopics(for: section), id: \.key) { topic in
+                            HStack {
+                                Text(displayTopicName(topic.key))
+                                    .font(.caption)
+                                Spacer()
+                                Text(topicWeightLabel(topic.value))
+                                    .font(.caption.weight(.medium))
+                                    .foregroundStyle(Color.textSecondary)
+                            }
+                        }
+                    }
+                }
+
+                if !section.embrace.isEmpty {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("ui.readingResult.6".localized)
+                            .font(.caption.weight(.medium))
+                            .foregroundStyle(Color.positiveGreen)
+                        ForEach(section.embrace, id: \.self) { item in
+                            Text("• \(item)")
+                                .font(.caption)
+                        }
+                    }
+                }
+
+                if !section.avoid.isEmpty {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("ui.readingResult.7".localized)
+                            .font(.caption.weight(.medium))
+                            .foregroundStyle(Color.warningOrange)
+                        ForEach(section.avoid, id: \.self) { item in
+                            Text("• \(item)")
+                                .font(.caption)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private func activeTransitsCard(_ transits: [ActiveTransit]) -> some View {
+        CardView(padding: Space.sm, cornerRadius: Radius.md, materialOpacity: 0.04) {
+            VStack(alignment: .leading, spacing: 10) {
+                HStack {
+                    Text("🌌")
+                        .font(.title3)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Active Transits")
+                            .font(.headline)
+                        Text("Today's sky to your natal chart")
+                            .font(.caption)
+                            .foregroundStyle(Color.textSecondary)
+                    }
+                    Spacer()
+                    FeatureProvenanceBadge(provenance: .calculated, compact: true)
+                }
+
+                Divider()
+
+                ForEach(transits) { transit in
+                    HStack(spacing: 10) {
+                        Text(transit.aspectSymbol)
+                            .font(.title3)
+                            .frame(width: 28)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("\(transit.transitPlanet) \(transit.aspect) \(transit.natalPlanet)")
+                                .font(.subheadline.weight(.medium))
+                                .foregroundStyle(Color.textPrimary)
+                            Text("Orb \(String(format: "%.1f", transit.orb))°")
+                                .font(.caption)
+                                .foregroundStyle(Color.textSecondary)
+                        }
+                        Spacer()
+                    }
+                }
+            }
+        }
+    }
+
     private func insightPill(title: String, body: String, color: Color) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(title)
@@ -240,6 +274,26 @@ struct ReadingResultView: View {
         .padding(12)
         .background(color.opacity(0.08))
         .clipShape(RoundedRectangle(cornerRadius: 14))
+    }
+
+    private var todayHeroTitle: String {
+        if let firstSection = data.sections.first?.title, !firstSection.isEmpty {
+            return firstSection
+        }
+
+        return "ui.readingResult.2".localized
+    }
+
+    private var summaryChips: [String] {
+        var chips: [String] = [data.date, "\("ui.readingResult.0".localized): \(String(format: "%.1f", data.overallScore))/10"]
+
+        if let personalDayNumber {
+            chips.append("\("numerology.personalDay".localized) \(personalDayNumber)")
+        } else if let theme = strongestThemes(limit: 1).first {
+            chips.append(theme)
+        }
+
+        return chips
     }
 
     // MARK: - Monthly Zodiac Helpers
@@ -340,7 +394,7 @@ struct ReadingResultView: View {
                 HStack(spacing: 10) {
                     ZStack {
                         Circle()
-                            .fill(Color.purple.opacity(0.18))
+                            .fill(Color.accentPrimary.opacity(0.18))
                             .frame(width: 48, height: 48)
                         Text(sign.emoji)
                             .font(.system(.title2))
@@ -376,8 +430,8 @@ struct ReadingResultView: View {
                                     .font(.caption.weight(.medium))
                                     .padding(.horizontal, 12)
                                     .padding(.vertical, 6)
-                                    .background(Color.purple.opacity(0.15))
-                                    .foregroundStyle(.purple)
+                                    .background(Color.accentPrimary.opacity(0.15))
+                                    .foregroundStyle(Color.accentPrimary)
                                     .clipShape(Capsule())
                             }
                         }
@@ -520,7 +574,7 @@ struct ReadingResultView: View {
                             Circle()
                                 .fill(
                                     LinearGradient(
-                                        colors: [Color.green.opacity(0.3), Color.teal.opacity(0.2)],
+                                        colors: [Color.positiveGreen.opacity(0.3), Color.cosmicBlue.opacity(0.2)],
                                         startPoint: .topLeading,
                                         endPoint: .bottomTrailing
                                     )
@@ -528,7 +582,7 @@ struct ReadingResultView: View {
                                 .frame(width: 52, height: 52)
                             Text("\(number)")
                                 .font(.title3.bold())
-                                .foregroundStyle(.green)
+                                .foregroundStyle(Color.positiveGreen)
                         }
                     }
                 }
@@ -755,9 +809,9 @@ struct AIInsightsSheetView: View {
                 .padding(.horizontal, 10)
                 .padding(.vertical, 6)
                 .background(
-                    Capsule().fill(source == .ai ? Color.purple.opacity(0.18) : Color.borderSubtle)
+                    Capsule().fill(source == .ai ? Color.accentPrimary.opacity(0.18) : Color.borderSubtle)
                 )
-                .foregroundStyle(source == .ai ? .purple : Color.textSecondary)
+                .foregroundStyle(source == .ai ? Color.accentPrimary : Color.textSecondary)
 
             Text(relativeTime(generatedAt))
                 .font(.caption)
@@ -776,7 +830,7 @@ struct AIInsightsSheetView: View {
         VStack(spacing: 8) {
             Text("ui.readingResult.10".localized)
                 .font(.caption.weight(.bold))
-                .foregroundStyle(.purple)
+                .foregroundStyle(Color.accentPrimary)
 
             Text(text)
                 .font(.subheadline)
@@ -790,8 +844,8 @@ struct AIInsightsSheetView: View {
                 .fill(
                     LinearGradient(
                         colors: [
-                            Color.purple.opacity(0.2),
-                            Color.purple.opacity(0.1),
+                            Color.accentPrimary.opacity(0.2),
+                            Color.accentPrimary.opacity(0.1),
                         ],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
@@ -800,12 +854,12 @@ struct AIInsightsSheetView: View {
         )
         .overlay(
             RoundedRectangle(cornerRadius: 16)
-                .strokeBorder(Color.purple.opacity(0.3), lineWidth: 1)
+                .strokeBorder(Color.accentPrimary.opacity(0.3), lineWidth: 1)
         )
         .overlay(alignment: .topLeading) {
             Text("ui.readingResult.11".localized)
                 .font(.system(.caption2, design: .monospaced)).fontWeight(.bold)
-                .foregroundStyle(.purple.opacity(0.7))
+                .foregroundStyle(Color.accentPrimary.opacity(0.7))
                 .padding(.horizontal, 10)
                 .padding(.vertical, 6)
         }
