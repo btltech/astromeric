@@ -31,22 +31,30 @@ PLANETS = [
     "Pluto",
 ]
 
-# Degrees and labels for classic Ptolemaic aspects
+# Degrees and labels for Ptolemaic + minor aspects
 ASPECT_ANGLES: Dict[str, float] = {
     "conjunction": 0.0,
     "sextile": 60.0,
     "square": 90.0,
     "trine": 120.0,
     "opposition": 180.0,
+    "semi_sextile": 30.0,
+    "semi_square": 45.0,
+    "sesquiquadrate": 135.0,
+    "quincunx": 150.0,
 }
 
-# Max orb per aspect type (can be tuned or externalised later)
+# Max orb per aspect type
 ASPECT_ORBS: Dict[str, float] = {
     "conjunction": 7.0,
     "sextile": 3.5,
     "square": 5.5,
     "trine": 5.5,
     "opposition": 7.0,
+    "semi_sextile": 2.0,
+    "semi_square": 2.0,
+    "sesquiquadrate": 2.0,
+    "quincunx": 3.0,
 }
 
 
@@ -110,6 +118,33 @@ class ChartEngine:
                     cusp_degree=cusp.signlon,
                 )
             )
+
+        # Extract Chiron and Lunar Nodes as full participants in aspect calculation
+        for body_name, fl_attr in {
+            "Chiron": "CHIRON",
+            "North Node": "NORTH_NODE",
+            "South Node": "SOUTH_NODE",
+        }.items():
+            try:
+                obj = fl_chart.get(getattr(fl_const, fl_attr))
+                try:
+                    point_house = int(
+                        fl_chart.houses.getObjectHouse(obj).id.replace("House", "")
+                    )
+                except Exception:
+                    point_house = None
+                planets.append(
+                    PlanetPosition(
+                        name=body_name,
+                        sign=obj.sign,
+                        degree=obj.signlon,
+                        absolute_degree=obj.lon,
+                        house=point_house,
+                        retrograde=getattr(obj, "speed", 0) < 0,
+                    )
+                )
+            except Exception:
+                pass
 
         aspects = self._compute_aspects(planets)
 

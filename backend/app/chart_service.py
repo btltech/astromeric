@@ -475,12 +475,16 @@ def _chart_with_flatlib(dt: datetime, profile: Dict, chart_type: str) -> Dict:
         asc_data = {"sign": "Aries", "degree": 0.0, "absolute_degree": 0.0}
         mc_data = {"sign": "Capricorn", "degree": 0.0, "absolute_degree": 0.0}
 
-    # Calculate aspects (planet-to-planet + planet-to-angle) — done AFTER ASC/MC extraction
+    # Calculate aspects — planets + Chiron/Nodes as full participants + ASC/MC as angle targets
     angle_points = [
         {"name": "Ascendant", "absolute_degree": asc_data.get("absolute_degree", 0.0)},
         {"name": "Midheaven", "absolute_degree": mc_data.get("absolute_degree", 0.0)},
     ]
-    aspects = _compute_aspects(planets, angles=angle_points)
+    _ASPECT_POINT_NAMES = {"Chiron", "North Node", "South Node"}
+    aspect_bodies = planets + [
+        p for p in points if p.get("name") in _ASPECT_POINT_NAMES
+    ]
+    aspects = _compute_aspects(aspect_bodies, angles=angle_points)
 
     # Calculate Part of Fortune (Arabic Lot)
     # Day chart (Sun above horizon): PoF = ASC + Moon - Sun

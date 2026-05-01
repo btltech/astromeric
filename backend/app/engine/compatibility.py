@@ -1,29 +1,53 @@
 """Compatibility calculations for astrology and numerology - Pro Level."""
 
 from datetime import datetime
-from typing import Dict
+from typing import Dict, Optional
 
 from ..interpretation.translations import get_translation
 from .astrology import get_element, get_zodiac_sign
+from .moon_phases import estimate_moon_sign
 from .numerology import calculate_life_path_number
 from .numerology_extended import calculate_expression_number, calculate_soul_urge_number
-from .moon_phases import estimate_moon_sign
 
 # Modality mapping (Cardinal, Fixed, Mutable)
 MODALITY_MAP = {
-    "Aries": "Cardinal", "Cancer": "Cardinal", "Libra": "Cardinal", "Capricorn": "Cardinal",
-    "Taurus": "Fixed", "Leo": "Fixed", "Scorpio": "Fixed", "Aquarius": "Fixed",
-    "Gemini": "Mutable", "Virgo": "Mutable", "Sagittarius": "Mutable", "Pisces": "Mutable",
+    "Aries": "Cardinal",
+    "Cancer": "Cardinal",
+    "Libra": "Cardinal",
+    "Capricorn": "Cardinal",
+    "Taurus": "Fixed",
+    "Leo": "Fixed",
+    "Scorpio": "Fixed",
+    "Aquarius": "Fixed",
+    "Gemini": "Mutable",
+    "Virgo": "Mutable",
+    "Sagittarius": "Mutable",
+    "Pisces": "Mutable",
 }
 
 # Modality compatibility scores
 MODALITY_COMPAT = {
-    ("Cardinal", "Cardinal"): {"score": 70, "desc": "Two leaders - dynamic but competitive."},
-    ("Cardinal", "Fixed"): {"score": 65, "desc": "Initiator meets sustainer - power struggles possible."},
-    ("Cardinal", "Mutable"): {"score": 85, "desc": "Leader meets adapter - natural flow."},
+    ("Cardinal", "Cardinal"): {
+        "score": 70,
+        "desc": "Two leaders - dynamic but competitive.",
+    },
+    ("Cardinal", "Fixed"): {
+        "score": 65,
+        "desc": "Initiator meets sustainer - power struggles possible.",
+    },
+    ("Cardinal", "Mutable"): {
+        "score": 85,
+        "desc": "Leader meets adapter - natural flow.",
+    },
     ("Fixed", "Fixed"): {"score": 75, "desc": "Stable but stubborn - loyalty is key."},
-    ("Fixed", "Mutable"): {"score": 80, "desc": "Anchor meets flexibility - balanced dynamic."},
-    ("Mutable", "Mutable"): {"score": 70, "desc": "Both adaptable - may lack direction."},
+    ("Fixed", "Mutable"): {
+        "score": 80,
+        "desc": "Anchor meets flexibility - balanced dynamic.",
+    },
+    ("Mutable", "Mutable"): {
+        "score": 70,
+        "desc": "Both adaptable - may lack direction.",
+    },
 }
 
 # Venus approximate offsets from Sun (in zodiac positions, simplified)
@@ -171,19 +195,19 @@ def get_element_compat(e1: str, e2: str, lang: str = "en") -> Dict:
     key = tuple(sorted([e1, e2]))
     if key[0] == key[1]:
         key = (e1, e2)
-        
+
     # Try translation first
     trans_key = f"compat_element_{key[0].lower()}_{key[1].lower()}"
     trans = get_translation(lang, trans_key)
-    
+
     default_data = ELEMENT_COMPAT.get(
         key, {"score": 65, "desc": "Unique combination with growth potential."}
     )
-    
+
     if trans:
         # Assuming translation returns [desc]
         return {"score": default_data["score"], "desc": trans[0]}
-        
+
     return default_data
 
 
@@ -196,57 +220,81 @@ def get_modality_compat(sign1: str, sign2: str) -> Dict:
     """Get modality compatibility between two signs."""
     mod1 = get_modality(sign1)
     mod2 = get_modality(sign2)
-    
+
     key = tuple(sorted([mod1, mod2]))
     if key[0] == key[1]:
         key = (mod1, mod2)
-    
+
     return MODALITY_COMPAT.get(key, {"score": 70, "desc": "Balanced dynamic."})
 
 
 ZODIAC_ORDER = [
-    "Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo",
-    "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"
+    "Aries",
+    "Taurus",
+    "Gemini",
+    "Cancer",
+    "Leo",
+    "Virgo",
+    "Libra",
+    "Scorpio",
+    "Sagittarius",
+    "Capricorn",
+    "Aquarius",
+    "Pisces",
 ]
+
+
+def _swe_planet_sign(dob: str, planet_const: int) -> Optional[str]:
+    """Compute a planet's zodiac sign via Swiss Ephemeris (noon UTC when no time given)."""
+    try:
+        import swisseph as swe
+
+        d = datetime.fromisoformat(dob)
+        hour = float(d.hour) if (d.hour or d.minute) else 12.0
+        jd = swe.julday(d.year, d.month, d.day, hour)
+        result, _ = swe.calc_ut(jd, planet_const)
+        return ZODIAC_ORDER[int(result[0] % 360.0 // 30) % 12]
+    except Exception:
+        return None
 
 
 def estimate_venus_sign(dob: str) -> str:
     """
-    Approximate Venus sign from DOB.
-    Venus is typically within ±2 signs of Sun sign.
-    Uses simplified pattern for estimation.
+    Calculate Venus sign using Swiss Ephemeris with fallback to approximation.
+    Venus can be up to ±2 signs from the Sun; swisseph gives the real position.
     """
+    real = _swe_planet_sign(dob, 3)  # swe.VENUS = 3
+    if real:
+        return real
+    # Fallback: approximate from Sun sign + month-based offset
     date = datetime.fromisoformat(dob)
     sun_sign = get_zodiac_sign(dob)
     sun_idx = ZODIAC_ORDER.index(sun_sign) if sun_sign in ZODIAC_ORDER else 0
-    
-    # Venus offset pattern based on month
     offset = VENUS_OFFSET_PATTERN[date.month - 1]
-    venus_idx = (sun_idx + offset) % 12
-    
-    return ZODIAC_ORDER[venus_idx]
+    return ZODIAC_ORDER[(sun_idx + offset) % 12]
 
 
 def get_venus_compat(dob1: str, dob2: str) -> Dict:
     """Get Venus sign compatibility (love style harmony)."""
     venus1 = estimate_venus_sign(dob1)
     venus2 = estimate_venus_sign(dob2)
-    
+
     elem1 = get_element(venus1)
     elem2 = get_element(venus2)
-    
+
     # Element-based Venus compatibility
     if elem1 == elem2:
         score = 85
         desc = f"Venus in {venus1} & {venus2}: Similar love languages."
-    elif (elem1 in ["Fire", "Air"] and elem2 in ["Fire", "Air"]) or \
-         (elem1 in ["Earth", "Water"] and elem2 in ["Earth", "Water"]):
+    elif (elem1 in ["Fire", "Air"] and elem2 in ["Fire", "Air"]) or (
+        elem1 in ["Earth", "Water"] and elem2 in ["Earth", "Water"]
+    ):
         score = 80
         desc = f"Venus in {venus1} & {venus2}: Complementary romantic styles."
     else:
         score = 65
         desc = f"Venus in {venus1} & {venus2}: Different love languages - growth opportunity."
-    
+
     return {
         "score": score,
         "desc": desc,
@@ -257,15 +305,18 @@ def get_venus_compat(dob1: str, dob2: str) -> Dict:
 
 def get_moon_sign_compat(dob1: str, dob2: str) -> Dict:
     """Get Moon sign compatibility (emotional connection)."""
-    date1 = datetime.fromisoformat(dob1)
-    date2 = datetime.fromisoformat(dob2)
-    
+    # Default to noon when DOB has no time component — reduces Moon sign boundary errors
+    _d1 = datetime.fromisoformat(dob1)
+    _d2 = datetime.fromisoformat(dob2)
+    date1 = _d1.replace(hour=12) if _d1.hour == 0 and _d1.minute == 0 else _d1
+    date2 = _d2.replace(hour=12) if _d2.hour == 0 and _d2.minute == 0 else _d2
+
     moon1 = estimate_moon_sign(date1)
     moon2 = estimate_moon_sign(date2)
-    
+
     elem1 = get_element(moon1)
     elem2 = get_element(moon2)
-    
+
     # Moon compatibility scoring
     if moon1 == moon2:
         score = 95
@@ -273,16 +324,16 @@ def get_moon_sign_compat(dob1: str, dob2: str) -> Dict:
     elif elem1 == elem2:
         score = 88
         desc = f"Moon in {moon1} & {moon2}: Natural emotional harmony."
-    elif (elem1 in ["Water", "Earth"] and elem2 in ["Water", "Earth"]):
+    elif elem1 in ["Water", "Earth"] and elem2 in ["Water", "Earth"]:
         score = 82
         desc = f"Moon in {moon1} & {moon2}: Nurturing emotional bond."
-    elif (elem1 in ["Fire", "Air"] and elem2 in ["Fire", "Air"]):
+    elif elem1 in ["Fire", "Air"] and elem2 in ["Fire", "Air"]:
         score = 78
         desc = f"Moon in {moon1} & {moon2}: Exciting emotional dynamic."
     else:
         score = 65
         desc = f"Moon in {moon1} & {moon2}: Different emotional needs - opportunity for growth."
-    
+
     return {
         "score": score,
         "desc": desc,
@@ -301,26 +352,30 @@ def get_life_path_compat(lp1: int, lp2: int, lang: str = "en") -> Dict:
     if key[0] == key[1]:
         key = (lp1_r, lp2_r)
 
-    default = LIFE_PATH_COMPAT.get(key, {
-        "harmony": 70,
-        "friction": "Different approaches",
-        "advice": "Appreciate your differences.",
-    })
-    
+    default = LIFE_PATH_COMPAT.get(
+        key,
+        {
+            "harmony": 70,
+            "friction": "Different approaches",
+            "advice": "Appreciate your differences.",
+        },
+    )
+
     if lang != "en":
         friction_key = f"compat_lp_{key[0]}_{key[1]}_friction"
         advice_key = f"compat_lp_{key[0]}_{key[1]}_advice"
-        
+
         friction = get_translation(lang, friction_key)
         advice = get_translation(lang, advice_key)
-        
+
         if friction:
             default = default.copy()
             default["friction"] = friction[0]
         if advice:
-            if "friction" not in default: default = default.copy() # Ensure copy if not already
+            if "friction" not in default:
+                default = default.copy()  # Ensure copy if not already
             default["advice"] = advice[0]
-            
+
     return default
 
 
@@ -335,17 +390,35 @@ def calculate_astro_compatibility(dob1: str, dob2: str, lang: str = "en") -> Dic
 
     # Localize strengths
     if lang != "en":
-        s1_key = "compat_strength_same_element" if elem1 == elem2 else "compat_strength_diff_element"
-        s1_trans = get_translation(lang, s1_key)
-        s1 = s1_trans[0].format(elem1=elem1, elem2=elem2, element=elem1) if s1_trans else (
-            f"Both share {elem1} qualities" if elem1 == elem2 else f"{elem1} and {elem2} can balance each other"
+        s1_key = (
+            "compat_strength_same_element"
+            if elem1 == elem2
+            else "compat_strength_diff_element"
         )
-        
+        s1_trans = get_translation(lang, s1_key)
+        s1 = (
+            s1_trans[0].format(elem1=elem1, elem2=elem2, element=elem1)
+            if s1_trans
+            else (
+                f"Both share {elem1} qualities"
+                if elem1 == elem2
+                else f"{elem1} and {elem2} can balance each other"
+            )
+        )
+
         s2_trans = get_translation(lang, "compat_strength_sign1")
-        s2 = s2_trans[0].format(sign=sign1) if s2_trans else f"{sign1} brings unique perspective"
-        
+        s2 = (
+            s2_trans[0].format(sign=sign1)
+            if s2_trans
+            else f"{sign1} brings unique perspective"
+        )
+
         s3_trans = get_translation(lang, "compat_strength_sign2")
-        s3 = s3_trans[0].format(sign=sign2) if s3_trans else f"{sign2} offers complementary energy"
+        s3 = (
+            s3_trans[0].format(sign=sign2)
+            if s3_trans
+            else f"{sign2} offers complementary energy"
+        )
     else:
         s1 = (
             f"Both share {elem1} qualities"
@@ -381,7 +454,11 @@ def calculate_numerology_compatibility(
     soul_match = 100 - abs(soul1 - soul2) * 10 if soul1 != soul2 else 95
 
     summary_trans = get_translation(lang, "compat_num_summary")
-    summary = summary_trans[0].format(lp1=lp1, lp2=lp2, harmony=lp_compat['harmony']) if summary_trans else f"Life Paths {lp1} and {lp2} create a {lp_compat['harmony']}% harmony match."
+    summary = (
+        summary_trans[0].format(lp1=lp1, lp2=lp2, harmony=lp_compat["harmony"])
+        if summary_trans
+        else f"Life Paths {lp1} and {lp2} create a {lp_compat['harmony']}% harmony match."
+    )
 
     return {
         "person1": {"life_path": lp1, "expression": expr1, "soul_urge": soul1},
@@ -395,11 +472,16 @@ def calculate_numerology_compatibility(
 
 
 def calculate_combined_compatibility(
-    name1: str, dob1: str, name2: str, dob2: str, relationship_type: str = "romantic", lang: str = "en"
+    name1: str,
+    dob1: str,
+    name2: str,
+    dob2: str,
+    relationship_type: str = "romantic",
+    lang: str = "en",
 ) -> Dict:
     """
     Calculate full combined compatibility report - PRO LEVEL.
-    
+
     Scoring weights (total 100%):
     - Element Harmony (Sun signs): 20%
     - Modality Match: 15%
@@ -411,11 +493,11 @@ def calculate_combined_compatibility(
     # Get base astro and numerology data
     astro = calculate_astro_compatibility(dob1, dob2, lang)
     numerology = calculate_numerology_compatibility(name1, dob1, name2, dob2, lang)
-    
+
     # Pro-level: Get additional compatibility dimensions
     sign1 = get_zodiac_sign(dob1)
     sign2 = get_zodiac_sign(dob2)
-    
+
     modality_compat = get_modality_compat(sign1, sign2)
     moon_compat = get_moon_sign_compat(dob1, dob2)
     venus_compat = get_venus_compat(dob1, dob2)
@@ -424,24 +506,26 @@ def calculate_combined_compatibility(
     rel_context = RELATIONSHIP_TEXTS.get(
         relationship_type, RELATIONSHIP_TEXTS["romantic"]
     )
-    
+
     frame = rel_context["frame"]
     focus = rel_context["focus"]
-    
+
     if lang != "en":
         frame_trans = get_translation(lang, f"compat_rel_frame_{relationship_type}")
         focus_trans = get_translation(lang, f"compat_rel_focus_{relationship_type}")
-        if frame_trans: frame = frame_trans[0]
-        if focus_trans: focus = focus_trans[0]
+        if frame_trans:
+            frame = frame_trans[0]
+        if focus_trans:
+            focus = focus_trans[0]
 
     # PRO-LEVEL Combined score (6-dimension weighted average)
     combined_score = int(
-        astro["score"] * 0.20                      # Element harmony
-        + modality_compat["score"] * 0.15          # Modality match
-        + moon_compat["score"] * 0.20              # Moon sign (emotional)
-        + venus_compat["score"] * 0.15             # Venus (love style)
-        + numerology["life_path_harmony"] * 0.20   # Life Path
-        + numerology["soul_connection"] * 0.10     # Soul Urge
+        astro["score"] * 0.20  # Element harmony
+        + modality_compat["score"] * 0.15  # Modality match
+        + moon_compat["score"] * 0.20  # Moon sign (emotional)
+        + venus_compat["score"] * 0.15  # Venus (love style)
+        + numerology["life_path_harmony"] * 0.20  # Life Path
+        + numerology["soul_connection"] * 0.10  # Soul Urge
     )
 
     # Generate advice based on relationship type
@@ -457,14 +541,20 @@ def calculate_combined_compatibility(
     else:
         key = "compat_overall_challenging"
         default = f"Challenging {frame}, but growth potential exists."
-        
+
     overall_trans = get_translation(lang, key)
     overall = overall_trans[0].format(frame=frame) if overall_trans else default
 
     # Localize top advice
     ta2_trans = get_translation(lang, "compat_advice_leverage")
-    ta2 = ta2_trans[0].format(e1=astro['person1']['element'], e2=astro['person2']['element']) if ta2_trans else f"Leverage your {astro['person1']['element']}-{astro['person2']['element']} dynamic"
-    
+    ta2 = (
+        ta2_trans[0].format(
+            e1=astro["person1"]["element"], e2=astro["person2"]["element"]
+        )
+        if ta2_trans
+        else f"Leverage your {astro['person1']['element']}-{astro['person2']['element']} dynamic"
+    )
+
     ta3_trans = get_translation(lang, "compat_advice_communicate")
     ta3 = ta3_trans[0] if ta3_trans else "Communicate openly about differences"
 
@@ -474,10 +564,30 @@ def calculate_combined_compatibility(
         "overall_assessment": overall,
         # Pro-level breakdown
         "score_breakdown": {
-            "element_harmony": {"score": astro["score"], "weight": "20%", "desc": astro["element_harmony"]},
-            "modality_match": {"score": modality_compat["score"], "weight": "15%", "desc": modality_compat["desc"]},
-            "moon_connection": {"score": moon_compat["score"], "weight": "20%", "desc": moon_compat["desc"], "moon1": moon_compat["moon1"], "moon2": moon_compat["moon2"]},
-            "venus_harmony": {"score": venus_compat["score"], "weight": "15%", "desc": venus_compat["desc"], "venus1": venus_compat["venus1"], "venus2": venus_compat["venus2"]},
+            "element_harmony": {
+                "score": astro["score"],
+                "weight": "20%",
+                "desc": astro["element_harmony"],
+            },
+            "modality_match": {
+                "score": modality_compat["score"],
+                "weight": "15%",
+                "desc": modality_compat["desc"],
+            },
+            "moon_connection": {
+                "score": moon_compat["score"],
+                "weight": "20%",
+                "desc": moon_compat["desc"],
+                "moon1": moon_compat["moon1"],
+                "moon2": moon_compat["moon2"],
+            },
+            "venus_harmony": {
+                "score": venus_compat["score"],
+                "weight": "15%",
+                "desc": venus_compat["desc"],
+                "venus1": venus_compat["venus1"],
+                "venus2": venus_compat["venus2"],
+            },
             "life_path": {"score": numerology["life_path_harmony"], "weight": "20%"},
             "soul_urge": {"score": numerology["soul_connection"], "weight": "10%"},
         },
