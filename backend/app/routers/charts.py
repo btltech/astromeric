@@ -11,7 +11,13 @@ from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
 from ..cache import cached_build_chart
-from ..chart_service import build_natal_chart, build_progressed_chart
+from ..chart_service import (
+    build_lunar_return_chart,
+    build_natal_chart,
+    build_progressed_chart,
+    build_relocation_chart,
+    build_solar_arc_chart,
+)
 from ..exceptions import StructuredLogger
 from ..models import SessionLocal
 from ..products import build_compatibility
@@ -408,5 +414,121 @@ async def get_composite_chart(
                 "person_b": person_b["name"],
                 "method": "midpoint",
             },
+        ),
+    )
+
+
+# ============================================================================
+# PHASE 2: SOLAR ARC, RELOCATION, LUNAR RETURN
+# ============================================================================
+
+
+class SolarArcRequest(BaseModel):
+    profile: ProfilePayload
+    target_date: Optional[str] = None  # yyyy-MM-dd
+
+
+class RelocationRequest(BaseModel):
+    profile: ProfilePayload
+    new_latitude: float
+    new_longitude: float
+    new_timezone: Optional[str] = None
+
+
+class LunarReturnRequest(BaseModel):
+    profile: ProfilePayload
+    target_date: Optional[str] = None
+    location_lat: Optional[float] = None
+    location_lon: Optional[float] = None
+    location_tz: Optional[str] = None
+
+
+@router.post("/solar-arc", response_model=ApiResponse[NatalChartData])
+async def get_solar_arc_chart(
+    request: Request,
+    req: SolarArcRequest,
+) -> ApiResponse[NatalChartData]:
+    """
+    Solar arc directions for the given profile.
+    Returns directed planet positions and cross-aspects (directed vs natal).
+    """
+    _require_chart_inputs(req.profile)
+    profile = _profile_to_dict(req.profile)
+    try:
+        chart = build_solar_arc_chart(profile, target_date=req.target_date)
+    except Exception as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    return ApiResponse(
+        status=ResponseStatus.SUCCESS,
+        data=NatalChartData(
+            planets=chart.get("planets", []),
+            points=chart.get("points", []),
+            houses=chart.get("houses", []),
+            aspects=chart.get("aspects", []),
+            metadata=chart.get("metadata", {}),
+        ),
+    )
+
+
+@router.post("/relocation", response_model=ApiResponse[NatalChartData])
+async def get_relocation_chart(
+    request: Request,
+    req: RelocationRequest,
+) -> ApiResponse[NatalChartData]:
+    """
+    Relocation chart: same UTC birth moment, different geographic coordinates.
+    Planets are identical to natal; houses, ASC, and MC recalculate.
+    """
+    _require_chart_inputs(req.profile)
+    profile = _profile_to_dict(req.profile)
+    try:
+        chart = build_relocation_chart(
+            profile,
+            new_latitude=req.new_latitude,
+            new_longitude=req.new_longitude,
+            new_timezone=req.new_timezone,
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    return ApiResponse(
+        status=ResponseStatus.SUCCESS,
+        data=NatalChartData(
+            planets=chart.get("planets", []),
+            points=chart.get("points", []),
+            houses=chart.get("houses", []),
+            aspects=chart.get("aspects", []),
+            metadata=chart.get("metadata", {}),
+        ),
+    )
+
+
+@router.post("/lunar-return", response_model=ApiResponse[NatalChartData])
+async def get_lunar_return_chart(
+    request: Request,
+    req: LunarReturnRequest,
+) -> ApiResponse[NatalChartData]:
+    """
+    Lunar Return chart: cast for the next moment the Moon returns to its natal longitude.
+    """
+    _require_chart_inputs(req.profile)
+    profile = _profile_to_dict(req.profile)
+    try:
+        chart = build_lunar_return_chart(
+            profile,
+            target_date=req.target_date,
+            location_lat=req.location_lat,
+            location_lon=req.location_lon,
+            location_tz=req.location_tz,
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    return ApiResponse(
+        status=ResponseStatus.SUCCESS,
+        data=NatalChartData(
+            planets=chart.get("planets", []),
+            points=chart.get("points", []),
+            houses=chart.get("houses", []),
+            aspects=chart.get("aspects", []),
+            metadata=chart.get("metadata", {}),
         ),
     )

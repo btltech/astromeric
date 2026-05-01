@@ -33,10 +33,12 @@ EPHEMERIS_PATH = os.getenv("EPHEMERIS_PATH", DEFAULT_EPHEMERIS)
 os.environ["SE_EPHE_PATH"] = EPHEMERIS_PATH
 
 # Set pyswisseph path explicitly (needed for asteroids like Chiron)
+HAS_SWISSEPH = False
 try:
     import swisseph as swe
 
     swe.set_ephe_path(EPHEMERIS_PATH)
+    HAS_SWISSEPH = True
 except ImportError:
     pass
 
@@ -184,6 +186,14 @@ DIGNITY_WEIGHTS: Dict[str, float] = {
 # Points (sensitive points & asteroids) extracted alongside planets
 CHART_POINTS = ["North Node", "South Node", "Chiron"]
 
+# Major asteroids via pyswisseph SE body numbers (SE_AST_OFFSET=10000 + catalog number)
+ASTEROID_POINTS = {
+    "Ceres": 10001,
+    "Pallas": 10002,
+    "Juno": 10003,
+    "Vesta": 10004,
+}
+
 HOUSE_SYSTEM_MAP = {
     "placidus": "HOUSES_PLACIDUS",
     "whole": "HOUSES_WHOLE_SIGN",
@@ -294,6 +304,239 @@ def build_transit_chart(profile: Dict, target_date: datetime) -> Dict:
     profile_copy["date_of_birth"] = date_str
     profile_copy["time_of_birth"] = time_str
     return _build_chart(dt_local, profile_copy, chart_type="transit")
+
+
+def build_solar_arc_chart(profile: Dict, target_date: Optional[str] = None) -> Dict:
+    """
+    Solar arc directions: every natal planet advanced by the arc the progressed Sun
+    has moved from its natal position (~1\u00b0 per year, computed precisely).
+
+    Returns directed planet positions + cross-aspects (directed vs natal).
+    """
+    dob = datetime.fromisoformat(profile["date_of_birth"]).date()
+    ref_date = (
+        datetime.fromisoformat(target_date).date()
+        if target_date
+        else datetime.now().date()
+    )
+    age_years = (ref_date - dob).days / 365.25
+    progressed_day = dob + timedelta(days=age_years)
+
+    natal = build_natal_chart(profile)
+    natal_sun = next((p for p in natal["planets"] if p["name"] == "Sun"), None)
+    if not natal_sun:
+        raise ValueError("Could not compute natal Sun position")
+    natal_sun_lon = natal_sun["absolute_degree"]
+
+    prog_profile = dict(profile)
+    prog_profile["date_of_birth"] = progressed_day.isoformat()
+    prog_dt = _parse_datetime(
+        prog_profile["date_of_birth"],
+        prog_profile.get("time_of_birth"),
+        prog_profile.get("timezone", "UTC"),
+    )
+    prog_chart = _build_chart(prog_dt, prog_profile, chart_type="progressed")
+    prog_sun = next((p for p in prog_chart["planets"] if p["name"] == "Sun"), None)
+    prog_sun_lon = (
+        prog_sun["absolute_degree"] if prog_sun else (natal_sun_lon + age_years) % 360
+    )
+    solar_arc = (prog_sun_lon - natal_sun_lon) % 360
+
+    def _direct(lon: float) -> float:
+        return round((lon + solar_arc) % 360, 4)
+
+    directed_planets = [
+        {
+            **p,
+            "absolute_degree": _direct(p["absolute_degree"]),
+            "sign": ZODIAC_SIGNS[int(_direct(p["absolute_degree"]) / 30) % 12],
+            "degree": round(_direct(p["absolute_degree"]) % 30, 4),
+            "natal_degree": p["absolute_degree"],
+        }
+        for p in natal["planets"]
+    ]
+    directed_points = [
+        {
+            **p,
+            "absolute_degree": _direct(p["absolute_degree"]),
+            "sign": ZODIAC_SIGNS[int(_direct(p["absolute_degree"]) / 30) % 12],
+            "degree": round(_direct(p["absolute_degree"]) % 30, 4),
+        }
+        for p in natal.get("points", [])
+    ]
+
+    # Cross-aspects: directed planets (sources) vs natal planets (as angle targets)
+    cross_aspects = _compute_aspects(
+        [
+            {"name": p["name"] + " (d)", "absolute_degree": p["absolute_degree"]}
+            for p in directed_planets
+        ],
+        angles=[
+            {"name": p["name"], "absolute_degree": p["absolute_degree"]}
+            for p in natal["planets"]
+        ],
+    )
+
+    return {
+        "metadata": {
+            "chart_type": "solar_arc",
+            "natal_date": profile["date_of_birth"],
+            "directed_to": ref_date.isoformat(),
+            "solar_arc_degrees": round(solar_arc, 4),
+            "age_years": round(age_years, 2),
+            "provider": prog_chart.get("metadata", {}).get("provider", "flatlib"),
+        },
+        "planets": directed_planets,
+        "points": directed_points,
+        "houses": natal.get("houses", []),
+        "aspects": cross_aspects,
+        "natal_planets": natal["planets"],
+        "ascendant": natal.get("ascendant", {}),
+        "midheaven": natal.get("midheaven", {}),
+    }
+
+
+def build_relocation_chart(
+    profile: Dict,
+    new_latitude: float,
+    new_longitude: float,
+    new_timezone: Optional[str] = None,
+) -> Dict:
+    """
+    Relocation chart: same birth moment (UTC-fixed), different geographic coordinates.
+    Planets are identical to natal; houses, ASC, and MC recalculate for the new location.
+    """
+    orig_tz = profile.get("timezone", "UTC")
+    dt_orig = _parse_datetime(
+        profile["date_of_birth"],
+        profile.get("time_of_birth"),
+        orig_tz,
+    )
+    dt_utc = dt_orig.astimezone(timezone.utc)
+    reloc_tz = new_timezone or "UTC"
+    dt_local = dt_utc.astimezone(_tzinfo_from_name(reloc_tz))
+
+    reloc_profile = {
+        **profile,
+        "latitude": new_latitude,
+        "longitude": new_longitude,
+        "timezone": reloc_tz,
+        "date_of_birth": dt_local.strftime("%Y-%m-%d"),
+        "time_of_birth": dt_local.strftime("%H:%M"),
+    }
+    chart = _build_chart(dt_local, reloc_profile, chart_type="relocation")
+    chart["metadata"]["chart_type"] = "relocation"
+    chart["metadata"]["natal_location"] = {
+        "lat": profile.get("latitude", 0.0),
+        "lon": profile.get("longitude", 0.0),
+    }
+    chart["metadata"]["relocation_location"] = {
+        "lat": new_latitude,
+        "lon": new_longitude,
+    }
+    return chart
+
+
+def build_lunar_return_chart(
+    profile: Dict,
+    target_date: Optional[str] = None,
+    location_lat: Optional[float] = None,
+    location_lon: Optional[float] = None,
+    location_tz: Optional[str] = None,
+) -> Dict:
+    """
+    Lunar Return chart: cast for the moment the Moon returns to its natal longitude.
+    Uses the next return on or after target_date (defaults to today).
+    Location can be overridden for current place of residence.
+    """
+    natal = build_natal_chart(profile)
+    natal_moon = next((p for p in natal["planets"] if p["name"] == "Moon"), None)
+    if not natal_moon:
+        raise ValueError("Could not compute natal Moon position")
+    natal_moon_lon = natal_moon["absolute_degree"]
+
+    ref = datetime.fromisoformat(target_date) if target_date else datetime.now()
+
+    if HAS_SWISSEPH:
+        return_jd = _find_lunar_return_jd(natal_moon_lon, ref)
+        return_utc = _jd_to_utc_datetime(return_jd)
+    else:
+        # Fallback: estimate using mean Moon motion (27.321-day synodic month)
+        days_since_2000 = (ref.replace(tzinfo=None) - datetime(2000, 1, 1, 12)).days
+        mean_moon_lon = (218.3165 + days_since_2000 * (360.0 / 27.321661)) % 360.0
+        diff = (natal_moon_lon - mean_moon_lon) % 360.0
+        days_to = diff / (360.0 / 27.321661)
+        return_utc = datetime.now(tz=timezone.utc) + timedelta(days=days_to)
+
+    ret_tz = location_tz or profile.get("timezone", "UTC")
+    return_local = return_utc.astimezone(_tzinfo_from_name(ret_tz))
+
+    return_profile = {
+        **profile,
+        "latitude": location_lat
+        if location_lat is not None
+        else profile.get("latitude", 0.0),
+        "longitude": location_lon
+        if location_lon is not None
+        else profile.get("longitude", 0.0),
+        "timezone": ret_tz,
+        "date_of_birth": return_local.strftime("%Y-%m-%d"),
+        "time_of_birth": return_local.strftime("%H:%M"),
+    }
+    chart = _build_chart(return_local, return_profile, chart_type="lunar_return")
+    chart["metadata"]["chart_type"] = "lunar_return"
+    chart["metadata"]["natal_moon"] = {
+        "sign": natal_moon["sign"],
+        "degree": natal_moon["degree"],
+        "absolute_degree": natal_moon_lon,
+    }
+    chart["metadata"]["return_datetime_utc"] = return_utc.isoformat()
+    chart["metadata"]["return_datetime_local"] = return_local.isoformat()
+    return chart
+
+
+def _find_lunar_return_jd(natal_moon_lon: float, start_dt: datetime) -> float:
+    """Julian Date of the next lunar return after start_dt via Newton-Raphson iteration."""
+    MEAN_MOON_SPEED = 13.176  # degrees per day
+    dt_naive = start_dt.replace(tzinfo=None) if start_dt.tzinfo else start_dt
+    jd = swe.julday(
+        dt_naive.year,
+        dt_naive.month,
+        dt_naive.day,
+        dt_naive.hour + dt_naive.minute / 60.0,
+    )
+    res, _ = swe.calc_ut(jd, 1)  # Moon
+    diff = (natal_moon_lon - res[0] % 360.0) % 360.0
+    est_jd = jd + diff / MEAN_MOON_SPEED
+    for _ in range(6):
+        res, _ = swe.calc_ut(est_jd, 1)
+        delta = (natal_moon_lon - res[0] % 360.0 + 180) % 360 - 180
+        est_jd += delta / MEAN_MOON_SPEED
+    return est_jd
+
+
+def _jd_to_utc_datetime(jd: float) -> datetime:
+    """Convert a Julian Date to a UTC datetime."""
+    jd_int = int(jd + 0.5)
+    f = jd + 0.5 - jd_int
+    if jd_int >= 2299161:
+        alpha = int((jd_int - 1867216.25) / 36524.25)
+        A = jd_int + 1 + alpha - alpha // 4
+    else:
+        A = jd_int
+    B = A + 1524
+    C = int((B - 122.1) / 365.25)
+    D = int(365.25 * C)
+    E = int((B - D) / 30.6001)
+    day = B - D - int(30.6001 * E)
+    month = E - 1 if E < 14 else E - 13
+    year = C - 4716 if month > 2 else C - 4715
+    frac = f * 24
+    hour = int(frac)
+    frac = (frac - hour) * 60
+    minute = int(frac)
+    second = int((frac - minute) * 60)
+    return datetime(year, month, day, hour, minute, second, tzinfo=timezone.utc)
 
 
 # ---------- Internal helpers ----------
@@ -456,6 +699,46 @@ def _chart_with_flatlib(dt: datetime, profile: Dict, chart_type: str) -> Dict:
                     "degree": 0.0,
                 }
             )
+
+    # Extract major asteroids via pyswisseph (require .se1 asteroid ephemeris files)
+    if HAS_SWISSEPH:
+        try:
+            _jd = swe.julday(
+                dt_local.year,
+                dt_local.month,
+                dt_local.day,
+                dt_local.hour + dt_local.minute / 60.0 + dt_local.second / 3600.0,
+            )
+            _h_cusps = []
+            for _h in houses:
+                _s_idx = (
+                    ZODIAC_SIGNS.index(_h["sign"])
+                    if _h["sign"] in ZODIAC_SIGNS
+                    else _h["house"] - 1
+                )
+                _h_cusps.append((_s_idx * 30 + _h.get("degree", 0.0)) % 360)
+            for ast_name, ast_body in ASTEROID_POINTS.items():
+                try:
+                    _res, _ = swe.calc_ut(_jd, ast_body)
+                    _lon = _res[0] % 360.0
+                    points.append(
+                        {
+                            "name": ast_name,
+                            "sign": ZODIAC_SIGNS[int(_lon / 30) % 12],
+                            "degree": round(_lon % 30, 4),
+                            "absolute_degree": round(_lon, 4),
+                            "house": (
+                                _get_house_for_longitude(_lon, _h_cusps)
+                                if _h_cusps
+                                else None
+                            ),
+                            "retrograde": bool(_res[3] < 0) if len(_res) > 3 else False,
+                        }
+                    )
+                except Exception:
+                    pass  # Skip if asteroid ephemeris file not present
+        except Exception:
+            pass  # swisseph JD error; skip all asteroids
 
     # Get Ascendant and MC
     try:
