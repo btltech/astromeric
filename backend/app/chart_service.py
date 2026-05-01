@@ -633,6 +633,9 @@ def _chart_with_flatlib(dt: datetime, profile: Dict, chart_type: str) -> Dict:
                     "sign": sign,
                     "degree": round(obj.signlon, 4),
                     "absolute_degree": round(obj.lon, 4),
+                    "ecliptic_latitude": round(float(obj.lat), 6)
+                    if hasattr(obj, "lat")
+                    else 0.0,
                     "house": int(
                         chart.houses.getObjectHouse(obj).id.replace("House", "")
                     ),
@@ -647,6 +650,7 @@ def _chart_with_flatlib(dt: datetime, profile: Dict, chart_type: str) -> Dict:
                     "sign": "Aries",
                     "degree": 0.0,
                     "absolute_degree": 0.0,
+                    "ecliptic_latitude": 0.0,
                     "house": 1,
                     "retrograde": False,
                     "dignity": None,
@@ -670,6 +674,9 @@ def _chart_with_flatlib(dt: datetime, profile: Dict, chart_type: str) -> Dict:
                     "sign": obj.sign,
                     "degree": round(obj.signlon, 4),
                     "absolute_degree": round(obj.lon, 4),
+                    "ecliptic_latitude": round(float(obj.lat), 6)
+                    if hasattr(obj, "lat")
+                    else 0.0,
                     "house": int(
                         chart.houses.getObjectHouse(obj).id.replace("House", "")
                     ),

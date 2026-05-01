@@ -232,19 +232,19 @@ def calculate_declinations(
                 pass
 
     elif planet_positions:
-        # Approximate: set lat=0 for all planets (ecliptic approximation)
-        # Mean obliquity for rough date
+        # Use ecliptic latitude from flatlib if present (Fix 3), otherwise 0
         days_from_2000 = (dt_utc.date() - _dt(2000, 1, 1).date()).days
         jd_approx = _J2000 + days_from_2000
         eps = _obliquity_deg(jd_approx)
         for p in planet_positions:
             lon = p.get("absolute_degree", 0.0)
-            dec = _ecliptic_to_declination(lon, 0.0, eps)
+            lat = p.get("ecliptic_latitude", 0.0)  # real lat when flatlib provided it
+            dec = _ecliptic_to_declination(lon, lat, eps)
             declinations.append(
                 {
                     "name": p["name"],
                     "longitude": round(lon, 4),
-                    "latitude": 0.0,
+                    "latitude": round(lat, 4),
                     "declination": round(dec, 4),
                     "out_of_bounds": abs(dec) > 23.44,
                 }

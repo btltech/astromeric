@@ -2,7 +2,7 @@ import hashlib
 import json
 import os
 from datetime import datetime, timezone
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from app.interpretation.translations import get_translation
 
@@ -418,6 +418,53 @@ def _fuse_prediction(
         longitude=longitude,
     )
 
+    # --- Fix 1: Transit positions and aspects for daily scope ---
+    active_transits: List[Dict] = []
+    transit_narrative: str = ""
+    if scope == "daily" and date:
+        transit_positions = _get_transit_positions(date)
+        if transit_positions and chart_ctx:
+            # Build natal absolute-degree map from chart_ctx sign→midpoint (rough)
+            # For a richer version we need actual natal degrees; use what we have
+            try:
+                from ..chart_service import build_natal_chart as _bnc
+
+                _natal_profile = {
+                    "date_of_birth": dob,
+                    "time_of_birth": time_of_birth or "12:00",
+                    "latitude": latitude or 0.0,
+                    "longitude": longitude or 0.0,
+                    "timezone": "UTC",
+                }
+                _natal_chart = _bnc(_natal_profile)
+                _natal_planets = {
+                    p["name"]: float(p.get("absolute_degree", 0))
+                    for p in _natal_chart.get("planets", [])
+                }
+                _natal_points = {
+                    p["name"]: float(p.get("absolute_degree", 0))
+                    for p in _natal_chart.get("points", [])
+                }
+                _natal_positions = {**_natal_planets, **_natal_points}
+            except Exception:
+                _natal_positions = {}
+
+            if _natal_positions:
+                aspects = _find_transit_aspects(transit_positions, _natal_positions)
+                best = _pick_best_transit(aspects)
+                if best:
+                    from app.interpretation.planet_sign_copy import (
+                        build_transit_sentence,
+                    )
+
+                    transit_narrative = build_transit_sentence(
+                        best["transit_planet"],
+                        best["aspect"],
+                        best["natal_planet"],
+                        best["orb"],
+                    )
+                    active_transits = aspects[:5]  # top 5 tightest
+
     # Map tracks to the most astrologically relevant natal planet
     _track_planet: Dict[str, str] = {
         "love": chart_ctx.get("venus_sign") or sign,
@@ -439,33 +486,62 @@ def _fuse_prediction(
         enriched_tldr = scope_summaries[tldr_idx].format(
             sign=sign, life_path=life_path, element=element_display
         )
-    tldr = enriched_tldr
+    # Append transit narrative for daily scope when available
+    if transit_narrative:
+        tldr = f"{enriched_tldr} {transit_narrative}."
+    else:
+        tldr = enriched_tldr
 
     # Tracks
     tracks = {}
     ratings = {}
+    # planet name per track (for richer copy lookup)
+    _track_planet_name: Dict[str, str] = {
+        "love": "Venus",
+        "money": "Venus",
+        "career": "Mars",
+        "health": "Moon",
+        "spiritual": "Moon",
+        "general": "Sun",
+    }
+    try:
+        from app.interpretation.planet_sign_copy import get_planet_sign_traits as _pst
+
+        _has_pst = True
+    except Exception:
+        _has_pst = False
+
     for track_name, track_data in TRACK_POOLS.items():
         pools = get_localized_pool(f"track_{track_name}", track_data["pools"], lang)
 
         # Use the planet-specific sign's traits when available
         planet_sign = _track_planet.get(track_name, sign)
-        planet_traits = (
-            get_sign_traits(planet_sign, lang=lang)
-            if planet_sign != sign
-            else sign_traits
-        )
+        planet_name_for_track = _track_planet_name.get(track_name, "Sun")
 
-        traits_key = f"{track_name}_traits"
-        if track_name in planet_traits:
-            trait_pool = planet_traits[track_name]
-        elif "general" in planet_traits:
-            trait_pool = planet_traits["general"]
-        else:
-            trait_pool = sign_traits.get("general", ["adaptable energy"])
+        # Fix 4: try richer planet-in-sign copy first
+        trait_pool: List[str] = []
+        if _has_pst:
+            trait_pool = _pst(planet_name_for_track, planet_sign, track_name)
+
+        # Fall back to existing get_sign_traits mechanism
+        if not trait_pool:
+            planet_traits = (
+                get_sign_traits(planet_sign, lang=lang)
+                if planet_sign != sign
+                else sign_traits
+            )
+            traits_key = f"{track_name}_traits"
+            if track_name in planet_traits:
+                trait_pool = planet_traits[track_name]
+            elif "general" in planet_traits:
+                trait_pool = planet_traits["general"]
+            else:
+                trait_pool = sign_traits.get("general", ["adaptable energy"])
 
         if not trait_pool:
             trait_pool = sign_traits.get("general", ["adaptable energy"])
 
+        traits_key = f"{track_name}_traits"
         traits = trait_pool[
             generate_deterministic_index(seed + traits_key, len(trait_pool))
         ]
@@ -556,7 +632,150 @@ def _fuse_prediction(
         "element": element_display,
         "place_vibe": place_vibe,
         "natal_context": natal_context,
+        "active_transits": active_transits if active_transits else None,
     }
+
+
+# ---------------------------------------------------------------------------
+# Transit helpers (Fix 1)
+# ---------------------------------------------------------------------------
+
+_TRANSIT_ASPECT_ANGLES = {
+    "conjunction": 0,
+    "sextile": 60,
+    "square": 90,
+    "trine": 120,
+    "opposition": 180,
+}
+_TRANSIT_ORB = 3.5  # degrees
+
+
+def _angular_diff(a: float, b: float) -> float:
+    """Shortest arc between two ecliptic longitudes (0–360)."""
+    diff = abs(a - b) % 360
+    return diff if diff <= 180 else 360 - diff
+
+
+def _get_transit_positions(date_str: str) -> Dict[str, float]:
+    """
+    Compute noon-UTC planetary longitudes for *date_str* (YYYY-MM-DD).
+    Returns {planet_name: absolute_degree_0_360}.
+    Uses flatlib when available; silently returns {} on failure.
+    """
+    try:
+        from flatlib import const as flat_const
+        from flatlib.chart import Chart
+        from flatlib.datetime import Datetime
+        from flatlib.geopos import GeoPos
+
+        dt_str = date_str.replace("-", "/")
+        dt = Datetime(dt_str, "12:00", "+00:00")
+        pos = GeoPos("0n00", "0e00")
+        chart = Chart(dt, pos)
+        planets_out: Dict[str, float] = {}
+        for name in [
+            "Sun",
+            "Moon",
+            "Mercury",
+            "Venus",
+            "Mars",
+            "Jupiter",
+            "Saturn",
+            "Uranus",
+            "Neptune",
+            "Pluto",
+        ]:
+            try:
+                p = chart.get(getattr(flat_const, name.upper(), None) or name)
+                if p:
+                    planets_out[name] = float(p.lon) % 360
+            except Exception:
+                pass
+        return planets_out
+    except Exception:
+        return {}
+
+
+def _find_transit_aspects(
+    transit_positions: Dict[str, float],
+    natal_positions: Dict[str, float],
+    orb: float = _TRANSIT_ORB,
+) -> List[Dict[str, Any]]:
+    """
+    Find tight aspects between transiting and natal planets.
+    Returns list of dicts sorted by orb asc.
+    """
+    aspects: List[Dict[str, Any]] = []
+    for t_name, t_lon in transit_positions.items():
+        for n_name, n_lon in natal_positions.items():
+            diff = _angular_diff(t_lon, n_lon)
+            for asp_name, asp_angle in _TRANSIT_ASPECT_ANGLES.items():
+                asp_orb = abs(diff - asp_angle)
+                if asp_orb <= orb:
+                    aspects.append(
+                        {
+                            "transit_planet": t_name,
+                            "natal_planet": n_name,
+                            "aspect": asp_name,
+                            "orb": round(asp_orb, 2),
+                        }
+                    )
+    return sorted(aspects, key=lambda x: x["orb"])
+
+
+# Priority order for picking the most narrative-worthy transit
+_TRANSIT_PLANET_PRIORITY = [
+    "Venus",
+    "Mars",
+    "Sun",
+    "Moon",
+    "Mercury",
+    "Jupiter",
+    "Saturn",
+    "Uranus",
+    "Neptune",
+    "Pluto",
+]
+_NATAL_PLANET_PRIORITY = [
+    "Sun",
+    "Moon",
+    "Ascendant",
+    "Venus",
+    "Mars",
+    "Mercury",
+    "Midheaven",
+    "Jupiter",
+    "Saturn",
+]
+
+
+def _pick_best_transit(aspects: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+    """Pick the most astrologically significant transit from the aspect list."""
+    if not aspects:
+        return None
+
+    # Score each aspect: lower score = higher priority
+    def _score(a: Dict) -> int:
+        tp = (
+            _TRANSIT_PLANET_PRIORITY.index(a["transit_planet"])
+            if a["transit_planet"] in _TRANSIT_PLANET_PRIORITY
+            else 99
+        )
+        np = (
+            _NATAL_PLANET_PRIORITY.index(a["natal_planet"])
+            if a["natal_planet"] in _NATAL_PLANET_PRIORITY
+            else 99
+        )
+        asp_prio = {
+            "conjunction": 0,
+            "opposition": 1,
+            "square": 2,
+            "trine": 3,
+            "sextile": 4,
+        }.get(a["aspect"], 5)
+        return tp * 10 + np * 3 + asp_prio
+
+    return min(aspects, key=_score)
 
 
 def _get_chart_context(
