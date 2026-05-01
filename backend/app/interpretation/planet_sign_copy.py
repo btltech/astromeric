@@ -615,6 +615,309 @@ TRACK_TRANSIT_RELEVANCE = {
 }
 
 
+# ---------------------------------------------------------------------------
+# Sun in Sign — general identity and career flavour
+# ---------------------------------------------------------------------------
+
+SUN_SIGN = {
+    "Aries": {
+        "general": [
+            "bold self-assertion",
+            "trailblazing courage",
+            "fearless initiative",
+        ],
+        "career": [
+            "competitive drive",
+            "leadership through action",
+            "pioneering ambition",
+        ],
+    },
+    "Taurus": {
+        "general": [
+            "grounded determination",
+            "patient inner strength",
+            "steady reliability",
+        ],
+        "career": [
+            "value-building persistence",
+            "methodical execution",
+            "tangible results focus",
+        ],
+    },
+    "Gemini": {
+        "general": [
+            "curious versatility",
+            "quick mental agility",
+            "social adaptability",
+        ],
+        "career": [
+            "multi-tasking skill",
+            "communication mastery",
+            "idea generation speed",
+        ],
+    },
+    "Cancer": {
+        "general": [
+            "intuitive empathy",
+            "protective warmth",
+            "deep emotional intelligence",
+        ],
+        "career": [
+            "nurturing leadership",
+            "home-building instinct",
+            "caring team investment",
+        ],
+    },
+    "Leo": {
+        "general": [
+            "radiant confidence",
+            "generous creative expression",
+            "warm magnetic presence",
+        ],
+        "career": [
+            "bold visibility",
+            "inspiring others naturally",
+            "passionate self-promotion",
+        ],
+    },
+    "Virgo": {
+        "general": [
+            "precise analytical clarity",
+            "service-oriented focus",
+            "practical discernment",
+        ],
+        "career": [
+            "detail mastery",
+            "quality over quantity discipline",
+            "systematic efficiency",
+        ],
+    },
+    "Libra": {
+        "general": [
+            "harmonious balance-seeking",
+            "diplomatic grace",
+            "aesthetic sensitivity",
+        ],
+        "career": [
+            "collaborative partnership skill",
+            "fair-minded negotiation",
+            "beauty-building focus",
+        ],
+    },
+    "Scorpio": {
+        "general": [
+            "penetrating emotional depth",
+            "transformative intensity",
+            "magnetic willpower",
+        ],
+        "career": [
+            "strategic resourcefulness",
+            "research and investigation mastery",
+            "powerful focused ambition",
+        ],
+    },
+    "Sagittarius": {
+        "general": [
+            "expansive philosophical optimism",
+            "adventurous wisdom-seeking",
+            "freedom-loving spirit",
+        ],
+        "career": [
+            "big-picture strategic vision",
+            "philosophical leadership",
+            "growth through exploration",
+        ],
+    },
+    "Capricorn": {
+        "general": [
+            "disciplined patient ambition",
+            "structured perseverance",
+            "legacy-building focus",
+        ],
+        "career": [
+            "authority-building discipline",
+            "long-term goal mastery",
+            "practical strategic ambition",
+        ],
+    },
+    "Aquarius": {
+        "general": [
+            "independent forward-thinking",
+            "humanitarian innovation",
+            "intellectual originality",
+        ],
+        "career": [
+            "visionary disruption energy",
+            "community-minded leadership",
+            "unconventional solution-finding",
+        ],
+    },
+    "Pisces": {
+        "general": [
+            "compassionate intuitive sensitivity",
+            "boundless empathy",
+            "spiritual depth",
+        ],
+        "career": [
+            "creative visionary purpose",
+            "healing-oriented work ethic",
+            "intuitive client insight",
+        ],
+    },
+}
+
+# ---------------------------------------------------------------------------
+# Mercury in Sign — thinking and communication flavour
+# ---------------------------------------------------------------------------
+
+MERCURY_SIGN = {
+    "Aries": {
+        "general": [
+            "quick decisive thinking",
+            "direct assertive communication",
+            "rapid idea bursts",
+        ],
+        "career": [
+            "fast decision-making energy",
+            "bold confident messaging",
+            "competitive intellectual drive",
+        ],
+    },
+    "Taurus": {
+        "general": [
+            "methodical patient analysis",
+            "practical grounded reasoning",
+            "deliberate communication style",
+        ],
+        "career": [
+            "thorough research discipline",
+            "reliable analytical approach",
+            "deliberate strategic thinking",
+        ],
+    },
+    "Gemini": {
+        "general": [
+            "sharp versatile intellect",
+            "quick witty articulation",
+            "curious multi-threaded thinking",
+        ],
+        "career": [
+            "persuasive articulate delivery",
+            "rapid problem navigation",
+            "networking communication ease",
+        ],
+    },
+    "Cancer": {
+        "general": [
+            "intuitive memory-driven thinking",
+            "emotionally resonant communication",
+            "protective conversational instinct",
+        ],
+        "career": [
+            "empathetic client insight",
+            "nurturing team communication",
+            "memory-strong data retention",
+        ],
+    },
+    "Leo": {
+        "general": [
+            "dramatic expressive thinking",
+            "confident storytelling ability",
+            "enthusiastic idea sharing",
+        ],
+        "career": [
+            "bold presentation mastery",
+            "inspiring visionary messaging",
+            "charismatic professional voice",
+        ],
+    },
+    "Virgo": {
+        "general": [
+            "precise detail-oriented analysis",
+            "critical discerning thinking",
+            "organized methodical mind",
+        ],
+        "career": [
+            "meticulous research skills",
+            "systematic problem-solving",
+            "technical precision focus",
+        ],
+    },
+    "Libra": {
+        "general": [
+            "balanced diplomatic reasoning",
+            "charming fair-minded communication",
+            "strategic social intelligence",
+        ],
+        "career": [
+            "consensus-building dialogue",
+            "elegant negotiation skill",
+            "presentation polish",
+        ],
+    },
+    "Scorpio": {
+        "general": [
+            "penetrating investigative insight",
+            "strategic perceptive communication",
+            "deep pattern recognition",
+        ],
+        "career": [
+            "incisive research ability",
+            "strategic information management",
+            "psychological communication mastery",
+        ],
+    },
+    "Sagittarius": {
+        "general": [
+            "expansive philosophical thinking",
+            "optimistic broad-minded expression",
+            "inspirational storytelling",
+        ],
+        "career": [
+            "big-picture strategic communication",
+            "cross-cultural perspective breadth",
+            "visionary leadership voice",
+        ],
+    },
+    "Capricorn": {
+        "general": [
+            "structured systematic thinking",
+            "authoritative measured communication",
+            "disciplined analytical mind",
+        ],
+        "career": [
+            "long-term strategic planning",
+            "disciplined professional voice",
+            "executive-level reasoning",
+        ],
+    },
+    "Aquarius": {
+        "general": [
+            "innovative original thinking",
+            "unconventional intellectual expression",
+            "future-focused ideation",
+        ],
+        "career": [
+            "breakthrough problem-solving",
+            "tech-forward strategic thinking",
+            "innovative concept development",
+        ],
+    },
+    "Pisces": {
+        "general": [
+            "intuitive imaginative thinking",
+            "compassionate poetic communication",
+            "empathetic listening depth",
+        ],
+        "career": [
+            "creative concept ideation",
+            "empathetic client understanding",
+            "visionary artistic communication",
+        ],
+    },
+}
+
+
 def get_planet_sign_traits(planet: str, sign: str, track: str) -> List[str]:
     """
     Return copy traits for a planet in a sign for a given track.
@@ -627,6 +930,10 @@ def get_planet_sign_traits(planet: str, sign: str, track: str) -> List[str]:
         lookup = MARS_SIGN.get(sign, {})
     elif planet == "Moon":
         lookup = MOON_SIGN.get(sign, {})
+    elif planet == "Sun":
+        lookup = SUN_SIGN.get(sign, {})
+    elif planet == "Mercury":
+        lookup = MERCURY_SIGN.get(sign, {})
 
     return lookup.get(track) or lookup.get("general") or []
 

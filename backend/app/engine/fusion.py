@@ -492,6 +492,39 @@ def _fuse_prediction(
     else:
         tldr = enriched_tldr
 
+    # Append progressed Sun context for daily scope
+    if scope == "daily" and dob and date:
+        try:
+            from ..chart_service import build_progressed_chart as _bpc
+
+            _prog_profile = {
+                "date_of_birth": dob,
+                "time_of_birth": time_of_birth or "12:00",
+                "latitude": latitude or 0.0,
+                "longitude": longitude or 0.0,
+                "timezone": "UTC",
+            }
+            _prog_chart = _bpc(_prog_profile, date)
+            _prog_sun = next(
+                (p for p in _prog_chart.get("planets", []) if p["name"] == "Sun"),
+                None,
+            )
+            _prog_moon = next(
+                (p for p in _prog_chart.get("planets", []) if p["name"] == "Moon"),
+                None,
+            )
+            prog_sun_sign = _prog_sun.get("sign") if _prog_sun else None
+            prog_moon_sign = _prog_moon.get("sign") if _prog_moon else None
+            if prog_sun_sign and prog_sun_sign != sign:
+                prog_note = f"Your progressed Sun is in {prog_sun_sign}"
+                if prog_moon_sign and prog_moon_sign != chart_ctx.get("moon_sign"):
+                    prog_note += f", progressed Moon in {prog_moon_sign}"
+                tldr = f"{tldr} {prog_note}."
+            elif prog_moon_sign and prog_moon_sign != chart_ctx.get("moon_sign"):
+                tldr = f"{tldr} Progressed Moon in {prog_moon_sign}."
+        except Exception:
+            pass  # progressions are enhancement only
+
     # Tracks
     tracks = {}
     ratings = {}
@@ -505,11 +538,15 @@ def _fuse_prediction(
         "general": "Sun",
     }
     try:
+        from app.interpretation.planet_sign_copy import ASPECT_FLAVOUR as _asp_flavour
+        from app.interpretation.planet_sign_copy import TRACK_TRANSIT_RELEVANCE as _ttr
         from app.interpretation.planet_sign_copy import get_planet_sign_traits as _pst
 
         _has_pst = True
     except Exception:
         _has_pst = False
+        _ttr = {}
+        _asp_flavour = {}
 
     for track_name, track_data in TRACK_POOLS.items():
         pools = get_localized_pool(f"track_{track_name}", track_data["pools"], lang)
@@ -548,6 +585,23 @@ def _fuse_prediction(
 
         text_idx = generate_deterministic_index(seed + track_name, len(pools))
         text = pools[text_idx].format(traits=traits)
+
+        # Inject transit note when a relevant transit is active for this track
+        if active_transits and _ttr:
+            relevant = [
+                t
+                for t in active_transits
+                if track_name in _ttr.get(t["transit_planet"], [])
+            ]
+            if relevant:
+                best_t = relevant[0]  # already sorted by orb
+                t_planet = best_t["transit_planet"]
+                n_planet = best_t["natal_planet"]
+                asp = best_t["aspect"]
+                asp_verb = _asp_flavour.get(asp, "aspecting")
+                transit_note = f"{t_planet} is {asp_verb} your natal {n_planet} now."
+                text = f"{text.rstrip('.')}. {transit_note}"
+
         tracks[track_name] = text
 
         if track_data["ratings"]:
