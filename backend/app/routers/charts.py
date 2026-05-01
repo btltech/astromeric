@@ -532,3 +532,84 @@ async def get_lunar_return_chart(
             metadata=chart.get("metadata", {}),
         ),
     )
+
+
+# ---------------------------------------------------------------------------
+# Phase 3 endpoints: Profections, Declinations, Fixed Stars
+# ---------------------------------------------------------------------------
+
+
+class ProfectionsRequest(BaseModel):
+    profile: ProfilePayload
+    ref_date: Optional[str] = None  # ISO date string; defaults to today
+
+
+class DeclinationsRequest(BaseModel):
+    profile: ProfilePayload
+
+
+class FixedStarsRequest(BaseModel):
+    planets: List[Dict[str, Any]]  # list of {name, absolute_degree}
+    orb: Optional[float] = 1.0
+
+
+@router.post("/profections")
+async def get_profections(
+    request: Request,
+    req: ProfectionsRequest,
+) -> ApiResponse[Dict[str, Any]]:
+    """
+    Annual & Monthly Profections (Hellenistic timing technique).
+    Returns the active house, Time Lord, and thematic interpretation.
+    """
+    from ..engine.advanced_techniques import calculate_profections
+
+    profile = _profile_to_dict(req.profile)
+    try:
+        result = calculate_profections(
+            dob=profile["date_of_birth"],
+            ref_date=req.ref_date,
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    return ApiResponse(status=ResponseStatus.SUCCESS, data=result)
+
+
+@router.post("/declinations")
+async def get_declinations(
+    request: Request,
+    req: DeclinationsRequest,
+) -> ApiResponse[Dict[str, Any]]:
+    """
+    Planetary declinations and parallel / contra-parallel aspects.
+    """
+    from ..engine.advanced_techniques import calculate_declinations
+
+    _require_chart_inputs(req.profile)
+    profile = _profile_to_dict(req.profile)
+    try:
+        result = calculate_declinations(profile=profile)
+    except Exception as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    return ApiResponse(status=ResponseStatus.SUCCESS, data=result)
+
+
+@router.post("/fixed-stars")
+async def get_fixed_stars(
+    request: Request,
+    req: FixedStarsRequest,
+) -> ApiResponse[List[Dict[str, Any]]]:
+    """
+    Fixed Star conjunctions within the requested orb (default 1°).
+    Accepts a pre-computed planet list (name + absolute_degree).
+    """
+    from ..engine.advanced_techniques import find_fixed_star_conjunctions
+
+    try:
+        result = find_fixed_star_conjunctions(
+            planets=req.planets,
+            orb=req.orb if req.orb is not None else 1.0,
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    return ApiResponse(status=ResponseStatus.SUCCESS, data=result)
