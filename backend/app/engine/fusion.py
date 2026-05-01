@@ -407,6 +407,7 @@ def _fuse_prediction(
     # --- Fix 1: Transit positions and aspects for daily scope ---
     active_transits: List[Dict] = []
     transit_narrative: str = ""
+    _natal_planet_data: Dict[str, Any] = {}
     if scope == "daily" and date:
         transit_positions = _get_transit_positions(date)
         if transit_positions and chart_ctx:
@@ -432,8 +433,17 @@ def _fuse_prediction(
                     for p in _natal_chart.get("points", [])
                 }
                 _natal_positions = {**_natal_planets, **_natal_points}
+                # Capture house and dignity per planet for richer track notes
+                _natal_planet_data = {
+                    p["name"]: {
+                        "house": p.get("house"),
+                        "dignity": p.get("dignity"),
+                    }
+                    for p in _natal_chart.get("planets", [])
+                }
             except Exception:
                 _natal_positions = {}
+                _natal_planet_data = {}
 
             if _natal_positions:
                 aspects = _find_transit_aspects(transit_positions, _natal_positions)
@@ -486,6 +496,9 @@ def _fuse_prediction(
     # Moon phase for daily scope
     _moon_phase_name: str = ""
     _moon_phase_emoji: str = ""
+    _is_waxing: bool = True
+    _moon_voc: bool = False
+    _moon_voc_next_sign: str = ""
     if scope == "daily" and date:
         try:
             from .moon_phases import calculate_moon_phase as _cmp
@@ -493,6 +506,84 @@ def _fuse_prediction(
             _mp = _cmp(datetime.fromisoformat(date))
             _moon_phase_name = _mp.get("phase", "")
             _moon_phase_emoji = _mp.get("emoji", "")
+            _is_waxing = _mp.get("is_waxing", True)
+        except Exception:
+            pass
+
+    # Void-of-course Moon detection for daily scope
+    if scope == "daily" and transit_positions:
+        try:
+            _ZODIAC_12 = [
+                "Aries",
+                "Taurus",
+                "Gemini",
+                "Cancer",
+                "Leo",
+                "Virgo",
+                "Libra",
+                "Scorpio",
+                "Sagittarius",
+                "Capricorn",
+                "Aquarius",
+                "Pisces",
+            ]
+            _moon_lon = transit_positions.get("Moon", 0.0)
+            _remaining = 30.0 - (_moon_lon % 30.0)
+            _MAJOR_ASPECTS = [0, 60, 90, 120, 180]
+            _has_applying = False
+            for _voc_planet, _voc_lon in transit_positions.items():
+                if _voc_planet == "Moon":
+                    continue
+                for _asp in _MAJOR_ASPECTS:
+                    # Check Moon applying toward P+asp and P-asp
+                    for _target in [(_voc_lon + _asp) % 360, (_voc_lon - _asp) % 360]:
+                        if (_target - _moon_lon) % 360 <= _remaining:
+                            _has_applying = True
+                            break
+                if _has_applying:
+                    break
+            if not _has_applying:
+                _moon_voc = True
+                _moon_voc_next_sign = _ZODIAC_12[(int(_moon_lon / 30) + 1) % 12]
+        except Exception:
+            pass
+
+    # North Node sign from DOB (mean node via Meeus formula)
+    _nn_sign: str = ""
+    if dob:
+        try:
+            from datetime import date as _date_type
+
+            _d = _date_type.fromisoformat(dob)
+            _a = (14 - _d.month) // 12
+            _y = _d.year + 4800 - _a
+            _m2 = _d.month + 12 * _a - 3
+            _jd = (
+                _d.day
+                + (153 * _m2 + 2) // 5
+                + 365 * _y
+                + _y // 4
+                - _y // 100
+                + _y // 400
+                - 32045
+                + 0.5
+            )
+            _nn_lon = (125.044 - 0.052954 * (_jd - 2451545.0)) % 360
+            _ZODIAC_12 = [
+                "Aries",
+                "Taurus",
+                "Gemini",
+                "Cancer",
+                "Leo",
+                "Virgo",
+                "Libra",
+                "Scorpio",
+                "Sagittarius",
+                "Capricorn",
+                "Aquarius",
+                "Pisces",
+            ]
+            _nn_sign = _ZODIAC_12[int(_nn_lon / 30)]
         except Exception:
             pass
 
@@ -665,6 +756,178 @@ def _fuse_prediction(
                     if note:
                         text = f"{text.rstrip('.')}. {note}"
                     break  # one retrograde note per track is enough
+
+        # Fix 1: House placement note
+        _HOUSE_ORDINALS = {
+            1: "1st",
+            2: "2nd",
+            3: "3rd",
+            4: "4th",
+            5: "5th",
+            6: "6th",
+            7: "7th",
+            8: "8th",
+            9: "9th",
+            10: "10th",
+            11: "11th",
+            12: "12th",
+        }
+        _HOUSE_TRACK_THEMES = {
+            "love": {
+                5: "romance and self-expression",
+                7: "partnership and commitment",
+                8: "deep intimacy",
+            },
+            "money": {
+                2: "personal wealth and values",
+                8: "shared resources and investment",
+                11: "financial networks",
+            },
+            "career": {
+                1: "personal ambition",
+                6: "daily work and service",
+                10: "public reputation and career",
+            },
+            "health": {
+                1: "physical vitality",
+                6: "health routines",
+                12: "rest and inner renewal",
+            },
+            "spiritual": {
+                8: "transformation and mystery",
+                9: "philosophy and higher truth",
+                12: "solitude, dreams and spiritual depth",
+            },
+            "general": {
+                1: "identity and presence",
+                10: "life direction",
+                11: "community and vision",
+            },
+        }
+        if _natal_planet_data:
+            _pdata = _natal_planet_data.get(planet_name_for_track, {})
+            _phouse = _pdata.get("house")
+            _house_themes_for_track = _HOUSE_TRACK_THEMES.get(track_name, {})
+            if _phouse and _phouse in _house_themes_for_track:
+                _ordinal = _HOUSE_ORDINALS.get(_phouse, f"{_phouse}th")
+                _htheme = _house_themes_for_track[_phouse]
+                text = (
+                    f"{text.rstrip('.')}. "
+                    f"With {planet_name_for_track} in your {_ordinal} house, "
+                    f"{_htheme} is your natural territory."
+                )
+
+        # Fix 2: Planet dignity note
+        _DIGNITY_PHRASES = {
+            "domicile": "in its home sign — trust this energy completely",
+            "exaltation": "at peak strength — lean into it",
+            "detriment": "working against its nature — be patient with yourself",
+            "fall": "in its most challenging placement — work consciously with it",
+        }
+        if _natal_planet_data:
+            _dignity = _natal_planet_data.get(planet_name_for_track, {}).get("dignity")
+            if _dignity and _dignity in _DIGNITY_PHRASES:
+                text = (
+                    f"{text.rstrip('.')}. "
+                    f"Note: {planet_name_for_track} is {_DIGNITY_PHRASES[_dignity]}."
+                )
+
+        # Fix 3: Life path amplifier per track
+        _LP_TRACK_THEMES: Dict[int, Dict[str, str]] = {
+            1: {
+                "career": "leadership and bold initiative",
+                "general": "independent vision",
+            },
+            2: {"love": "deep partnership and sensitivity", "general": "cooperation"},
+            3: {"love": "expressive joy", "general": "creative self-expression"},
+            4: {
+                "career": "structure and mastery",
+                "money": "disciplined long-term building",
+            },
+            5: {
+                "general": "freedom and adaptability",
+                "career": "versatile opportunity",
+            },
+            6: {"love": "devotion and nurturing", "health": "self-care as sacred duty"},
+            7: {
+                "spiritual": "deep introspection and wisdom",
+                "general": "inner knowing",
+            },
+            8: {"money": "abundance cycles and power", "career": "material mastery"},
+            9: {
+                "spiritual": "humanitarian service",
+                "general": "completion and wisdom",
+            },
+            11: {
+                "spiritual": "intuitive illumination",
+                "love": "soulmate-level connection",
+            },
+            22: {"career": "master builder energy", "money": "large-scale vision"},
+            33: {"spiritual": "compassionate mastery", "love": "unconditional giving"},
+        }
+        _lp_theme = _LP_TRACK_THEMES.get(life_path, {}).get(track_name)
+        if _lp_theme:
+            text = f"{text.rstrip('.')}. Your Life Path {life_path} amplifies {_lp_theme} right now."
+
+        # Fix 4: Waxing/waning moon directive
+        if _moon_phase_name and scope == "daily":
+            _MOON_DIRECTIVES_WAXING = {
+                "love": "initiate",
+                "money": "invest",
+                "career": "pitch",
+                "health": "build",
+                "spiritual": "begin",
+                "general": "act",
+            }
+            _MOON_DIRECTIVES_WANING = {
+                "love": "deepen what exists",
+                "money": "review and trim",
+                "career": "consolidate gains",
+                "health": "rest and restore",
+                "spiritual": "release",
+                "general": "reflect",
+            }
+            _directive = (
+                _MOON_DIRECTIVES_WAXING if _is_waxing else _MOON_DIRECTIVES_WANING
+            ).get(track_name)
+            if _directive:
+                text = f"{text.rstrip('.')}. Moon energy favors: {_directive}."
+
+        # Fix 5: Void-of-course moon warning (general + spiritual tracks)
+        if _moon_voc and track_name in ("general", "spiritual") and scope == "daily":
+            _voc_messages = {
+                "general": (
+                    f"The Moon is void-of-course — avoid major new decisions "
+                    f"until it enters {_moon_voc_next_sign}."
+                    if _moon_voc_next_sign
+                    else "The Moon is void-of-course — avoid major new decisions for now."
+                ),
+                "spiritual": "Void-of-course Moon: rest in the in-between — nothing needs forcing.",
+            }
+            text = f"{text.rstrip('.')}. {_voc_messages[track_name]}"
+
+        # Fix 6: North Node theming (spiritual track)
+        _NN_SIGN_THEMES = {
+            "Aries": "bold self-initiation and courage",
+            "Taurus": "grounded presence and material stability",
+            "Gemini": "curiosity, communication and intellectual growth",
+            "Cancer": "emotional security and nurturing connections",
+            "Leo": "creative self-expression and heart-led leadership",
+            "Virgo": "service, discernment and healing craft",
+            "Libra": "partnership, harmony and relational wisdom",
+            "Scorpio": "deep transformation and soulful power",
+            "Sagittarius": "expansive truth-seeking and higher wisdom",
+            "Capricorn": "disciplined mastery and long-term legacy",
+            "Aquarius": "collective vision and authentic individuality",
+            "Pisces": "spiritual surrender, compassion and inner union",
+        }
+        if _nn_sign and track_name == "spiritual":
+            _nn_theme = _NN_SIGN_THEMES.get(_nn_sign, "")
+            if _nn_theme:
+                text = (
+                    f"{text.rstrip('.')}. "
+                    f"Your North Node in {_nn_sign} calls you toward {_nn_theme}."
+                )
 
         tracks[track_name] = text
 
