@@ -20,108 +20,94 @@ from .numerology import (
 
 # Pools for different scopes and tracks
 LOVE_POOLS = [
-    "In matters of the heart, {traits}. Focus on genuine connections.",
-    "Romantic energies suggest {traits}. Be open to new possibilities.",
-    "Love life benefits from {traits}. Communicate your feelings clearly.",
-    "Intimacy grows when you lean into {traits}. Offer steady presence.",
-    "Affection deepens through {traits}; choose quality time today.",
+    "Your capacity for {traits} is your greatest romantic asset right now — let it lead.",
+    "Love opens wider when you bring {traits} into how you show up for others.",
+    "Intimacy deepens through {traits} today; small gestures carry lasting weight.",
+    "Romance responds to your {traits} energy — authenticity is more magnetic than perfection.",
+    "Connection blooms where {traits} meets real vulnerability. Be seen.",
+    "Your {traits} draws people closer; don't second-guess what feels natural.",
+    "Relationships grow when {traits} guides your words rather than just your actions.",
+    "The heart wants what resonates — your {traits} knows the way.",
 ]
 
 MONEY_POOLS = [
-    "Financial prospects involve {traits}. Make informed decisions.",
-    "Wealth opportunities arise through {traits}. Stay grounded.",
-    "Money matters favor {traits}. Plan for long-term stability.",
-    "Prosperity follows {traits}; refine your plan before acting.",
-    "Resources respond to {traits}; be disciplined yet open to surprise.",
+    "Your {traits} is the financial edge others don't have — use it deliberately.",
+    "Wealth follows the path of {traits} right now; trust the slow build.",
+    "Money flows toward {traits}; resist shortcuts that bypass your instincts.",
+    "Financial clarity comes from leaning into {traits} rather than hedging every move.",
+    "Resources respond to {traits}; one disciplined decision today compounds forward.",
+    "Prosperity is a practice — your {traits} is showing you exactly where to focus.",
+    "The gap between planning and earning closes when you apply {traits} consistently.",
+    "An opportunity may look small but carry real weight — {traits} helps you see it.",
 ]
 
 CAREER_POOLS = [
-    "Professional path enhances with {traits}. Seize opportunities.",
-    "Work life thrives on {traits}. Demonstrate your skills.",
-    "Career growth comes from {traits}. Stay focused and dedicated.",
-    "Authority notices {traits}; let your actions be visible.",
-    "Momentum builds through {traits}; prioritize the hard thing first.",
+    "Your {traits} is visible to the right people right now — let it speak.",
+    "Professional momentum builds where {traits} meets consistent follow-through.",
+    "Ambition sharpens when you channel {traits} into the next concrete step.",
+    "Work rewards {traits} right now; don't dilute your effort across too many fronts.",
+    "Career growth lives at the intersection of {traits} and timing — today both align.",
+    "The work that feels most authentic to your {traits} is also the work that stands out.",
+    "Step into the harder conversation or the harder project — {traits} makes you ready.",
+    "Authority and recognition come naturally to your {traits} when you stop holding back.",
 ]
 
 HEALTH_POOLS = [
-    "Wellbeing focuses on {traits}. Prioritize rest and nourishment.",
-    "Health energies support {traits}. Listen to your body's signals.",
-    "Vitality grows through {traits}; balance activity with recovery.",
+    "Your body is communicating through {traits} — listen before you push harder.",
+    "Vitality returns when you align with {traits} rather than override it.",
+    "Wellbeing deepens through {traits} today; recovery is part of the work.",
+    "Energy is renewable when you honor {traits}; force drains what rest replenishes.",
+    "Your {traits} holds the key to what your body actually needs right now.",
+    "Small rituals rooted in {traits} compound into real physical resilience.",
+    "Movement and stillness both have a role; {traits} tells you which one today.",
 ]
 
 SPIRITUAL_POOLS = [
-    "Personal growth calls for {traits}. Explore inner wisdom.",
-    "Spiritual path deepens with {traits}. Trust your intuition.",
-    "Enlightenment flows from {traits}; seek meaningful connections.",
+    "Your {traits} is the doorway to the inner work available right now.",
+    "Spiritual growth moves at the pace of {traits} — don't rush what is unfolding.",
+    "Inner clarity arrives when you stop explaining {traits} and start inhabiting it.",
+    "The practice isn't complicated — your {traits} already knows the direction.",
+    "What you seek is seeking you; {traits} is how you stay receptive.",
+    "Meaning reveals itself at the edge of {traits}; lean toward the quiet.",
+    "Your {traits} connects you to something larger than the moment demands.",
+    "The day holds more depth than it appears — {traits} helps you find it.",
 ]
 
 SCOPE_SUMMARIES = {
     "daily": [
         "Today's cosmic alignment favors {sign} with Life Path {life_path} energy.",
         "A day of {element} influence for {sign}, guided by Life Path {life_path}.",
+        "{sign} energy is active today — Life Path {life_path} shapes how it lands.",
     ],
     "weekly": [
         "This week's themes revolve around {sign}'s {element} qualities, amplified by Life Path {life_path}.",
         "Over the next 7 days, {sign} energy builds momentum with Life Path {life_path} support.",
+        "A {element} week ahead — {sign} steady-states with Life Path {life_path} in the background.",
     ],
     "monthly": [
         "This month brings {sign}'s {element} essence to the forefront, shaped by Life Path {life_path}.",
         "Big opportunities emerge for {sign} this month, with Life Path {life_path} as your guide.",
+        "Long-range {element} themes deepen for {sign} — Life Path {life_path} holds the thread.",
     ],
 }
 
 TRACK_POOLS = {
     "general": {
         "pools": [
-            "Overview: Today's energy supports {traits}. Trust your instincts.",
-            "General outlook: Focus on {traits} for best results.",
-            "Overall theme: Embrace {traits} to navigate today's path.",
+            "Your {traits} is the throughline of today — follow where it leads.",
+            "The day opens around your {traits}; don't talk yourself out of what feels clear.",
+            "Everything sharpens when you trust your {traits} rather than override it.",
+            "Today's energy bends toward {traits}; you'll feel it in the choices that matter.",
+            "Your {traits} gives you an edge right now — use it, don't explain it.",
         ],
         "ratings": True,
     },
     "love": {"pools": LOVE_POOLS, "ratings": True},
     "money": {"pools": MONEY_POOLS, "ratings": True},
-    "health": {
-        "pools": [
-            "Wellbeing focuses on {traits}. Prioritize rest and nourishment.",
-            "Health energies support {traits}. Listen to your body's signals.",
-            "Vitality grows through {traits}; balance activity with recovery.",
-        ],
-        "ratings": True,
-    },
-    "spiritual": {
-        "pools": [
-            "Personal growth calls for {traits}. Explore inner wisdom.",
-            "Spiritual path deepens with {traits}. Trust your intuition.",
-            "Enlightenment flows from {traits}; seek meaningful connections.",
-        ],
-        "ratings": True,
-    },
+    "career": {"pools": CAREER_POOLS, "ratings": True},
+    "health": {"pools": HEALTH_POOLS, "ratings": True},
+    "spiritual": {"pools": SPIRITUAL_POOLS, "ratings": True},
 }
-
-LOVE_POOLS = [
-    "In matters of the heart, {traits}. Focus on genuine connections.",
-    "Romantic energies suggest {traits}. Be open to new possibilities.",
-    "Love life benefits from {traits}. Communicate your feelings clearly.",
-    "Intimacy grows when you lean into {traits}. Offer steady presence.",
-    "Affection deepens through {traits}; choose quality time today.",
-]
-
-MONEY_POOLS = [
-    "Financial prospects involve {traits}. Make informed decisions.",
-    "Wealth opportunities arise through {traits}. Stay grounded.",
-    "Money matters favor {traits}. Plan for long-term stability.",
-    "Prosperity follows {traits}; refine your plan before acting.",
-    "Resources respond to {traits}; be disciplined yet open to surprise.",
-]
-
-CAREER_POOLS = [
-    "Professional path enhances with {traits}. Seize opportunities.",
-    "Work life thrives on {traits}. Demonstrate your skills.",
-    "Career growth comes from {traits}. Stay focused and dedicated.",
-    "Authority notices {traits}; let your actions be visible.",
-    "Momentum builds through {traits}; prioritize the hard thing first.",
-]
 
 THEME_WORDS = [
     "Resilience",
@@ -475,6 +461,41 @@ def _fuse_prediction(
         "general": sign,
     }
 
+    # Detect retrograde planets from today's transit positions
+    _retrograde_planets: List[str] = []
+    if scope == "daily" and date and transit_positions:
+        try:
+            from flatlib import const as _fl_const
+            from flatlib.chart import Chart as _FLChart
+            from flatlib.datetime import Datetime as _FLDt
+            from flatlib.geopos import GeoPos as _GeoPos
+
+            _dt = _FLDt(date.replace("-", "/"), "12:00", "+00:00")
+            _pos = _GeoPos("0n00", "0e00")
+            _tc = _FLChart(_dt, _pos)
+            for _pname in ["Mercury", "Venus", "Mars", "Jupiter", "Saturn"]:
+                try:
+                    _obj = _tc.get(getattr(_fl_const, _pname.upper()))
+                    if _obj and _obj.movement() == _fl_const.RETROGRADE:
+                        _retrograde_planets.append(_pname)
+                except Exception:
+                    pass
+        except Exception:
+            pass
+
+    # Moon phase for daily scope
+    _moon_phase_name: str = ""
+    _moon_phase_emoji: str = ""
+    if scope == "daily" and date:
+        try:
+            from .moon_phases import calculate_moon_phase as _cmp
+
+            _mp = _cmp(datetime.fromisoformat(date))
+            _moon_phase_name = _mp.get("phase", "")
+            _moon_phase_emoji = _mp.get("emoji", "")
+        except Exception:
+            pass
+
     # TL;DR summary — try enriched version first
     enriched_tldr = _chart_enriched_tldr(
         sign, life_path, element_display, chart_ctx, scope, seed
@@ -491,6 +512,11 @@ def _fuse_prediction(
         tldr = f"{enriched_tldr} {transit_narrative}."
     else:
         tldr = enriched_tldr
+
+    # Prepend moon phase to tldr for daily scope
+    if _moon_phase_name and scope == "daily":
+        phase_str = f"{_moon_phase_emoji} {_moon_phase_name}".strip()
+        tldr = f"{phase_str}. {tldr}"
 
     # Append progressed Sun context for daily scope
     if scope == "daily" and dob and date:
@@ -601,6 +627,44 @@ def _fuse_prediction(
                 asp_verb = _asp_flavour.get(asp, "aspecting")
                 transit_note = f"{t_planet} is {asp_verb} your natal {n_planet} now."
                 text = f"{text.rstrip('.')}. {transit_note}"
+
+        # Retrograde notes per track
+        if _retrograde_planets:
+            _rx_track_map = {
+                "Mercury": ["general", "career"],
+                "Venus": ["love", "money"],
+                "Mars": ["career", "health"],
+                "Jupiter": ["money", "spiritual"],
+                "Saturn": ["career", "money"],
+            }
+            for _rx in _retrograde_planets:
+                if track_name in _rx_track_map.get(_rx, []):
+                    _rx_notes = {
+                        "Mercury": {
+                            "general": "Mercury is retrograde — review before committing.",
+                            "career": "Mercury Rx: slow down, recheck, then advance.",
+                        },
+                        "Venus": {
+                            "love": "Venus is retrograde — old connections resurface; tread thoughtfully.",
+                            "money": "Venus Rx: pause on new financial commitments.",
+                        },
+                        "Mars": {
+                            "career": "Mars is retrograde — redirect energy inward before pushing forward.",
+                            "health": "Mars Rx: rest and restore rather than strain.",
+                        },
+                        "Jupiter": {
+                            "money": "Jupiter Rx: opportunities need a second look.",
+                            "spiritual": "Jupiter Rx: revisit beliefs that no longer fit.",
+                        },
+                        "Saturn": {
+                            "career": "Saturn Rx: structural reviews pay off now.",
+                            "money": "Saturn Rx: shore up foundations before expanding.",
+                        },
+                    }
+                    note = _rx_notes.get(_rx, {}).get(track_name)
+                    if note:
+                        text = f"{text.rstrip('.')}. {note}"
+                    break  # one retrograde note per track is enough
 
         tracks[track_name] = text
 
