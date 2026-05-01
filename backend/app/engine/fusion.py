@@ -410,14 +410,36 @@ def _fuse_prediction(
         f"{name.lower()}{dob}{date}{scope}{time_of_birth or ''}{place_of_birth or ''}"
     )
 
-    # TL;DR summary
-    scope_summaries = SCOPE_SUMMARIES.get(scope, SCOPE_SUMMARIES["daily"])
-    scope_summaries = get_localized_pool(f"scope_{scope}", scope_summaries, lang)
-
-    tldr_idx = generate_deterministic_index(seed + "tldr", len(scope_summaries))
-    tldr = scope_summaries[tldr_idx].format(
-        sign=sign, life_path=life_path, element=element_display
+    # --- Phase 5: Pull real natal chart context ---
+    chart_ctx = _get_chart_context(
+        dob=dob,
+        time_of_birth=time_of_birth,
+        latitude=latitude,
+        longitude=longitude,
     )
+
+    # Map tracks to the most astrologically relevant natal planet
+    _track_planet: Dict[str, str] = {
+        "love": chart_ctx.get("venus_sign") or sign,
+        "money": chart_ctx.get("venus_sign") or sign,
+        "career": chart_ctx.get("mars_sign") or sign,
+        "health": chart_ctx.get("moon_sign") or sign,
+        "spiritual": chart_ctx.get("moon_sign") or sign,
+        "general": sign,
+    }
+
+    # TL;DR summary — try enriched version first
+    enriched_tldr = _chart_enriched_tldr(
+        sign, life_path, element_display, chart_ctx, scope, seed
+    )
+    if not enriched_tldr:
+        scope_summaries = SCOPE_SUMMARIES.get(scope, SCOPE_SUMMARIES["daily"])
+        scope_summaries = get_localized_pool(f"scope_{scope}", scope_summaries, lang)
+        tldr_idx = generate_deterministic_index(seed + "tldr", len(scope_summaries))
+        enriched_tldr = scope_summaries[tldr_idx].format(
+            sign=sign, life_path=life_path, element=element_display
+        )
+    tldr = enriched_tldr
 
     # Tracks
     tracks = {}
@@ -425,19 +447,28 @@ def _fuse_prediction(
     for track_name, track_data in TRACK_POOLS.items():
         pools = get_localized_pool(f"track_{track_name}", track_data["pools"], lang)
 
+        # Use the planet-specific sign's traits when available
+        planet_sign = _track_planet.get(track_name, sign)
+        planet_traits = (
+            get_sign_traits(planet_sign, lang=lang)
+            if planet_sign != sign
+            else sign_traits
+        )
+
         traits_key = f"{track_name}_traits"
-        if track_name in sign_traits:
-            traits = sign_traits[track_name][
-                generate_deterministic_index(
-                    seed + traits_key, len(sign_traits[track_name])
-                )
-            ]
+        if track_name in planet_traits:
+            trait_pool = planet_traits[track_name]
+        elif "general" in planet_traits:
+            trait_pool = planet_traits["general"]
         else:
-            traits = sign_traits["general"][
-                generate_deterministic_index(
-                    seed + traits_key, len(sign_traits["general"])
-                )
-            ]  # fallback
+            trait_pool = sign_traits.get("general", ["adaptable energy"])
+
+        if not trait_pool:
+            trait_pool = sign_traits.get("general", ["adaptable energy"])
+
+        traits = trait_pool[
+            generate_deterministic_index(seed + traits_key, len(trait_pool))
+        ]
 
         text_idx = generate_deterministic_index(seed + track_name, len(pools))
         text = pools[text_idx].format(traits=traits)
@@ -464,7 +495,7 @@ def _fuse_prediction(
     ]
 
     # Rising sign — use real flatlib Ascendant when birth time + location are available
-    rising_sign = (
+    rising_sign = chart_ctx.get("asc_sign") or (
         compute_rising_sign(
             time_of_birth,
             dob=dob,
@@ -492,6 +523,19 @@ def _fuse_prediction(
         generate_deterministic_index(seed + "action", len(daily_actions_pool))
     ]
 
+    # Build natal context summary for clients
+    natal_context: Dict[str, Any] = {"sun_sign": sign}
+    if chart_ctx:
+        natal_context.update(
+            {
+                "moon_sign": chart_ctx.get("moon_sign") or None,
+                "asc_sign": chart_ctx.get("asc_sign") or None,
+                "venus_sign": chart_ctx.get("venus_sign") or None,
+                "mars_sign": chart_ctx.get("mars_sign") or None,
+                "mercury_sign": chart_ctx.get("mercury_sign") or None,
+            }
+        )
+
     return {
         "scope": scope,
         "date": date,
@@ -511,7 +555,91 @@ def _fuse_prediction(
         "name_number": name_number,
         "element": element_display,
         "place_vibe": place_vibe,
+        "natal_context": natal_context,
     }
+
+
+def _get_chart_context(
+    dob: str,
+    time_of_birth: str = None,
+    latitude: float = None,
+    longitude: float = None,
+    timezone: str = "UTC",
+) -> Dict[str, Any]:
+    """
+    Return natal planet context from the chart engine.
+
+    On success returns a dict with sun_sign, moon_sign, asc_sign and the
+    sign for Venus, Mars, Mercury so track generation can reference the
+    relevant planet.  Returns an empty dict on any failure so callers
+    degrade gracefully.
+    """
+    if latitude is None or longitude is None or not dob:
+        return {}
+    try:
+        from ..chart_service import build_natal_chart
+
+        profile = {
+            "date_of_birth": dob,
+            "time_of_birth": time_of_birth or "12:00",
+            "latitude": latitude,
+            "longitude": longitude,
+            "timezone": timezone,
+        }
+        chart = build_natal_chart(profile)
+        planets_list = chart.get("planets", [])
+        planets = {p["name"]: p for p in planets_list}
+        points_list = chart.get("points", [])
+        points = {p["name"]: p for p in points_list}
+
+        asc_sign = chart.get("ascendant", {}).get("sign") or ""
+
+        def _sign(name: str) -> str:
+            p = planets.get(name) or points.get(name) or {}
+            return p.get("sign", "")
+
+        return {
+            "sun_sign": _sign("Sun"),
+            "moon_sign": _sign("Moon"),
+            "mercury_sign": _sign("Mercury"),
+            "venus_sign": _sign("Venus"),
+            "mars_sign": _sign("Mars"),
+            "jupiter_sign": _sign("Jupiter"),
+            "asc_sign": asc_sign,
+        }
+    except Exception:
+        return {}
+
+
+def _chart_enriched_tldr(
+    sign: str,
+    life_path: int,
+    element_display: str,
+    chart_ctx: Dict[str, Any],
+    scope: str,
+    seed: str,
+) -> str:
+    """Build a more specific TL;DR using real natal data when available."""
+    moon = chart_ctx.get("moon_sign") or ""
+    asc = chart_ctx.get("asc_sign") or ""
+
+    if moon and asc:
+        templates = [
+            f"Your {sign} Sun, {moon} Moon, and {asc} rising shape this {scope}'s energy around Life Path {life_path}.",
+            f"With {sign} solar energy, a {moon} Moon, and {asc} on the horizon, {scope} calls for {element_display} focus.",
+            f"{scope.title()}'s vibration blends {sign}'s {element_display} drive with your {moon} Moon's instincts and {asc} ascendant.",
+        ]
+    elif moon:
+        templates = [
+            f"Your {sign} Sun and {moon} Moon guide this {scope}'s energy — Life Path {life_path} leads the way.",
+            f"{sign} solar warmth meets {moon} lunar depth; a {scope} for integrating both.",
+        ]
+    else:
+        # Fallback: use existing scope pools
+        return ""
+
+    idx = generate_deterministic_index(seed + "enriched_tldr", len(templates))
+    return templates[idx]
 
 
 def _get_redis_client():
