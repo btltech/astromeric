@@ -36,7 +36,7 @@ export function LearningCenter() {
     async function loadModules() {
       try {
         const response = await fetchLearningModules();
-        setModules(response.modules);
+        setModules(Array.isArray(response.modules) ? response.modules : []);
       } catch (err) {
         console.error('Failed to load modules:', err);
         setError('Could not load learning content');
@@ -51,7 +51,11 @@ export function LearningCenter() {
     setLoading(true);
     try {
       const data = await fetchLearningModule(moduleId);
-      setView({ type: 'module', moduleId, data });
+      setView({
+        type: 'module',
+        moduleId,
+        data: data && typeof data === 'object' ? data : {},
+      });
     } catch (err) {
       console.error('Failed to load module:', err);
     } finally {
@@ -110,6 +114,14 @@ export function LearningCenter() {
 
   // Render modules list
   if (view.type === 'modules') {
+    if (modules.length === 0) {
+      return (
+        <div className="learning-center error">
+          <p>Learning modules are not available yet. The desk shell is live, but the content feed is still catching up.</p>
+        </div>
+      );
+    }
+
     return (
       <div className="learning-center">
         <h2 className="learning-title">📚 Cosmic Learning Center</h2>
@@ -150,7 +162,7 @@ export function LearningCenter() {
   // Render module content
   if (view.type === 'module') {
     const isSignModule = view.moduleId === 'moon_signs' || view.moduleId === 'rising_signs';
-    const entries = Object.entries(view.data);
+    const entries = Object.entries(view.data ?? {});
 
     return (
       <div className="learning-center module-view">
@@ -168,61 +180,75 @@ export function LearningCenter() {
         <div className={`content-grid ${isSignModule ? 'signs-grid' : ''}`}>
           {entries.map(([key, value]) => {
             const item = value as Record<string, unknown>;
+            const title = typeof item.title === 'string' ? item.title : null;
+            const emotionalNature =
+              typeof item.emotional_nature === 'string' ? item.emotional_nature : null;
+            const needs = typeof item.needs === 'string' ? item.needs : null;
+            const firstImpression =
+              typeof item.first_impression === 'string' ? item.first_impression : null;
+            const appearanceVibe =
+              typeof item.appearance_vibe === 'string' ? item.appearance_vibe : null;
+            const effects = typeof item.effects === 'string' ? item.effects : null;
+            const duration = typeof item.duration === 'string' ? item.duration : null;
+            const tips = Array.isArray(item.tips)
+              ? item.tips.filter((tip): tip is string => typeof tip === 'string')
+              : [];
+
             return (
               <div key={key} className="content-card">
                 <h3 className="content-title">
                   {(item.symbol as string) || ''} {key}
                 </h3>
 
-                {item.title && <h4 className="content-subtitle">{item.title as string}</h4>}
+                {title && <h4 className="content-subtitle">{title}</h4>}
 
-                {item.emotional_nature && (
+                {emotionalNature && (
                   <div className="content-section">
                     <span className="section-label">Emotional Nature</span>
-                    <p>{item.emotional_nature as string}</p>
+                    <p>{emotionalNature}</p>
                   </div>
                 )}
 
-                {item.needs && (
+                {needs && (
                   <div className="content-section">
                     <span className="section-label">Core Needs</span>
-                    <p>{item.needs as string}</p>
+                    <p>{needs}</p>
                   </div>
                 )}
 
-                {item.first_impression && (
+                {firstImpression && (
                   <div className="content-section">
                     <span className="section-label">First Impression</span>
-                    <p>{item.first_impression as string}</p>
+                    <p>{firstImpression}</p>
                   </div>
                 )}
 
-                {item.appearance_vibe && (
+                {appearanceVibe && (
                   <div className="content-section">
                     <span className="section-label">Appearance & Vibe</span>
-                    <p>{item.appearance_vibe as string}</p>
+                    <p>{appearanceVibe}</p>
                   </div>
                 )}
 
-                {item.effects && (
+                {effects && (
                   <div className="content-section">
                     <span className="section-label">Effects</span>
-                    <p>{item.effects as string}</p>
+                    <p>{effects}</p>
                   </div>
                 )}
 
-                {item.duration && (
+                {duration && (
                   <div className="content-section">
                     <span className="section-label">Duration</span>
-                    <p>{item.duration as string}</p>
+                    <p>{duration}</p>
                   </div>
                 )}
 
-                {item.tips && Array.isArray(item.tips) && (
+                {tips.length > 0 && (
                   <div className="content-section tips">
                     <span className="section-label">Tips</span>
                     <ul>
-                      {(item.tips as string[]).map((tip, i) => (
+                      {tips.map((tip, i) => (
                         <li key={i}>{tip}</li>
                       ))}
                     </ul>
@@ -238,7 +264,8 @@ export function LearningCenter() {
 
   // Render course overview
   if (view.type === 'course') {
-    const lessonKeys = Object.keys(view.data.lessons || {});
+    const lessons = view.data.lessons && typeof view.data.lessons === 'object' ? view.data.lessons : {};
+    const lessonKeys = Object.keys(lessons);
 
     return (
       <div className="learning-center course-view">
@@ -254,7 +281,7 @@ export function LearningCenter() {
 
         <div className="lessons-list">
           {lessonKeys.map((key, index) => {
-            const lesson = view.data.lessons[key];
+            const lesson = lessons[key];
             return (
               <div
                 key={key}

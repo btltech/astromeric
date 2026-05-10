@@ -9,6 +9,7 @@ export interface ProfilePayload {
   name: string;
   date_of_birth: string;
   time_of_birth?: string;
+  place_of_birth?: string;
   location?: {
     latitude?: number;
     longitude?: number;
@@ -42,6 +43,140 @@ export interface ForecastResponse {
   numerology?: NumerologyProfile;
 }
 
+export interface LiveProfileIdentity {
+  name: string;
+  date_of_birth: string;
+  time_of_birth?: string | null;
+  place_of_birth?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  timezone?: string | null;
+  house_system?: string | null;
+  date?: string | null;
+}
+
+export interface LiveChartPlanet {
+  name: string;
+  sign: string;
+  degree: number;
+  absolute_degree: number;
+  ecliptic_latitude?: number;
+  house: number;
+  retrograde: boolean;
+  dignity?: string | null;
+}
+
+export interface LiveChartHouse {
+  house: number;
+  sign: string;
+  degree: number;
+}
+
+export interface LiveChartAspect {
+  planet_a: string;
+  planet_b: string;
+  type: string;
+  orb: number;
+  strength?: number;
+}
+
+export interface LiveNatalProfile {
+  profile: LiveProfileIdentity;
+  chart: {
+    metadata: {
+      chart_type: string;
+      datetime: string;
+      house_system: string;
+      provider: string;
+      birth_time_assumed?: boolean;
+      time_confidence?: string;
+      data_quality?: string;
+      location_assumed?: boolean;
+      moon_sign_uncertain?: boolean;
+    };
+    planets: LiveChartPlanet[];
+    houses: LiveChartHouse[];
+    aspects: LiveChartAspect[];
+  };
+}
+
+export interface LiveCompatibilityDimension {
+  name: string;
+  score: number;
+  interpretation: string;
+}
+
+export interface LiveCompatibilityResult {
+  person_a: LiveProfileIdentity;
+  person_b: LiveProfileIdentity;
+  overall_score: number;
+  summary: string;
+  dimensions: LiveCompatibilityDimension[];
+  strengths: string[];
+  challenges: string[];
+  recommendations: string[];
+  confidence?: number;
+  data_quality_note?: string | null;
+}
+
+export interface LiveNumerologyMeaning {
+  number: number;
+  meaning: string;
+  traits?: string[];
+  life_purpose?: string;
+}
+
+export interface LiveNumerologyCycle {
+  year: number;
+  cycle_number: number;
+  interpretation: string;
+  focus_areas: string[];
+}
+
+export interface LiveNumerologyArc {
+  number: number;
+  ages: string;
+  meaning: string;
+}
+
+export interface LiveKarmicDebt {
+  raw: number;
+  sources: string[];
+  label: string;
+  theme: string;
+  description: string;
+}
+
+export interface LiveNumerologySynthesis {
+  summary: string;
+  strengths: string[];
+  growth_edges: string[];
+  current_focus: string;
+  affirmation: string;
+}
+
+export interface LiveNumerologyProfile {
+  profile: LiveProfileIdentity;
+  life_path: LiveNumerologyMeaning;
+  destiny_number: number;
+  destiny_interpretation: string;
+  personal_year: LiveNumerologyCycle;
+  compatibility_number?: number | null;
+  compatibility_interpretation?: string | null;
+  lucky_numbers: number[];
+  auspicious_days: number[];
+  numerology_insights: {
+    soul_urge?: string;
+    personality?: string;
+    personal_month?: string;
+    personal_day?: string;
+  };
+  pinnacles: LiveNumerologyArc[];
+  challenges: LiveNumerologyArc[];
+  karmic_debts?: LiveKarmicDebt[];
+  synthesis?: LiveNumerologySynthesis;
+}
+
 export interface AiExplainSectionPayload {
   title?: string;
   highlights?: string[];
@@ -64,6 +199,14 @@ export interface ApiResponse<T> {
   status: 'success' | 'error';
   data?: T;
   message?: string;
+}
+
+function unwrapResponseData<T>(response: ApiResponse<T>, fallbackMessage: string): T {
+  if (response.status === 'success' && response.data !== undefined) {
+    return response.data;
+  }
+
+  throw new Error(response.message || fallbackMessage);
 }
 
 export interface SectionFeedbackPayload {
@@ -110,8 +253,34 @@ export class ApiError extends Error {
   }
 }
 
+function toErrorDetail(value: unknown): string {
+  if (typeof value === 'string') {
+    return value;
+  }
+
+  if (value && typeof value === 'object') {
+    const record = value as Record<string, unknown>;
+    if (typeof record.message === 'string') {
+      return record.message;
+    }
+    if (typeof record.error === 'string') {
+      return record.error;
+    }
+
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return 'Request failed';
+    }
+  }
+
+  return 'Request failed';
+}
+
 export async function apiFetch<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const baseUrl = getApiBaseUrl();
+  const method = (options.method ?? 'GET').toUpperCase();
+  const cache = options.cache ?? (method === 'GET' ? 'no-store' : undefined);
 
   // Merge headers without losing defaults when callers pass Authorization, etc.
   const mergedHeaders = new Headers(options.headers || undefined);
@@ -124,13 +293,14 @@ export async function apiFetch<T>(endpoint: string, options: RequestInit = {}): 
 
   const resp = await fetch(`${baseUrl}${endpoint}`, {
     ...options,
+    cache,
     headers: mergedHeaders,
   });
   if (!resp.ok) {
     let detail = 'Request failed';
     try {
       const body = await resp.json();
-      detail = (body && (body.detail || body.error || JSON.stringify(body))) || detail;
+      detail = toErrorDetail(body?.detail ?? body?.error ?? body);
     } catch {
       const text = await resp.text();
       detail = text || detail;
@@ -140,13 +310,39 @@ export async function apiFetch<T>(endpoint: string, options: RequestInit = {}): 
   return resp.json() as Promise<T>;
 }
 
+function getResolvedLocation(profile: ProfilePayload) {
+  return {
+    latitude: profile.location?.latitude ?? 0,
+    longitude: profile.location?.longitude ?? 0,
+    timezone: profile.location?.timezone ?? 'UTC',
+  };
+}
+
+function toFlatProfilePayload(profile: ProfilePayload) {
+  const location = getResolvedLocation(profile);
+
+  return {
+    name: profile.name,
+    date_of_birth: profile.date_of_birth,
+    time_of_birth: profile.time_of_birth,
+    place_of_birth: profile.place_of_birth,
+    latitude: location.latitude,
+    longitude: location.longitude,
+    timezone: location.timezone,
+    house_system: profile.house_system ?? 'Placidus',
+  };
+}
+
 export async function fetchForecast(
   profile: ProfilePayload,
   scope: 'daily' | 'weekly' | 'monthly' = 'daily'
 ): Promise<ForecastResponse> {
   const response = await apiFetch<ApiResponse<ForecastResponse>>(`/v2/forecasts/${scope}`, {
     method: 'POST',
-    body: JSON.stringify({ ...profile, scope }), // Flatten profile data
+    body: JSON.stringify({
+      profile: toFlatProfilePayload(profile),
+      scope,
+    }),
   });
   if (response.status === 'success' && response.data) {
     // Transform v2 API response to match frontend expectations
@@ -171,10 +367,20 @@ export async function fetchForecast(
   throw new Error(response.message || 'Failed to fetch forecast');
 }
 
-export async function fetchNatalProfile(profile: ProfilePayload) {
-  const response = await apiFetch<ApiResponse<any>>('/v2/profiles/natal', {
+export async function fetchNatalProfile(profile: ProfilePayload): Promise<LiveNatalProfile> {
+  const location = getResolvedLocation(profile);
+
+  const response = await apiFetch<ApiResponse<LiveNatalProfile>>('/v2/profiles/natal', {
     method: 'POST',
-    body: JSON.stringify(profile), // Send flat
+    body: JSON.stringify({
+      profile: {
+        name: profile.name,
+        date_of_birth: profile.date_of_birth,
+        time_of_birth: profile.time_of_birth,
+        location,
+        house_system: profile.house_system ?? 'Placidus',
+      },
+    }),
   });
   if (response.status === 'success' && response.data) {
     return response.data;
@@ -182,15 +388,36 @@ export async function fetchNatalProfile(profile: ProfilePayload) {
   throw new Error(response.message || 'Failed to fetch natal profile');
 }
 
-export async function fetchCompatibility(person_a: ProfilePayload, person_b: ProfilePayload) {
-  const response = await apiFetch<ApiResponse<any>>('/v2/compatibility/romantic', {
+export async function fetchCompatibility(
+  person_a: ProfilePayload,
+  person_b: ProfilePayload
+): Promise<LiveCompatibilityResult> {
+  const response = await apiFetch<ApiResponse<LiveCompatibilityResult>>('/v2/compatibility/romantic', {
     method: 'POST',
-    body: JSON.stringify({ person_a, person_b }),
+    body: JSON.stringify({
+      person_a: toFlatProfilePayload(person_a),
+      person_b: toFlatProfilePayload(person_b),
+    }),
   });
   if (response.status === 'success' && response.data) {
     return response.data;
   }
   throw new Error(response.message || 'Failed to fetch compatibility');
+}
+
+export async function fetchNumerologyProfile(profile: ProfilePayload): Promise<LiveNumerologyProfile> {
+  const response = await apiFetch<ApiResponse<LiveNumerologyProfile>>('/v2/numerology/profile', {
+    method: 'POST',
+    body: JSON.stringify({
+      profile: toFlatProfilePayload(profile),
+    }),
+  });
+
+  if (response.status === 'success' && response.data) {
+    return response.data;
+  }
+
+  throw new Error(response.message || 'Failed to fetch numerology profile');
 }
 
 export async function fetchAiExplanation(
@@ -396,22 +623,102 @@ export interface LearningModule {
   title: string;
   description: string;
   item_count: number;
+  category?: string;
+  difficulty?: string;
+  duration_minutes?: number;
+  content?: string;
+  keywords?: string[];
+  related_modules?: string[];
 }
 
 export interface LearningModulesResponse {
   modules: LearningModule[];
+  total: number;
+  page: number;
+  pageSize: number;
+  hasNext: boolean;
+  hasPrev: boolean;
 }
 
-export function fetchLearningModules() {
-  return apiFetch<LearningModulesResponse>('/v2/learning/modules', {
+export interface LearningGlossaryEntry {
+  term: string;
+  definition: string;
+  category: string;
+  usage_example: string;
+  related_terms: string[];
+}
+
+export interface LearningGlossaryResponse {
+  entries: LearningGlossaryEntry[];
+  total: number;
+  page: number;
+  pageSize: number;
+  hasNext: boolean;
+  hasPrev: boolean;
+}
+
+interface LearningLegacyPageResponse<T> {
+  data: T[];
+  items: T[];
+  total: number;
+  page: number;
+  page_size: number;
+  pages: number;
+  has_next: boolean;
+  has_prev: boolean;
+}
+
+interface RawLearningModule {
+  id: string;
+  title: string;
+  description: string;
+  item_count?: number;
+  category?: string;
+  difficulty?: string;
+  duration_minutes?: number;
+  content?: string;
+  keywords?: string[];
+  related_modules?: string[];
+}
+
+function normalizeLearningModule(module: RawLearningModule): LearningModule {
+  return {
+    ...module,
+    item_count:
+      module.item_count ?? module.keywords?.length ?? module.related_modules?.length ?? 1,
+  };
+}
+
+export function fetchLearningModules(category?: string, difficulty?: string) {
+  const params = new URLSearchParams();
+  if (category) {
+    params.set('category', category);
+  }
+  if (difficulty) {
+    params.set('difficulty', difficulty);
+  }
+
+  const query = params.toString();
+
+  return apiFetch<LearningLegacyPageResponse<RawLearningModule>>(
+    `/v2/learning/modules${query ? `?${query}` : ''}`,
+    {
     method: 'GET',
-  });
+    }
+  ).then((response) => ({
+    modules: response.data.map(normalizeLearningModule),
+    total: response.total,
+    page: response.page,
+    pageSize: response.page_size,
+    hasNext: response.has_next,
+    hasPrev: response.has_prev,
+  }));
 }
 
 export function fetchLearningModule(moduleId: string) {
-  return apiFetch<Record<string, unknown>>(`/v2/learning/module/${moduleId}`, {
+  return apiFetch<ApiResponse<RawLearningModule>>(`/v2/learning/module/${moduleId}`, {
     method: 'GET',
-  });
+  }).then((response) => unwrapResponseData(response, 'Learning module could not be loaded.'));
 }
 
 export function fetchCourse(courseId: string) {
@@ -427,6 +734,32 @@ export function fetchLesson(courseId: string, lessonNumber: number) {
       method: 'GET',
     }
   );
+}
+
+export function fetchLearningGlossary(search?: string, category?: string) {
+  const params = new URLSearchParams();
+  if (search) {
+    params.set('search', search);
+  }
+  if (category && category !== 'all') {
+    params.set('category', category);
+  }
+
+  const query = params.toString();
+
+  return apiFetch<LearningLegacyPageResponse<LearningGlossaryEntry>>(
+    `/v2/learning/glossary${query ? `?${query}` : ''}`,
+    {
+      method: 'GET',
+    }
+  ).then((response) => ({
+    entries: response.data,
+    total: response.total,
+    page: response.page,
+    pageSize: response.page_size,
+    hasNext: response.has_next,
+    hasPrev: response.has_prev,
+  }));
 }
 
 export interface SearchResult {
@@ -460,8 +793,14 @@ export function fetchYearAhead(profile: ProfilePayload, year?: number) {
 // ========== MOON PHASES API ==========
 
 export function fetchCurrentMoonPhase() {
-  return apiFetch<MoonPhaseInfo>('/v2/moon/phase', {
+  return apiFetch<ApiResponse<MoonPhaseInfo>>('/v2/moon/phase', {
     method: 'GET',
+  }).then((response) => {
+    if (response.status === 'success' && response.data) {
+      return response.data;
+    }
+
+    throw new Error(response.message || 'Failed to fetch current moon phase');
   });
 }
 
@@ -491,9 +830,15 @@ export interface TimingAdviceRequest {
 }
 
 export function fetchTimingAdvice(request: TimingAdviceRequest) {
-  return apiFetch<TimingAdviceResult>('/v2/timing/advice', {
+  return apiFetch<ApiResponse<TimingAdviceResult>>('/v2/timing/advice', {
     method: 'POST',
     body: JSON.stringify(request),
+  }).then((response) => {
+    if (response.status === 'success' && response.data) {
+      return response.data;
+    }
+
+    throw new Error(response.message || 'Failed to fetch timing advice');
   });
 }
 
@@ -507,15 +852,27 @@ export interface BestDaysRequest {
 }
 
 export function fetchBestDays(request: BestDaysRequest) {
-  return apiFetch<BestDaysResult>('/v2/timing/best-days', {
+  return apiFetch<ApiResponse<BestDaysResult>>('/v2/timing/best-days', {
     method: 'POST',
     body: JSON.stringify(request),
+  }).then((response) => {
+    if (response.status === 'success' && response.data) {
+      return response.data;
+    }
+
+    throw new Error(response.message || 'Failed to fetch best days');
   });
 }
 
 export function fetchTimingActivities() {
-  return apiFetch<{ activities: TimingActivity[] }>('/v2/timing/activities', {
+  return apiFetch<ApiResponse<{ activities: TimingActivity[] }>>('/v2/timing/activities', {
     method: 'GET',
+  }).then((response) => {
+    if (response.status === 'success' && response.data) {
+      return response.data;
+    }
+
+    throw new Error(response.message || 'Failed to fetch timing activities');
   });
 }
 
@@ -552,13 +909,16 @@ export interface AccountabilityReportRequest {
  * Requires authentication
  */
 export function addJournalEntry(request: JournalEntryRequest, token: string) {
-  return apiFetch<{ success: boolean; message: string; entry: JournalEntry }>('/v2/journal/entry', {
+  return apiFetch<ApiResponse<{ success: boolean; message: string; entry: JournalEntry }>>(
+    '/v2/journal/entry',
+    {
     method: 'POST',
     body: JSON.stringify(request),
     headers: {
       Authorization: `Bearer ${token}`,
     },
-  });
+    }
+  ).then((response) => unwrapResponseData(response, 'Journal entry could not be saved.'));
 }
 
 /**
@@ -566,7 +926,7 @@ export function addJournalEntry(request: JournalEntryRequest, token: string) {
  * Requires authentication
  */
 export function recordOutcome(request: OutcomeRequest, token: string) {
-  return apiFetch<{ success: boolean; message: string; outcome: OutcomeRecord }>(
+  return apiFetch<ApiResponse<{ success: boolean; message: string; outcome: OutcomeRecord }>>(
     '/v2/journal/outcome',
     {
       method: 'POST',
@@ -575,7 +935,7 @@ export function recordOutcome(request: OutcomeRequest, token: string) {
         Authorization: `Bearer ${token}`,
       },
     }
-  );
+  ).then((response) => unwrapResponseData(response, 'Outcome could not be recorded.'));
 }
 
 /**
@@ -583,7 +943,7 @@ export function recordOutcome(request: OutcomeRequest, token: string) {
  * Requires authentication
  */
 export function fetchJournalReadings(profileId: number, token: string, limit = 20, offset = 0) {
-  return apiFetch<JournalReadingsResponse>(
+  return apiFetch<ApiResponse<JournalReadingsResponse>>(
     `/v2/journal/readings/${profileId}?limit=${limit}&offset=${offset}`,
     {
       method: 'GET',
@@ -591,7 +951,7 @@ export function fetchJournalReadings(profileId: number, token: string, limit = 2
         Authorization: `Bearer ${token}`,
       },
     }
-  );
+  ).then((response) => unwrapResponseData(response, 'Journal readings could not be loaded.'));
 }
 
 /**
@@ -599,20 +959,22 @@ export function fetchJournalReadings(profileId: number, token: string, limit = 2
  * Requires authentication
  */
 export function fetchJournalReading(readingId: number, token: string) {
-  return apiFetch<{
-    id: number;
-    scope: string;
-    date: string;
-    content: Record<string, unknown>;
-    feedback: string | null;
-    journal: string;
-    created_at: string | null;
-  }>(`/v2/journal/reading/${readingId}`, {
+  return apiFetch<
+    ApiResponse<{
+      id: number;
+      scope: string;
+      date: string;
+      content: Record<string, unknown>;
+      feedback: string | null;
+      journal: string;
+      created_at: string | null;
+    }>
+  >(`/v2/journal/reading/${readingId}`, {
     method: 'GET',
     headers: {
       Authorization: `Bearer ${token}`,
     },
-  });
+  }).then((response) => unwrapResponseData(response, 'Journal reading could not be loaded.'));
 }
 
 /**
@@ -620,12 +982,12 @@ export function fetchJournalReading(readingId: number, token: string) {
  * Requires authentication
  */
 export function fetchJournalStats(profileId: number, token: string) {
-  return apiFetch<JournalStatsResponse>(`/v2/journal/stats/${profileId}`, {
+  return apiFetch<ApiResponse<JournalStatsResponse>>(`/v2/journal/stats/${profileId}`, {
     method: 'GET',
     headers: {
       Authorization: `Bearer ${token}`,
     },
-  });
+  }).then((response) => unwrapResponseData(response, 'Journal stats could not be loaded.'));
 }
 
 /**
@@ -633,12 +995,12 @@ export function fetchJournalStats(profileId: number, token: string) {
  * Requires authentication
  */
 export function fetchJournalPatterns(profileId: number, token: string) {
-  return apiFetch<JournalPatternsResponse>(`/v2/journal/patterns/${profileId}`, {
+  return apiFetch<ApiResponse<JournalPatternsResponse>>(`/v2/journal/patterns/${profileId}`, {
     method: 'GET',
     headers: {
       Authorization: `Bearer ${token}`,
     },
-  });
+  }).then((response) => unwrapResponseData(response, 'Journal patterns could not be loaded.'));
 }
 
 /**
@@ -646,13 +1008,13 @@ export function fetchJournalPatterns(profileId: number, token: string) {
  * Requires authentication
  */
 export function fetchAccountabilityReport(request: AccountabilityReportRequest, token: string) {
-  return apiFetch<AccountabilityReportResponse>('/v2/journal/report', {
+  return apiFetch<ApiResponse<AccountabilityReportResponse>>('/v2/journal/report', {
     method: 'POST',
     body: JSON.stringify(request),
     headers: {
       Authorization: `Bearer ${token}`,
     },
-  });
+  }).then((response) => unwrapResponseData(response, 'Accountability report could not be loaded.'));
 }
 
 /**
@@ -667,9 +1029,9 @@ export function fetchJournalPrompts(
   if (themes && themes.length > 0) {
     params.set('themes', themes.join(','));
   }
-  return apiFetch<JournalPromptsResponse>(`/v2/journal/prompts?${params.toString()}`, {
+  return apiFetch<ApiResponse<JournalPromptsResponse>>(`/v2/journal/prompts?${params.toString()}`, {
     method: 'GET',
-  });
+  }).then((response) => unwrapResponseData(response, 'Journal prompts could not be loaded.'));
 }
 
 // ========== RELATIONSHIP TIMELINE API ==========

@@ -1,12 +1,17 @@
 /**
  * Custom hook for profile management
- * Supports both saved profiles (opt-in) and session-only profiles (default)
+ * Supports both saved profiles (opt-in) and session-only profiles (browser-session default)
  */
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useStore } from '../store/useStore';
 import { apiFetch } from '../api/client';
 import type { NewProfileForm, SavedProfile } from '../types';
 import { toast } from '../components/Toast';
+import {
+  getActiveProfileSource,
+  getActiveProfileSourceLabel,
+  resolveActiveProfile,
+} from './useActiveProfile';
 
 // API response wrapper type
 interface ApiResponse<T> {
@@ -30,39 +35,96 @@ export function useProfiles() {
     token,
   } = useStore();
 
+  const inflightFetchRef = useRef<Promise<SavedProfile[]> | null>(null);
+  const latestFetchIdRef = useRef(0);
+  const suppressNextAutoFetchRef = useRef(false);
+
+  const syncProfilesFromBackend = useCallback((profileList: SavedProfile[]) => {
+    const state = useStore.getState();
+    const localProfiles = state.profiles.filter((profile) => profile.id < 0);
+    const mergedProfiles = [...localProfiles, ...profileList];
+
+    state.setProfiles(mergedProfiles);
+
+    if (state.sessionProfile) {
+      return mergedProfiles;
+    }
+
+    const hasSelectedProfile =
+      typeof state.selectedProfileId === 'number' &&
+      mergedProfiles.some((profile) => profile.id === state.selectedProfileId);
+    const nextSelectedProfileId = hasSelectedProfile ? state.selectedProfileId : mergedProfiles[0]?.id ?? null;
+
+    if (nextSelectedProfileId !== state.selectedProfileId) {
+      state.setSelectedProfileId(nextSelectedProfileId);
+    }
+
+    return mergedProfiles;
+  }, []);
+
+  const fetchProfiles = useCallback(async ({ force = false }: { force?: boolean } = {}) => {
+    if (!force && inflightFetchRef.current) {
+      return inflightFetchRef.current;
+    }
+
+    const fetchId = ++latestFetchIdRef.current;
+
+    const request = (async () => {
+      const currentToken = useStore.getState().token;
+      if (!currentToken) {
+        return useStore.getState().profiles.filter((profile) => profile.id < 0);
+      }
+
+      const res = await apiFetch<ApiResponse<SavedProfile[]>>('/v2/profiles/', {
+        headers: {
+          Authorization: `Bearer ${currentToken}`,
+        },
+      });
+
+      if (fetchId !== latestFetchIdRef.current) {
+        return useStore.getState().profiles;
+      }
+
+      return syncProfilesFromBackend(res.data || []);
+    })();
+
+    inflightFetchRef.current = request;
+
+    try {
+      return await request;
+    } finally {
+      if (inflightFetchRef.current === request) {
+        inflightFetchRef.current = null;
+      }
+    }
+  }, [syncProfilesFromBackend]);
+
   // Auto-fetch saved profiles from backend when token is available
   useEffect(() => {
     if (!token) return;
-    const headers: Record<string, string> = { Authorization: `Bearer ${token}` };
-    // Use trailing slash to avoid 307 redirect which loses auth headers
-    apiFetch<ApiResponse<SavedProfile[]>>('/v2/profiles/', { headers })
-      .then((res) => {
-        const profileList = res.data || [];
-        setProfiles(profileList);
-        // Auto-select first profile if none selected
-        if (profileList.length > 0 && !selectedProfileId && !sessionProfile) {
-          setSelectedProfileId(profileList[0].id);
-        }
-      })
+
+    if (suppressNextAutoFetchRef.current) {
+      suppressNextAutoFetchRef.current = false;
+      return;
+    }
+
+    fetchProfiles()
       .catch((err) => console.error('Failed to auto-fetch profiles:', err));
-  }, [token, setProfiles, selectedProfileId, sessionProfile, setSelectedProfileId]);
+  }, [fetchProfiles, token]);
+
+  const suppressNextAutoFetch = useCallback(() => {
+    suppressNextAutoFetchRef.current = true;
+    latestFetchIdRef.current += 1;
+    inflightFetchRef.current = null;
+  }, []);
+
+  const clearAutoFetchSuppression = useCallback(() => {
+    suppressNextAutoFetchRef.current = false;
+  }, []);
 
   // Get the active profile (session or saved)
-  const selectedProfile =
-    sessionProfile || profiles.find((p) => p.id === selectedProfileId) || profiles[0] || null;
-
-  const fetchProfiles = useCallback(async () => {
-    try {
-      const headers: Record<string, string> = {};
-      if (token) headers['Authorization'] = `Bearer ${token}`;
-
-      // Use trailing slash to avoid 307 redirect which loses auth headers
-      const res = await apiFetch<ApiResponse<SavedProfile[]>>('/v2/profiles/', { headers });
-      setProfiles(res.data || []);
-    } catch (err) {
-      console.error('Failed to fetch profiles:', err);
-    }
-  }, [setProfiles, token]);
+  const selectedProfile = resolveActiveProfile(profiles, selectedProfileId, sessionProfile);
+  const activeProfileSource = getActiveProfileSource(selectedProfile, sessionProfile);
 
   const createProfile = useCallback(
     async (formData: NewProfileForm) => {
@@ -81,6 +143,14 @@ export function useProfiles() {
           timezone: formData.timezone || null,
           house_system: formData.house_system || null,
         };
+
+        if (formData.saveProfile && !token) {
+          addProfile(sessionOnlyProfile);
+          setSelectedProfileId(sessionOnlyProfile.id);
+          setSessionProfile(null);
+          toast.success('Profile saved on this device');
+          return sessionOnlyProfile;
+        }
 
         // If user opts in to save, also store in backend
         if (formData.saveProfile) {
@@ -110,10 +180,10 @@ export function useProfiles() {
           return savedData;
         }
 
-        // Session-only: store in memory, don't save to backend
+        // Session-only: keep it for the current browser session, but don't save to backend
         setSessionProfile(sessionOnlyProfile);
         setSelectedProfileId(null);
-        toast.info('Profile created for this session');
+        toast.info('Profile saved for this browser session');
         return sessionOnlyProfile;
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Failed to create profile';
@@ -127,10 +197,10 @@ export function useProfiles() {
     [addProfile, setSelectedProfileId, setSessionProfile, setLoading, setError, token]
   );
 
-  // Clear session profile when switching to a saved profile
+  // Clear session profile when switching to any persisted profile
   const selectProfile = useCallback(
     (id: number | null) => {
-      if (id !== null && id > 0) {
+      if (id !== null) {
         setSessionProfile(null);
       }
       setSelectedProfileId(id);
@@ -140,10 +210,20 @@ export function useProfiles() {
 
   return {
     profiles,
+    activeProfile: selectedProfile,
+    activeProfileSource,
+    activeProfileSourceLabel: getActiveProfileSourceLabel(activeProfileSource),
+    hasActiveProfile: selectedProfile !== null,
+    isGuestProfile: activeProfileSource === 'guest',
+    isLocalProfile: activeProfileSource === 'local',
+    isRailwayProfile: activeProfileSource === 'railway',
+    isSessionProfile: activeProfileSource === 'session',
     selectedProfile,
     selectedProfileId,
     sessionProfile,
     setSelectedProfileId: selectProfile,
+    suppressNextAutoFetch,
+    clearAutoFetchSuppression,
     fetchProfiles,
     createProfile,
   };

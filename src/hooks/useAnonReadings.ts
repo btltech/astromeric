@@ -22,11 +22,15 @@ export function useAnonReadings() {
   const [readingCount, setReadingCount] = useState(0);
   const [shouldShowUpsellModal, setShouldShowUpsellModal] = useState(false);
 
-  // Initialize from localStorage
-  useEffect(() => {
+  const refreshReadings = () => {
     const stored = getAnonReadings();
     setReadings(stored);
     setReadingCount(stored.length);
+  };
+
+  // Initialize from localStorage
+  useEffect(() => {
+    refreshReadings();
   }, []);
 
   // Check if should show upsell
@@ -39,8 +43,7 @@ export function useAnonReadings() {
 
   const saveReading = (reading: Omit<AnonReading, 'id' | 'timestamp'>) => {
     const newReading = addAnonReading(reading);
-    setReadings(getAnonReadings());
-    setReadingCount(getAnonReadingCount());
+    refreshReadings();
     return newReading;
   };
 
@@ -51,15 +54,13 @@ export function useAnonReadings() {
   const migrateReadings = () => {
     const toMigrate = getReadingsForMigration();
     clearReadingsAfterMigration();
-    setReadings([]);
-    setReadingCount(0);
+    refreshReadings();
     return toMigrate;
   };
 
   const clearAll = () => {
     clearAnonReadings();
-    setReadings([]);
-    setReadingCount(0);
+    refreshReadings();
   };
 
   return {
@@ -67,6 +68,7 @@ export function useAnonReadings() {
     readingCount,
     shouldShowUpsellModal,
     saveReading,
+    refreshReadings,
     closeUpsell,
     migrateReadings,
     clearAll,

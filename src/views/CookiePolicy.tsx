@@ -1,18 +1,15 @@
 import React from 'react';
-import { Helmet } from 'react-helmet';
+import { DocumentMeta } from '../components/DocumentMeta';
 import './CookiePolicy.css';
 
 export function CookiePolicy() {
   return (
     <>
-      <Helmet>
-        <title>Cookie Policy - Astromeric</title>
-        <meta
-          name="description"
-          content="Understand how Astromeric uses cookies and tracking technologies."
-        />
-        <meta name="robots" content="index, follow" />
-      </Helmet>
+      <DocumentMeta
+        title="Cookie Policy — AstroNumeric"
+        description="Understand how Astromeric uses cookies and tracking technologies."
+        robots="index, follow"
+      />
 
       <main className="cookie-policy-container">
         <header className="policy-header">
@@ -301,7 +298,7 @@ export function CookiePolicy() {
             <h2>Questions About Our Cookie Policy?</h2>
             <p>
               If you have questions or concerns about our use of cookies, please contact us at{' '}
-              <a href="mailto:privacy@astromeric.com">privacy@astromeric.com</a>.
+              <a href="mailto:privacy@astromeric.app">privacy@astromeric.app</a>.
             </p>
           </section>
 

@@ -1,0 +1,188 @@
+.learn-view__alert {
+  padding: 1rem 1.15rem;
+  border-radius: 20px;
+  border: 1px solid rgba(191, 97, 106, 0.24);
+  background: rgba(191, 97, 106, 0.12);
+}
+
+.learn-view__alert strong,
+.learn-view__alert p {
+  margin: 0;
+}
+
+.learn-view__alert p {
+  margin-top: 0.35rem;
+  color: rgba(229, 233, 240, 0.76);
+}
+
+.learn-view__category-row,
+.learn-view__keyword-row,
+.learn-view__glossary-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.learn-view__category-chip,
+.learn-view__filter-chip,
+.learn-view__term-button,
+.learn-view__module-card,
+.learn-view__related-card {
+  border: 1px solid rgba(136, 192, 208, 0.16);
+  background: rgba(255, 255, 255, 0.03);
+  color: #eceff4;
+}
+
+.learn-view__category-chip {
+  display: grid;
+  gap: 0.35rem;
+  min-width: min(100%, 220px);
+  padding: 1rem;
+  border-radius: 20px;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+}
+
+.learn-view__category-chip span,
+.learn-view__category-chip small {
+  color: rgba(216, 222, 233, 0.66);
+}
+
+.learn-view__category-chip--active,
+.learn-view__category-chip:hover,
+.learn-view__filter-chip--active,
+.learn-view__filter-chip:hover,
+.learn-view__term-button--active,
+.learn-view__term-button:hover,
+.learn-view__module-card--active,
+.learn-view__module-card:hover,
+.learn-view__related-card:hover {
+  transform: translateY(-1px);
+  border-color: rgba(136, 192, 208, 0.36);
+  background: rgba(136, 192, 208, 0.08);
+}
+
+.learn-view__module-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.9rem;
+}
+
+.learn-view__module-card {
+  display: grid;
+  gap: 0.65rem;
+  width: 100%;
+  padding: 1rem;
+  border-radius: 20px;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+}
+
+.learn-view__module-card p,
+.learn-view__detail-header p,
+.learn-view__definition-block p {
+  margin: 0;
+  color: rgba(229, 233, 240, 0.74);
+  line-height: 1.6;
+}
+
+.learn-view__module-topline,
+.learn-view__module-topline--foot,
+.learn-view__detail-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  color: rgba(216, 222, 233, 0.64);
+  font-size: 0.9rem;
+}
+
+.learn-view__detail-stack,
+.learn-view__glossary-controls,
+.learn-view__glossary-detail,
+.learn-view__definition-block {
+  display: grid;
+  gap: 1rem;
+}
+
+.learn-view__complete-button {
+  width: 100%;
+}
+
+.learn-view__keyword {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.45rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(229, 233, 240, 0.8);
+  font-size: 0.85rem;
+}
+
+.learn-view__glossary-controls {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.learn-view__search {
+  width: 100%;
+  padding: 0.85rem 1rem;
+  border-radius: 18px;
+  border: 1px solid rgba(136, 192, 208, 0.18);
+  background: rgba(255, 255, 255, 0.04);
+  color: #eceff4;
+  font: inherit;
+}
+
+.learn-view__search:focus {
+  outline: none;
+  border-color: rgba(136, 192, 208, 0.4);
+  box-shadow: 0 0 0 1px rgba(136, 192, 208, 0.2);
+}
+
+.learn-view__filter-chip,
+.learn-view__term-button {
+  padding: 0.65rem 0.85rem;
+  border-radius: 18px;
+  cursor: pointer;
+  transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+}
+
+.learn-view__glossary-layout {
+  display: grid;
+  grid-template-columns: minmax(220px, 300px) minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.learn-view__term-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.learn-view__term-button {
+  display: grid;
+  gap: 0.2rem;
+  text-align: left;
+}
+
+.learn-view__term-button span {
+  color: rgba(216, 222, 233, 0.66);
+  text-transform: capitalize;
+}
+
+@media (max-width: 960px) {
+  .learn-view__glossary-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .learn-view__module-topline,
+  .learn-view__detail-meta {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

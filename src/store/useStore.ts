@@ -10,15 +10,47 @@ import type {
   SavedProfile,
 } from '../types';
 
+const SESSION_PROFILE_STORAGE_KEY = 'astro-session-profile';
+
+function readSessionProfile() {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  try {
+    const stored = window.sessionStorage.getItem(SESSION_PROFILE_STORAGE_KEY);
+    return stored ? (JSON.parse(stored) as SavedProfile) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeSessionProfile(profile: SavedProfile | null) {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  try {
+    if (profile) {
+      window.sessionStorage.setItem(SESSION_PROFILE_STORAGE_KEY, JSON.stringify(profile));
+      return;
+    }
+
+    window.sessionStorage.removeItem(SESSION_PROFILE_STORAGE_KEY);
+  } catch {
+    // Ignore storage failures and keep the in-memory state usable.
+  }
+}
+
 interface AppState {
-  // Profiles (saved to backend - opt-in only)
+  // Saved profiles (backend when authenticated, device-local otherwise)
   profiles: SavedProfile[];
   selectedProfileId: number | null;
   setProfiles: (profiles: SavedProfile[]) => void;
   setSelectedProfileId: (id: number | null) => void;
   addProfile: (profile: SavedProfile) => void;
 
-  // Session profile (never saved to backend or localStorage)
+  // Session profile (never saved to backend, kept only for the current browser session)
   sessionProfile: SavedProfile | null;
   setSessionProfile: (profile: SavedProfile | null) => void;
 
@@ -88,16 +120,19 @@ interface AppState {
 export const useStore = create<AppState>()(
   persist(
     (set) => ({
-      // Profiles (saved to backend - opt-in only)
+      // Saved profiles (backend when authenticated, device-local otherwise)
       profiles: [],
       selectedProfileId: null,
       setProfiles: (profiles) => set({ profiles }),
       setSelectedProfileId: (id) => set({ selectedProfileId: id }),
       addProfile: (profile) => set((state) => ({ profiles: [...state.profiles, profile] })),
 
-      // Session profile (never saved)
-      sessionProfile: null,
-      setSessionProfile: (profile) => set({ sessionProfile: profile }),
+      // Session profile (browser-session only)
+      sessionProfile: readSessionProfile(),
+      setSessionProfile: (profile) => {
+        writeSessionProfile(profile);
+        set({ sessionProfile: profile });
+      },
 
       // Reading
       selectedScope: 'daily',
@@ -177,12 +212,36 @@ export const useStore = create<AppState>()(
       token: null,
       user: null,
       setAuth: (token, user) => set({ token, user }),
-      logout: () => set({ token: null, user: null, profiles: [], selectedProfileId: null }),
+      logout: () =>
+        set((state) => {
+          const localProfiles = state.profiles.filter((profile) => profile.id < 0);
+          const hasSessionProfile = Boolean(state.sessionProfile);
+          const localSelectedProfileId =
+            typeof state.selectedProfileId === 'number' && state.selectedProfileId < 0
+              ? state.selectedProfileId
+              : localProfiles[0]?.id ?? null;
+          const localCompareProfileId =
+            typeof state.compareProfileId === 'number' && state.compareProfileId < 0
+              ? state.compareProfileId
+              : null;
+
+          return {
+            token: null,
+            user: null,
+            profiles: localProfiles,
+            selectedProfileId: hasSessionProfile ? null : localSelectedProfileId,
+            compareProfileId: localCompareProfileId,
+            sessionProfile: state.sessionProfile,
+          };
+        }),
     }),
     {
       name: 'astro-storage',
-      // Persist UI preferences and auth
+      // Persist saved profiles, current selectors, UI preferences, and auth
       partialize: (state) => ({
+        profiles: state.profiles,
+        selectedProfileId: state.selectedProfileId,
+        compareProfileId: state.compareProfileId,
         selectedScope: state.selectedScope,
         token: state.token,
         user: state.user,
@@ -198,6 +257,10 @@ export const useStore = create<AppState>()(
         // Reapply theme on page load
         if (state?.theme && state.theme !== 'default') {
           document.documentElement.setAttribute('data-theme', state.theme);
+        }
+
+        if (state?.sessionProfile === null) {
+          writeSessionProfile(null);
         }
       },
     }

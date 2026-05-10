@@ -20,11 +20,11 @@ function getColorData(color: string | ColorInfo): { hex: string; name: string } 
 function getScopeLabel(scope: string): { title: string; period: string; periodLong: string } {
   switch (scope) {
     case 'weekly':
-      return { title: 'Weekly Cosmic Guidance', period: 'This Week', periodLong: 'this week' };
+      return { title: "This Week's Guidance", period: 'This Week', periodLong: 'this week' };
     case 'monthly':
-      return { title: 'Monthly Cosmic Guidance', period: 'This Month', periodLong: 'this month' };
+      return { title: "This Month's Guidance", period: 'This Month', periodLong: 'this month' };
     default:
-      return { title: 'Daily Cosmic Guidance', period: 'Today', periodLong: 'today' };
+      return { title: "Today's Guidance", period: 'Today', periodLong: 'today' };
   }
 }
 
@@ -106,7 +106,7 @@ function RetrogradeBadge({ retro }: { retro: RetrogradeInfo }) {
     <ContextCard
       icon={`${PLANET_EMOJI[retro.planet] || '⚹'}℞`}
       title={`${retro.planet} Retrograde`}
-      subtitle={`in ${retro.sign}`}
+      subtitle="Tap to see what to watch for"
       severity="caution"
     >
       <p className="context-detail">{retro.impact}</p>
@@ -129,9 +129,9 @@ function VocMoonCard({ voc }: { voc: VoidOfCourseMoon }) {
     : undefined;
 
   return (
-    <ContextCard icon="☽" title="Void-of-Course Moon" subtitle={timeInfo} severity="warning">
+    <ContextCard icon="☽" title="Moon Energy Is Low" subtitle={timeInfo} severity="warning">
       <p className="context-detail">
-        Moon in {voc.current_sign} {voc.moon_degree ? `at ${voc.moon_degree}°` : ''}
+        Not a good time to start new things or make big decisions.
       </p>
       <p className="context-advice">{voc.advice}</p>
     </ContextCard>
@@ -148,11 +148,16 @@ function PowerHourCard({ hour }: { hour: PlanetaryHourInfo }) {
   };
   const severity = qualityMap[hour.quality.toLowerCase()] || 'info';
 
+  const windowSubtitle =
+    hour.quality.toLowerCase() === 'challenging' || hour.quality.toLowerCase() === 'difficult'
+      ? 'Demanding window — take it steady'
+      : 'Good time to do focused work';
+
   return (
     <ContextCard
       icon={PLANET_EMOJI[hour.planet] || '⚹'}
-      title={`${hour.planet} Hour`}
-      subtitle={`${hour.start} - ${hour.end}`}
+      title={`Focus window: ${hour.start}–${hour.end}`}
+      subtitle={windowSubtitle}
       severity={severity}
     >
       <p className="context-detail">{hour.suggestion}</p>
@@ -210,151 +215,127 @@ function GuidanceList({ items, type }: GuidanceListProps) {
   );
 }
 
-type GuidanceTab = 'embrace' | 'avoid';
-
 export function DailyGuidance({ guidance, scope = 'daily' }: Props) {
   const { avoid, embrace, retrogrades, void_of_course_moon, current_planetary_hour } = guidance;
   const { title } = getScopeLabel(scope);
-  const [activeTab, setActiveTab] = useState<GuidanceTab>('embrace');
+  const [whyOpen, setWhyOpen] = useState(false);
 
-  // Count alerts for badge
   const alertCount = (retrogrades?.length || 0) + (void_of_course_moon?.is_void ? 1 : 0);
+  const hasInfluences = alertCount > 0 || !!current_planetary_hour;
 
   return (
     <div className="guidance-container">
-      <h3 className="guidance-title">✨ {title}</h3>
+      <h3 className="guidance-title">{title}</h3>
 
-      {/* Cosmic Alerts Section - Compact Cards */}
-      {(alertCount > 0 || current_planetary_hour) && (
-        <div className="cosmic-alerts">
-          <div className="alerts-header">
-            <span className="alerts-label">Cosmic Context</span>
-            {alertCount > 0 && (
-              <span className="alerts-badge">
-                {alertCount} alert{alertCount > 1 ? 's' : ''}
-              </span>
+      {/* WHAT TO DO */}
+      <div className="guidance-section guidance-section--do">
+        <div className="guidance-section-header">
+          <span className="guidance-section-icon">✅</span>
+          <span className="guidance-section-label">What to do</span>
+        </div>
+
+        {embrace.time && scope === 'daily' && (
+          <div className="power-hour-highlight">
+            <span className="power-icon">⚡</span>
+            <span className="power-label">Peak Time</span>
+            <span className="power-time">{embrace.time}</span>
+          </div>
+        )}
+
+        <GuidanceList items={embrace.activities} type="embrace" />
+
+        {embrace.colors.length > 0 && (
+          <div className="color-palette">
+            <span className="palette-label">
+              {scope === 'weekly' ? 'Best Colors This Week' : scope === 'monthly' ? 'Best Colors This Month' : 'Best Colors Today'}
+            </span>
+            <div className="swatches">
+              {embrace.colors.map((c, i) => {
+                const { hex, name } = getColorData(c);
+                return (
+                  <div key={i} className="color-chip" title={name}>
+                    <span className="chip-swatch" style={{ backgroundColor: hex }} />
+                    <span className="chip-name">{name}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* WHAT TO AVOID */}
+      <div className="guidance-section guidance-section--avoid">
+        <div className="guidance-section-header">
+          <span className="guidance-section-icon">🚫</span>
+          <span className="guidance-section-label">What to avoid</span>
+        </div>
+
+        <GuidanceList items={avoid.activities} type="avoid" />
+
+        {avoid.colors.length > 0 && (
+          <div className="color-palette color-palette--avoid">
+            <span className="palette-label">Colors to skip</span>
+            <div className="swatches">
+              {avoid.colors.map((c, i) => {
+                const { hex, name } = getColorData(c);
+                return (
+                  <div key={i} className="color-chip color-chip--avoid" title={name}>
+                    <span className="chip-swatch" style={{ backgroundColor: hex }} />
+                    <span className="chip-name">{name}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {avoid.numbers.length > 0 && (
+          <div className="challenge-numbers">
+            <span className="palette-label">Numbers to avoid</span>
+            <div className="numbers-row">
+              {avoid.numbers.map((n, i) => (
+                <span key={i} className="number-badge number-badge--warning">
+                  {n}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* WHY THESE RECOMMENDATIONS — collapsible */}
+      {hasInfluences && (
+        <div className="guidance-why">
+          <button
+            className="guidance-why-toggle"
+            onClick={() => setWhyOpen((v) => !v)}
+            aria-expanded={whyOpen}
+          >
+            <span>Why these recommendations?</span>
+            <span className={`guidance-why-chevron ${whyOpen ? 'open' : ''}`}>▾</span>
+          </button>
+          <AnimatePresence>
+            {whyOpen && (
+              <motion.div
+                className="context-cards-grid"
+                key="why-panel"
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                style={{ overflow: 'hidden' }}
+              >
+                {current_planetary_hour && <PowerHourCard hour={current_planetary_hour} />}
+                {void_of_course_moon?.is_void && <VocMoonCard voc={void_of_course_moon} />}
+                {retrogrades?.map((r, i) => (
+                  <RetrogradeBadge key={i} retro={r} />
+                ))}
+              </motion.div>
             )}
-          </div>
-
-          <div className="context-cards-grid">
-            {/* Power Hour first - most actionable */}
-            {current_planetary_hour && <PowerHourCard hour={current_planetary_hour} />}
-
-            {/* VOC Moon - time-sensitive */}
-            {void_of_course_moon?.is_void && <VocMoonCard voc={void_of_course_moon} />}
-
-            {/* Retrogrades */}
-            {retrogrades?.map((r, i) => (
-              <RetrogradeBadge key={i} retro={r} />
-            ))}
-          </div>
+          </AnimatePresence>
         </div>
       )}
-
-      {/* Guidance Tabs - Embrace / Avoid */}
-      <div className="guidance-tabs-container">
-        <div className="guidance-tabs" role="tablist">
-          <button
-            role="tab"
-            aria-selected={activeTab === 'embrace'}
-            className={`guidance-tab guidance-tab--embrace ${
-              activeTab === 'embrace' ? 'active' : ''
-            }`}
-            onClick={() => setActiveTab('embrace')}
-          >
-            <span className="tab-icon">✅</span>
-            <span className="tab-label">Embrace</span>
-            <span className="tab-count">{embrace.activities.length}</span>
-          </button>
-          <button
-            role="tab"
-            aria-selected={activeTab === 'avoid'}
-            className={`guidance-tab guidance-tab--avoid ${activeTab === 'avoid' ? 'active' : ''}`}
-            onClick={() => setActiveTab('avoid')}
-          >
-            <span className="tab-icon">🚫</span>
-            <span className="tab-label">Avoid</span>
-            <span className="tab-count">{avoid.activities.length}</span>
-          </button>
-        </div>
-
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={activeTab}
-            className="guidance-tab-content"
-            role="tabpanel"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.15 }}
-          >
-            {activeTab === 'embrace' ? (
-              <div className="guidance-panel embrace-panel">
-                {embrace.time && scope === 'daily' && (
-                  <div className="power-hour-highlight">
-                    <span className="power-icon">⚡</span>
-                    <span className="power-label">Power Hour</span>
-                    <span className="power-time">{embrace.time}</span>
-                  </div>
-                )}
-
-                <GuidanceList items={embrace.activities} type="embrace" />
-
-                {embrace.colors.length > 0 && (
-                  <div className="color-palette">
-                    <span className="palette-label">Power Colors</span>
-                    <div className="swatches">
-                      {embrace.colors.map((c, i) => {
-                        const { hex, name } = getColorData(c);
-                        return (
-                          <div key={i} className="color-chip" title={name}>
-                            <span className="chip-swatch" style={{ backgroundColor: hex }} />
-                            <span className="chip-name">{name}</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="guidance-panel avoid-panel">
-                <GuidanceList items={avoid.activities} type="avoid" />
-
-                {avoid.colors.length > 0 && (
-                  <div className="color-palette color-palette--avoid">
-                    <span className="palette-label">Avoid Colors</span>
-                    <div className="swatches">
-                      {avoid.colors.map((c, i) => {
-                        const { hex, name } = getColorData(c);
-                        return (
-                          <div key={i} className="color-chip color-chip--avoid" title={name}>
-                            <span className="chip-swatch" style={{ backgroundColor: hex }} />
-                            <span className="chip-name">{name}</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {avoid.numbers.length > 0 && (
-                  <div className="challenge-numbers">
-                    <span className="palette-label">Challenge Numbers</span>
-                    <div className="numbers-row">
-                      {avoid.numbers.map((n, i) => (
-                        <span key={i} className="number-badge number-badge--warning">
-                          {n}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </motion.div>
-        </AnimatePresence>
-      </div>
     </div>
   );
 }

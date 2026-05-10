@@ -109,11 +109,11 @@
   },
   "compatibility": {
     "title": "💕 Compatibility Check",
-    "subtitle": "Compare your cosmic alignment with another profile",
+    "subtitle": "See how well you and another person match",
     "compareWith": "Compare With",
     "chooseProfile": "Choose a profile...",
-    "calculate": "Calculate Compatibility",
-    "calculating": "Calculating..."
+    "calculate": "Check Compatibility",
+    "calculating": "Checking..."
   },
   "auth": {
     "signIn": "🔑 Sign In",

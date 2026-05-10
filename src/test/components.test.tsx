@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
@@ -37,6 +37,30 @@ vi.mock('../components/LocationAutocomplete', () => ({
 describe('FortuneForm', () => {
   const mockOnSubmit = vi.fn();
 
+  const getDateInput = async (container: HTMLElement) => {
+    await waitFor(() => {
+      expect(container.querySelector('input[type="date"]')).toBeInTheDocument();
+    });
+
+    return container.querySelector('input[type="date"]') as HTMLInputElement;
+  };
+
+  const getTimeInput = async (container: HTMLElement) => {
+    await waitFor(() => {
+      expect(container.querySelector('input[type="time"]')).toBeInTheDocument();
+    });
+
+    return container.querySelector('input[type="time"]') as HTMLInputElement;
+  };
+
+  const getLocationInput = async () => {
+    await waitFor(() => {
+      expect(screen.getByTestId('location-autocomplete')).toBeInTheDocument();
+    });
+
+    return screen.getByTestId('location-autocomplete');
+  };
+
   beforeEach(() => {
     mockOnSubmit.mockClear();
   });
@@ -52,10 +76,8 @@ describe('FortuneForm', () => {
 
     // Step 2: DOB
     expect(await screen.findByText(/When were you born/i)).toBeInTheDocument();
-    const dateInput = container.querySelector('input[type="date"]');
-    const timeInput = container.querySelector('input[type="time"]');
-    expect(dateInput).toBeInTheDocument();
-    expect(timeInput).toBeInTheDocument();
+    const dateInput = await getDateInput(container);
+    const timeInput = await getTimeInput(container);
 
     await user.type(timeInput!, '14:30');
     fireEvent.change(dateInput!, { target: { value: '1990-05-15' } });
@@ -63,13 +85,13 @@ describe('FortuneForm', () => {
 
     // Step 3: Location
     expect(await screen.findByText(/Where were you born/i)).toBeInTheDocument();
-    expect(screen.getByTestId('location-autocomplete')).toBeInTheDocument();
-    await user.type(screen.getByTestId('location-autocomplete'), 'New York');
+    const locationInput = await getLocationInput();
+    await user.type(locationInput, 'New York');
     await user.click(screen.getByRole('button', { name: /next/i }));
 
     // Step 4: Summary
     expect(await screen.findByText(/Ready for your destiny/i)).toBeInTheDocument();
-    expect(screen.getByText('John Doe')).toBeInTheDocument();
+    expect(await screen.findByText('John Doe')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /prediction/i })).toBeInTheDocument();
   });
 
@@ -100,6 +122,26 @@ describe('FortuneForm', () => {
     expect(await screen.findByText(/form\.errors\.dobRequired/i)).toBeInTheDocument();
   });
 
+  it('requires a confirmed location selection on step 3', async () => {
+    const { container } = render(<FortuneForm onSubmit={mockOnSubmit} isLoading={false} />);
+    const user = userEvent.setup();
+
+    await user.type(screen.getByPlaceholderText(/form\.fullNamePlaceholder/i), 'John Doe');
+    await user.click(screen.getByRole('button', { name: /next/i }));
+
+    const dateInput = await getDateInput(container);
+    fireEvent.change(dateInput, { target: { value: '1990-05-15' } });
+    await user.click(screen.getByRole('button', { name: /next/i }));
+
+    expect(await screen.findByText(/Where were you born/i)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /next/i }));
+
+    expect(
+      await screen.findByText(/Choose a birth place from the search results before continuing\./i)
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/Ready for your destiny/i)).not.toBeInTheDocument();
+  });
+
   it('submits valid form data', async () => {
     const { container } = render(<FortuneForm onSubmit={mockOnSubmit} isLoading={false} />);
     const user = userEvent.setup();
@@ -110,8 +152,8 @@ describe('FortuneForm', () => {
 
     // Step 2
     expect(await screen.findByText(/When were you born/i)).toBeInTheDocument();
-    const dateInput = container.querySelector('input[type="date"]');
-    const timeInput = container.querySelector('input[type="time"]');
+    const dateInput = await getDateInput(container);
+    const timeInput = await getTimeInput(container);
     fireEvent.change(dateInput!, { target: { value: '1990-05-15' } });
     await user.type(timeInput!, '14:30');
     await user.click(screen.getByRole('button', { name: /next/i }));
@@ -145,7 +187,7 @@ describe('FortuneForm', () => {
 
     // Wait for step 2
     expect(await screen.findByText(/When were you born/i)).toBeInTheDocument();
-    const dateInput = container.querySelector('input[type="date"]');
+    const dateInput = await getDateInput(container);
     fireEvent.change(dateInput!, { target: { value: '1990-01-01' } });
     await user.click(screen.getByRole('button', { name: /next/i }));
 
@@ -170,7 +212,7 @@ describe('FortuneForm', () => {
 
     // Step 2
     expect(await screen.findByText(/When were you born/i)).toBeInTheDocument();
-    const dateInput = container.querySelector('input[type="date"]');
+    const dateInput = await getDateInput(container);
     fireEvent.change(dateInput!, { target: { value: '1990-01-01' } });
     await user.click(screen.getByRole('button', { name: /next/i }));
 

@@ -1,5 +1,6 @@
 import React from 'react';
-import { Helmet } from 'react-helmet';
+import { Link } from 'react-router-dom';
+import { DocumentMeta } from '../components/DocumentMeta';
 
 import './PrivacyPolicy.css';
 
@@ -8,11 +9,11 @@ export function TermsOfService() {
 
   return (
     <>
-      <Helmet>
-        <title>Terms of Service - Astromeric</title>
-        <meta name="description" content="Terms of Service for Astromeric." />
-        <meta name="robots" content="index, follow" />
-      </Helmet>
+      <DocumentMeta
+        title="Terms of Service — AstroNumeric"
+        description="Terms of service governing your use of AstroNumeric on web, iOS, and Android."
+        robots="index, follow"
+      />
 
       <main className="privacy-policy-container">
         <header className="policy-header">
@@ -57,7 +58,8 @@ export function TermsOfService() {
           <section>
             <h2>5. Contact</h2>
             <p>
-              Questions? Email <a href="mailto:privacy@astromeric.com">privacy@astromeric.com</a>.
+              Questions? Visit <Link to="/support">/support</Link> or email{' '}
+              <a href="mailto:privacy@astromeric.app">privacy@astromeric.app</a>.
             </p>
           </section>
 

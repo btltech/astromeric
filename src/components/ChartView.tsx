@@ -71,7 +71,40 @@ const SIGN_INFO: Record<string, { element: string; modality: string; emoji: stri
   Pisces: { element: 'Water', modality: 'Mutable', emoji: '♓' },
 };
 
-// Personality trait interpretations based on placements
+// Friendly display names for trait categories
+const TRAIT_FRIENDLY_NAME: Record<string, string> = {
+  'Core Self': 'Who you are at your core',
+  'Emotional Style': 'How you feel and recharge',
+  'Communication': 'How you think and talk',
+  'Love Language': 'What you need in relationships',
+  'Drive & Energy': 'How you take action',
+};
+
+// Actionable advice for each trait category — single, specific action
+const TRAIT_ACTIONS: Record<string, string> = {
+  'Core Self': "Use this energy when you need to make a decision — your instinct here is usually right.",
+  'Emotional Style': "Before saying yes to anything today, check whether it actually aligns with what you need.",
+  'Communication': "Say the direct version of what you mean — this style is a strength, not a problem.",
+  'Love Language': "Tell one person what you need today instead of waiting for them to figure it out.",
+  'Drive & Energy': "Block your hardest task for your natural energy peak window and protect that time.",
+};
+
+// Plain-English translations of element + modality pairs for Core Self
+const CORE_SELF_DESC: Record<string, string> = {
+  'Fire-Cardinal': 'You initiate. You spark things into motion and lead naturally.',
+  'Fire-Fixed':    'You burn with steady purpose. Once committed, you see it through.',
+  'Fire-Mutable':  'You adapt quickly and bring energy wherever you go.',
+  'Earth-Cardinal': 'You build things. You turn ideas into tangible results.',
+  'Earth-Fixed':   'You are reliable and immovable. People count on your consistency.',
+  'Earth-Mutable': 'You are practical and flexible — you find what works and use it.',
+  'Air-Cardinal':  'You connect people and ideas. You are the one who starts conversations.',
+  'Air-Fixed':     'You think independently and hold your positions firmly.',
+  'Air-Mutable':   'You absorb and synthesise ideas from everywhere around you.',
+  'Water-Cardinal': 'You feel deeply and move with emotional intelligence.',
+  'Water-Fixed':   'Your emotional depth is your greatest strength — you go all in.',
+  'Water-Mutable': 'You are highly intuitive. You pick up on what others miss.',
+};
+
 const getPersonalityTraits = (chartData: ChartData) => {
   const traits: { category: string; trait: string; description: string }[] = [];
 
@@ -79,12 +112,11 @@ const getPersonalityTraits = (chartData: ChartData) => {
   if (chartData.planets.Sun) {
     const sign = chartData.planets.Sun.sign;
     const signData = SIGN_INFO[sign];
+    const descKey = signData ? `${signData.element}-${signData.modality}` : '';
     traits.push({
       category: 'Core Self',
       trait: `${sign} Energy`,
-      description: `Your fundamental nature is ${
-        signData?.element?.toLowerCase() || 'dynamic'
-      } and ${signData?.modality?.toLowerCase() || 'adaptable'}.`,
+      description: CORE_SELF_DESC[descKey] || 'You bring a distinct energy to everything you do.',
     });
   }
 
@@ -94,9 +126,7 @@ const getPersonalityTraits = (chartData: ChartData) => {
     traits.push({
       category: 'Emotional Style',
       trait: `${sign} Moon`,
-      description: `You process emotions through ${sign} energy, seeking ${getEmotionalNeed(
-        sign
-      )}.`,
+      description: `You feel most like yourself when you have ${getEmotionalNeed(sign)}.`,
     });
   }
 
@@ -126,7 +156,7 @@ const getPersonalityTraits = (chartData: ChartData) => {
     traits.push({
       category: 'Drive & Energy',
       trait: `${sign} Action`,
-      description: `You take action with ${getActionStyle(sign)} energy.`,
+      description: `You take action in a ${getActionStyle(sign)} way — this is how you get things done.`,
     });
   }
 
@@ -225,7 +255,8 @@ export function ChartView({ profile, onExportPDF }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
   const [activeTooltip, setActiveTooltip] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'placements' | 'traits' | 'elements'>('placements');
+  const [activeTab, setActiveTab] = useState<'placements' | 'traits' | 'elements'>('traits');
+  const [showAllTraits, setShowAllTraits] = useState(false);
 
   useEffect(() => {
     const fetchChart = async () => {
@@ -324,7 +355,7 @@ export function ChartView({ profile, onExportPDF }: Props) {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="chart-view-enhanced">
       <div className="chart-header">
-        <h2>{profile.name}&apos;s Natal Chart</h2>
+        <h2>{profile.name}&apos;s Birth Chart</h2>
         <p className="chart-meta">
           {profile.date_of_birth} {profile.time_of_birth && `at ${profile.time_of_birth}`}
           {profile.place_of_birth && ` • ${profile.place_of_birth}`}
@@ -341,11 +372,11 @@ export function ChartView({ profile, onExportPDF }: Props) {
           >
             <span className="planet-symbol">☉</span>
             <div className="placement-info">
-              <span className="placement-label">Sun Sign</span>
+              <span className="placement-label">Core Self</span>
               <span className="placement-sign">
                 {SIGN_INFO[chartData.planets.Sun.sign]?.emoji} {chartData.planets.Sun.sign}
               </span>
-              <span className="placement-degree">{chartData.planets.Sun.degree.toFixed(1)}°</span>
+              <span className="placement-desc">Your fundamental nature</span>
             </div>
             {activeTooltip === 'Sun' && <div className="tooltip">{PLANET_INFO.Sun.meaning}</div>}
           </div>
@@ -358,11 +389,11 @@ export function ChartView({ profile, onExportPDF }: Props) {
           >
             <span className="planet-symbol">☽</span>
             <div className="placement-info">
-              <span className="placement-label">Moon Sign</span>
+              <span className="placement-label">Emotional Style</span>
               <span className="placement-sign">
                 {SIGN_INFO[chartData.planets.Moon.sign]?.emoji} {chartData.planets.Moon.sign}
               </span>
-              <span className="placement-degree">{chartData.planets.Moon.degree.toFixed(1)}°</span>
+              <span className="placement-desc">What makes you feel secure</span>
             </div>
             {activeTooltip === 'Moon' && <div className="tooltip">{PLANET_INFO.Moon.meaning}</div>}
           </div>
@@ -375,11 +406,11 @@ export function ChartView({ profile, onExportPDF }: Props) {
           >
             <span className="planet-symbol">↑</span>
             <div className="placement-info">
-              <span className="placement-label">Rising Sign</span>
+              <span className="placement-label">How Others See You</span>
               <span className="placement-sign">
                 {SIGN_INFO[chartData.ascendant.sign]?.emoji} {chartData.ascendant.sign}
               </span>
-              <span className="placement-degree">{chartData.ascendant.degree.toFixed(1)}°</span>
+              <span className="placement-desc">Your first impression</span>
             </div>
             {activeTooltip === 'Ascendant' && (
               <div className="tooltip">{PLANET_INFO.Ascendant.meaning}</div>
@@ -396,22 +427,22 @@ export function ChartView({ profile, onExportPDF }: Props) {
       {/* Tab Navigation */}
       <div className="chart-tabs">
         <button
-          className={`chart-tab ${activeTab === 'placements' ? 'active' : ''}`}
-          onClick={() => setActiveTab('placements')}
-        >
-          🪐 All Placements
-        </button>
-        <button
           className={`chart-tab ${activeTab === 'traits' ? 'active' : ''}`}
           onClick={() => setActiveTab('traits')}
         >
-          ✨ Personality Traits
+          ✨ Your Traits
         </button>
         <button
           className={`chart-tab ${activeTab === 'elements' ? 'active' : ''}`}
           onClick={() => setActiveTab('elements')}
         >
-          🔥 Elements
+          🔥 Your Energy Mix
+        </button>
+        <button
+          className={`chart-tab ${activeTab === 'placements' ? 'active' : ''}`}
+          onClick={() => setActiveTab('placements')}
+        >
+          🪐 Technical Details
         </button>
       </div>
 
@@ -437,16 +468,9 @@ export function ChartView({ profile, onExportPDF }: Props) {
                     <span className="sign-badge" data-element={signInfo?.element?.toLowerCase()}>
                       {signInfo?.emoji} {data.sign}
                     </span>
-                    <span className="degree-text">{data.degree.toFixed(1)}°</span>
                     <span className="house-text">House {data.house}</span>
                   </div>
-                  {activeTooltip === name && info && (
-                    <div className="tooltip">
-                      <strong>{name}</strong>: {info.meaning}
-                      <br />
-                      <small>Rules: {info.rules}</small>
-                    </div>
-                  )}
+                  {info && <p className="placement-meaning">{info.meaning}</p>}
                 </div>
               );
             })}
@@ -455,13 +479,22 @@ export function ChartView({ profile, onExportPDF }: Props) {
 
         {activeTab === 'traits' && (
           <div className="traits-grid">
-            {personalityTraits.map((trait, index) => (
+            {(showAllTraits ? personalityTraits : personalityTraits.slice(0, 3)).map((trait, index) => (
               <div key={index} className="trait-card">
                 <span className="trait-category">{trait.category}</span>
-                <h4 className="trait-title">{trait.trait}</h4>
+                <h4 className="trait-title">{TRAIT_FRIENDLY_NAME[trait.category] || trait.trait}</h4>
                 <p className="trait-description">{trait.description}</p>
+                <p className="trait-action">→ {TRAIT_ACTIONS[trait.category] || 'Use this awareness in your everyday decisions.'}</p>
               </div>
             ))}
+            {personalityTraits.length > 3 && (
+              <button
+                className="traits-show-more"
+                onClick={() => setShowAllTraits((v) => !v)}
+              >
+                {showAllTraits ? 'Show less' : `Show ${personalityTraits.length - 3} more traits`}
+              </button>
+            )}
           </div>
         )}
 
@@ -493,31 +526,22 @@ export function ChartView({ profile, onExportPDF }: Props) {
                 if (count >= 4) {
                   return (
                     <p key={element} className="element-note strong">
-                      <strong>
-                        {element} Dominant ({count})
-                      </strong>
-                      :
-                      {element === 'Fire' && ' You are passionate, energetic, and action-oriented.'}
-                      {element === 'Earth' && ' You are practical, grounded, and security-focused.'}
-                      {element === 'Air' &&
-                        ' You are intellectual, communicative, and socially adept.'}
-                      {element === 'Water' &&
-                        ' You are emotional, intuitive, and deeply sensitive.'}
+                      <strong>Strong {element} energy.</strong>{' '}
+                      {element === 'Fire' && 'You lead with action and enthusiasm. Channel it by picking one thing to start this week rather than spreading yourself thin.'}
+                      {element === 'Earth' && 'You are grounded and reliable. Use that to tackle the practical task you have been delaying.'}
+                      {element === 'Air' && 'You think clearly and communicate well. Use this to have the conversation you have been putting off.'}
+                      {element === 'Water' && 'You read situations and people well. Trust your first impression today — it is usually right.'}
                     </p>
                   );
                 }
                 if (count <= 1) {
                   return (
                     <p key={element} className="element-note weak">
-                      <strong>
-                        {element} Lacking ({count})
-                      </strong>
-                      :{element === 'Fire' && ' May struggle with motivation and self-assertion.'}
-                      {element === 'Earth' &&
-                        ' May need to work on practical matters and stability.'}
-                      {element === 'Air' && ' May need to develop communication and objectivity.'}
-                      {element === 'Water' &&
-                        ' May need to connect more with emotions and intuition.'}
+                      <strong>Low {element} energy.</strong>{' '}
+                      {element === 'Fire' && 'Motivation comes harder for you. Start with one tiny action — momentum builds from there.'}
+                      {element === 'Earth' && 'Practical follow-through is a growth area. Write down one concrete next step before finishing anything.'}
+                      {element === 'Air' && 'Stepping back and looking at things objectively takes effort. Ask one trusted person for their honest take before deciding.'}
+                      {element === 'Water' && 'Tuning into feelings — yours or others — takes practice. Before reacting, pause and ask: what is actually going on here?'}
                     </p>
                   );
                 }
@@ -625,9 +649,17 @@ export function ChartView({ profile, onExportPDF }: Props) {
           color: var(--text);
         }
         
-        .placement-degree {
-          font-size: 0.85rem;
+        .placement-desc {
+          font-size: 0.8rem;
           color: var(--text-muted);
+          font-style: italic;
+        }
+        
+        .placement-meaning {
+          font-size: 0.8rem;
+          color: var(--text-muted);
+          margin: 0.4rem 0 0;
+          line-height: 1.35;
         }
         
         .tooltip {

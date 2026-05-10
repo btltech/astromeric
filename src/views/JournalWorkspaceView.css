@@ -1,0 +1,192 @@
+.journal-workspace__alert {
+  padding: 1rem 1.15rem;
+  border-radius: 20px;
+  border: 1px solid rgba(191, 97, 106, 0.24);
+  background: rgba(191, 97, 106, 0.12);
+}
+
+.journal-workspace__alert strong,
+.journal-workspace__alert p {
+  margin: 0;
+}
+
+.journal-workspace__alert p {
+  margin-top: 0.35rem;
+  color: rgba(229, 233, 240, 0.76);
+}
+
+.journal-workspace__prompt-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.journal-workspace__prompt-tab,
+.journal-workspace__outcome,
+.journal-workspace__entry {
+  border: 1px solid rgba(136, 192, 208, 0.16);
+  background: rgba(255, 255, 255, 0.03);
+  color: #eceff4;
+}
+
+.journal-workspace__prompt-tab {
+  padding: 0.55rem 0.85rem;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+}
+
+.journal-workspace__prompt-tab:hover,
+.journal-workspace__prompt-tab--active {
+  background: rgba(136, 192, 208, 0.12);
+  border-color: rgba(136, 192, 208, 0.36);
+  transform: translateY(-1px);
+}
+
+.journal-workspace__insight-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.journal-workspace__entry-list {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.journal-workspace__entry {
+  display: grid;
+  gap: 0.65rem;
+  width: 100%;
+  padding: 1rem;
+  text-align: left;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+}
+
+.journal-workspace__entry:hover,
+.journal-workspace__entry--active {
+  transform: translateY(-1px);
+  border-color: rgba(136, 192, 208, 0.34);
+  background: rgba(136, 192, 208, 0.08);
+}
+
+.journal-workspace__entry p,
+.journal-workspace__summary {
+  margin: 0;
+  color: rgba(229, 233, 240, 0.74);
+  line-height: 1.55;
+}
+
+.journal-workspace__entry-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  color: rgba(216, 222, 233, 0.66);
+  font-size: 0.92rem;
+}
+
+.journal-workspace__entry-row strong {
+  color: #eceff4;
+}
+
+.journal-workspace__entry-row--status {
+  flex-wrap: wrap;
+}
+
+.journal-workspace__editor-panel {
+  grid-column: span 4;
+}
+
+.journal-workspace__editor {
+  display: grid;
+  gap: 1rem;
+}
+
+.journal-workspace__editor-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.journal-workspace__outcomes {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.journal-workspace__outcome {
+  padding: 0.75rem 0.65rem;
+  border-radius: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+}
+
+.journal-workspace__outcome:hover,
+.journal-workspace__outcome--active {
+  background: rgba(163, 190, 140, 0.14);
+  border-color: rgba(163, 190, 140, 0.38);
+  transform: translateY(-1px);
+}
+
+.journal-workspace__textarea-label {
+  color: rgba(216, 222, 233, 0.66);
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.journal-workspace__textarea {
+  min-height: 220px;
+  width: 100%;
+  padding: 0.95rem 1rem;
+  border-radius: 20px;
+  border: 1px solid rgba(136, 192, 208, 0.16);
+  background: rgba(255, 255, 255, 0.04);
+  color: #eceff4;
+  font: inherit;
+  line-height: 1.6;
+  resize: vertical;
+}
+
+.journal-workspace__textarea:focus {
+  outline: none;
+  border-color: rgba(136, 192, 208, 0.4);
+  box-shadow: 0 0 0 1px rgba(136, 192, 208, 0.2);
+}
+
+.journal-workspace__editor-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  color: rgba(216, 222, 233, 0.66);
+}
+
+@media (max-width: 960px) {
+  .journal-workspace__editor-panel {
+    grid-column: 1 / -1;
+  }
+
+  .journal-workspace__insight-columns {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .journal-workspace__entry-row,
+  .journal-workspace__editor-header,
+  .journal-workspace__editor-footer {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .journal-workspace__outcomes {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

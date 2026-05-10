@@ -1,6 +1,7 @@
 import React, { useRef } from 'react';
 import { toPng } from 'html-to-image';
 import { motion } from 'framer-motion';
+import { QRCodeSVG } from 'qrcode.react';
 import type { PredictionData } from '../types';
 
 interface Props {
@@ -10,6 +11,7 @@ interface Props {
 
 export const CosmicCard: React.FC<Props> = ({ data, userName }) => {
   const cardRef = useRef<HTMLDivElement>(null);
+  const shareUrl = 'https://astronumeric.com/reading';
 
   const downloadImage = async () => {
     if (cardRef.current === null) return;
@@ -27,7 +29,7 @@ export const CosmicCard: React.FC<Props> = ({ data, userName }) => {
   const sunSign =
     data.sign || data.charts?.natal?.planets?.find((p) => p.name === 'Sun')?.sign || 'Star';
   const moonSign = data.charts?.natal?.planets?.find((p) => p.name === 'Moon')?.sign || 'Shadow';
-  const dominantElement = data.charts?.natal?.element_distribution?.dominant || 'Aether';
+  const dominantElement = data.element || 'Aether';
 
   return (
     <div className="cosmic-share-container">
@@ -63,7 +65,7 @@ export const CosmicCard: React.FC<Props> = ({ data, userName }) => {
               <div className="aura-stat">
                 <span className="stat-label">LUCKY NUMBERS</span>
                 <div className="stat-numbers">
-                  {data.numerology?.lucky_numbers?.slice(0, 3).map((n: number) => (
+                  {data.lucky_numbers?.slice(0, 3).map((n: number) => (
                     <span key={n} className="mini-hex">
                       {n}
                     </span>
@@ -89,11 +91,23 @@ export const CosmicCard: React.FC<Props> = ({ data, userName }) => {
           </main>
 
           <footer>
-            <div className="aura-qr-placeholder">
-              <div className="qr-box">✨</div>
-              <span>Scan to reveal your destiny</span>
+            <div className="aura-qr-block">
+              <div className="aura-qr-code" aria-hidden="true">
+                <QRCodeSVG
+                  value={shareUrl}
+                  size={56}
+                  level="M"
+                  includeMargin
+                  bgColor="transparent"
+                  fgColor="#08101f"
+                />
+              </div>
+              <div className="aura-qr-copy">
+                <span className="aura-qr-label">Scan to start your reading</span>
+                <span className="aura-qr-link">astronumeric.com/reading</span>
+              </div>
             </div>
-            <div className="aura-url">astromeric.io</div>
+            <div className="aura-url">astronumeric.com</div>
           </footer>
         </div>
       </div>

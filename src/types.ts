@@ -61,6 +61,8 @@ export interface PredictionData {
   scope: string;
   date: string;
   theme?: string;
+  mood?: string;
+  advice?: string;
   summary?: { headline?: string; top_factors?: TopFactor[] };
   sections: Array<{
     title: string;

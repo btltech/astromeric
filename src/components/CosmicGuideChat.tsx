@@ -15,11 +15,11 @@ interface Message {
 }
 
 const QUICK_TOPICS = [
-  { label: '💕 Love Today', topic: 'love and relationships today' },
-  { label: '💼 Career Path', topic: 'career and work energy' },
-  { label: '🌙 Sleep Tips', topic: 'better sleep and rest' },
-  { label: '✨ Manifestation', topic: 'manifestation and intention setting' },
-  { label: '🔮 Mercury Rx', topic: 'Mercury retrograde effects' },
+  { label: '💕 Love & Relationships', topic: 'love and relationships today' },
+  { label: '💼 Career & Work', topic: 'career and work energy' },
+  { label: '🌙 Rest & Sleep', topic: 'better sleep and rest' },
+  { label: '🎯 Goals & Intentions', topic: 'setting goals and intentions' },
+  { label: '⚡ Current Challenges', topic: 'what to watch out for right now' },
 ];
 
 export function CosmicGuideChat({ sunSign, moonSign, risingSign }: Props) {
@@ -27,9 +27,7 @@ export function CosmicGuideChat({ sunSign, moonSign, risingSign }: Props) {
     {
       id: 'welcome',
       role: 'assistant',
-      content: `✨ Greetings, cosmic traveler! I am your Celestial Guide, here to illuminate your path through the stars. ${
-        sunSign ? `I sense your ${sunSign} solar energy...` : ''
-      } Ask me about love, career, timing, retrogrades, or any cosmic wisdom you seek.`,
+      content: `Hi${sunSign ? `, I can see you're a ${sunSign}` : ''}. Ask me anything about your reading — love, career, timing, or what to expect next.`,
       timestamp: new Date(),
     },
   ]);
@@ -81,7 +79,7 @@ export function CosmicGuideChat({ sunSign, moonSign, risingSign }: Props) {
       const errorMessage: Message = {
         id: `error-${Date.now()}`,
         role: 'assistant',
-        content: '🌙 The cosmic connection flickered momentarily. Please try again, dear seeker.',
+        content: 'Something went wrong. Please try again.',
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, errorMessage]);
@@ -119,7 +117,7 @@ export function CosmicGuideChat({ sunSign, moonSign, risingSign }: Props) {
       const errorMessage: Message = {
         id: `error-${Date.now()}`,
         role: 'assistant',
-        content: '🌙 The stars are momentarily obscured. Please try again.',
+        content: 'Something went wrong. Please try again.',
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, errorMessage]);
@@ -133,9 +131,9 @@ export function CosmicGuideChat({ sunSign, moonSign, risingSign }: Props) {
       <div className="chat-header">
         <span className="guide-avatar">🔮</span>
         <div className="guide-info">
-          <h3 className="guide-name">Celestial Guide</h3>
+          <h3 className="guide-name">Your Guide</h3>
           <span className="guide-status">
-            {loading ? 'Consulting the stars...' : 'Online • Mystical Advisor'}
+            {loading ? 'Thinking...' : 'Online • Ready to help'}
           </span>
         </div>
       </div>
@@ -186,7 +184,7 @@ export function CosmicGuideChat({ sunSign, moonSign, risingSign }: Props) {
         <input
           type="text"
           className="chat-input"
-          placeholder="Ask the cosmos..."
+          placeholder="What would you like to understand?"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           disabled={loading}

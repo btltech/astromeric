@@ -1,14 +1,23 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, NavLink, Navigate, useLocation } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { CosmicBackground } from './components/CosmicBackground';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { AnimatePresence } from 'framer-motion';
 import { CookieConsent } from './components/CookieConsent';
 import { Footer } from './components/Footer';
 import { PWAPrompt } from './components/PWAPrompt';
+import { NavigationBar } from './components/home/NavigationBar';
 
 // Lazy load views for code splitting
-const HomeSupportView = React.lazy(() =>
-  import('./views/HomeSupportView').then((m) => ({ default: m.HomeSupportView }))
+const HomeSupportView = React.lazy(() => import('./views/HomeSupportView'));
+const ReadingView = React.lazy(() => import('./views/ReadingView'));
+const JournalWorkspaceView = React.lazy(() => import('./views/JournalWorkspaceView'));
+const ChartViewPage = React.lazy(() => import('./views/ChartViewPage'));
+const NumerologyDeskView = React.lazy(() => import('./views/NumerologyDeskView'));
+const CosmicToolsView = React.lazy(() => import('./views/CosmicToolsView'));
+const RelationshipsView = React.lazy(() => import('./views/RelationshipsView'));
+const LearnView = React.lazy(() => import('./views/LearnView'));
+const ProfileView = React.lazy(() => import('./views/ProfileView'));
+const SupportCenter = React.lazy(() =>
+  import('./views/SupportCenter').then((m) => ({ default: m.SupportCenter }))
 );
 const PrivacyPolicy = React.lazy(() =>
   import('./views/PrivacyPolicy').then((m) => ({ default: m.PrivacyPolicy }))
@@ -20,18 +29,6 @@ const CookiePolicy = React.lazy(() =>
   import('./views/CookiePolicy').then((m) => ({ default: m.CookiePolicy }))
 );
 
-function NavBar() {
-  return (
-    <header style={{ justifyContent: 'center' }}>
-      <NavLink to="/" className="logo-link" style={{ margin: '0 auto' }}>
-        <div className="logo" aria-label="AstroNumeric home">
-          ASTRO<span>NUMERIC</span>
-        </div>
-      </NavLink>
-    </header>
-  );
-}
-
 function AnimatedRoutes() {
   const location = useLocation();
 
@@ -40,6 +37,17 @@ function AnimatedRoutes() {
       <React.Suspense fallback={<div className="loader-overlay" />}>
         <Routes location={location} key={location.pathname}>
           <Route path="/" element={<HomeSupportView />} />
+          <Route path="/reading" element={<ReadingView />} />
+          <Route path="/journal" element={<JournalWorkspaceView />} />
+          <Route path="/charts" element={<ChartViewPage />} />
+          <Route path="/numerology" element={<NumerologyDeskView />} />
+          <Route path="/tools" element={<CosmicToolsView />} />
+          <Route path="/relationships" element={<RelationshipsView />} />
+          <Route path="/learn" element={<LearnView />} />
+          <Route path="/profile" element={<ProfileView />} />
+          <Route path="/experience" element={<Navigate to="/charts" replace />} />
+          <Route path="/support" element={<SupportCenter />} />
+          <Route path="/help" element={<Navigate to="/support" replace />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/privacy" element={<Navigate to="/privacy-policy" replace />} />
           <Route path="/terms" element={<TermsOfService />} />
@@ -55,12 +63,10 @@ function AnimatedRoutes() {
 
 function Layout() {
   return (
-    <div className="app-container">
-      <CosmicBackground element="fire" />
-
-      <div className="content-wrapper">
-        <NavBar />
-        <main id="main-content" tabIndex={-1}>
+    <div className="app-container app-shell">
+      <div className="content-wrapper content-wrapper--modern">
+        <NavigationBar />
+        <main id="main-content" tabIndex={-1} className="site-main">
           <AnimatedRoutes />
         </main>
         <Footer />

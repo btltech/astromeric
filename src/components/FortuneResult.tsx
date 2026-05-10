@@ -8,6 +8,7 @@ import { useProfiles } from '../hooks';
 import { toast } from './Toast';
 import { CosmicCard } from './CosmicCard';
 import { MarkdownText } from './MarkdownText';
+import { CollapsibleSection } from './CollapsibleSection';
 
 interface Props {
   data: PredictionData;
@@ -98,6 +99,86 @@ export function FortuneResult({ data, onReset }: Props) {
     const factors = data.summary?.top_factors ?? [];
     return factors.slice(0, 3);
   }, [data.summary?.top_factors]);
+
+  const summaryChips = useMemo(() => {
+    const chips: string[] = [];
+
+    if (sunSign) chips.push(`${sunSign} sun`);
+    if (typeof data.life_path_number === 'number') chips.push(`Life Path ${data.life_path_number}`);
+    if (data.lucky_numbers?.length) chips.push(`Lucky ${data.lucky_numbers.slice(0, 2).join(' · ')}`);
+
+    return chips.slice(0, 3);
+  }, [data.life_path_number, data.lucky_numbers, sunSign]);
+
+  const actionSignals = useMemo(() => {
+    const sectionHighlights = data.sections.flatMap((section) => section.highlights ?? []);
+    const bestMoveFromHighlights = sectionHighlights.find((item) => item.startsWith('✨ Embrace:'));
+    const watchForFromHighlights = sectionHighlights.find((item) => item.startsWith('⚠️ Avoid:'));
+
+    return {
+      bestMove:
+        data.guidance?.embrace.activities[0] ??
+        bestMoveFromHighlights?.replace(/^✨ Embrace:\s*/, '') ??
+        keyTakeaways[0]?.description ??
+        headline ??
+        'Use the strongest opening in this reading first.',
+      watchFor:
+        data.guidance?.avoid.activities[0] ??
+        watchForFromHighlights?.replace(/^⚠️ Avoid:\s*/, '') ??
+        keyTakeaways[1]?.description ??
+        'Watch where the reading repeats caution or friction.',
+    };
+  }, [data.guidance, data.sections, headline, keyTakeaways]);
+
+  const readingDrivers = useMemo(() => {
+    const rows = keyTakeaways.map((factor) => ({
+      title: [factor.aspect, factor.impact].filter(Boolean).join(' · ') || 'Forecast driver',
+      detail: factor.description ?? headline ?? 'The reading engine elevated this theme as one of the main drivers.',
+    }));
+
+    if (rows.length < 3) {
+      for (const section of data.sections) {
+        if (rows.length >= 3) break;
+
+        const topTopic = Object.entries(section.topic_scores ?? {}).sort((left, right) => right[1] - left[1])[0];
+        rows.push({
+          title: topTopic ? `${section.title} · ${topTopic[0].replace(/_/g, ' ')}` : section.title,
+          detail:
+            section.highlights[0] ??
+            section.affirmation ??
+            'This section is one of the active layers shaping the forecast.',
+        });
+      }
+    }
+
+    return rows.slice(0, 3);
+  }, [data.sections, headline, keyTakeaways]);
+
+  const sectionPreviews = useMemo(
+    () =>
+      data.sections.map((section) => {
+        const embrace = section.highlights
+          .filter((item) => item.startsWith('✨ Embrace:'))
+          .map((item) => item.replace(/^✨ Embrace:\s*/, ''))
+          .slice(0, 2);
+        const avoid = section.highlights
+          .filter((item) => item.startsWith('⚠️ Avoid:'))
+          .map((item) => item.replace(/^⚠️ Avoid:\s*/, ''))
+          .slice(0, 2);
+        const lead =
+          section.highlights.find(
+            (item) => !item.startsWith('✨ Embrace:') && !item.startsWith('⚠️ Avoid:')
+          ) ?? section.affirmation;
+
+        return {
+          title: section.title,
+          lead,
+          embrace,
+          avoid,
+        };
+      }),
+    [data.sections]
+  );
 
   const readingText = useMemo(() => {
     const lines: string[] = [];
@@ -244,7 +325,7 @@ export function FortuneResult({ data, onReset }: Props) {
       setMessages((prev) => [...prev, { role: 'assistant', content: response.response }]);
     } catch (err) {
       console.error('Chat failed', err);
-      toast.error('The Cosmic Guide is currently meditating. Please try again.');
+      toast.error('Something went wrong. Please try again.');
     } finally {
       setChatLoading(false);
     }
@@ -264,63 +345,73 @@ export function FortuneResult({ data, onReset }: Props) {
         </button>
       </div>
 
-      <div className="header-badge">
-        {data.element === 'Fire' && '🔥'}
-        {data.element === 'Water' && '💧'}
-        {data.element === 'Air' && '🌬️'}
-        {data.element === 'Earth' && '🌱'}
-      </div>
-      <h1 className="text-center mb-1">{scopeLabel} Reading</h1>
-      {sunSign && data.numerology?.core_numbers?.life_path && (
-        <h3 className="reading-subtitle">
-          {sunSign} • Life Path {data.numerology.core_numbers.life_path.number}
-        </h3>
-      )}
+      <section className="reading-hero-card">
+        <div className="reading-hero-card__eyebrow-row">
+          <span className="reading-hero-card__eyebrow">{scopeLabel} reading</span>
+          <span className="reading-hero-card__badge">
+            {data.element === 'Fire' && '🔥 Fire-led'}
+            {data.element === 'Water' && '💧 Water-led'}
+            {data.element === 'Air' && '🌬️ Air-led'}
+            {data.element === 'Earth' && '🌱 Earth-led'}
+            {!data.element && 'Live forecast'}
+          </span>
+        </div>
 
-      {/* Cosmic Stones Section */}
-      {(zodiacStones || birthstone) && (
-        <div className="cosmic-stones-section">
-          <h4 className="cosmic-stones-title">💎 Your Cosmic Stones</h4>
-          <div className="stones-grid">
-            {zodiacStones && (
-              <div className="stone-category">
-                <span className="stone-label">{sunSign} Crystals</span>
-                <div className="stone-list">
-                  {zodiacStones.stones.map((stone, i) => (
-                    <span key={i} className="stone-tag">
-                      {stone}
-                    </span>
-                  ))}
-                </div>
-                <span className="stone-meaning">{zodiacStones.meaning}</span>
-              </div>
-            )}
-            {birthstone && (
-              <div className="stone-category birthstone">
-                <span className="stone-label">Birthstone</span>
-                <span
-                  className="stone-tag birthstone-tag"
-                  style={{ '--stone-color': birthstone.color } as React.CSSProperties}
-                >
-                  {birthstone.stone}
-                </span>
-              </div>
-            )}
+        <h1 className="reading-hero-card__title">{headline ?? `${scopeLabel} outlook ready`}</h1>
+        <p className="reading-hero-card__body">
+          {data.sections[0]?.highlights[0] ??
+            keyTakeaways[0]?.description ??
+            'The strongest forecast signal is summarized here first so the user can act before scrolling into the deeper reading.'}
+        </p>
+
+        {summaryChips.length > 0 && (
+          <div className="reading-hero-card__chips">
+            {summaryChips.map((chip) => (
+              <span key={chip} className="reading-hero-card__chip">
+                {chip}
+              </span>
+            ))}
           </div>
-        </div>
-      )}
+        )}
+      </section>
 
-      {headline && (
-        <div className="tldr-box">
-          <strong>TL;DR:</strong> {headline}
-        </div>
+      <section className="reading-signal-grid" aria-label="Action signals">
+        <article className="reading-signal-card reading-signal-card--positive">
+          <span className="reading-signal-card__label">Best move</span>
+          <strong>{actionSignals.bestMove}</strong>
+          <p>Start with the strongest opening the forecast is giving you instead of reading every section equally.</p>
+        </article>
+
+        <article className="reading-signal-card reading-signal-card--warning">
+          <span className="reading-signal-card__label">Watch for</span>
+          <strong>{actionSignals.watchFor}</strong>
+          <p>This is the friction signal to keep visible while you use the rest of the guidance.</p>
+        </article>
+      </section>
+
+      {readingDrivers.length > 0 && (
+        <section className="reading-drivers-card">
+          <div className="reading-drivers-card__header">
+            <span>Reading drivers</span>
+            <strong>Why this forecast is leaning the way it is</strong>
+          </div>
+
+          <div className="reading-drivers-card__rows">
+            {readingDrivers.map((driver) => (
+              <div key={`${driver.title}-${driver.detail}`} className="reading-driver-row">
+                <strong>{driver.title}</strong>
+                <p>{driver.detail}</p>
+              </div>
+            ))}
+          </div>
+        </section>
       )}
 
       {(keyTakeaways.length > 0 || headline) && (
         <div className="reading-summary">
           {keyTakeaways.length > 0 && (
             <>
-              <h3 className="reading-summary-title">Key takeaways</h3>
+              <h3 className="reading-summary-title">What to focus on next</h3>
               <ul className="reading-takeaways">
                 {keyTakeaways.map((factor, idx) => {
                   const label = [factor.aspect, factor.impact].filter(Boolean).join(' — ');
@@ -358,33 +449,101 @@ export function FortuneResult({ data, onReset }: Props) {
         </div>
       )}
 
+      {sectionPreviews.length > 0 && (
+        <section className="reading-sections-preview">
+          <div className="reading-sections-preview__header">
+            <span>Forecast sections</span>
+            <strong>Scan the section-level guidance before opening the full detail grid</strong>
+          </div>
+
+          <div className="reading-sections-preview__grid">
+            {sectionPreviews.map((section) => (
+              <article key={section.title} className="reading-section-preview-card">
+                <strong>{section.title}</strong>
+                {section.lead && <p>{section.lead}</p>}
+
+                {section.embrace.length > 0 && (
+                  <div className="reading-section-preview-card__list">
+                    <span>Embrace</span>
+                    <ul>
+                      {section.embrace.map((item) => (
+                        <li key={item}>{item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {section.avoid.length > 0 && (
+                  <div className="reading-section-preview-card__list reading-section-preview-card__list--warning">
+                    <span>Avoid</span>
+                    <ul>
+                      {section.avoid.map((item) => (
+                        <li key={item}>{item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
+
       {aiInsight && (
-        <div className="tldr-box ai-insight">
-          <p className="reading-meta" style={{ marginBottom: '0.5rem' }}>
-            Source:{' '}
-            {aiInsightProvider === 'gemini-flash' || aiInsightProvider === 'gemini'
-              ? 'AI'
-              : 'Structured'}
-          </p>
+        <CollapsibleSection title="Deeper Explanation" icon="🔍" defaultExpanded={true}>
           <MarkdownText text={aiInsight} />
-        </div>
+        </CollapsibleSection>
       )}
 
       {data.guidance && <DailyGuidance guidance={data.guidance} scope={data.scope} />}
 
       {data.sections && data.sections.length > 0 && (
-        <SectionGrid
-          sections={data.sections}
-          scope={data.scope}
-          profileId={selectedProfile?.id || null}
-        />
+        <CollapsibleSection title="Full Reading Details" icon="📖" defaultExpanded={false}>
+          <SectionGrid
+            sections={data.sections}
+            scope={data.scope}
+            profileId={selectedProfile?.id || null}
+          />
+        </CollapsibleSection>
+      )}
+
+      {/* Crystals & Stones — moved after main content */}
+      {(zodiacStones || birthstone) && (
+        <CollapsibleSection title="Your Crystals & Stones" icon="💎" defaultExpanded={false}>
+          <div className="stones-grid">
+            {zodiacStones && (
+              <div className="stone-category">
+                <span className="stone-label">{sunSign} Crystals</span>
+                <div className="stone-list">
+                  {zodiacStones.stones.map((stone, i) => (
+                    <span key={i} className="stone-tag">
+                      {stone}
+                    </span>
+                  ))}
+                </div>
+                <span className="stone-meaning">{zodiacStones.meaning}</span>
+              </div>
+            )}
+            {birthstone && (
+              <div className="stone-category birthstone">
+                <span className="stone-label">Birthstone</span>
+                <span
+                  className="stone-tag birthstone-tag"
+                  style={{ '--stone-color': birthstone.color } as React.CSSProperties}
+                >
+                  {birthstone.stone}
+                </span>
+              </div>
+            )}
+          </div>
+        </CollapsibleSection>
       )}
 
       {/* Cosmic Guide Chat UI */}
       <div className="cosmic-guide-container">
-        <h3 className="cosmic-guide-title">✨ Ask the Cosmic Guide</h3>
+        <h3 className="cosmic-guide-title">Ask a Follow-Up Question</h3>
         <p className="cosmic-guide-subtitle">
-          Ask follow-up questions about your reading or seek mystical advice.
+          Your reading is already loaded. Ask anything specific about it.
         </p>
 
         <div className="chat-messages">
@@ -412,7 +571,7 @@ export function FortuneResult({ data, onReset }: Props) {
             type="text"
             value={chatInput}
             onChange={(e) => setChatInput(e.target.value)}
-            placeholder="Ask the stars anything..."
+            placeholder="What would you like to understand?"
             className="chat-input"
             disabled={chatLoading}
           />
@@ -437,7 +596,7 @@ export function FortuneResult({ data, onReset }: Props) {
           aria-busy={aiLoading}
           type="button"
         >
-          {aiLoading ? 'Thinking…' : '✨ Explain This Reading'}
+          {aiLoading ? 'Thinking…' : 'Explain This Reading'}
         </button>
         <button
           onClick={onReset}

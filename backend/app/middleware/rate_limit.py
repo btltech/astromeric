@@ -29,11 +29,26 @@ class RateLimiter:
         self.last_update: Dict[str, float] = defaultdict(time.time)
 
     def _get_client_id(self, request: Request) -> str:
-        """Extract client identifier from request."""
-        # Try X-Forwarded-For for proxied requests
+        """Extract client identifier from request.
+
+        X-Forwarded-For is only trusted when the request originates from a
+        known proxy (Cloudflare).  Trusting it blindly allows attackers to
+        spoof the header and bypass IP-based rate limiting.
+        """
+        # Cloudflare sets CF-Connecting-IP to the real visitor IP and cannot
+        # be spoofed by the client.  Prefer it when present.
+        cf_ip = request.headers.get("CF-Connecting-IP")
+        if cf_ip:
+            return cf_ip.strip()
+
+        # Railway / other trusted reverse proxies: use the rightmost
+        # non-private IP in X-Forwarded-For (the last hop the proxy added),
+        # NOT the leftmost which is client-controlled.
         forwarded = request.headers.get("X-Forwarded-For")
         if forwarded:
-            return forwarded.split(",")[0].strip()
+            ips = [ip.strip() for ip in forwarded.split(",") if ip.strip()]
+            if ips:
+                return ips[-1]  # rightmost = added by the trusted proxy
 
         # Fall back to direct client IP
         return request.client.host if request.client else "unknown"
@@ -80,6 +95,11 @@ default_limiter = RateLimiter(requests_per_minute=60)
 strict_limiter = RateLimiter(
     requests_per_minute=10, burst_size=5
 )  # For expensive operations
+
+# Auth-specific limiters — tighter limits to block brute-force and spam
+login_limiter = RateLimiter(requests_per_minute=5, burst_size=5)
+register_limiter = RateLimiter(requests_per_minute=3, burst_size=3)
+password_reset_limiter = RateLimiter(requests_per_minute=3, burst_size=3)
 
 
 async def rate_limit_middleware(request: Request, call_next):

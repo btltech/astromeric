@@ -1,5 +1,5 @@
 import React from 'react';
-import { Helmet } from 'react-helmet';
+import { DocumentMeta } from '../components/DocumentMeta';
 import './PrivacyPolicy.css';
 
 export function PrivacyPolicy() {
@@ -8,14 +8,11 @@ export function PrivacyPolicy() {
 
   return (
     <>
-      <Helmet>
-        <title>Privacy Policy - Astromeric</title>
-        <meta
-          name="description"
-          content="Learn how Astromeric collects, uses, and protects your personal data."
-        />
-        <meta name="robots" content="index, follow" />
-      </Helmet>
+      <DocumentMeta
+        title="Privacy Policy — AstroNumeric"
+        description="Learn how Astromeric collects, uses, and protects your personal data."
+        robots="index, follow"
+      />
 
       <main className="privacy-policy-container">
         <header className="policy-header">
@@ -176,7 +173,7 @@ export function PrivacyPolicy() {
             <h3>6.3 How to Exercise Your Rights</h3>
             <p>
               To exercise any of these rights, please contact us at{' '}
-              <a href="mailto:privacy@astromeric.com">privacy@astromeric.com</a> with &quot;Privacy
+              <a href="mailto:privacy@astromeric.app">privacy@astromeric.app</a> with &quot;Privacy
               Request&quot; in the subject line. We will respond within 30 days.
             </p>
           </section>
@@ -200,7 +197,7 @@ export function PrivacyPolicy() {
             </p>
             <ul>
               <li>
-                Email: <a href="mailto:privacy@astromeric.com">privacy@astromeric.com</a>
+                Email: <a href="mailto:privacy@astromeric.app">privacy@astromeric.app</a>
               </li>
             </ul>
           </section>

@@ -15,13 +15,13 @@ const getScoreColor = (score: number) => {
 
 // Helper to get score label
 const getScoreLabel = (score: number) => {
-  if (score >= 90) return 'Soulmate Potential';
-  if (score >= 80) return 'Highly Compatible';
-  if (score >= 70) return 'Strong Connection';
-  if (score >= 60) return 'Good Potential';
-  if (score >= 50) return 'Workable Match';
-  if (score >= 40) return 'Challenging but Growth-Oriented';
-  return 'Significant Differences';
+  if (score >= 90) return 'Exceptional Match';
+  if (score >= 80) return 'Strong Match';
+  if (score >= 70) return 'Good Match';
+  if (score >= 60) return 'Promising — Needs Effort';
+  if (score >= 50) return 'Workable with Effort';
+  if (score >= 40) return 'Challenging';
+  return 'Major Differences';
 };
 
 // Generate red flags based on scores and challenges
@@ -44,7 +44,7 @@ const getRedFlags = (data: CompatibilityResult): string[] => {
     redFlags.push('Core values may not align - have honest conversations about life goals');
   }
   if (overallScore < 50) {
-    redFlags.push('Overall compatibility is low - consider if the growth is worth the effort');
+    redFlags.push('Overall compatibility is low — focus on one shared goal first and see if you can move forward on that before everything else.');
   }
 
   // Add specific element-based red flags
@@ -53,7 +53,7 @@ const getRedFlags = (data: CompatibilityResult): string[] => {
       (c) => c.toLowerCase().includes('control') || c.toLowerCase().includes('power')
     )
   ) {
-    redFlags.push('Power dynamics may become an issue');
+    redFlags.push('Power dynamics may come up — decide early on who handles what so it does not become a daily source of friction.');
   }
   if (
     data.challenges.some(
@@ -64,6 +64,41 @@ const getRedFlags = (data: CompatibilityResult): string[] => {
   }
 
   return redFlags.slice(0, 3); // Limit to top 3
+};
+
+// Plain-English verdict that directly answers "Is this a good match?"
+const getCompatSummary = (score: number): string => {
+  if (score >= 80) return 'Yes — strong natural connection that flows easily with minimal effort.';
+  if (score >= 60) return 'Promising, but communication is the make-or-break factor here.';
+  if (score >= 40) return 'More work than easy — worth it only if both actively choose it.';
+  return 'Fundamentally different approaches to life — can work, but takes consistent effort from both.';
+};
+
+// Dynamic action tips based on weakest areas
+const getActionTips = (data: CompatibilityResult, score: number): string[] => {
+  const tips: string[] = [];
+
+  if (data.topic_scores.communication < 6) {
+    tips.push('Set a weekly 15-minute check-in where each person shares one concern without interruption');
+  } else {
+    tips.push('Use your communication strength — be the one who raises issues before they become problems');
+  }
+
+  if (data.topic_scores.emotional < 6) {
+    tips.push('Ask each other “what do you need right now?” — your emotional styles differ more than you think');
+  } else if (data.topic_scores.values < 6) {
+    tips.push('Write down your three relationship non-negotiables and share them openly');
+  } else {
+    tips.push('Plan one activity per month that is completely new to both of you');
+  }
+
+  if (score < 60) {
+    tips.push('Agree on one shared goal — having a common direction reduces day-to-day friction');
+  } else {
+    tips.push('Focus on what you are building together, not just what feels good in the moment');
+  }
+
+  return tips;
 };
 
 // Category definitions for detailed breakdown
@@ -80,7 +115,7 @@ const CATEGORIES = [
 type TabType = 'overview' | 'details' | 'advice';
 
 export function CompatibilityCard({ data }: Props) {
-  const [activeTab, setActiveTab] = useState<TabType>('overview');
+  const [detailsOpen, setDetailsOpen] = useState(false);
 
   // Calculate overall score (0-100 scale)
   const rawScore =
@@ -93,7 +128,7 @@ export function CompatibilityCard({ data }: Props) {
 
   return (
     <div className="compatibility-enhanced">
-      {/* Header with Score */}
+      {/* Header — names + plain outcome */}
       <div className="compat-header">
         <div className="compat-names">
           <span className="person-name">{data.people[0].name}</span>
@@ -101,205 +136,136 @@ export function CompatibilityCard({ data }: Props) {
           <span className="person-name">{data.people[1].name}</span>
         </div>
 
-        <div
-          className="score-display"
-          style={{ '--score-color': scoreColor } as React.CSSProperties}
-        >
-          <div className="score-ring">
-            <svg viewBox="0 0 120 120">
-              <circle
-                cx="60"
-                cy="60"
-                r="54"
-                fill="none"
-                stroke="rgba(136, 192, 208, 0.1)"
-                strokeWidth="8"
-              />
-              <circle
-                cx="60"
-                cy="60"
-                r="54"
-                fill="none"
-                stroke={scoreColor}
-                strokeWidth="8"
-                strokeDasharray={`${(overallScore / 100) * 339.292} 339.292`}
-                strokeLinecap="round"
-                transform="rotate(-90 60 60)"
-                className="score-progress"
-              />
-            </svg>
-            <div className="score-value">
-              <span className="score-number">{overallScore}</span>
-              <span className="score-percent">%</span>
-            </div>
-          </div>
-          <span className="score-label">{scoreLabel}</span>
+        <div className="compat-outcome-banner" style={{ borderColor: scoreColor }}>
+          <span className="compat-outcome-label" style={{ color: scoreColor }}>{scoreLabel}</span>
+          <p className="compat-outcome-summary">{getCompatSummary(overallScore)}</p>
         </div>
       </div>
 
-      {/* Tab Navigation */}
-      <div className="compat-tabs">
-        <button
-          className={`compat-tab ${activeTab === 'overview' ? 'active' : ''}`}
-          onClick={() => setActiveTab('overview')}
-        >
-          Overview
-        </button>
-        <button
-          className={`compat-tab ${activeTab === 'details' ? 'active' : ''}`}
-          onClick={() => setActiveTab('details')}
-        >
-          Detailed Scores
-        </button>
-        <button
-          className={`compat-tab ${activeTab === 'advice' ? 'active' : ''}`}
-          onClick={() => setActiveTab('advice')}
-        >
-          Advice
-        </button>
+      {/* WHAT TO DO */}
+      <div className="compat-action-section">
+        <h4 className="compat-action-title">🎯 What to do</h4>
+        <p className="compat-advice-text">{data.advice}</p>
+        <div className="tips-grid">
+          {getActionTips(data, overallScore).map((tip, i) => (
+            <div key={i} className="tip-card">
+              <span className="tip-number">{i + 1}</span>
+              <p>{tip}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="cosmic-timing" style={{ marginTop: '1rem' }}>
+          <strong>When to spend time together: </strong>
+          {overallScore >= 70
+            ? 'Any time works — small daily moments build this connection more than big occasions.'
+            : 'One-on-one time with no distractions matters more here than how often you see each other.'}
+        </div>
       </div>
 
-      {/* Tab Content */}
-      <div className="compat-content">
-        {activeTab === 'overview' && (
-          <>
-            {/* Quick Stats */}
-            <div className="quick-stats">
-              <div className="stat-item">
-                <span className="stat-emoji">☉</span>
-                <span className="stat-label">Signs</span>
-                <span className="stat-value">
-                  {data.people[0].sign} + {data.people[1].sign}
-                </span>
-              </div>
-              <div className="stat-item">
-                <span className="stat-emoji">🔢</span>
-                <span className="stat-label">Life Paths</span>
-                <span className="stat-value">
-                  {data.numerology.a.core_numbers.life_path.number} +{' '}
-                  {data.numerology.b.core_numbers.life_path.number}
-                </span>
-              </div>
-            </div>
-
-            {/* Strengths */}
-            <div className="compat-list strengths">
-              <h4>💪 Your Strengths Together</h4>
-              <ul>
-                {data.strengths.map((s, i) => (
+      {/* WHAT TO WATCH OUT FOR */}
+      {(redFlags.length > 0 || data.challenges.length > 0) && (
+        <div className="compat-list challenges" style={{ marginTop: '1rem' }}>
+          <h4>⚡ Watch out for</h4>
+          <ul>
+            {redFlags.length > 0
+              ? redFlags.map((rf, i) => (
                   <li key={i}>
-                    <span className="list-icon">✓</span>
-                    {s}
+                    <span className="list-icon">⚠</span>
+                    {rf}
                   </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Challenges */}
-            <div className="compat-list challenges">
-              <h4>⚡ Growth Areas</h4>
-              <ul>
-                {data.challenges.map((c, i) => (
+                ))
+              : data.challenges.slice(0, 3).map((c, i) => (
                   <li key={i}>
                     <span className="list-icon">!</span>
                     {c}
                   </li>
                 ))}
-              </ul>
+          </ul>
+        </div>
+      )}
+
+      {/* STRENGTHS */}
+      <div className="compat-list strengths" style={{ marginTop: '1rem' }}>
+        <h4>💪 Where you're strong together</h4>
+        <ul>
+          {data.strengths.map((s, i) => (
+            <li key={i}>
+              <span className="list-icon">✓</span>
+              {s}
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {/* DETAILS — collapsible (scores, breakdown) */}
+      <div className="compat-details-toggle-wrapper">
+        <button
+          className="compat-details-toggle"
+          onClick={() => setDetailsOpen((v) => !v)}
+          aria-expanded={detailsOpen}
+        >
+          <span>See compatibility breakdown</span>
+          <span className={`compat-toggle-chevron ${detailsOpen ? 'open' : ''}`}>▾</span>
+        </button>
+
+        {detailsOpen && (
+          <div className="compat-details-panel">
+            {/* Score ring — de-emphasised in details */}
+            <div className="score-display-compact" style={{ '--score-color': scoreColor } as React.CSSProperties}>
+              <div className="score-ring-small">
+                <svg viewBox="0 0 80 80">
+                  <circle cx="40" cy="40" r="34" fill="none" stroke="rgba(136,192,208,0.1)" strokeWidth="6" />
+                  <circle
+                    cx="40" cy="40" r="34" fill="none"
+                    stroke={scoreColor} strokeWidth="6"
+                    strokeDasharray={`${(overallScore / 100) * 213.628} 213.628`}
+                    strokeLinecap="round"
+                    transform="rotate(-90 40 40)"
+                  />
+                </svg>
+                <div className="score-value-small">
+                  <span style={{ fontSize: '1.4rem', fontWeight: 700, color: scoreColor }}>{overallScore}</span>
+                  <span style={{ fontSize: '0.75rem', color: scoreColor }}>%</span>
+                </div>
+              </div>
+              <p className="score-detail-note">Overall compatibility score</p>
             </div>
 
-            {/* Red Flags (if any) */}
-            {redFlags.length > 0 && (
-              <div className="compat-list red-flags">
-                <h4>🚩 Watch Out For</h4>
-                <ul>
-                  {redFlags.map((rf, i) => (
-                    <li key={i}>
-                      <span className="list-icon">⚠</span>
-                      {rf}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </>
-        )}
-
-        {activeTab === 'details' && (
-          <div className="detailed-scores">
-            {CATEGORIES.map((cat) => {
-              const score = (data.topic_scores[cat.key] || 5) * 10;
-              const catColor = getScoreColor(score);
-              return (
-                <div key={cat.key} className="category-score">
-                  <div className="category-header">
-                    <span className="category-icon">{cat.icon}</span>
-                    <span className="category-label">{cat.label}</span>
-                    <span className="category-value" style={{ color: catColor }}>
-                      {Math.round(score)}%
-                    </span>
+            {/* Category scores */}
+            <div className="detailed-scores">
+              {CATEGORIES.map((cat) => {
+                const score = (data.topic_scores[cat.key] || 5) * 10;
+                const catColor = getScoreColor(score);
+                return (
+                  <div key={cat.key} className="category-score">
+                    <div className="category-header">
+                      <span className="category-icon">{cat.icon}</span>
+                      <span className="category-label">{cat.label}</span>
+                      <span className="category-value" style={{ color: catColor }}>
+                        {Math.round(score)}%
+                      </span>
+                    </div>
+                    <div className="category-bar">
+                      <div className="category-fill" style={{ width: `${score}%`, background: catColor }} />
+                    </div>
                   </div>
-                  <div className="category-bar">
-                    <div
-                      className="category-fill"
-                      style={{
-                        width: `${score}%`,
-                        background: catColor,
-                      }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
 
-            {/* Element Harmony */}
-            <div className="element-harmony">
-              <h4>🌀 Element Dynamics</h4>
+            {/* Element dynamics */}
+            <div className="element-harmony" style={{ marginTop: '1rem' }}>
+              <h4>🌀 How your energies interact</h4>
               <div className="elements-display">
                 <span className="element-badge">
-                  {data.people[0].sign} ({data.people[0].sign && getElement(data.people[0].sign)})
+                  {(data.people[0] as any).sign} ({(data.people[0] as any).sign && getElement((data.people[0] as any).sign)})
                 </span>
                 <span className="element-connector">×</span>
                 <span className="element-badge">
-                  {data.people[1].sign} ({data.people[1].sign && getElement(data.people[1].sign)})
+                  {(data.people[1] as any).sign} ({(data.people[1] as any).sign && getElement((data.people[1] as any).sign)})
                 </span>
               </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'advice' && (
-          <div className="advice-section">
-            <div className="main-advice">
-              <span className="advice-icon">💡</span>
-              <p>{data.advice}</p>
-            </div>
-
-            <div className="action-tips">
-              <h4>🎯 Action Items</h4>
-              <div className="tips-grid">
-                <div className="tip-card">
-                  <span className="tip-number">1</span>
-                  <p>Schedule regular check-ins to discuss your relationship dynamics</p>
-                </div>
-                <div className="tip-card">
-                  <span className="tip-number">2</span>
-                  <p>Celebrate your differences as opportunities for growth</p>
-                </div>
-                <div className="tip-card">
-                  <span className="tip-number">3</span>
-                  <p>Create shared rituals that honor both your needs</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="cosmic-timing">
-              <h4>⏰ Best Times Together</h4>
-              <p>
-                {overallScore >= 70
-                  ? 'Your connection flows naturally - any time together strengthens your bond.'
-                  : 'Focus on quality over quantity. Plan intentional activities that play to your strengths.'}
-              </p>
             </div>
           </div>
         )}

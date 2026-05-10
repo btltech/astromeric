@@ -30,6 +30,7 @@ interface Props {
   onSelect: (location: SelectedLocation) => void;
   placeholder?: string;
   initialValue?: string;
+  onQueryChange?: (query: string) => void;
 }
 
 // Debounce hook
@@ -48,6 +49,7 @@ export function LocationAutocomplete({
   onSelect,
   placeholder = 'Search city...',
   initialValue = '',
+  onQueryChange,
 }: Props) {
   const [query, setQuery] = useState(initialValue);
   const [results, setResults] = useState<LocationResult[]>([]);
@@ -167,8 +169,10 @@ export function LocationAutocomplete({
           type="text"
           value={query}
           onChange={(e) => {
-            setQuery(e.target.value);
+            const nextQuery = e.target.value;
+            setQuery(nextQuery);
             setIsOpen(true);
+            onQueryChange?.(nextQuery);
           }}
           onFocus={() => results.length > 0 && setIsOpen(true)}
           placeholder={placeholder}

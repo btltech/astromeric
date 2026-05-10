@@ -1,13 +1,5 @@
 User-agent: *
 Allow: /
+Disallow: /journal
 
-# Sitemap
 Sitemap: https://astronumeric.com/sitemap.xml
-
-# Crawl-delay for polite crawling
-Crawl-delay: 1
-
-# Disallow API endpoints
-Disallow: /api/
-Disallow: /health
-Disallow: /cache/

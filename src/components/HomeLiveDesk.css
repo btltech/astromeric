@@ -1,0 +1,221 @@
+.live-desk {
+  margin-top: 40px;
+}
+
+.live-desk__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 22px;
+}
+
+.live-desk__eyebrow,
+.live-desk__card-label,
+.live-desk__day-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(255, 196, 130, 0.9);
+  font-weight: 700;
+}
+
+.live-desk__header h2 {
+  margin: 12px 0 0;
+  max-width: 13ch;
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 4vw, 3.05rem);
+  line-height: 1.02;
+  letter-spacing: -0.05em;
+  color: #f8fbff;
+}
+
+.live-desk__header p,
+.live-desk__lead-card p,
+.live-desk__signal-card p,
+.live-desk__day p,
+.live-desk__error p {
+  color: rgba(205, 219, 233, 0.74);
+  line-height: 1.74;
+}
+
+.live-desk__status-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.live-desk__status,
+.live-desk__phase-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(122, 154, 185, 0.14);
+  background: rgba(10, 16, 25, 0.92);
+  color: rgba(217, 229, 239, 0.8);
+}
+
+.live-desk__status--live::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #4bd3ff;
+  box-shadow: 0 0 0 5px rgba(75, 211, 255, 0.12);
+}
+
+.live-desk__board,
+.live-desk__rail {
+  display: grid;
+  gap: 14px;
+}
+
+.live-desk__board {
+  grid-template-columns: minmax(0, 1.15fr) repeat(2, minmax(0, 0.85fr));
+}
+
+.live-desk__lead-card,
+.live-desk__signal-card,
+.live-desk__day,
+.live-desk__error,
+.live-desk__loading-card,
+.live-desk__loading-day {
+  position: relative;
+  overflow: hidden;
+  border-radius: 22px;
+  border: 1px solid rgba(122, 154, 185, 0.18);
+  background: linear-gradient(180deg, rgba(16, 24, 36, 0.96), rgba(8, 13, 21, 0.94));
+  box-shadow: 0 22px 60px rgba(1, 7, 15, 0.34);
+}
+
+.live-desk__lead-card::before,
+.live-desk__signal-card::before,
+.live-desk__day::before,
+.live-desk__error::before,
+.live-desk__loading-card::before,
+.live-desk__loading-day::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(72, 195, 255, 0), rgba(72, 195, 255, 0.34), rgba(255, 167, 92, 0));
+}
+
+.live-desk__lead-card,
+.live-desk__signal-card,
+.live-desk__error {
+  padding: 22px;
+}
+
+.live-desk__lead-card {
+  background:
+    radial-gradient(circle at 100% 0%, rgba(72, 195, 255, 0.12), transparent 34%),
+    linear-gradient(180deg, rgba(18, 27, 40, 0.98), rgba(8, 13, 21, 0.96));
+}
+
+.live-desk__lead-card strong,
+.live-desk__signal-card strong {
+  display: block;
+  margin-top: 14px;
+  font-family: var(--font-display);
+  font-size: clamp(1.35rem, 2vw, 1.95rem);
+  line-height: 1.08;
+  letter-spacing: -0.05em;
+  color: #f8fbff;
+}
+
+.live-desk__phase-pill {
+  margin-top: 18px;
+  flex-wrap: wrap;
+}
+
+.live-desk__rail {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin-top: 14px;
+}
+
+.live-desk__day {
+  padding: 18px;
+}
+
+.live-desk__day strong {
+  display: block;
+  margin-top: 12px;
+  font-size: 1.6rem;
+}
+
+.live-desk__day-score {
+  display: block;
+  margin-top: 10px;
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  letter-spacing: -0.04em;
+  color: #f6fbff;
+}
+
+.live-desk__day--strong {
+  border-color: rgba(75, 211, 255, 0.22);
+}
+
+.live-desk__day--steady {
+  border-color: rgba(122, 154, 185, 0.18);
+}
+
+.live-desk__day--watch {
+  border-color: rgba(255, 167, 92, 0.2);
+}
+
+.live-desk__loading {
+  display: grid;
+  gap: 14px;
+}
+
+.live-desk__loading-card {
+  min-height: 176px;
+}
+
+.live-desk__loading-rail {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.live-desk__loading-day {
+  min-height: 150px;
+}
+
+@media (max-width: 1180px) {
+  .live-desk__header,
+  .live-desk__board,
+  .live-desk__rail,
+  .live-desk__loading-rail {
+    grid-template-columns: 1fr;
+  }
+
+  .live-desk__header {
+    display: block;
+  }
+
+  .live-desk__status-row {
+    justify-content: flex-start;
+    margin-top: 16px;
+  }
+}
+
+@media (max-width: 760px) {
+  .live-desk__lead-card,
+  .live-desk__signal-card,
+  .live-desk__day,
+  .live-desk__error,
+  .live-desk__loading-card,
+  .live-desk__loading-day {
+    border-radius: 20px;
+  }
+}

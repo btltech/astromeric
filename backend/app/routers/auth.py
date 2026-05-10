@@ -3,17 +3,20 @@ API v2 - Auth Endpoints
 Standardized authentication endpoints with JWT tokens.
 """
 
+import json
 import os
 import uuid
 from datetime import timedelta
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, status
 from jose import JWTError
 from jose import jwt as jose_jwt
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
+
+import logging
 
 from ..auth import (
     ACCESS_TOKEN_EXPIRE_MINUTES,
@@ -25,6 +28,9 @@ from ..auth import (
     get_current_user,
     get_user_by_email,
 )
+from ..middleware.rate_limit import login_limiter, password_reset_limiter, register_limiter
+
+logger = logging.getLogger(__name__)
 from ..models import (
     DeviceToken,
     Favourite,
@@ -62,6 +68,48 @@ class TokenResponse(BaseModel):
     user: UserInfo
 
 
+class LocalProfilePayload(BaseModel):
+    """Device-local profile payload for Railway sync."""
+
+    id: Optional[int] = None
+    name: str
+    date_of_birth: str
+    time_of_birth: Optional[str] = None
+    place_of_birth: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    timezone: Optional[str] = None
+    house_system: Optional[str] = None
+
+
+class LocalReadingProfilePayload(BaseModel):
+    """Profile identity carried alongside a local reading."""
+
+    name: str
+    date_of_birth: str
+    time_of_birth: Optional[str] = None
+    timezone: Optional[str] = None
+    place_of_birth: Optional[str] = None
+
+
+class LocalReadingPayload(BaseModel):
+    """Anonymous/local reading payload for Railway sync."""
+
+    scope: str = Field(
+        ..., pattern="^(daily|weekly|monthly|forecast|compatibility|natal|year-ahead)$"
+    )
+    date: str
+    profile: Optional[LocalReadingProfilePayload] = None
+    content: Any
+
+
+class MigrateLocalDataRequest(BaseModel):
+    """Bulk sync request for device-local profiles and readings."""
+
+    profiles: List[LocalProfilePayload] = Field(default_factory=list)
+    readings: List[LocalReadingPayload] = Field(default_factory=list)
+
+
 def get_db():
     """Get database session."""
     db = SessionLocal()
@@ -69,6 +117,52 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
+def _profile_signature(
+    name: str,
+    date_of_birth: str,
+    time_of_birth: Optional[str] = None,
+    place_of_birth: Optional[str] = None,
+) -> tuple[str, str, str, str]:
+    return (
+        name.strip().lower(),
+        date_of_birth,
+        (time_of_birth or "").strip(),
+        (place_of_birth or "").strip().lower(),
+    )
+
+
+def _profile_data_quality(
+    latitude: Optional[float], longitude: Optional[float], time_of_birth: Optional[str]
+) -> str:
+    has_location = latitude is not None and longitude is not None
+    has_time = bool(time_of_birth)
+
+    if has_location and has_time:
+        return "full"
+    if has_location:
+        return "date_and_place"
+    return "date_only"
+
+
+def _apply_profile_updates(profile: Profile, payload: LocalProfilePayload) -> None:
+    if not profile.time_of_birth and payload.time_of_birth:
+        profile.time_of_birth = payload.time_of_birth
+        profile.time_confidence = "exact"
+    if not profile.place_of_birth and payload.place_of_birth:
+        profile.place_of_birth = payload.place_of_birth
+    if profile.latitude is None and payload.latitude is not None:
+        profile.latitude = payload.latitude
+    if profile.longitude is None and payload.longitude is not None:
+        profile.longitude = payload.longitude
+    if (not profile.timezone or profile.timezone == "UTC") and payload.timezone:
+        profile.timezone = payload.timezone
+    if not profile.house_system and payload.house_system:
+        profile.house_system = payload.house_system
+    profile.data_quality = _profile_data_quality(
+        profile.latitude, profile.longitude, profile.time_of_birth
+    )
 
 
 # Apple Sign-In configuration
@@ -129,10 +223,10 @@ def verify_apple_token(identity_token: str, keys: Dict) -> Optional[Dict]:
 
         return claims
     except JWTError as e:
-        print(f"Apple token verification failed: {e}")
+        logger.warning("Apple token verification failed: %s", e)
         return None
     except Exception as e:
-        print(f"Apple token verification error: {e}")
+        logger.error("Apple token verification error: %s", e)
         return None
 
 
@@ -242,7 +336,7 @@ async def apple_sign_in(request: AppleAuthRequest, db: Session = Depends(get_db)
 
 
 @router.post("/register", response_model=ApiResponse[TokenResponse])
-def register(user_data: UserCreate, db: Session = Depends(get_db)):
+def register(request: Request, user_data: UserCreate, db: Session = Depends(get_db)):
     """
     Register a new user account.
 
@@ -252,6 +346,13 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
     ## Response
     Returns JWT token and user info on successful registration.
     """
+    allowed, headers = register_limiter.is_allowed(request)
+    if not allowed:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Too many registration attempts. Please wait and try again.",
+            headers=headers,
+        )
     existing_user = get_user_by_email(db, user_data.email)
     if existing_user:
         raise HTTPException(
@@ -275,13 +376,20 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
 
 
 @router.post("/login", response_model=ApiResponse[TokenResponse])
-def login(user_data: UserLogin, db: Session = Depends(get_db)):
+def login(request: Request, user_data: UserLogin, db: Session = Depends(get_db)):
     """
     Authenticate user and return JWT token.
 
     ## Rate Limit
     5 requests per minute to prevent brute force attacks.
     """
+    allowed, headers = login_limiter.is_allowed(request)
+    if not allowed:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Too many login attempts. Please wait and try again.",
+            headers=headers,
+        )
     user = authenticate_user(db, user_data.email, user_data.password)
     if not user:
         raise HTTPException(
@@ -313,6 +421,142 @@ def get_me(current_user: User = Depends(get_current_user)):
         data=UserInfo(
             id=current_user.id, email=current_user.email, is_paid=current_user.is_paid
         ),
+    )
+
+
+@router.post("/migrate-local-data", response_model=ApiResponse[Dict[str, Any]])
+def migrate_local_data(
+    req: MigrateLocalDataRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Sync device-local profiles and readings into the authenticated Railway account."""
+
+    user_profiles = db.query(Profile).filter(Profile.user_id == current_user.id).all()
+    profiles_by_signature = {
+        _profile_signature(
+            profile.name,
+            profile.date_of_birth,
+            profile.time_of_birth,
+            profile.place_of_birth,
+        ): profile
+        for profile in user_profiles
+    }
+    profile_id_map: Dict[str, int] = {}
+    created_profiles = 0
+    created_readings = 0
+    skipped_readings = 0
+
+    for payload in req.profiles:
+        signature = _profile_signature(
+            payload.name,
+            payload.date_of_birth,
+            payload.time_of_birth,
+            payload.place_of_birth,
+        )
+        profile = profiles_by_signature.get(signature)
+
+        if profile is None:
+            profile = Profile(
+                name=payload.name,
+                date_of_birth=payload.date_of_birth,
+                time_of_birth=payload.time_of_birth,
+                time_confidence="exact" if payload.time_of_birth else "unknown",
+                place_of_birth=payload.place_of_birth,
+                latitude=payload.latitude,
+                longitude=payload.longitude,
+                timezone=payload.timezone or "UTC",
+                house_system=payload.house_system or "Placidus",
+                data_quality=_profile_data_quality(
+                    payload.latitude, payload.longitude, payload.time_of_birth
+                ),
+                user_id=current_user.id,
+            )
+            db.add(profile)
+            db.flush()
+            profiles_by_signature[signature] = profile
+            created_profiles += 1
+        else:
+            _apply_profile_updates(profile, payload)
+
+        if payload.id is not None:
+            profile_id_map[str(payload.id)] = profile.id
+
+    def resolve_profile_for_reading(reading: LocalReadingPayload) -> Optional[Profile]:
+        if reading.profile:
+            signature = _profile_signature(
+                reading.profile.name,
+                reading.profile.date_of_birth,
+                reading.profile.time_of_birth,
+                reading.profile.place_of_birth,
+            )
+            existing_profile = profiles_by_signature.get(signature)
+            if existing_profile is not None:
+                return existing_profile
+
+            fallback_profile = Profile(
+                name=reading.profile.name,
+                date_of_birth=reading.profile.date_of_birth,
+                time_of_birth=reading.profile.time_of_birth,
+                time_confidence="exact" if reading.profile.time_of_birth else "unknown",
+                place_of_birth=reading.profile.place_of_birth,
+                timezone=reading.profile.timezone or "UTC",
+                house_system="Placidus",
+                data_quality=_profile_data_quality(None, None, reading.profile.time_of_birth),
+                user_id=current_user.id,
+            )
+            db.add(fallback_profile)
+            db.flush()
+            profiles_by_signature[signature] = fallback_profile
+            return fallback_profile
+
+        if req.profiles:
+            first_profile = req.profiles[0]
+            if first_profile.id is not None:
+                mapped_id = profile_id_map.get(str(first_profile.id))
+                if mapped_id is not None:
+                    return db.query(Profile).filter(Profile.id == mapped_id).first()
+
+        return None
+
+    for reading in req.readings:
+        profile = resolve_profile_for_reading(reading)
+        if profile is None:
+            skipped_readings += 1
+            continue
+
+        existing_reading = (
+            db.query(Reading)
+            .filter(
+                Reading.profile_id == profile.id,
+                Reading.scope == reading.scope,
+                Reading.date == reading.date,
+            )
+            .first()
+        )
+        if existing_reading is not None:
+            continue
+
+        db.add(
+            Reading(
+                profile_id=profile.id,
+                scope=reading.scope,
+                date=reading.date,
+                content=json.dumps(reading.content, default=str),
+            )
+        )
+        created_readings += 1
+
+    db.commit()
+
+    return ApiResponse(
+        status=ResponseStatus.SUCCESS,
+        data={
+            "migrated_profile_count": created_profiles,
+            "migrated_reading_count": created_readings,
+            "skipped_reading_count": skipped_readings,
+            "profile_id_map": profile_id_map,
+        },
     )
 
 
@@ -434,13 +678,20 @@ class ResetPasswordRequest(BaseModel):
 
 
 @router.post("/forgot-password", response_model=ApiResponse[Dict[str, Any]])
-def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(get_db)):
+def forgot_password(http_request: Request, request: ForgotPasswordRequest, db: Session = Depends(get_db)):
     """
     Request a password reset email.
 
     Sends an email with a reset link if the email exists.
     Always returns success to prevent email enumeration.
     """
+    allowed, headers = password_reset_limiter.is_allowed(http_request)
+    if not allowed:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Too many password reset requests. Please wait and try again.",
+            headers=headers,
+        )
     from ..email_service import generate_reset_token, send_password_reset_email
 
     user = get_user_by_email(db, request.email)

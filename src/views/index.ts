@@ -1,8 +1,7 @@
 export { ReadingView } from './ReadingView';
-export { NumerologyView } from './NumerologyView';
-export { CompatibilityView } from './CompatibilityView';
-export { LearnView } from './LearnView';
-export { AuthView } from './AuthView';
-export { ProfileView } from './ProfileView';
-export { ChartViewPage } from './ChartViewPage';
-export { CosmicToolsView } from './CosmicToolsView';
+export { HomeSupportView } from './HomeSupportView';
+export { default as LearnView } from './LearnView';
+export { default as ProfileView } from './ProfileView';
+export { default as ChartViewPage } from './ChartViewPage';
+export { default as CosmicToolsView } from './CosmicToolsView';
+export { default as RelationshipsView } from './RelationshipsView';

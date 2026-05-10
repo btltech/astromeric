@@ -22,12 +22,12 @@ export function useReading() {
   } = useStore();
 
   const getPrediction = useCallback(
-    async (profileId: number) => {
+    async (profileId: number, profileOverride?: SavedProfile) => {
       // Find profile: check session profile first (negative ID), then saved profiles
-      let profile: SavedProfile | undefined;
-      if (sessionProfile && profileId < 0) {
+      let profile: SavedProfile | undefined = profileOverride;
+      if (!profile && sessionProfile && profileId < 0) {
         profile = sessionProfile;
-      } else {
+      } else if (!profile) {
         profile = profiles.find((p) => p.id === profileId);
       }
 
@@ -49,14 +49,13 @@ export function useReading() {
         const payload = {
           name: profile.name,
           date_of_birth: profile.date_of_birth,
-          time_of_birth: profile.time_of_birth || undefined,
-          location: hasCoordinates
-            ? {
-                latitude: profile.latitude as number,
-                longitude: profile.longitude as number,
-                timezone: profile.timezone || 'UTC',
-              }
-            : undefined,
+          time_of_birth: profile.time_of_birth || '12:00:00',
+          place_of_birth: profile.place_of_birth || undefined,
+          location: {
+            latitude: hasCoordinates ? (profile.latitude as number) : 0,
+            longitude: hasCoordinates ? (profile.longitude as number) : 0,
+            timezone: profile.timezone || 'UTC',
+          },
           house_system: profile.house_system || 'Placidus',
         };
 

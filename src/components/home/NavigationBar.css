@@ -1,0 +1,243 @@
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  padding: 10px 16px 0;
+}
+
+.topbar__inner {
+  position: relative;
+  width: min(1180px, calc(100vw - 32px));
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+  border-radius: 22px;
+  border: 1px solid rgba(118, 148, 181, 0.18);
+  background: rgba(7, 15, 24, 0.88);
+  backdrop-filter: blur(18px);
+  box-shadow: 0 20px 42px rgba(2, 8, 18, 0.28);
+}
+
+.topbar__brand-block {
+  min-width: 0;
+}
+
+.topbar__brand {
+  font-family: var(--font-display);
+  font-size: clamp(1.2rem, 2vw, 1.55rem);
+  font-weight: 700;
+  letter-spacing: -0.05em;
+  color: #f7fbff;
+  text-decoration: none;
+}
+
+.topbar__brand span {
+  color: var(--primary);
+}
+
+.topbar__tagline {
+  margin: 4px 0 0;
+  color: rgba(233, 241, 248, 0.82);
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.topbar__nav,
+.topbar__nav-links,
+.topbar__utility,
+.topbar__mobile-utility {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.topbar__nav {
+  justify-content: center;
+  min-width: 0;
+}
+
+.topbar__nav-links {
+  flex-wrap: nowrap;
+  justify-content: center;
+  min-width: 0;
+}
+
+.topbar__link,
+.topbar__utility-link,
+.topbar__toggle {
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(118, 148, 181, 0.14);
+  background: rgba(11, 18, 28, 0.88);
+  color: rgba(236, 243, 249, 0.82);
+  text-decoration: none;
+  font-size: 0.92rem;
+  font-weight: 600;
+  transition:
+    transform 160ms var(--ease-out),
+    border-color 160ms var(--ease-out),
+    background 160ms var(--ease-out),
+    color 160ms var(--ease-out);
+}
+
+.topbar__link:focus-visible,
+.topbar__utility-link:focus-visible,
+.topbar__toggle:focus-visible {
+  outline: 2px solid rgba(76, 207, 255, 0.95);
+  outline-offset: 3px;
+}
+
+.topbar__link:hover,
+.topbar__utility-link:hover,
+.topbar__toggle:hover {
+  transform: translateY(-1px);
+  border-color: rgba(65, 200, 255, 0.26);
+  color: #f7fbff;
+}
+
+.topbar__link--active {
+  background: rgba(16, 34, 54, 0.92);
+  border-color: rgba(65, 200, 255, 0.26);
+  color: #f7fbff;
+}
+
+.topbar__utility {
+  justify-content: flex-end;
+}
+
+.topbar__utility-link {
+  background: transparent;
+}
+
+.topbar__utility-link--active {
+  background: rgba(31, 50, 71, 0.72);
+  border-color: rgba(255, 201, 138, 0.24);
+}
+
+.topbar__toggle {
+  display: none;
+  justify-self: end;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.topbar__mobile-utility {
+  display: none;
+}
+
+@media (max-width: 1040px) {
+  .topbar__inner {
+    grid-template-columns: auto 1fr;
+  }
+
+  .topbar__utility {
+    display: none;
+  }
+
+  .topbar__nav {
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .topbar__nav::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@media (max-width: 860px) {
+  .topbar {
+    padding: 10px 10px 0;
+  }
+
+  .topbar__inner {
+    width: calc(100vw - 20px);
+    grid-template-columns: auto auto;
+    gap: 12px;
+  }
+
+  .topbar__tagline {
+    font-size: 0.84rem;
+  }
+
+  .topbar__toggle {
+    display: inline-flex;
+    width: auto;
+    justify-content: center;
+  }
+
+  .topbar__nav {
+    position: absolute;
+    top: calc(100% + 10px);
+    left: 0;
+    right: 0;
+    display: none;
+    overflow: visible;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    padding: 12px;
+    border-radius: 20px;
+    border: 1px solid rgba(118, 148, 181, 0.18);
+    background: rgba(7, 15, 24, 0.96);
+    backdrop-filter: blur(18px);
+    box-shadow: 0 18px 36px rgba(2, 8, 18, 0.26);
+  }
+
+  .topbar__nav--open {
+    display: flex;
+  }
+
+  .topbar__nav-links,
+  .topbar__mobile-utility {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .topbar__mobile-utility {
+    display: flex;
+    padding-top: 8px;
+    border-top: 1px solid rgba(118, 148, 181, 0.14);
+  }
+
+  .topbar__link,
+  .topbar__utility-link,
+  .topbar__toggle {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 560px) {
+  .topbar__inner {
+    padding: 11px 13px;
+  }
+
+  .topbar__tagline {
+    display: none;
+  }
+
+  .topbar__brand {
+    font-size: 1.48rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .topbar__link,
+  .topbar__utility-link,
+  .topbar__toggle {
+    transition: none;
+  }
+
+  .topbar__link:hover,
+  .topbar__utility-link:hover,
+  .topbar__toggle:hover {
+    transform: none;
+  }
+}
