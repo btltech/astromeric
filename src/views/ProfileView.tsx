@@ -87,10 +87,10 @@ export function ProfileView() {
               </div>
               <p className="product-desk__note">
                 {activeProfileSource === 'session'
-                  ? 'This browser-session profile is active across the route shell, but it still needs a saved copy before cloud sync can move it into Railway.'
+                  ? 'This is a session profile. Save it to keep it across browser sessions.'
                   : activeProfileSource === 'local'
-                    ? 'This profile is saved locally on this device, which makes it portable across routes and ready for Railway sync when the account layer is connected.'
-                    : 'This profile is backend-backed and already participates in the Railway-connected path.'}
+                    ? 'This profile is saved on your device. Sign in to sync it across devices.'
+                    : 'This profile is saved to your account and available across devices.'}
               </p>
             </div>
           ) : (

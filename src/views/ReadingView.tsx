@@ -152,20 +152,20 @@ export function ReadingView() {
   }, [selectedProfile]);
   const profilePersistenceNote = useMemo(() => {
     if (!selectedProfile) {
-      return 'Session-only profiles now survive reloads in this browser session. Save them on this device if you want them queued for Railway sync.';
+      return 'Create a profile to unlock your daily reading, birth chart, and compatibility.';
     }
 
     if (sessionProfile) {
-      return 'This browser-session profile survives reloads here, but Railway sync ignores it until you save it on this device.';
+      return 'This is a session profile. Save it to keep it across browser sessions.';
     }
 
     if (selectedProfile.id < 0) {
       return isAuthenticated
-        ? 'This profile is saved on this device and is ready to move into Railway the next time you sync.'
-        : 'This profile is saved on this device and will be ready to sync once you connect Railway.';
+        ? 'This profile is saved on your device. Sign in to sync it to your account.'
+        : 'This profile is saved on your device.';
     }
 
-    return 'This profile already belongs to your Railway account and can follow you across devices.';
+    return 'This profile is saved to your account and available across devices.';
   }, [isAuthenticated, selectedProfile, sessionProfile]);
   const profileReadinessNote = useMemo(() => {
     if (!selectedProfile) {
@@ -202,7 +202,7 @@ export function ReadingView() {
     }
 
     if (sessionProfile) {
-      return 'The active profile is browser-session only for now. Save it on this device before expecting Railway sync or cross-device access.';
+      return 'Sign in to save your profile and access it from any device.';
     }
 
     return 'Sign in to keep your profiles and readings across devices.';
@@ -217,25 +217,25 @@ export function ReadingView() {
     }
 
     if (sessionProfile) {
-      return 'Railway cloud sync is active, but the active profile is still browser-session only until you save it on this device.';
+      return 'Cloud sync is active. Save your profile to include it in future syncs.';
     }
 
-    return 'Railway cloud sync is active. New saved profiles and cloud-history readings now target the backend.';
+    return 'Cloud sync is active. New saved profiles and readings will sync to your account.';
   }, [hasPendingRailwaySync, localProfileCount, readingCount, sessionProfile]);
   const connectedAccountNote = useMemo(() => {
     if (sessionProfile) {
       return hasPendingRailwaySync
-        ? 'Sync now to move device-local readings into Railway. The active browser-session profile itself still needs a saved copy.'
-        : 'Cloud history is active, but the active browser-session profile still needs a saved copy before it can move into Railway.';
+        ? 'Sync now to save your readings to your account. Save your session profile first to include it.'
+        : 'Cloud sync is active. Save your session profile to include it in future syncs.';
     }
 
     if (hasPendingRailwaySync) {
-      return 'Sync now to move device-local profiles and readings into your Railway account.';
+      return 'Sync now to save your local profiles and readings to your account.';
     }
 
     return allowCloudHistory
-      ? 'Cloud history is active, so future saved readings can go straight to Railway.'
-      : 'Cloud history is off, so future readings stay local until you switch it back on in the profile panel.';
+      ? 'Cloud history is active. Future readings will save to your account.'
+      : 'Cloud history is off. Readings stay on this device until you turn it back on.';
   }, [allowCloudHistory, hasPendingRailwaySync, sessionProfile]);
   const trimmedAuthEmail = authEmail.trim();
   const trimmedAuthPassword = authPassword.trim();
@@ -259,7 +259,7 @@ export function ReadingView() {
         {
           label: 'Cloud history',
           value: allowCloudHistory ? 'On' : 'Off',
-          detail: allowCloudHistory ? 'future saves can target Railway' : 'future saves stay local',
+          detail: allowCloudHistory ? 'future readings save to your account' : 'readings save to this device only',
         },
       ];
     }
@@ -268,17 +268,17 @@ export function ReadingView() {
       {
         label: 'Local profiles',
         value: String(localProfileCount),
-        detail: localProfileCount ? 'waiting on this device' : 'none queued yet',
+        detail: localProfileCount ? 'waiting to sync' : 'nothing to sync',
       },
       {
         label: 'Local readings',
         value: String(readingCount),
-        detail: readingCount ? 'waiting on this device' : 'none queued yet',
+        detail: readingCount ? 'waiting to sync' : 'nothing to sync',
       },
       {
-        label: 'After connect',
+        label: 'After sign in',
         value: 'Cloud',
-        detail: 'future saved readings can target Railway',
+        detail: 'syncs to your account automatically',
       },
     ];
   }, [allowCloudHistory, isAuthenticated, localProfileCount, readingCount]);
@@ -473,17 +473,17 @@ export function ReadingView() {
               <article className="reading-hero__stat">
                 <span>Streak</span>
                 <strong>{streakCount}</strong>
-                <p>Daily return rhythm carried over from the shared store.</p>
+                <p>Days in a row you've opened your reading.</p>
               </article>
               <article className="reading-hero__stat">
                 <span>Profiles</span>
                 <strong>{profiles.length}</strong>
-                <p>Saved profiles synced from the backend when authentication is active.</p>
+                <p>Birth profiles saved to your account.</p>
               </article>
               <article className="reading-hero__stat">
                 <span>Recent reads</span>
                 <strong>{readingCount}</strong>
-                <p>Session and anonymous history stays available locally.</p>
+                <p>Readings stored in this session.</p>
               </article>
             </div>
 
@@ -609,7 +609,7 @@ export function ReadingView() {
                       </label>
                     ) : (
                       <p className="reading-helper-copy">
-                        Saved profiles stay on this device until authentication is connected for cloud sync.
+                        Profiles saved on this device are kept here. Sign in to sync them to your account.
                       </p>
                     )}
                   </div>
@@ -619,8 +619,8 @@ export function ReadingView() {
 
             <section className="reading-panel">
               <div className="reading-panel__header">
-                <span>Recent local history</span>
-                <strong>Useful continuity while account flows are still thin</strong>
+                <span>Reading history</span>
+                <strong>Your recent readings</strong>
               </div>
 
               <div className="reading-history-summary">
@@ -628,7 +628,7 @@ export function ReadingView() {
                   <article className="reading-history-summary__metric">
                     <span>Stored locally</span>
                     <strong>{readingCount}</strong>
-                    <p>{readingCount ? 'waiting on this browser' : 'no readings buffered yet'}</p>
+                    <p>{readingCount ? 'saved on this device' : 'No readings yet'}</p>
                   </article>
 
                   <article className="reading-history-summary__metric">
@@ -758,9 +758,9 @@ export function ReadingView() {
                   </div>
 
                   <div className="reading-account-benefits">
-                    <span className="reading-account-benefit">Migrate device-local profiles into Railway</span>
-                    <span className="reading-account-benefit">Keep reading history beyond this browser</span>
-                    <span className="reading-account-benefit">Enable cloud history for future saves</span>
+                    <span className="reading-account-benefit">Keep your profiles across devices</span>
+                    <span className="reading-account-benefit">Access your reading history anywhere</span>
+                    <span className="reading-account-benefit">Save readings to your account</span>
                   </div>
 
                   <label className="reading-account-field">
