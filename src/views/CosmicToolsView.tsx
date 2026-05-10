@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { CosmicGuideChat } from '../components/CosmicGuideChat';
+
 import { DailyFeaturesCard } from '../components/DailyFeaturesCard';
 import { DocumentMeta } from '../components/DocumentMeta';
 import { MoonPhaseCard } from '../components/MoonPhaseCard';
@@ -185,11 +185,7 @@ export function CosmicToolsView() {
           </div>
         </article>
 
-        <article className="product-desk__panel product-desk__panel--full">
-          <div className="tools-content">
-            <CosmicGuideChat />
-          </div>
-        </article>
+
       </section>
     </div>
   );
