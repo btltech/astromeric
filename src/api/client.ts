@@ -805,8 +805,13 @@ export function fetchCurrentMoonPhase() {
 }
 
 export function fetchUpcomingMoonEvents(days: number = 30) {
-  return apiFetch<MoonEvent[]>(`/v2/moon/upcoming?days=${days}`, {
+  return apiFetch<ApiResponse<{ events: MoonEvent[]; days_ahead: number }>>(`/v2/moon/upcoming?days=${days}`, {
     method: 'GET',
+  }).then((response) => {
+    if (response.status === 'success' && response.data) {
+      return response.data.events ?? [];
+    }
+    throw new Error(response.message || 'Failed to fetch upcoming moon events');
   });
 }
 

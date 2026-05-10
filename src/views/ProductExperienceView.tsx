@@ -704,10 +704,10 @@ export function ProductExperienceView() {
         >
           <div className="experience-hero__copy">
             <span className="experience-label">Charts desk</span>
-            <h1>AstroNumeric can turn natal, numerology, and compatibility into a real chart desk instead of a demo surface.</h1>
+            <h1>Your birth chart, numerology, and compatibility — in one place.</h1>
             <p>
-              This route is now backed by the live profile, natal chart, numerology, compatibility, and weekly forecast feeds.
-              It should read like the product's chart center of gravity, not a generic experience sandbox.
+              Everything calculated from your active profile. Scroll to explore your natal chart, core numbers,
+              relationship compatibility, and more.
             </p>
 
             <div className="experience-hero__actions">
