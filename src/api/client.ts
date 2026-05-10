@@ -585,26 +585,6 @@ export function askOracle(question: string, birthDate?: string) {
   });
 }
 
-// ========== MOOD FORECAST API ==========
-
-export interface MoodForecastResponse {
-  date: string;
-  overall_mood: string;
-  energy_level: string;
-  social_vibe: string;
-  creative_flow: string;
-  focus_areas: string[];
-  caution: string;
-  best_hours: string;
-}
-
-export function fetchMoodForecast(sunSign: string, moonSign?: string) {
-  return apiFetch<MoodForecastResponse>('/forecast/mood', {
-    method: 'POST',
-    body: JSON.stringify({ sun_sign: sunSign, moon_sign: moonSign }),
-  });
-}
-
 export interface QuickInsightResponse {
   insight: string;
 }
@@ -760,23 +740,6 @@ export function fetchLearningGlossary(search?: string, category?: string) {
     hasNext: response.has_next,
     hasPrev: response.has_prev,
   }));
-}
-
-export interface SearchResult {
-  module: string;
-  key: string;
-  content: Record<string, unknown>;
-}
-
-export interface SearchLearningResponse {
-  results: SearchResult[];
-}
-
-export function searchLearning(query: string) {
-  return apiFetch<SearchLearningResponse>('/v2/learning/search', {
-    method: 'POST',
-    body: JSON.stringify({ query }),
-  });
 }
 
 // ========== YEAR-AHEAD FORECAST API ==========
@@ -1146,35 +1109,6 @@ export function fetchLunarHabitGuidance() {
   });
 }
 
-/**
- * Get guidance for a specific moon phase
- */
-export function fetchPhaseGuidance(phase: string) {
-  return apiFetch<LunarHabitGuidance>(`/v2/habits/phase/${phase}`, {
-    method: 'GET',
-  });
-}
-
-/**
- * Check habit alignment with current moon phase
- */
-export function fetchHabitAlignment(category: string, moon_phase: string) {
-  const params = new URLSearchParams({ category, moon_phase });
-  return apiFetch<LunarAlignment>(`/v2/habits/alignment?${params.toString()}`, {
-    method: 'GET',
-  });
-}
-
-/**
- * Get habit recommendations based on current moon phase
- */
-export function fetchHabitRecommendations(moon_phase: string) {
-  return apiFetch<{ recommendations: HabitRecommendation[]; phase_info: LunarHabitGuidance }>(
-    `/v2/habits/recommendations?moon_phase=${moon_phase}`,
-    { method: 'GET' }
-  );
-}
-
 export interface CreateHabitRequest {
   name: string;
   category: string;
@@ -1209,47 +1143,6 @@ export function logHabitCompletion(habit_id: number, moon_phase: string, notes?:
   );
 }
 
-/**
- * Calculate habit streak
- */
-export function fetchHabitStreak(
-  completions: Array<{ date: string }>,
-  frequency: 'daily' | 'weekly' | 'lunar_cycle' = 'daily'
-) {
-  return apiFetch<HabitStreak>(`/v2/habits/streak?frequency=${frequency}`, {
-    method: 'POST',
-    body: JSON.stringify({ completions }),
-  });
-}
-
-/**
- * Get today's habit forecast
- */
-export function fetchTodayHabitForecast(
-  habits: Habit[],
-  moon_phase: string,
-  completions_today?: number[]
-) {
-  return apiFetch<HabitForecast>(`/v2/habits/today?moon_phase=${moon_phase}`, {
-    method: 'POST',
-    body: JSON.stringify({ habits, completions_today }),
-  });
-}
-
-/**
- * Get lunar cycle report
- */
-export function fetchLunarCycleReport(
-  habits: Habit[],
-  completions: HabitCompletion[],
-  cycle_days: number = 29
-) {
-  return apiFetch<LunarCycleReport>(`/habits/lunar-report?cycle_days=${cycle_days}`, {
-    method: 'POST',
-    body: JSON.stringify({ habits, completions }),
-  });
-}
-
 // ========== V2 DAILY FEATURES API ==========
 
 export interface ForecastDay {
@@ -1269,7 +1162,7 @@ export async function fetchWeeklyForecast(
 ): Promise<WeeklyForecastResponse> {
   const result = await apiFetch<ApiResponse<WeeklyForecastResponse>>('/v2/daily/forecast', {
     method: 'POST',
-    body: JSON.stringify(profile),
+    body: JSON.stringify(toFlatProfilePayload(profile)),
   });
   if (result.status === 'success' && result.data) {
     return result.data;
