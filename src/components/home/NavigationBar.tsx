@@ -20,6 +20,22 @@ const utilityLinks = [
 export function NavigationBar() {
   const location = useLocation();
   const [menuOpen, setMenuOpen] = React.useState(false);
+  const [theme, setTheme] = React.useState<'dark' | 'light'>(() => {
+    return (localStorage.getItem('astromeric_theme') as 'dark' | 'light') || 'dark';
+  });
+
+  React.useEffect(() => {
+    if (theme === 'light') {
+      document.documentElement.setAttribute('data-theme', 'light');
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+    }
+    localStorage.setItem('astromeric_theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme((t) => (t === 'light' ? 'dark' : 'light'));
+  };
 
   React.useEffect(() => {
     setMenuOpen(false);
@@ -98,6 +114,13 @@ export function NavigationBar() {
                 {link.label}
               </NavLink>
             ))}
+            <button 
+              className="topbar__theme-toggle" 
+              onClick={toggleTheme}
+              aria-label="Toggle theme"
+            >
+              {theme === 'light' ? '☾ Dark Mode' : '☀️ Light Mode'}
+            </button>
           </div>
         </nav>
 
@@ -113,6 +136,14 @@ export function NavigationBar() {
               {link.label}
             </NavLink>
           ))}
+          <button 
+            className="topbar__theme-toggle-icon" 
+            onClick={toggleTheme}
+            aria-label="Toggle theme"
+            title="Toggle theme"
+          >
+            {theme === 'light' ? '☾' : '☀️'}
+          </button>
         </div>
       </div>
     </header>

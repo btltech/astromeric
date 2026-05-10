@@ -87,7 +87,7 @@ export function DailyFeaturesCard({ birthDate, sunSign }: Props) {
           <span className="daily-meaning-value">{moodForecast?.mood ?? 'Steady'}</span>
           <span className="daily-meaning-note">
             {moodForecast?.description ??
-              'The live daily feature payload is partial right now, so this card is showing the safest fallback guidance.'}
+              'Your daily features are being calculated. Check back soon for deeper insights.'}
           </span>
         </div>
       </div>

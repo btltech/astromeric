@@ -127,14 +127,14 @@ function formatLocationLabel(profile: ProfilePayload) {
 
 function getPlanetInsightText(planet: LiveChartPlanet) {
   const baseCopy: Record<string, string> = {
-    Sun: 'Core identity should read like the lead operating theme, not background flavor.',
-    Moon: 'Emotional tone needs a clear, readable summary before the user opens the deeper interpretation.',
-    Mercury: 'Communication and decision style should surface as practical signal, not buried explanation.',
-    Venus: 'Relationship style deserves a fast read so the romantic route feels grounded and current.',
-    Mars: 'Action strategy is one of the clearest places to turn chart data into usable advice.',
+    Sun: 'Your core identity serves as the leading theme for your astrological makeup.',
+    Moon: 'Your emotional tone shapes how you process underlying feelings and reactions.',
+    Mercury: 'Your communication and decision style is a practical, everyday reflection of your intellect.',
+    Venus: 'Your relationship style defines your romantic and social connections in grounded ways.',
+    Mars: 'Your action strategy is one of the clearest indicators of how you turn energy into motion.',
   };
 
-  const base = baseCopy[planet.name] ?? 'This placement should be surfaced as a fast, trustworthy signal.';
+  const base = baseCopy[planet.name] ?? 'This placement serves as a clear, trustworthy signal in your chart.';
   return planet.retrograde ? `${base} Retrograde motion adds a more internal and reflective edge.` : base;
 }
 
@@ -195,7 +195,7 @@ function buildChartInsights(natalProfile: LiveNatalProfile | null): ExperienceIn
     return [
       {
         label: 'Chart feed unavailable',
-        text: 'The live natal payload did not resolve for this profile, so the chart desk cannot render yet.',
+        text: 'Your chart data is not yet available, so the chart preview cannot render yet.',
       },
     ];
   }
@@ -215,7 +215,7 @@ function buildChartInsights(natalProfile: LiveNatalProfile | null): ExperienceIn
   if (strongestAspect) {
     planetInsights.push({
       label: `${strongestAspect.planet_a} ${formatAspectType(strongestAspect.type)} ${strongestAspect.planet_b}`,
-      text: `A ${strongestAspect.orb.toFixed(1)}° orb makes this one of the clearest pressure points to surface as practical guidance instead of descriptive filler.`,
+      text: `A tight ${strongestAspect.orb.toFixed(1)}° orb makes this one of the most prominent connections in your chart, offering clear and practical guidance.`,
     });
   }
 
@@ -227,7 +227,7 @@ function buildChartQualityStates(natalProfile: LiveNatalProfile | null): ChartQu
     return [
       {
         label: 'Chart feed unavailable',
-        message: 'The live natal payload did not resolve for this profile, so the trust cues are waiting on fresh chart data.',
+        message: 'Your chart data is not yet available, so the trust cues are waiting on fresh chart data.',
         tone: 'warning',
       },
     ];
@@ -239,7 +239,7 @@ function buildChartQualityStates(natalProfile: LiveNatalProfile | null): ChartQu
   if (metadata.location_assumed) {
     states.push({
       label: 'Location missing',
-      message: 'Birth location is missing, so houses and rising sign are using fallback coordinates until the profile is completed.',
+      message: 'Birth location is missing, so an estimated location is being used for your houses and rising sign.',
       tone: 'warning',
     });
   } else if (metadata.birth_time_assumed) {
@@ -297,7 +297,7 @@ function buildBigThreeSignals(natalProfile: LiveNatalProfile | null): BigThreeSi
       value: risingSign ? `${risingSign} rising` : 'Pending',
       reliability: risingSign
         ? metadata?.location_assumed
-          ? 'Fallback coordinates in use'
+          ? 'Estimated location in use'
           : metadata?.birth_time_assumed
             ? 'Estimated from assumed time'
             : 'Confirmed placement'
@@ -324,32 +324,32 @@ function buildHeroSignals(
   return [
     {
       label: 'Signal of the day',
-      value: today ? `${today.icon} ${today.vibe}` : 'Loading live timing',
-      note: today?.recommendation ?? "Today's forecast will land here once the live feed returns.",
+      value: today ? `${today.icon} ${today.vibe}` : 'Loading daily timing',
+      note: today?.recommendation ?? "Your daily forecast will appear here once it is ready.",
     },
     {
       label: 'Chart focus',
-      value: sunPlacement ? `${sunPlacement.sign} Sun · House ${sunPlacement.house}` : 'Waiting for natal data',
+      value: sunPlacement ? `${sunPlacement.sign} Sun · House ${sunPlacement.house}` : 'Waiting for chart data',
       note: sunPlacement
-        ? 'The live natal chart now decides the lead chart signal on this route instead of sample copy.'
-        : 'The chart desk will surface the strongest live placement here.',
+        ? 'Your specific astrological placements dictate the strongest core signals shown here.'
+        : 'Your strongest personal chart placement will appear here.',
     },
     {
       label: 'Timing read',
       value: numerologyProfile ? `Year ${numerologyProfile.personal_year.cycle_number}` : 'Numerology loading',
       note:
         numerologyProfile?.personal_year.interpretation ??
-        'The live numerology cycle will supply the timing angle for this surface.',
+        'Your live numerology cycle will provide the timing insight for this desk.',
     },
     {
       label: 'Relationship board',
       value:
         overallCompatibility !== null
           ? `${overallCompatibility}% ${formatScore(overallCompatibility)}`
-          : 'Choose compare profile',
+          : 'Choose a profile to compare',
       note:
         compatibilityResult?.summary ??
-        'Pick a second saved profile to replace the preview fallback with a real compatibility pairing.',
+        'Pick a second saved profile to see real compatibility insights instead of preview text.',
     },
   ];
 }
@@ -1000,7 +1000,7 @@ export function ProductExperienceView() {
               <p className="experience-muted-copy">
                 {numerologyProfile?.synthesis?.summary ??
                   numerologyProfile?.life_path.meaning ??
-                  'The numerology desk will summarize the active profile once the live feed resolves.'}
+                  'Your numerology summary will appear here once your profile is analyzed.'}
               </p>
             </article>
 
@@ -1010,7 +1010,7 @@ export function ProductExperienceView() {
                 <strong>
                   {numerologyProfile
                     ? `Personal Year ${numerologyProfile.personal_year.cycle_number}`
-                    : 'Live cycle feed'}
+                    : 'Timing calculations'}
                 </strong>
               </div>
               <div className="experience-cycle-list">

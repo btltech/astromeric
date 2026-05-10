@@ -53,7 +53,7 @@ export function ProfileView() {
         <div className="product-desk__chips">
           <span className="product-desk__chip">Active profile</span>
           <span className="product-desk__chip">Local vs session vs cloud</span>
-          <span className="product-desk__chip">Railway status</span>
+          <span className="product-desk__chip">Sync status</span>
           <span className="product-desk__chip">Cross-route reuse</span>
         </div>
         <div className="product-desk__actions">
@@ -131,7 +131,7 @@ export function ProfileView() {
               <span className="product-desk__value">{localProfiles.length}</span>
             </div>
             <div className="product-desk__stat">
-              <span className="product-desk__label">Railway-backed</span>
+              <span className="product-desk__label">Cloud-backed</span>
               <span className="product-desk__value">{cloudProfiles.length}</span>
             </div>
           </div>
@@ -154,7 +154,7 @@ export function ProfileView() {
                   <span className="product-desk__meta">{formatProfileMeta(profile)}</span>
                 </div>
                 <span className="product-desk__badge">
-                  {profile.id < 0 ? 'Saved on device' : 'Railway-backed'}
+                  {profile.id < 0 ? 'Saved on device' : 'Cloud-backed'}
                 </span>
               </li>
             ))}

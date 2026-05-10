@@ -42,6 +42,29 @@
   --glow-color: var(--primary);
 }
 
+/* Theme: Light Mode (SaaS Clean) */
+[data-theme='light'] {
+  --bg-dark: #f0f4f8;
+  --surface: #ffffff;
+  --surface-tint: #e4ebf1;
+  --surface-1: #f8fafc;
+  --surface-2: #f1f5f9;
+  --surface-3: #e2e8f0;
+  --card-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 252, 0.94));
+  --card-border: rgba(15, 23, 42, 0.12);
+  --card-border-strong: rgba(15, 23, 42, 0.24);
+  --card-glow: rgba(15, 23, 42, 0.06);
+  --text: #071018;
+  --text-secondary: #1e293b;
+  --text-muted: #475569;
+  --text-dim: #64748b;
+  --primary: #0ea5e9;
+  --primary-glow: rgba(14, 165, 233, 0.15);
+  --secondary: #f59e0b;
+  --accent: #f97316;
+  --section-gradient: linear-gradient(135deg, rgba(14, 165, 233, 0.08), rgba(248, 250, 252, 0.88));
+}
+
 /* Theme: Ocean Depths (Teal + Sand) */
 [data-theme='ocean'] {
   --bg-dark: #0c1418;

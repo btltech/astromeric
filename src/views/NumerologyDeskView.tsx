@@ -103,14 +103,14 @@ export function NumerologyDeskView() {
       label: 'Lock the baseline',
       detail: numerologyProfile
         ? `Life Path ${numerologyProfile.life_path.number}, Destiny ${numerologyProfile.destiny_number}, and Personal Year ${numerologyProfile.personal_year.cycle_number} define the desk.`
-        : 'The core number set will appear here once the live numerology feed resolves.',
+        : 'Your core numbers will appear here once your profile is analyzed.',
     },
     {
       label: 'Read the current cycle',
       detail:
         numerologyProfile?.synthesis?.current_focus ??
         numerologyProfile?.personal_year.interpretation ??
-        'The active timing layer will surface the strongest current focus here.',
+        'Your strongest current numeric focus will appear here.',
     },
     {
       label: 'Carry the longer arc',
@@ -133,7 +133,7 @@ export function NumerologyDeskView() {
       value:
         numerologyProfile?.synthesis?.current_focus ??
         numerologyProfile?.personal_year.interpretation ??
-        'Current-cycle emphasis will surface here.',
+        'Current-cycle emphasis will appear here.',
     },
     {
       label: 'Affirmation',
@@ -226,7 +226,7 @@ export function NumerologyDeskView() {
           </div>
           <p className="product-desk__note">
             {numerologyProfile?.life_path.meaning ??
-              'The meaning attached to the lead number will surface here once the live numerology feed resolves.'}
+              'The meaning attached to your core numbers will appear here once your profile is analyzed.'}
           </p>
         </article>
 
@@ -264,7 +264,7 @@ export function NumerologyDeskView() {
         </article>
 
         <article className="product-desk__panel">
-          <h2>Luck surface</h2>
+          <h2>Lucky numbers</h2>
           <div className="product-desk__stack">
             <div>
               <span className="product-desk__label">Lucky numbers</span>
@@ -351,8 +351,8 @@ export function NumerologyDeskView() {
           ) : (
             <p className="product-desk__note">
               {loading
-                ? 'Checking the live numerology response for karmic debt markers.'
-                : 'No karmic debt markers are currently surfaced for this profile.'}
+                ? 'Checking for karmic debt markers...'
+                : 'No karmic debt markers are active for this profile.'}
             </p>
           )}
         </article>

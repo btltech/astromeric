@@ -105,12 +105,12 @@ export function HomeChartStrip() {
     : strongestAspect
       ? `Strongest aspect: ${strongestAspect.planet_a} ${formatAspectType(strongestAspect.type)} ${strongestAspect.planet_b}`
       : loading
-        ? 'Loading the live natal chart for this homepage strip.'
-        : 'Live chart signals will surface here once the natal payload resolves.';
+        ? 'Loading chart details...'
+        : 'Your core astrological influences will appear here once your profile is analyzed.';
 
   const cards = [
     {
-      label: 'Live chart desk',
+      label: 'Core influences',
       value: requestProfile.name,
       detail: `${sourceLabel} · ${liveLeadDetail}`,
     },

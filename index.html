@@ -100,6 +100,17 @@
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/index.tsx"></script>
-  </body>
+    <script type="module" src="/index.tsx"></script>    <script>
+      (function() {
+        try {
+          var theme = localStorage.getItem('astromeric_theme');
+          // If no theme in local storage, but they prefer light color scheme, you could do this:
+          // if (!theme && window.matchMedia('(prefers-color-scheme: light)').matches) theme = 'light';
+          
+          if (theme === 'light') {
+            document.documentElement.setAttribute('data-theme', 'light');
+          }
+        } catch (e) {}
+      })();
+    </script>  </body>
 </html>
