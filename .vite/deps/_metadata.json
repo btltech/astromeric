@@ -2,105 +2,117 @@
   "hash": "f37a6826",
   "configHash": "b40c570e",
   "lockfileHash": "dec65c87",
-  "browserHash": "5be41248",
+  "browserHash": "b8d42770",
   "optimized": {
     "framer-motion": {
       "src": "../../node_modules/framer-motion/dist/es/index.mjs",
       "file": "framer-motion.js",
-      "fileHash": "cf934fea",
+      "fileHash": "fd9ed184",
       "needsInterop": false
     },
     "html-to-image": {
       "src": "../../node_modules/html-to-image/es/index.js",
       "file": "html-to-image.js",
-      "fileHash": "c32488db",
+      "fileHash": "024abacd",
       "needsInterop": false
     },
     "i18next": {
       "src": "../../node_modules/i18next/dist/esm/i18next.js",
       "file": "i18next.js",
-      "fileHash": "e108a9d2",
+      "fileHash": "00f0e131",
       "needsInterop": false
     },
     "i18next-browser-languagedetector": {
       "src": "../../node_modules/i18next-browser-languagedetector/dist/esm/i18nextBrowserLanguageDetector.js",
       "file": "i18next-browser-languagedetector.js",
-      "fileHash": "11358a16",
+      "fileHash": "b4c66333",
       "needsInterop": false
     },
     "jspdf": {
       "src": "../../node_modules/jspdf/dist/jspdf.es.min.js",
       "file": "jspdf.js",
-      "fileHash": "48d1dbda",
+      "fileHash": "c1b2afda",
       "needsInterop": false
     },
     "qrcode.react": {
       "src": "../../node_modules/qrcode.react/lib/esm/index.js",
       "file": "qrcode__react.js",
-      "fileHash": "5ec66a38",
+      "fileHash": "5937688f",
       "needsInterop": false
     },
     "react": {
       "src": "../../node_modules/react/index.js",
       "file": "react.js",
-      "fileHash": "d107350e",
+      "fileHash": "b1c5784b",
       "needsInterop": true
     },
     "react-dom/client": {
       "src": "../../node_modules/react-dom/client.js",
       "file": "react-dom_client.js",
-      "fileHash": "dca76920",
+      "fileHash": "50959cfe",
       "needsInterop": true
     },
     "react-i18next": {
       "src": "../../node_modules/react-i18next/dist/es/index.js",
       "file": "react-i18next.js",
-      "fileHash": "c40a6206",
+      "fileHash": "d18d3798",
       "needsInterop": false
     },
     "react-markdown": {
       "src": "../../node_modules/react-markdown/index.js",
       "file": "react-markdown.js",
-      "fileHash": "8954b52c",
+      "fileHash": "33f848e3",
       "needsInterop": false
     },
     "react-router-dom": {
       "src": "../../node_modules/react-router-dom/dist/index.mjs",
       "file": "react-router-dom.js",
-      "fileHash": "f39838ee",
+      "fileHash": "7a902d8c",
       "needsInterop": false
     },
     "remark-gfm": {
       "src": "../../node_modules/remark-gfm/index.js",
       "file": "remark-gfm.js",
-      "fileHash": "23d78e26",
+      "fileHash": "b00807ac",
       "needsInterop": false
     },
     "zustand": {
       "src": "../../node_modules/zustand/esm/index.mjs",
       "file": "zustand.js",
-      "fileHash": "4d7eff02",
+      "fileHash": "881dd1d4",
       "needsInterop": false
     },
     "zustand/middleware": {
       "src": "../../node_modules/zustand/esm/middleware.mjs",
       "file": "zustand_middleware.js",
-      "fileHash": "e4f6a274",
+      "fileHash": "6ef1dae8",
       "needsInterop": false
+    },
+    "react/jsx-dev-runtime": {
+      "src": "../../node_modules/react/jsx-dev-runtime.js",
+      "file": "react_jsx-dev-runtime.js",
+      "fileHash": "d8cf6ee8",
+      "needsInterop": true
     }
   },
   "chunks": {
+    "purify.es-N56BLXLL": {
+      "file": "purify__es-N56BLXLL.js"
+    },
     "index.es-BYGUFUB5": {
       "file": "index__es-BYGUFUB5.js"
     },
-    "chunk-7JE7JXQT": {
-      "file": "chunk-7JE7JXQT.js"
+    "chunk-QFYBUIKB": {
+      "file": "chunk-QFYBUIKB.js"
+    },
+    "chunk-SITVF2AJ": {
+      "file": "chunk-SITVF2AJ.js"
     },
     "html2canvas.esm-G2ZJPYV4": {
       "file": "html2canvas__esm-G2ZJPYV4.js"
     },
-    "purify.es-N56BLXLL": {
-      "file": "purify__es-N56BLXLL.js"
+    "chunk-R5GCASJP": {
+      "file": "chunk-R5GCASJP.js"
     },
     "chunk-TNB6WWFL": {
       "file": "chunk-TNB6WWFL.js"
@@ -108,14 +120,8 @@
     "chunk-Q76T3GGX": {
       "file": "chunk-Q76T3GGX.js"
     },
-    "chunk-QFYBUIKB": {
-      "file": "chunk-QFYBUIKB.js"
-    },
     "chunk-7KC2DZ2O": {
       "file": "chunk-7KC2DZ2O.js"
-    },
-    "chunk-SITVF2AJ": {
-      "file": "chunk-SITVF2AJ.js"
     },
     "chunk-DC5AMYBS": {
       "file": "chunk-DC5AMYBS.js"

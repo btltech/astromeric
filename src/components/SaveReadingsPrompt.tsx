@@ -64,7 +64,7 @@ export function SaveReadingsPrompt({ isOpen, onClose }: SaveReadingsPromptProps)
           </ul>
 
           <div className="modal-actions">
-            <Link to="/auth" className="btn btn-primary" onClick={onClose}>
+            <Link to="/profile" className="btn btn-primary" onClick={onClose}>
               {t('upsell.cta', 'Create Account')}
             </Link>
             <button className="btn btn-secondary" onClick={onClose}>

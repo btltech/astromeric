@@ -511,12 +511,12 @@ export function LearnView() {
           <span className="product-desk__chip">Progress tracking</span>
         </div>
         <div className="product-desk__actions">
-          <Link to="#lesson-library" className="btn-primary product-desk__action">
+          <a href="#lesson-library" className="btn-primary product-desk__action">
             Open lesson library
-          </Link>
-          <Link to="#glossary-lane" className="btn-secondary product-desk__action">
+          </a>
+          <a href="#glossary-lane" className="btn-secondary product-desk__action">
             Open glossary lane
-          </Link>
+          </a>
           <Link to="/charts" className="btn-secondary product-desk__action">
             Return to charts
           </Link>

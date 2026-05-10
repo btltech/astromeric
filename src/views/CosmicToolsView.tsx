@@ -74,9 +74,9 @@ export function CosmicToolsView() {
           <Link to="/profile" className="btn-secondary product-desk__action">
             Check profile state
           </Link>
-          <Link to="#daily-tools" className="btn-secondary product-desk__action">
+          <a href="#daily-tools" className="btn-secondary product-desk__action">
             Jump to daily tools
-          </Link>
+          </a>
         </div>
       </section>
 
@@ -103,14 +103,14 @@ export function CosmicToolsView() {
         <article className="product-desk__panel">
           <h2>Tool lanes</h2>
           <div className="product-desk__linkgrid">
-            <Link to="#daily-tools" className="product-desk__linkcard">
+            <a href="#daily-tools" className="product-desk__linkcard">
               <strong>Daily tools</strong>
               <span>Tarot, oracle, lunar pulse, and your daily signal pack.</span>
-            </Link>
-            <Link to="#timing-planning" className="product-desk__linkcard">
+            </a>
+            <a href="#timing-planning" className="product-desk__linkcard">
               <strong>Timing &amp; planning</strong>
               <span>Activity windows and planning posture side by side.</span>
-            </Link>
+            </a>
             <Link to="/charts" className="product-desk__linkcard">
               <strong>Chart follow-through</strong>
               <span>Move into charts when a tool exposes a pattern worth unpacking in natal or numerology detail.</span>
