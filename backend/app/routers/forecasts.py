@@ -173,17 +173,29 @@ async def calculate_daily_forecast(
             tone=req.tone,
         )
 
+        # Extract guidance avoid/embrace from forecast result
+        guidance = forecast.get("guidance") or {}
+        guidance_avoid: List[str] = guidance.get("avoid") or []
+        guidance_embrace: List[str] = guidance.get("embrace") or []
+
         # Parse sections
         sections = []
         if isinstance(forecast.get("sections"), list):
-            for section in forecast["sections"]:
+            for i, section in enumerate(forecast["sections"]):
+                # Inject guidance avoid/embrace into Overview; topic sections keep per-block lists
+                if i == 0:
+                    sec_avoid = guidance_avoid[:4]
+                    sec_embrace = guidance_embrace[:4]
+                else:
+                    sec_avoid = section.get("avoid", [])
+                    sec_embrace = section.get("embrace", [])
                 sections.append(
                     ForecastSection(
                         title=section.get("title", ""),
                         summary=section.get("summary", ""),
                         topics=section.get("topics", {}),
-                        avoid=section.get("avoid", []),
-                        embrace=section.get("embrace", []),
+                        avoid=sec_avoid,
+                        embrace=sec_embrace,
                     )
                 )
 
@@ -235,11 +247,16 @@ async def calculate_daily_forecast(
                 if track_key is None:
                     enriched.append(sec)
                 elif isinstance(track_key, tuple):
-                    parts = [fusion_tracks[k] for k in track_key if k in fusion_tracks]
+                    # Use the first available track key; fall back to the second if missing
+                    summary = sec.summary
+                    for k in track_key:
+                        if k in fusion_tracks and fusion_tracks[k]:
+                            summary = fusion_tracks[k]
+                            break
                     enriched.append(
                         ForecastSection(
                             title=sec.title,
-                            summary=" ".join(parts) if parts else sec.summary,
+                            summary=summary,
                             topics=sec.topics,
                             avoid=sec.avoid,
                             embrace=sec.embrace,
@@ -358,17 +375,27 @@ async def calculate_weekly_forecast(
             tone=req.tone,
         )
 
+        guidance_w = forecast.get("guidance") or {}
+        guidance_avoid_w: List[str] = guidance_w.get("avoid") or []
+        guidance_embrace_w: List[str] = guidance_w.get("embrace") or []
+
         # Parse sections
         sections = []
         if isinstance(forecast.get("sections"), list):
-            for section in forecast["sections"]:
+            for i, section in enumerate(forecast["sections"]):
+                if i == 0:
+                    sec_avoid = guidance_avoid_w[:4]
+                    sec_embrace = guidance_embrace_w[:4]
+                else:
+                    sec_avoid = section.get("avoid", [])
+                    sec_embrace = section.get("embrace", [])
                 sections.append(
                     ForecastSection(
                         title=section.get("title", ""),
                         summary=section.get("summary", ""),
                         topics=section.get("topics", {}),
-                        avoid=section.get("avoid", []),
-                        embrace=section.get("embrace", []),
+                        avoid=sec_avoid,
+                        embrace=sec_embrace,
                     )
                 )
 
@@ -451,17 +478,27 @@ async def calculate_monthly_forecast(
             tone=req.tone,
         )
 
+        guidance_m = forecast.get("guidance") or {}
+        guidance_avoid_m: List[str] = guidance_m.get("avoid") or []
+        guidance_embrace_m: List[str] = guidance_m.get("embrace") or []
+
         # Parse sections
         sections = []
         if isinstance(forecast.get("sections"), list):
-            for section in forecast["sections"]:
+            for i, section in enumerate(forecast["sections"]):
+                if i == 0:
+                    sec_avoid = guidance_avoid_m[:4]
+                    sec_embrace = guidance_embrace_m[:4]
+                else:
+                    sec_avoid = section.get("avoid", [])
+                    sec_embrace = section.get("embrace", [])
                 sections.append(
                     ForecastSection(
                         title=section.get("title", ""),
                         summary=section.get("summary", ""),
                         topics=section.get("topics", {}),
-                        avoid=section.get("avoid", []),
-                        embrace=section.get("embrace", []),
+                        avoid=sec_avoid,
+                        embrace=sec_embrace,
                     )
                 )
 
