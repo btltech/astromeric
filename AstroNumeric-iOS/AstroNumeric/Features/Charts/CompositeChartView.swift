@@ -16,11 +16,11 @@ struct CompositeChartView: View {
                 
                 ScrollView {
                     VStack(spacing: 16) {
-                        PremiumHeroCard(
+                        PremiumScreenHeader(
                             eyebrow: "hero.compositeChart.eyebrow".localized,
                             title: "hero.compositeChart.title".localized,
-                            bodyText: "hero.compositeChart.body".localized,
-                            accent: [Color(hex: "241532"), Color(hex: "8750b7"), Color(hex: "d07a56")],
+                            subtitle: "hero.compositeChart.body".localized,
+                            accent: .accentPrimary,
                             chips: ["hero.compositeChart.chip.0".localized, "hero.compositeChart.chip.1".localized, "hero.compositeChart.chip.2".localized]
                         )
 

@@ -9,6 +9,11 @@ extension Color {
     static let cosmicPurple = Color(red: 0.5, green: 0.3, blue: 0.9)
     static let cosmicPink = Color(red: 0.9, green: 0.4, blue: 0.7)
     static let cosmicBlue = Color(red: 0.3, green: 0.5, blue: 0.9)
+
+    /// Primary accent – matches the app's cosmic purple.
+    static let accentPrimary = cosmicPurple
+    /// Secondary accent – matches the app's cosmic pink.
+    static let accentSecondary = cosmicPink
     
     // MARK: - Element Colors
     
@@ -197,4 +202,12 @@ extension Font {
     /// Helper to quickly replace .caption with something larger (15pt)
     /// Usage: .font(.readableCaption)
     static let readableCaption = Font.subheadline
+
+    /// 12pt – metadata labels, small annotations on cards.
+    static let metadata = Font.caption
+
+    /// 15pt (SemiBold) – in-card section headings.
+    static let sectionTitle = Font.subheadline.weight(.semibold)
+    /// 15pt – standard body copy inside cards.
+    static let bodyCopy = Font.subheadline
 }

@@ -24,12 +24,17 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.astromeric.android.R
 import com.astromeric.android.core.data.remote.AstroRemoteDataSource
 import com.astromeric.android.core.model.AppProfile
 import com.astromeric.android.core.model.ChartData
 import com.astromeric.android.core.model.CompositeChartData
 import com.astromeric.android.core.model.SynastryChartData
+import com.astromeric.android.core.model.DataQuality
+import com.astromeric.android.core.ui.DataQualityBanner
 import com.astromeric.android.core.ui.PremiumLoadingCard
 import java.time.LocalDate
 
@@ -40,6 +45,7 @@ fun ProgressionsScreen(
     onBackToCharts: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
     var refreshVersion by remember(selectedProfile?.id) { mutableIntStateOf(0) }
     var isLoading by remember(selectedProfile?.id) { mutableStateOf(false) }
     var chart by remember(selectedProfile?.id) { mutableStateOf<ChartData?>(null) }
@@ -60,7 +66,7 @@ fun ProgressionsScreen(
             .onSuccess { chart = it }
             .onFailure {
                 chart = null
-                errorMessage = it.message ?: "Progressed chart could not be loaded."
+                errorMessage = it.message ?: context.getString(R.string.charts_progressed_load_error)
             }
         isLoading = false
     }
@@ -73,64 +79,86 @@ fun ProgressionsScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Text(
-            text = "Progressions",
+            text = stringResource(R.string.charts_progressions_card_title),
             style = MaterialTheme.typography.headlineMedium,
         )
+        if (selectedProfile != null && selectedProfile.dataQuality != DataQuality.FULL) {
+            DataQualityBanner(quality = selectedProfile.dataQuality)
+        }
 
         StudioSectionCard(
-            title = "Secondary progressions",
-            subtitle = "Use this view when you need inner development and long-form timing, not just the natal snapshot.",
+            title = stringResource(R.string.charts_secondary_progressions_title),
+            subtitle = stringResource(R.string.charts_secondary_progressions_subtitle),
         ) {
             TextButton(onClick = onBackToCharts) {
-                Text("Back to Charts Studio")
+                Text(stringResource(R.string.charts_action_back_to_studio))
             }
             when {
                 selectedProfile == null -> Text(
-                    text = "Select or create a profile before loading progressions.",
+                    text = stringResource(R.string.charts_progressions_profile_required),
                     style = MaterialTheme.typography.bodyMedium,
                 )
 
                 !selectedProfile.canRequestNatalChart -> Text(
-                    text = "Add birthplace coordinates and timezone to unlock progressed chart calculations.",
+                    text = stringResource(R.string.charts_progressions_require_location_timezone),
                     style = MaterialTheme.typography.bodyMedium,
                 )
 
                 else -> {
                     Text(
-                        text = "Reading for ${selectedProfile.name} · ${selectedProfile.dataQuality.label}",
+                        text = stringResource(
+                            R.string.charts_reading_for_quality_format,
+                            selectedProfile.name,
+                            selectedProfile.dataQuality.label,
+                        ),
                         style = MaterialTheme.typography.bodyMedium,
                     )
                     Button(
                         onClick = { refreshVersion += 1 },
                         enabled = !isLoading,
                     ) {
-                        Text(if (isLoading) "Refreshing..." else "Refresh progressions")
+                        Text(
+                            if (isLoading) {
+                                stringResource(R.string.status_refreshing)
+                            } else {
+                                stringResource(R.string.charts_action_refresh_progressions)
+                            },
+                        )
                     }
                 }
             }
         }
 
         when {
-            isLoading -> PremiumLoadingCard(title = "Loading progressed chart")
+            isLoading -> PremiumLoadingCard(title = stringResource(R.string.charts_loading_progressed_chart))
 
             errorMessage != null -> StatusCard(message = errorMessage.orEmpty(), isError = true)
 
             chart != null -> {
                 chart?.metadata?.let { metadata ->
                     StudioSectionCard(
-                        title = "Chart context",
-                        subtitle = "Ground the progression in the natal profile before interpreting movement.",
+                        title = stringResource(R.string.charts_chart_context_title),
+                        subtitle = stringResource(R.string.charts_chart_context_subtitle),
                     ) {
                         Text(
-                            text = "Natal date: ${metadata.dateOfBirth ?: selectedProfile?.dateOfBirth ?: "Unknown"}",
+                            text = stringResource(
+                                R.string.charts_natal_date_format,
+                                metadata.dateOfBirth ?: selectedProfile?.dateOfBirth ?: stringResource(R.string.charts_unknown),
+                            ),
                             style = MaterialTheme.typography.bodyMedium,
                         )
                         Text(
-                            text = "Birth time anchor: ${metadata.timeOfBirth ?: selectedProfile?.timeOfBirth ?: "Unknown"}",
+                            text = stringResource(
+                                R.string.charts_birth_time_anchor_format,
+                                metadata.timeOfBirth ?: selectedProfile?.timeOfBirth ?: stringResource(R.string.charts_unknown),
+                            ),
                             style = MaterialTheme.typography.bodyMedium,
                         )
                         Text(
-                            text = "Timezone: ${metadata.timezone ?: selectedProfile?.timezone ?: "Unknown"}",
+                            text = stringResource(
+                                R.string.charts_timezone_format,
+                                metadata.timezone ?: selectedProfile?.timezone ?: stringResource(R.string.charts_unknown),
+                            ),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -139,8 +167,8 @@ fun ProgressionsScreen(
 
                 if (!chart?.planets.isNullOrEmpty()) {
                     StudioSectionCard(
-                        title = "Progressed planets",
-                        subtitle = "These placements show how your natal potential is unfolding over time.",
+                        title = stringResource(R.string.charts_progressed_planets_title),
+                        subtitle = stringResource(R.string.charts_progressed_planets_subtitle),
                     ) {
                         chart?.planets?.take(10)?.forEach { placement ->
                             PlanetPlacementRow(placement = placement)
@@ -150,8 +178,8 @@ fun ProgressionsScreen(
 
                 if (!chart?.aspects.isNullOrEmpty()) {
                     StudioSectionCard(
-                        title = "Progressed aspects",
-                        subtitle = "Look for the relationships that keep repeating across the current chapter.",
+                        title = stringResource(R.string.charts_progressed_aspects_title),
+                        subtitle = stringResource(R.string.charts_progressed_aspects_subtitle),
                     ) {
                         chart?.aspects?.take(8)?.forEach { aspect ->
                             AspectRow(aspect = aspect)
@@ -171,6 +199,7 @@ fun SynastryChartScreen(
     onBackToCharts: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
     val partnerProfiles = remember(profiles, selectedProfile?.id) {
         profiles.filter { it.id != selectedProfile?.id }
     }
@@ -205,7 +234,7 @@ fun SynastryChartScreen(
             .onSuccess { result = it }
             .onFailure {
                 result = null
-                errorMessage = it.message ?: "Synastry chart could not be loaded."
+                errorMessage = it.message ?: context.getString(R.string.charts_synastry_load_error)
             }
         isLoading = false
     }
@@ -218,31 +247,34 @@ fun SynastryChartScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Text(
-            text = "Synastry",
+            text = stringResource(R.string.charts_synastry_card_title),
             style = MaterialTheme.typography.headlineMedium,
         )
+        if (selectedProfile != null && selectedProfile.dataQuality != DataQuality.FULL) {
+            DataQualityBanner(quality = selectedProfile.dataQuality)
+        }
 
         StudioSectionCard(
-            title = "Aspect-level relationship insight",
-            subtitle = "Use synastry when you need to see where two charts support, trigger, or challenge each other.",
+            title = stringResource(R.string.charts_synastry_insight_title),
+            subtitle = stringResource(R.string.charts_synastry_insight_subtitle),
         ) {
             TextButton(onClick = onBackToCharts) {
-                Text("Back to Charts Studio")
+                Text(stringResource(R.string.charts_action_back_to_studio))
             }
             when {
                 selectedProfile == null -> Text(
-                    text = "Select your primary profile before comparing charts.",
+                    text = stringResource(R.string.charts_synastry_profile_required),
                     style = MaterialTheme.typography.bodyMedium,
                 )
 
                 partnerProfiles.isEmpty() -> Text(
-                    text = "Add another saved profile to unlock synastry comparisons.",
+                    text = stringResource(R.string.charts_synastry_no_partner_profiles),
                     style = MaterialTheme.typography.bodyMedium,
                 )
 
                 else -> {
                     Text(
-                        text = "Choose a comparison profile",
+                        text = stringResource(R.string.charts_choose_comparison_profile),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -262,11 +294,17 @@ fun SynastryChartScreen(
                         onClick = { refreshVersion += 1 },
                         enabled = selectedProfile.canRequestNatalChart && selectedPartner?.canRequestNatalChart == true && !isLoading,
                     ) {
-                        Text(if (isLoading) "Refreshing..." else "Refresh synastry")
+                        Text(
+                            if (isLoading) {
+                                stringResource(R.string.status_refreshing)
+                            } else {
+                                stringResource(R.string.charts_action_refresh_synastry)
+                            },
+                        )
                     }
                     if (selectedPartner?.canRequestNatalChart != true) {
                         Text(
-                            text = "Both profiles need birthplace coordinates and timezone before synastry can calculate cleanly.",
+                            text = stringResource(R.string.charts_synastry_require_both_profiles_chart_ready),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -276,34 +314,38 @@ fun SynastryChartScreen(
         }
 
         when {
-            isLoading -> PremiumLoadingCard(title = "Comparing charts")
+            isLoading -> PremiumLoadingCard(title = stringResource(R.string.charts_loading_compare_charts))
 
             errorMessage != null -> StatusCard(message = errorMessage.orEmpty(), isError = true)
 
             result != null -> {
                 StudioSectionCard(
-                    title = "Compatibility snapshot",
-                    subtitle = "Use this summary to separate chemistry, friction, and practical advice.",
+                    title = stringResource(R.string.charts_compatibility_snapshot_title),
+                    subtitle = stringResource(R.string.charts_compatibility_snapshot_subtitle),
                 ) {
                     Text(
-                        text = "${result?.personA?.name.orEmpty()} and ${result?.personB?.name.orEmpty()}",
+                        text = stringResource(
+                            R.string.charts_people_and_format,
+                            result?.personA?.name.orEmpty(),
+                            result?.personB?.name.orEmpty(),
+                        ),
                         style = MaterialTheme.typography.titleMedium,
                     )
                     result?.compatibility?.strengths?.take(3)?.forEach { strength ->
                         Text(
-                            text = "Strength: $strength",
+                            text = stringResource(R.string.charts_relationship_strength_format, strength),
                             style = MaterialTheme.typography.bodyMedium,
                         )
                     }
                     result?.compatibility?.challenges?.take(3)?.forEach { challenge ->
                         Text(
-                            text = "Challenge: $challenge",
+                            text = stringResource(R.string.charts_relationship_challenge_format, challenge),
                             style = MaterialTheme.typography.bodyMedium,
                         )
                     }
                     result?.compatibility?.advice?.take(3)?.forEach { advice ->
                         Text(
-                            text = "Advice: $advice",
+                            text = stringResource(R.string.charts_relationship_advice_format, advice),
                             style = MaterialTheme.typography.bodyMedium,
                         )
                     }
@@ -311,8 +353,8 @@ fun SynastryChartScreen(
 
                 if (!result?.synastryAspects.isNullOrEmpty()) {
                     StudioSectionCard(
-                        title = "Key synastry aspects",
-                        subtitle = "These are the main energetic contact points between both charts.",
+                        title = stringResource(R.string.charts_key_synastry_aspects_title),
+                        subtitle = stringResource(R.string.charts_key_synastry_aspects_subtitle),
                     ) {
                         result?.synastryAspects?.take(10)?.forEach { aspect ->
                             SynastryAspectRow(aspect = aspect)
@@ -332,6 +374,7 @@ fun CompositeChartScreen(
     onBackToCharts: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
     val partnerProfiles = remember(profiles, selectedProfile?.id) {
         profiles.filter { it.id != selectedProfile?.id }
     }
@@ -366,7 +409,7 @@ fun CompositeChartScreen(
             .onSuccess { result = it }
             .onFailure {
                 result = null
-                errorMessage = it.message ?: "Composite chart could not be loaded."
+                errorMessage = it.message ?: context.getString(R.string.charts_composite_load_error)
             }
         isLoading = false
     }
@@ -379,31 +422,34 @@ fun CompositeChartScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Text(
-            text = "Composite Chart",
+            text = stringResource(R.string.charts_composite_card_title),
             style = MaterialTheme.typography.headlineMedium,
         )
+        if (selectedProfile != null && selectedProfile.dataQuality != DataQuality.FULL) {
+            DataQualityBanner(quality = selectedProfile.dataQuality)
+        }
 
         StudioSectionCard(
-            title = "The relationship itself",
-            subtitle = "Composite charts describe the shared field created by two people, not just each person separately.",
+            title = stringResource(R.string.charts_relationship_itself_title),
+            subtitle = stringResource(R.string.charts_relationship_itself_subtitle),
         ) {
             TextButton(onClick = onBackToCharts) {
-                Text("Back to Charts Studio")
+                Text(stringResource(R.string.charts_action_back_to_studio))
             }
             when {
                 selectedProfile == null -> Text(
-                    text = "Select your primary profile before building a composite chart.",
+                    text = stringResource(R.string.charts_composite_profile_required),
                     style = MaterialTheme.typography.bodyMedium,
                 )
 
                 partnerProfiles.isEmpty() -> Text(
-                    text = "Add another saved profile to build a composite chart.",
+                    text = stringResource(R.string.charts_composite_need_partner),
                     style = MaterialTheme.typography.bodyMedium,
                 )
 
                 else -> {
                     Text(
-                        text = "Choose a comparison profile",
+                        text = stringResource(R.string.charts_choose_comparison_profile),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -423,11 +469,17 @@ fun CompositeChartScreen(
                         onClick = { refreshVersion += 1 },
                         enabled = selectedProfile.canRequestNatalChart && selectedPartner?.canRequestNatalChart == true && !isLoading,
                     ) {
-                        Text(if (isLoading) "Refreshing..." else "Refresh composite")
+                        Text(
+                            if (isLoading) {
+                                stringResource(R.string.status_refreshing)
+                            } else {
+                                stringResource(R.string.charts_action_refresh_composite)
+                            },
+                        )
                     }
                     if (selectedPartner?.canRequestNatalChart != true) {
                         Text(
-                            text = "Both profiles need birthplace coordinates and timezone before the composite chart can calculate cleanly.",
+                            text = stringResource(R.string.charts_composite_require_both_profiles_chart_ready),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -437,21 +489,25 @@ fun CompositeChartScreen(
         }
 
         when {
-            isLoading -> PremiumLoadingCard(title = "Building composite chart")
+            isLoading -> PremiumLoadingCard(title = stringResource(R.string.charts_loading_composite_chart))
 
             errorMessage != null -> StatusCard(message = errorMessage.orEmpty(), isError = true)
 
             result != null -> {
                 StudioSectionCard(
-                    title = "Composite frame",
-                    subtitle = "Start with the chart identity before reading the planet blend.",
+                    title = stringResource(R.string.charts_composite_frame_title),
+                    subtitle = stringResource(R.string.charts_composite_frame_subtitle),
                 ) {
                     Text(
-                        text = "${result?.metadata?.personA.orEmpty()} + ${result?.metadata?.personB.orEmpty()}",
+                        text = stringResource(
+                            R.string.charts_people_plus_format,
+                            result?.metadata?.personA.orEmpty(),
+                            result?.metadata?.personB.orEmpty(),
+                        ),
                         style = MaterialTheme.typography.titleMedium,
                     )
                     Text(
-                        text = "Method: ${result?.metadata?.method.orEmpty()}",
+                        text = stringResource(R.string.charts_method_format, result?.metadata?.method.orEmpty()),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -459,8 +515,8 @@ fun CompositeChartScreen(
 
                 if (!result?.planets.isNullOrEmpty()) {
                     StudioSectionCard(
-                        title = "Composite planets",
-                        subtitle = "These placements describe the relationship's tone, focus, and pressure points.",
+                        title = stringResource(R.string.charts_composite_planets_title),
+                        subtitle = stringResource(R.string.charts_composite_planets_subtitle),
                     ) {
                         result?.planets?.take(10)?.forEach { planet ->
                             CompositePlanetRow(planet = planet)

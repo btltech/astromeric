@@ -147,7 +147,7 @@ struct DoDontCard: View {
                 .clipShape(Capsule())
                 .shadow(color: isSelected ? .black.opacity(0.2) : .clear, radius: 4, x: 0, y: 2)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(ScaleButtonStyle())
     }
 
     @ViewBuilder

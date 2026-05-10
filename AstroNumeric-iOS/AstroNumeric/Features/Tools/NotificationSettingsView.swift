@@ -5,6 +5,7 @@ import SwiftUI
 
 struct NotificationSettingsView: View {
     @Environment(AppStore.self) private var store
+    private let alertPreferencesRepository: AlertPreferencesRepository = DefaultAlertPreferencesRepository()
     @AppStorage("notify_daily_reading") private var notifyDailyReading = false
     @AppStorage("notify_moon_events") private var notifyMoonEvents = false
     @AppStorage("notify_habit_reminder") private var notifyHabitReminder = false
@@ -28,11 +29,11 @@ struct NotificationSettingsView: View {
                 
                 ScrollView {
                     VStack(spacing: 16) {
-                        PremiumHeroCard(
+                        PremiumScreenHeader(
                             eyebrow: "hero.notificationSettings.eyebrow".localized,
                             title: "hero.notificationSettings.title".localized,
-                            bodyText: "hero.notificationSettings.body".localized,
-                            accent: [Color(hex: "1c1639"), Color(hex: "6c44b5"), Color(hex: "1a8a87")],
+                            subtitle: "hero.notificationSettings.body".localized,
+                            accent: .accentPrimary,
                             chips: ["hero.notificationSettings.chip.0".localized, "hero.notificationSettings.chip.1".localized, "hero.notificationSettings.chip.2".localized, "hero.notificationSettings.chip.3".localized]
                         )
 
@@ -172,7 +173,7 @@ struct NotificationSettingsView: View {
                                 }
                             }
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(ScaleButtonStyle())
                     }
                     .padding()
                     .readableContainer()
@@ -297,8 +298,7 @@ struct NotificationSettingsView: View {
     
     private func scheduleUpcomingMoonEvents() async {
         do {
-            let response: V2ApiResponse<UpcomingMoonEventsResponse> = try await APIClient.shared.fetch(.upcomingMoonEvents)
-            let events = response.data.events
+            let events = try await alertPreferencesRepository.upcomingMoonEvents()
             for event in events {
                 if let date = parseDate(event.date) {
                     let emoji = event.type.lowercased().contains("new") ? "🌑" : "🌕"
@@ -334,7 +334,7 @@ struct NotificationSettingsView: View {
             return
         }
         do {
-            let response: AlertPreferencesResponse = try await APIClient.shared.fetch(.alertPreferences)
+            let response = try await alertPreferencesRepository.loadPreferences()
             await MainActor.run {
                 mercuryRetrogradeAlerts = response.alertMercuryRetrograde
                 alertFrequency = response.alertFrequency
@@ -350,12 +350,10 @@ struct NotificationSettingsView: View {
             return
         }
         do {
-            let _: AlertPreferencesResponse = try await APIClient.shared.fetch(
-                .updateAlertPreferences(
-                    AlertPreferencesRequest(
-                        alertMercuryRetrograde: mercuryRetrogradeAlerts,
-                        alertFrequency: alertFrequency
-                    )
+            _ = try await alertPreferencesRepository.updatePreferences(
+                AlertPreferencesRequest(
+                    alertMercuryRetrograde: mercuryRetrogradeAlerts,
+                    alertFrequency: alertFrequency
                 )
             )
         } catch {

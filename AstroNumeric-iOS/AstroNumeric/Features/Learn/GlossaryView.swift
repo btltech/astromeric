@@ -66,13 +66,13 @@ struct GlossaryView: View {
                 } else {
                     ScrollView {
                         VStack(spacing: 16) {
-                            PremiumHeroCard(
-                            eyebrow: "hero.glossary.eyebrow".localized,
-                            title: "hero.glossary.title".localized,
-                            bodyText: "hero.glossary.body".localized,
-                            accent: [Color(hex: "13233b"), Color(hex: "3f69bf"), Color(hex: "1f8ca3")],
-                            chips: ["hero.glossary.chip.0".localized, "hero.glossary.chip.1".localized, "hero.glossary.chip.2".localized]
-                        )
+                            PremiumScreenHeader(
+                                eyebrow: "hero.glossary.eyebrow".localized,
+                                title: "hero.glossary.title".localized,
+                                subtitle: "hero.glossary.body".localized,
+                                accent: .accentPrimary,
+                                chips: ["hero.glossary.chip.0".localized, "hero.glossary.chip.1".localized, "hero.glossary.chip.2".localized]
+                            )
 
                             categoryPicker
 
@@ -106,7 +106,7 @@ struct GlossaryView: View {
                                         }
                                     }
                                 }
-                                .buttonStyle(.plain)
+                                .buttonStyle(ScaleButtonStyle())
                             }
 
                             if filteredEntries.isEmpty {
@@ -151,7 +151,7 @@ struct GlossaryView: View {
                             )
                             .foregroundStyle(selectedCategory == cat ? .white : .primary)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(ScaleButtonStyle())
                 }
             }
         }

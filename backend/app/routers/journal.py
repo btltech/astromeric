@@ -1,7 +1,9 @@
-"""
-API v2 - Journal Endpoints
+"""API v2 - Journal Endpoints.
+
 Reading journal, outcomes tracking, and accountability reports.
 """
+
+import json
 
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional
@@ -43,6 +45,17 @@ class JournalEntryRequest(BaseModel):
 
     reading_id: int
     entry: str = Field(..., min_length=1, max_length=5000)
+
+
+class SaveReadingRequest(BaseModel):
+    """Request to persist a generated reading for an authenticated profile."""
+
+    profile_id: int
+    scope: str = Field(
+        ..., pattern="^(daily|weekly|monthly|forecast|compatibility|natal|year-ahead)$"
+    )
+    content: Any
+    date: Optional[str] = None
 
 
 class OutcomeRequest(BaseModel):
@@ -94,6 +107,56 @@ async def add_journal_entry_endpoint(
     return ApiResponse(
         status=ResponseStatus.SUCCESS,
         data={"message": "Journal entry saved", "entry": entry_data},
+    )
+
+
+@router.post("/reading", response_model=ApiResponse[Dict[str, Any]])
+async def save_reading_endpoint(
+    request: Request,
+    req: SaveReadingRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Persist a generated reading for an authenticated user's profile."""
+
+    profile = db.query(DBProfile).filter(DBProfile.id == req.profile_id).first()
+    if not profile or profile.user_id != current_user.id:
+        raise HTTPException(
+            status_code=403, detail="Not authorized to save readings for this profile"
+        )
+
+    reading_date = req.date or datetime.now(timezone.utc).date().isoformat()
+    serialized_content = json.dumps(req.content, default=str)
+
+    reading = (
+        db.query(DBReading)
+        .filter(
+            DBReading.profile_id == req.profile_id,
+            DBReading.scope == req.scope,
+            DBReading.date == reading_date,
+        )
+        .first()
+    )
+
+    status_label = "updated"
+    if reading is None:
+        reading = DBReading(
+            profile_id=req.profile_id,
+            scope=req.scope,
+            date=reading_date,
+            content=serialized_content,
+        )
+        db.add(reading)
+        status_label = "created"
+    else:
+        reading.content = serialized_content
+
+    db.commit()
+    db.refresh(reading)
+
+    return ApiResponse(
+        status=ResponseStatus.SUCCESS,
+        data={"id": reading.id, "status": status_label},
     )
 
 
@@ -199,8 +262,6 @@ async def get_single_reading_journal(
     db: Session = Depends(get_db),
 ):
     """Get a single reading with full journal and content."""
-    import json
-
     reading = db.query(DBReading).filter(DBReading.id == reading_id).first()
     if not reading:
         raise HTTPException(status_code=404, detail="Reading not found")

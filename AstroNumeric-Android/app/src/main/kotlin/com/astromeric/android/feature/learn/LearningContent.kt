@@ -15,7 +15,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.astromeric.android.R
 import com.astromeric.android.core.data.remote.AstroRemoteDataSource
 import com.astromeric.android.core.model.AppProfile
 import com.astromeric.android.core.model.GlossaryEntryData
@@ -48,6 +50,9 @@ fun rememberLearningContentState(
     var zodiacGuidance by remember(selectedProfile?.id) { mutableStateOf<ZodiacGuidanceData?>(null) }
     var learningError by remember(selectedProfile?.id) { mutableStateOf<String?>(null) }
     var isLearningLoading by remember(selectedProfile?.id) { mutableStateOf(false) }
+    val modulesLoadError = stringResource(R.string.learning_modules_error)
+    val glossaryLoadError = stringResource(R.string.learning_glossary_error)
+    val zodiacLoadError = stringResource(R.string.learning_zodiac_error)
 
     LaunchedEffect(selectedProfile?.id) {
         isLearningLoading = true
@@ -59,15 +64,15 @@ fun rememberLearningContentState(
             val zodiacRequest = async { selectedProfile?.let { remoteDataSource.fetchZodiacGuidance(it) } }
 
             learningModules = modulesRequest.await()
-                .onFailure { learningError = it.message ?: "Learning modules could not be loaded." }
+                .onFailure { learningError = it.message ?: modulesLoadError }
                 .getOrDefault(emptyList())
 
             glossaryEntries = glossaryRequest.await()
-                .onFailure { learningError = learningError ?: it.message ?: "Glossary could not be loaded." }
+                .onFailure { learningError = learningError ?: it.message ?: glossaryLoadError }
                 .getOrDefault(emptyList())
 
             zodiacGuidance = zodiacRequest.await()
-                ?.onFailure { learningError = learningError ?: it.message ?: "Zodiac guidance could not be loaded." }
+                ?.onFailure { learningError = learningError ?: it.message ?: zodiacLoadError }
                 ?.getOrNull()
         }
 
@@ -96,6 +101,7 @@ fun LearningFeed(
     moduleLimit: Int? = null,
     glossaryLimit: Int? = null,
 ) {
+    val generalCategory = stringResource(R.string.learning_category_general)
     val filteredLearningModules = state.learningModules.filter { module ->
         searchQuery.isBlank() ||
             module.title.contains(searchQuery, ignoreCase = true) ||
@@ -109,7 +115,7 @@ fun LearningFeed(
             entry.relatedTerms.any { term -> term.contains(searchQuery, ignoreCase = true) }
     }
     val learningTrackSummaries = state.learningModules
-        .groupBy { it.category.ifBlank { "general" } }
+        .groupBy { it.category.ifBlank { generalCategory } }
         .entries
         .sortedByDescending { it.value.size }
         .take(4)
@@ -125,13 +131,21 @@ fun LearningFeed(
     val visibleGlossaryEntries = glossaryLimit?.let { filteredGlossaryEntries.take(it) } ?: filteredGlossaryEntries
 
     PremiumContentCard(
-        title = "Learning tracks",
-        body = "Use structured lessons when you want skill-building instead of a quick lookup.",
+        title = stringResource(R.string.learning_tracks_title),
+        body = stringResource(R.string.learning_tracks_body),
     ) {
         if (state.learningModules.isNotEmpty()) {
             AssistChip(
                 onClick = {},
-                label = { Text("$completedCount/${state.learningModules.size} completed") },
+                label = {
+                    Text(
+                        stringResource(
+                            R.string.learning_completed_progress,
+                            completedCount,
+                            state.learningModules.size,
+                        ),
+                    )
+                },
             )
         }
 
@@ -144,9 +158,13 @@ fun LearningFeed(
                 learningTrackSummaries.forEach { track ->
                     PremiumBentoCard(
                         title = track.title,
-                        body = "${track.completedCount}/${track.lessonCount} complete",
+                        body = stringResource(
+                            R.string.learning_track_progress,
+                            track.completedCount,
+                            track.lessonCount,
+                        ),
                         modifier = Modifier.fillMaxWidth(0.48f),
-                        badge = "Track",
+                        badge = stringResource(R.string.learning_track_badge),
                     )
                 }
             }
@@ -161,10 +179,10 @@ fun LearningFeed(
 
     val hasNoLearningContent = state.learningModules.isEmpty() && state.glossaryEntries.isEmpty() && state.zodiacGuidance == null
     if (state.isLoading && hasNoLearningContent) {
-        PremiumLoadingCard(title = "Loading learning content")
+        PremiumLoadingCard(title = stringResource(R.string.learning_loading_title))
     } else if (state.error != null && hasNoLearningContent) {
         PremiumStatusCard(
-            title = "Learning unavailable",
+            title = stringResource(R.string.learning_unavailable_title),
             message = state.error,
             isError = true,
         )
@@ -172,16 +190,16 @@ fun LearningFeed(
 
     state.zodiacGuidance?.let { guidance ->
         PremiumContentCard(
-            title = "${guidance.sign.replaceFirstChar { it.uppercase() }} guide",
+            title = stringResource(R.string.learning_zodiac_guide_title, guidance.sign.replaceFirstChar { it.uppercase() }),
             body = guidance.guidance,
             footer = if (guidance.characteristics.isNotEmpty()) {
-                "Traits: ${guidance.characteristics.take(4).joinToString()}"
+                stringResource(R.string.learning_traits_format, guidance.characteristics.take(4).joinToString())
             } else {
                 null
             },
         ) {
             Text(
-                text = "${guidance.element} element · ${guidance.rulingPlanet} rules",
+                text = stringResource(R.string.learning_zodiac_footer, guidance.element, guidance.rulingPlanet),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -191,8 +209,8 @@ fun LearningFeed(
     if (visibleModules.isNotEmpty()) {
         PremiumContentCard {
             PremiumSectionHeader(
-                title = "Modules",
-                subtitle = "Continue lessons or mark what you have completed.",
+                title = stringResource(R.string.learning_modules_title),
+                subtitle = stringResource(R.string.learning_modules_subtitle),
             )
             visibleModules.forEach { module ->
                 LearningModuleRow(
@@ -210,8 +228,8 @@ fun LearningFeed(
     if (visibleGlossaryEntries.isNotEmpty()) {
         PremiumContentCard {
             PremiumSectionHeader(
-                title = "Glossary",
-                subtitle = "Definitions for language that appears across readings and tools.",
+                title = stringResource(R.string.learning_glossary_title),
+                subtitle = stringResource(R.string.learning_glossary_subtitle),
             )
             visibleGlossaryEntries.forEach { entry ->
                 LearningGlossaryRow(entry = entry)
@@ -221,8 +239,8 @@ fun LearningFeed(
 
     if (!state.isLoading && state.error == null && hasNoLearningContent) {
         PremiumEmptyStateCard(
-            title = "No learning content yet",
-            message = "Learning content has not loaded yet.",
+            title = stringResource(R.string.learning_empty_title),
+            message = stringResource(R.string.learning_empty_message),
         )
     }
 }
@@ -238,22 +256,27 @@ private fun LearningModuleRow(
         title = module.title,
         body = module.description,
         footer = if (module.keywords.isNotEmpty()) {
-            "Keywords: ${module.keywords.take(4).joinToString()}"
+            stringResource(R.string.learning_keywords_format, module.keywords.take(4).joinToString())
         } else {
             null
         },
     ) {
         Text(
-            text = "${module.category.toDisplayLabel()} · ${module.difficulty.toDisplayLabel()} · ${module.durationMinutes} min",
+            text = stringResource(
+                R.string.learning_module_meta_format,
+                module.category.toDisplayLabel(),
+                module.difficulty.toDisplayLabel(),
+                module.durationMinutes,
+            ),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Button(onClick = onToggleCompleted) {
-            Text(if (isCompleted) "Completed" else "Mark complete")
+            Text(if (isCompleted) stringResource(R.string.learning_completed_label) else stringResource(R.string.learning_mark_complete))
         }
         if (module.content.isNotBlank()) {
             androidx.compose.material3.TextButton(onClick = onOpen) {
-                Text("Open Lesson")
+                Text(stringResource(R.string.learning_open_lesson))
             }
         }
     }

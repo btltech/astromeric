@@ -26,7 +26,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
@@ -34,9 +36,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
@@ -61,7 +65,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
@@ -123,6 +129,7 @@ fun ProfileListScreen(
     personalModeEnabled: Boolean,
     isAuthenticated: Boolean,
     accountEmail: String,
+    isPremiumUser: Boolean,
     onCreateProfile: () -> Unit,
     onOpenLearn: () -> Unit,
     onOpenGuide: () -> Unit,
@@ -130,6 +137,7 @@ fun ProfileListScreen(
     onOpenHelp: () -> Unit,
     onOpenNotifications: () -> Unit,
     onOpenPrivacy: () -> Unit,
+    onOpenPremium: () -> Unit,
     onSyncProfiles: () -> Unit,
     onEditProfile: (Int) -> Unit,
     onSelectProfile: (Int) -> Unit,
@@ -200,13 +208,13 @@ fun ProfileListScreen(
     ) {
         item {
             PremiumHeroCard(
-                eyebrow = "Profile",
-                title = "Your Cosmic Identity",
-                body = "Manage local-first identity, privacy, alerts, and account state without leaving the main shell.",
+                eyebrow = stringResource(R.string.profile_hub_hero_eyebrow),
+                title = stringResource(R.string.profile_hub_hero_title),
+                body = stringResource(R.string.profile_hub_hero_body),
                 chips = listOf(
-                    "${profiles.size} profile(s)",
-                    "${localOnlyCount} local",
-                    "${fullDataCount} complete",
+                    stringResource(R.string.profile_hub_chip_profiles, profiles.size),
+                    stringResource(R.string.profile_hub_chip_local, localOnlyCount),
+                    stringResource(R.string.profile_hub_chip_complete, fullDataCount),
                 ),
             ) {
                 FlowRow(
@@ -214,32 +222,121 @@ fun ProfileListScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     TextButton(onClick = onOpenNotifications) {
-                        Text("Alerts")
+                        Text(stringResource(R.string.profile_hub_cta_alerts))
                     }
                     TextButton(onClick = onOpenPrivacy) {
-                        Text(if (hideSensitiveDetailsEnabled) "Privacy: On" else "Privacy")
+                        Text(
+                            stringResource(
+                                if (hideSensitiveDetailsEnabled) {
+                                    R.string.profile_hub_cta_privacy_on
+                                } else {
+                                    R.string.profile_hub_cta_privacy
+                                },
+                            ),
+                        )
                     }
                     Button(onClick = onCreateProfile) {
                         Icon(Icons.Filled.Add, contentDescription = null)
-                        Text("New profile")
+                        Text(stringResource(R.string.profile_hub_cta_new_profile))
                     }
                 }
             }
         }
 
         item {
-            PremiumContentCard(
-                title = when {
-                    personalModeEnabled -> "Personal mode"
-                    isAuthenticated -> "Signed in as $accountEmail"
-                    else -> "Local-only profile mode"
+            ProfileIdentityCard(
+                selectedProfile = selectedProfile,
+                hideSensitiveDetailsEnabled = hideSensitiveDetailsEnabled,
+            )
+        }
+
+        item {
+            SystemDiagnosticsCard(
+                selectedProfile = selectedProfile,
+                profilesCount = profiles.size,
+                fullDataCount = fullDataCount,
+                localOnlyCount = localOnlyCount,
+                syncedCount = syncedCount,
+                hideSensitiveDetailsEnabled = hideSensitiveDetailsEnabled,
+                personalModeEnabled = personalModeEnabled,
+                isAuthenticated = isAuthenticated,
+                notificationsEnabledInSystem = notificationsEnabledInSystem,
+                notificationPermissionGranted = notificationPermissionGranted,
+                calendarPermissionGranted = calendarPermissionGranted,
+                healthAvailability = healthAvailability,
+                dailyReminderEnabled = dailyReminderEnabled,
+                habitReminderEnabled = habitReminderEnabled,
+                timingAlertEnabled = timingAlertEnabled,
+                transitAlertsEnabled = transitAlertsEnabled,
+                dailyReadingHour = dailyReadingHour,
+                dailyReadingMinute = dailyReadingMinute,
+                habitReminderHour = habitReminderHour,
+                habitReminderMinute = habitReminderMinute,
+                timingAlertHour = timingAlertHour,
+                timingAlertMinute = timingAlertMinute,
+                transitAlertHour = transitAlertHour,
+                transitAlertMinute = transitAlertMinute,
+                widgetInstanceCount = widgetInstanceCount,
+                widgetSnapshot = widgetSnapshot,
+                widgetSnapshotStore = widgetSnapshotStore,
+                exactTransitCacheSnapshot = exactTransitCacheSnapshot,
+                exactTransitLoadStatus = exactTransitLoadStatus,
+                exactTransitAlarmAccess = exactTransitAlarmAccess,
+                scheduledTransitHashCount = scheduledTransitHashCount,
+                isRunningDebugRefresh = isRunningDebugRefresh,
+                debugDiagnosticsNote = debugDiagnosticsNote,
+                onRefresh = { diagnosticsRefreshVersion += 1 },
+                onSeedDebugProfile = onSeedDebugProfile,
+                onDebugDiagnosticsNoteChange = { debugDiagnosticsNote = it },
+                onPreviewExactTransitNotification = { profile, source, isCached ->
+                    AstroNotificationService(context.applicationContext).showExactTransitNotification(
+                        profileName = profile.displayName(hideSensitiveDetailsEnabled, PrivacyDisplayRole.ACTIVE_USER),
+                        transitPlanet = "Mars",
+                        natalPoint = "Sun",
+                        aspect = "square",
+                        interpretation = "Debug preview of the exact-transit notification payload.",
+                        source = source,
+                        isCached = isCached,
+                        notificationId = 1008,
+                    )
                 },
-                body = when {
-                    personalModeEnabled -> "This build keeps the iOS-style local-first contract. Profiles stay on this device and any saved account session stays dormant while personal mode is enabled."
-                    isAuthenticated -> "$syncedCount account-synced profile(s) and $localOnlyCount device-only profile(s)."
-                    else -> "Profiles stay on this device until you sign in. $localOnlyCount profile(s) are currently device-only."
+                onRunDebugRefresh = { profile ->
+                    scope.launch {
+                        isRunningDebugRefresh = true
+                        debugDiagnosticsNote = "Running the shared refresh path now..."
+                        val refreshResult = runAstroRefresh(
+                            applicationContext = context.applicationContext,
+                            forceExactTransitDiagnostics = true,
+                        )
+                        val refreshedStatus = exactTransitLoadStatusStore.read(profile.id)
+                        diagnosticsRefreshVersion += 1
+                        debugDiagnosticsNote = when (refreshResult) {
+                            is ListenableWorker.Result.Success -> refreshedStatus?.let { exactTransitLoadStatusDetailLabel(context, it) }
+                                ?: "Refresh finished, but no exact transit source was recorded."
+                            is ListenableWorker.Result.Retry -> "Refresh requested a retry."
+                            is ListenableWorker.Result.Failure -> "Refresh failed."
+                            else -> "Refresh completed with an unexpected result."
+                        }
+                        isRunningDebugRefresh = false
+                    }
                 },
             )
+        }
+
+        if (profiles.isNotEmpty()) {
+            item {
+                ProfilesCollectionCard(
+                    profiles = profiles,
+                    selectedProfile = selectedProfile,
+                    hideSensitiveDetailsEnabled = hideSensitiveDetailsEnabled,
+                    personalModeEnabled = personalModeEnabled,
+                    isAuthenticated = isAuthenticated,
+                    onCreateProfile = onCreateProfile,
+                    onSelectProfile = onSelectProfile,
+                    onEditProfile = onEditProfile,
+                    onDeleteProfile = onDeleteProfile,
+                )
+            }
         }
 
         item {
@@ -260,8 +357,23 @@ fun ProfileListScreen(
 
         item {
             PremiumContentCard(
-                title = "Settings & account",
-                body = "Shape how visible your data is, where alerts go, and whether device-only profiles ever attach to an account.",
+                title = when {
+                    personalModeEnabled -> stringResource(R.string.profile_hub_mode_personal_title)
+                    isAuthenticated -> stringResource(R.string.profile_hub_mode_authenticated_title, accountEmail.orEmpty())
+                    else -> stringResource(R.string.profile_hub_mode_local_title)
+                },
+                body = when {
+                    personalModeEnabled -> stringResource(R.string.profile_hub_mode_personal_body)
+                    isAuthenticated -> stringResource(R.string.profile_hub_mode_authenticated_body, syncedCount, localOnlyCount)
+                    else -> stringResource(R.string.profile_hub_mode_local_body, localOnlyCount)
+                },
+            )
+        }
+
+        item {
+            PremiumContentCard(
+                title = stringResource(R.string.profile_hub_settings_title),
+                body = stringResource(R.string.profile_hub_settings_body),
             ) {
                     FlowRow(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -269,26 +381,46 @@ fun ProfileListScreen(
                     ) {
                         ElevatedAssistChip(
                             onClick = onOpenNotifications,
-                            label = { Text(if (personalModeEnabled) "Alerts & local settings" else "Alerts & account") },
+                            label = {
+                                Text(
+                                    stringResource(
+                                        if (personalModeEnabled) {
+                                            R.string.profile_hub_settings_chip_alerts_local
+                                        } else {
+                                            R.string.profile_hub_settings_chip_alerts_account
+                                        },
+                                    ),
+                                )
+                            },
                         )
                         ElevatedAssistChip(
                             onClick = onOpenPrivacy,
-                            label = { Text(if (hideSensitiveDetailsEnabled) "Privacy redaction on" else "Open privacy controls") },
+                            label = {
+                                Text(
+                                    stringResource(
+                                        if (hideSensitiveDetailsEnabled) {
+                                            R.string.profile_hub_settings_chip_privacy_on
+                                        } else {
+                                            R.string.profile_hub_settings_chip_open_privacy
+                                        },
+                                    ),
+                                )
+                            },
                         )
                         if (!personalModeEnabled && isAuthenticated && localOnlyCount > 0) {
                             ElevatedAssistChip(
                                 onClick = onSyncProfiles,
-                                label = { Text("Sync device-only profiles") },
+                                label = { Text(stringResource(R.string.profile_hub_settings_chip_sync_device_only)) },
                             )
                         } else if (!personalModeEnabled && !isAuthenticated) {
                             ElevatedAssistChip(
                                 onClick = onOpenNotifications,
-                                label = { Text("Sign in to sync") },
+                                label = { Text(stringResource(R.string.profile_hub_settings_chip_sign_in_sync)) },
                             )
                         }
                         ElevatedAssistChip(
                             onClick = onCreateProfile,
-                            label = { Text("Create another profile") },
+                            label = { Text(stringResource(R.string.profile_hub_settings_chip_create_another)) },
                         )
                     }
             }
@@ -364,29 +496,38 @@ fun ProfileListScreen(
 
         item {
             PremiumContentCard(
-                title = "Experience settings",
-                body = "Mirror the same controls iOS exposes: how readings sound, which nudges are active, and how much optional context the guide can use.",
+                title = stringResource(R.string.profile_hub_experience_title),
+                body = stringResource(R.string.profile_hub_experience_body),
             ) {
-                    ProfileStatusRow(label = "Reading tone", value = tonePreferenceLabel(tonePreference))
-                    ProfileStatusRow(label = "Guide voice", value = guideTone.label)
-                    ProfileStatusRow(label = "Daily reading reminder", value = if (dailyReminderEnabled) "On" else "Off")
-                    ProfileStatusRow(label = "Calendar context", value = if (calendarContextEnabled) "On" else "Off")
-                    ProfileStatusRow(label = "Biometric context", value = if (biometricContextEnabled) "On" else "Off")
+                    ProfileStatusRow(label = stringResource(R.string.profile_hub_status_reading_tone), value = tonePreferenceLabel(tonePreference))
+                    ProfileStatusRow(label = stringResource(R.string.profile_hub_status_guide_voice), value = guideTone.label)
+                    ProfileStatusRow(
+                        label = stringResource(R.string.profile_hub_status_daily_reading_reminder),
+                        value = stringResource(if (dailyReminderEnabled) R.string.profile_hub_status_on else R.string.profile_hub_status_off),
+                    )
+                    ProfileStatusRow(
+                        label = stringResource(R.string.profile_hub_status_calendar_context),
+                        value = stringResource(if (calendarContextEnabled) R.string.profile_hub_status_on else R.string.profile_hub_status_off),
+                    )
+                    ProfileStatusRow(
+                        label = stringResource(R.string.profile_hub_status_biometric_context),
+                        value = stringResource(if (biometricContextEnabled) R.string.profile_hub_status_on else R.string.profile_hub_status_off),
+                    )
                     FlowRow(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         ElevatedAssistChip(
                             onClick = onOpenNotifications,
-                            label = { Text("Notification settings") },
+                            label = { Text(stringResource(R.string.profile_hub_chip_notification_settings)) },
                         )
                         ElevatedAssistChip(
                             onClick = onOpenGuide,
-                            label = { Text("Guide preferences") },
+                            label = { Text(stringResource(R.string.profile_hub_chip_guide_preferences)) },
                         )
                         ElevatedAssistChip(
                             onClick = onOpenPrivacy,
-                            label = { Text("Privacy controls") },
+                            label = { Text(stringResource(R.string.profile_hub_chip_privacy_controls)) },
                         )
                     }
             }
@@ -394,8 +535,8 @@ fun ProfileListScreen(
 
         item {
             PremiumContentCard(
-                title = "Learning & support",
-                body = "Keep the Profile hub useful even when users need education, guidance, or a human follow-up.",
+                title = stringResource(R.string.profile_hub_learning_title),
+                body = stringResource(R.string.profile_hub_learning_body),
             ) {
                     FlowRow(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -403,37 +544,37 @@ fun ProfileListScreen(
                     ) {
                         ElevatedAssistChip(
                             onClick = onOpenUserGuide,
-                            label = { Text("User Guide") },
+                            label = { Text(stringResource(R.string.profile_hub_chip_user_guide)) },
                         )
                         ElevatedAssistChip(
                             onClick = onOpenHelp,
-                            label = { Text("Help & FAQ") },
+                            label = { Text(stringResource(R.string.profile_hub_chip_help_faq)) },
                         )
                         ElevatedAssistChip(
                             onClick = onOpenLearn,
-                            label = { Text("Learn Astrology & Numerology") },
+                            label = { Text(stringResource(R.string.profile_hub_chip_learn_astrology)) },
                         )
                         ElevatedAssistChip(
                             onClick = onOpenGuide,
-                            label = { Text("Open Cosmic Guide") },
+                            label = { Text(stringResource(R.string.profile_hub_chip_open_cosmic_guide)) },
                         )
                         ElevatedAssistChip(
                             onClick = {
                                 launchMailIntent(
                                     context = context,
                                     address = "support@astromeric.app",
-                                    subject = "AstroNumeric Android Support",
+                                    subject = context.getString(R.string.support_help_email_subject),
                                     body = buildSupportEmailBody(
                                         profilesCount = profiles.size,
                                         hideSensitiveDetailsEnabled = hideSensitiveDetailsEnabled,
                                     ),
                                 )
                             },
-                            label = { Text("Email support") },
+                            label = { Text(stringResource(R.string.profile_hub_chip_email_support)) },
                         )
                         ElevatedAssistChip(
                             onClick = onOpenPrivacy,
-                            label = { Text("Privacy policy") },
+                            label = { Text(stringResource(R.string.profile_hub_chip_privacy_policy)) },
                         )
                     }
             }
@@ -441,18 +582,21 @@ fun ProfileListScreen(
 
         item {
             PremiumContentCard(
-                title = "Backups & transfer",
+                title = stringResource(R.string.profile_hub_backups_title),
                 body = selectedProfile?.let {
-                    "Active profile ready for backup or share: ${it.displayName(hideSensitiveDetailsEnabled, PrivacyDisplayRole.ACTIVE_USER)}"
-                } ?: "Select or create a profile before exporting, importing, or sharing a summary.",
-                footer = "Android already ships full-fidelity export/import in Privacy. Redaction changes visible labels and text sharing, not the backup payload itself.",
+                    stringResource(
+                        R.string.profile_hub_backups_body_selected,
+                        it.displayName(hideSensitiveDetailsEnabled, PrivacyDisplayRole.ACTIVE_USER),
+                    )
+                } ?: stringResource(R.string.profile_hub_backups_body_empty),
+                footer = stringResource(R.string.profile_hub_backups_footer),
             ) {
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         Button(
                             onClick = onOpenPrivacy,
                             modifier = Modifier.weight(1f),
                         ) {
-                            Text("Export/import backups")
+                            Text(stringResource(R.string.profile_hub_backups_button_export_import))
                         }
                         OutlinedButton(
                             onClick = {
@@ -467,36 +611,42 @@ fun ProfileListScreen(
                             enabled = selectedProfile != null,
                             modifier = Modifier.weight(1f),
                         ) {
-                            Text("Share summary")
+                            Text(stringResource(R.string.profile_hub_backups_button_share_summary))
                         }
                     }
             }
         }
 
         item {
-            PremiumContentCard(title = "Trust & safety") {
+            PremiumContentCard(title = stringResource(R.string.profile_hub_trust_title)) {
                     ProfileInfoLine(
-                        title = "Private by default",
-                        detail = "Profiles begin on-device and stay local unless you explicitly attach them to an account-backed flow.",
+                        title = stringResource(R.string.profile_hub_trust_private_title),
+                        detail = stringResource(R.string.profile_hub_trust_private_detail),
                     )
                     ProfileInfoLine(
-                        title = "Privacy mode ${if (hideSensitiveDetailsEnabled) "is on" else "is off"}",
+                        title = stringResource(
+                            if (hideSensitiveDetailsEnabled) {
+                                R.string.profile_hub_trust_privacy_on_title
+                            } else {
+                                R.string.profile_hub_trust_privacy_off_title
+                            },
+                        ),
                         detail = if (hideSensitiveDetailsEnabled) {
-                            "Names and birth details are masked across the Android UI while calculations still use the saved profile data they need."
+                            stringResource(R.string.profile_hub_trust_privacy_on_detail)
                         } else {
-                            "Profile details are currently visible in full. Open Privacy to mask names and birth details across the main UI."
+                            stringResource(R.string.profile_hub_trust_privacy_off_detail)
                         },
                     )
                     ProfileInfoLine(
-                        title = "Shared backend boundary",
-                        detail = "Forecasts, charts, AI guidance, and alerts still use the same Railway `/v2` backend surface as iOS when those features need it.",
+                        title = stringResource(R.string.profile_hub_trust_backend_title),
+                        detail = stringResource(R.string.profile_hub_trust_backend_detail),
                     )
                     OutlinedButton(
                         onClick = {
                             launchMailIntent(
                                 context = context,
                                 address = "support@astromeric.app",
-                                subject = "AstroNumeric Android Support",
+                                subject = context.getString(R.string.support_help_email_subject),
                                 body = buildSupportEmailBody(
                                     profilesCount = profiles.size,
                                     hideSensitiveDetailsEnabled = hideSensitiveDetailsEnabled,
@@ -505,82 +655,9 @@ fun ProfileListScreen(
                         },
                         modifier = Modifier.fillMaxWidth(),
                     ) {
-                        Text("Send support email")
+                        Text(stringResource(R.string.profile_hub_trust_button_support_email))
                     }
             }
-        }
-
-        item {
-            SystemDiagnosticsCard(
-                selectedProfile = selectedProfile,
-                profilesCount = profiles.size,
-                fullDataCount = fullDataCount,
-                localOnlyCount = localOnlyCount,
-                syncedCount = syncedCount,
-                hideSensitiveDetailsEnabled = hideSensitiveDetailsEnabled,
-                personalModeEnabled = personalModeEnabled,
-                isAuthenticated = isAuthenticated,
-                notificationsEnabledInSystem = notificationsEnabledInSystem,
-                notificationPermissionGranted = notificationPermissionGranted,
-                calendarPermissionGranted = calendarPermissionGranted,
-                healthAvailability = healthAvailability,
-                dailyReminderEnabled = dailyReminderEnabled,
-                habitReminderEnabled = habitReminderEnabled,
-                timingAlertEnabled = timingAlertEnabled,
-                transitAlertsEnabled = transitAlertsEnabled,
-                dailyReadingHour = dailyReadingHour,
-                dailyReadingMinute = dailyReadingMinute,
-                habitReminderHour = habitReminderHour,
-                habitReminderMinute = habitReminderMinute,
-                timingAlertHour = timingAlertHour,
-                timingAlertMinute = timingAlertMinute,
-                transitAlertHour = transitAlertHour,
-                transitAlertMinute = transitAlertMinute,
-                widgetInstanceCount = widgetInstanceCount,
-                widgetSnapshot = widgetSnapshot,
-                widgetSnapshotStore = widgetSnapshotStore,
-                exactTransitCacheSnapshot = exactTransitCacheSnapshot,
-                exactTransitLoadStatus = exactTransitLoadStatus,
-                exactTransitAlarmAccess = exactTransitAlarmAccess,
-                scheduledTransitHashCount = scheduledTransitHashCount,
-                isRunningDebugRefresh = isRunningDebugRefresh,
-                debugDiagnosticsNote = debugDiagnosticsNote,
-                onRefresh = { diagnosticsRefreshVersion += 1 },
-                onSeedDebugProfile = onSeedDebugProfile,
-                onDebugDiagnosticsNoteChange = { debugDiagnosticsNote = it },
-                onPreviewExactTransitNotification = { profile, source, isCached ->
-                    AstroNotificationService(context.applicationContext).showExactTransitNotification(
-                        profileName = profile.displayName(hideSensitiveDetailsEnabled, PrivacyDisplayRole.ACTIVE_USER),
-                        transitPlanet = "Mars",
-                        natalPoint = "Sun",
-                        aspect = "square",
-                        interpretation = "Debug preview of the exact-transit notification payload.",
-                        source = source,
-                        isCached = isCached,
-                        notificationId = 1008,
-                    )
-                },
-                onRunDebugRefresh = { profile ->
-                    scope.launch {
-                        isRunningDebugRefresh = true
-                        debugDiagnosticsNote = "Running the shared refresh path now..."
-                        val refreshResult = runAstroRefresh(
-                            applicationContext = context.applicationContext,
-                            forceExactTransitDiagnostics = true,
-                        )
-                        val refreshedStatus = exactTransitLoadStatusStore.read(profile.id)
-                        diagnosticsRefreshVersion += 1
-                        debugDiagnosticsNote = when (refreshResult) {
-                            is ListenableWorker.Result.Success -> refreshedStatus?.let(::exactTransitLoadStatusDetailLabel)
-                                ?: "Refresh finished, but no exact transit source was recorded."
-                            is ListenableWorker.Result.Retry -> "Refresh requested a retry."
-                            is ListenableWorker.Result.Failure -> "Refresh failed."
-                            else -> "Refresh completed with an unexpected result."
-                        }
-                        isRunningDebugRefresh = false
-                    }
-                },
-            )
         }
 
         item {
@@ -605,24 +682,127 @@ fun ProfileListScreen(
                 }
             }
         }
+    }
+}
 
-        if (profiles.isNotEmpty()) {
-            item {
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(
-                        text = "All profiles",
-                        style = MaterialTheme.typography.titleMedium,
+@Composable
+@OptIn(ExperimentalLayoutApi::class)
+private fun ProfileIdentityCard(
+    selectedProfile: AppProfile?,
+    hideSensitiveDetailsEnabled: Boolean,
+) {
+    val initial = when {
+        selectedProfile == null -> "?"
+        hideSensitiveDetailsEnabled -> "•"
+        else -> selectedProfile
+            .displayName(hideSensitive = false, role = PrivacyDisplayRole.ACTIVE_USER)
+            .take(1)
+            .uppercase(Locale.getDefault())
+    }
+
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(80.dp)
+                    .background(
+                        brush = Brush.linearGradient(
+                            listOf(
+                                MaterialTheme.colorScheme.primary.copy(alpha = 0.95f),
+                                MaterialTheme.colorScheme.secondary.copy(alpha = 0.88f),
+                            ),
+                        ),
+                        shape = CircleShape,
+                    ),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = initial,
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimary,
+                )
+            }
+
+            Text(
+                text = selectedProfile?.displayName(
+                    hideSensitive = hideSensitiveDetailsEnabled,
+                    role = PrivacyDisplayRole.ACTIVE_USER,
+                ) ?: stringResource(R.string.profile_hub_no_profile_title),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.SemiBold,
+            )
+
+            Text(
+                text = selectedProfile?.dataQuality?.description
+                    ?: stringResource(R.string.profile_hub_no_profile_body),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+
+            selectedProfile?.let { profile ->
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    ElevatedAssistChip(onClick = {}, label = { Text(profile.dataQuality.label) })
+                    ElevatedAssistChip(
+                        onClick = {},
+                        label = {
+                            Text(
+                                stringResource(
+                                    if (profile.isRemoteBacked) {
+                                        R.string.profile_hub_chip_account_synced
+                                    } else {
+                                        R.string.profile_hub_chip_device_only
+                                    },
+                                ),
+                            )
+                        },
                     )
-                    Text(
-                        text = "Switch the active profile, edit details, or remove an old entry from this device.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    ElevatedAssistChip(
+                        onClick = {},
+                        label = { Text(profile.timezone ?: stringResource(R.string.profile_hub_chip_timezone_missing)) },
                     )
                 }
             }
         }
+    }
+}
 
-        itemsIndexed(items = profiles, key = { _, profile -> profile.id }) { index, profile ->
+@Composable
+@OptIn(ExperimentalLayoutApi::class)
+private fun ProfilesCollectionCard(
+    profiles: List<AppProfile>,
+    selectedProfile: AppProfile?,
+    hideSensitiveDetailsEnabled: Boolean,
+    personalModeEnabled: Boolean,
+    isAuthenticated: Boolean,
+    onCreateProfile: () -> Unit,
+    onSelectProfile: (Int) -> Unit,
+    onEditProfile: (Int) -> Unit,
+    onDeleteProfile: (Int) -> Unit,
+) {
+    PremiumContentCard(
+        title = stringResource(R.string.profile_hub_all_profiles_title),
+        body = stringResource(R.string.profile_hub_all_profiles_body),
+    ) {
+        Button(
+            onClick = onCreateProfile,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Icon(Icons.Filled.Add, contentDescription = null)
+            Text(stringResource(R.string.profile_hub_cta_new_profile))
+        }
+
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            profiles.forEachIndexed { index, profile ->
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     onClick = { onSelectProfile(profile.id) },
@@ -653,10 +833,10 @@ fun ProfileListScreen(
 
                             Row {
                                 IconButton(onClick = { onEditProfile(profile.id) }) {
-                                    Icon(Icons.Filled.Edit, contentDescription = "Edit profile")
+                                    Icon(Icons.Filled.Edit, contentDescription = stringResource(R.string.profile_hub_content_description_edit_profile))
                                 }
                                 IconButton(onClick = { onDeleteProfile(profile.id) }) {
-                                    Icon(Icons.Filled.Delete, contentDescription = "Delete profile")
+                                    Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.profile_hub_content_description_delete_profile))
                                 }
                             }
                         }
@@ -667,7 +847,17 @@ fun ProfileListScreen(
                         ) {
                             ElevatedAssistChip(
                                 onClick = {},
-                                label = { Text(if (profile.isRemoteBacked) "Account Synced" else "Device Only") },
+                                label = {
+                                    Text(
+                                        stringResource(
+                                            if (profile.isRemoteBacked) {
+                                                R.string.profile_hub_chip_account_synced
+                                            } else {
+                                                R.string.profile_hub_chip_device_only
+                                            },
+                                        ),
+                                    )
+                                },
                             )
                             ElevatedAssistChip(
                                 onClick = {},
@@ -676,12 +866,12 @@ fun ProfileListScreen(
                             if (selectedProfile?.id == profile.id) {
                                 ElevatedAssistChip(
                                     onClick = {},
-                                    label = { Text("Selected") },
+                                    label = { Text(stringResource(R.string.profile_hub_chip_selected)) },
                                 )
                             }
                             ElevatedAssistChip(
                                 onClick = {},
-                                label = { Text(profile.timezone ?: "Timezone missing") },
+                                label = { Text(profile.timezone ?: stringResource(R.string.profile_hub_chip_timezone_missing)) },
                             )
                         }
 
@@ -692,7 +882,7 @@ fun ProfileListScreen(
                         )
                         if (!personalModeEnabled && isAuthenticated && profile.isLocalOnly) {
                             Text(
-                                text = "This profile still lives only on this device. Sync it to attach it to your account-backed alerts and profile storage.",
+                                text = stringResource(R.string.profile_hub_device_only_note),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
@@ -700,6 +890,7 @@ fun ProfileListScreen(
                     }
                 }
             }
+        }
     }
 }
 
@@ -709,21 +900,21 @@ private fun NoProfileSetupCard(
     onOpenPrivacy: () -> Unit,
 ) {
     PremiumContentCard(
-        title = "No profile set up",
-        body = "Create your profile to unlock a real chart, meaningful numerology, and timing that actually belongs to you.",
+        title = stringResource(R.string.profile_hub_no_profile_title),
+        body = stringResource(R.string.profile_hub_no_profile_body),
     ) {
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Button(
                     onClick = onCreateProfile,
                     modifier = Modifier.weight(1f),
                 ) {
-                    Text("Create profile")
+                    Text(stringResource(R.string.profile_hub_no_profile_button_create))
                 }
                 TextButton(
                     onClick = onOpenPrivacy,
                     modifier = Modifier.weight(1f),
                 ) {
-                    Text("Privacy controls")
+                    Text(stringResource(R.string.profile_hub_no_profile_button_privacy))
                 }
             }
     }
@@ -740,8 +931,8 @@ private fun ActiveProfileSummaryCard(
     var showBirthDate by rememberSaveable(profile.id) { mutableStateOf(false) }
 
     PremiumContentCard(
-        title = "Birth details",
-        body = "This profile powers your chart, numerology, timing tools, and personal guidance throughout the app.",
+        title = stringResource(R.string.profile_hub_active_profile_title),
+        body = stringResource(R.string.profile_hub_active_profile_body),
     ) {
             Text(
                 text = profile.displayName(
@@ -761,11 +952,21 @@ private fun ActiveProfileSummaryCard(
                 )
                 ElevatedAssistChip(
                     onClick = {},
-                    label = { Text(if (profile.isRemoteBacked) "Account synced" else "Device only") },
+                    label = {
+                        Text(
+                            stringResource(
+                                if (profile.isRemoteBacked) {
+                                    R.string.profile_hub_active_profile_chip_account_synced
+                                } else {
+                                    R.string.profile_hub_active_profile_chip_device_only
+                                },
+                            ),
+                        )
+                    },
                 )
                 ElevatedAssistChip(
                     onClick = {},
-                    label = { Text(profile.timezone ?: "Timezone missing") },
+                    label = { Text(profile.timezone ?: stringResource(R.string.profile_hub_active_profile_chip_timezone_missing)) },
                 )
             }
             Text(
@@ -774,20 +975,28 @@ private fun ActiveProfileSummaryCard(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             ProfileDetailValueRow(
-                label = "Birth date",
+                label = stringResource(R.string.profile_hub_active_profile_label_birth_date),
                 value = when {
                     hideSensitiveDetailsEnabled -> HiddenValueLabel
                     showBirthDate -> formatBirthDateForDisplay(profile.dateOfBirth)
-                    else -> "Tap reveal below"
+                    else -> stringResource(R.string.profile_hub_active_profile_value_tap_reveal)
                 },
             )
             if (!hideSensitiveDetailsEnabled) {
                 TextButton(onClick = { showBirthDate = !showBirthDate }) {
-                    Text(if (showBirthDate) "Hide birth date" else "Reveal birth date")
+                    Text(
+                        stringResource(
+                            if (showBirthDate) {
+                                R.string.profile_hub_active_profile_button_hide_birth_date
+                            } else {
+                                R.string.profile_hub_active_profile_button_reveal_birth_date
+                            },
+                        ),
+                    )
                 }
             }
             ProfileDetailValueRow(
-                label = "Birth time",
+                label = stringResource(R.string.profile_hub_active_profile_label_birth_time),
                 value = if (hideSensitiveDetailsEnabled) {
                     profile.maskedBirthTime(true)
                 } else {
@@ -795,29 +1004,29 @@ private fun ActiveProfileSummaryCard(
                 },
             )
             ProfileDetailValueRow(
-                label = "Time confidence",
+                label = stringResource(R.string.profile_hub_active_profile_label_time_confidence),
                 value = profile.timeConfidence.displayTitle,
             )
             ProfileDetailValueRow(
-                label = "Birthplace",
+                label = stringResource(R.string.profile_hub_active_profile_label_birthplace),
                 value = profile.maskedBirthplace(hideSensitiveDetailsEnabled),
             )
             ProfileDetailValueRow(
-                label = "Timezone",
-                value = profile.timezone ?: "Timezone missing",
+                label = stringResource(R.string.profile_hub_active_profile_label_timezone),
+                value = profile.timezone ?: stringResource(R.string.profile_hub_active_profile_chip_timezone_missing),
             )
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Button(
                     onClick = onEditProfile,
                     modifier = Modifier.weight(1f),
                 ) {
-                    Text("Edit active profile")
+                    Text(stringResource(R.string.profile_hub_active_profile_button_edit))
                 }
                 TextButton(
                     onClick = onCreateProfile,
                     modifier = Modifier.weight(1f),
                 ) {
-                    Text("Create another")
+                    Text(stringResource(R.string.profile_hub_active_profile_button_create_another))
                 }
         }
     }
@@ -982,11 +1191,16 @@ private fun shareProfileSummary(
 ) {
     val shareIntent = Intent(Intent.ACTION_SEND).apply {
         type = "text/plain"
-        putExtra(Intent.EXTRA_SUBJECT, "AstroNumeric profile")
-        putExtra(Intent.EXTRA_TEXT, profile.toShareSummaryText(hideSensitiveDetailsEnabled))
+        putExtra(Intent.EXTRA_SUBJECT, context.getString(R.string.privacy_screen_share_profile_subject))
+        putExtra(Intent.EXTRA_TEXT, profile.toShareSummaryText(context, hideSensitiveDetailsEnabled))
     }
     if (shareIntent.resolveActivity(context.packageManager) != null) {
-        context.startActivity(Intent.createChooser(shareIntent, "Share profile summary"))
+        context.startActivity(
+            Intent.createChooser(
+                shareIntent,
+                context.getString(R.string.privacy_screen_share_profile_chooser_title),
+            ),
+        )
     }
 }
 

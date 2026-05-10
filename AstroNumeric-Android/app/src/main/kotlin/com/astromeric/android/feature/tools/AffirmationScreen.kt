@@ -37,9 +37,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.astromeric.android.R
 import com.astromeric.android.core.data.remote.AstroRemoteDataSource
 import com.astromeric.android.core.model.AffirmationData
 import com.astromeric.android.core.model.AppProfile
@@ -56,6 +58,7 @@ fun AffirmationScreen(
     onOpenProfile: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val errorFallback = stringResource(R.string.affirmation_error_load)
     var refreshVersion by remember(selectedProfile?.id) { mutableIntStateOf(0) }
     var isLoading by remember(selectedProfile?.id) { mutableStateOf(false) }
     var errorMessage by remember(selectedProfile?.id) { mutableStateOf<String?>(null) }
@@ -72,7 +75,7 @@ fun AffirmationScreen(
         errorMessage = null
         revealed = false
         affirmation = remoteDataSource.fetchAffirmation(profile)
-            .onFailure { errorMessage = it.message ?: "Affirmation could not be loaded." }
+            .onFailure { errorMessage = it.message ?: errorFallback }
             .getOrNull()
         isLoading = false
         if (affirmation != null) revealed = true
@@ -81,15 +84,15 @@ fun AffirmationScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Affirmation") },
+                title = { Text(stringResource(R.string.affirmation_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
                     }
                 },
                 actions = {
                     IconButton(onClick = { refreshVersion += 1 }, enabled = !isLoading) {
-                        Icon(Icons.Filled.Refresh, contentDescription = "New affirmation")
+                        Icon(Icons.Filled.Refresh, contentDescription = stringResource(R.string.affirmation_new_content_description))
                     }
                 },
             )
@@ -108,9 +111,9 @@ fun AffirmationScreen(
             if (selectedProfile == null) {
                 Card(modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("Profile Required", style = MaterialTheme.typography.titleSmall)
-                        Text("A profile is needed to personalise your affirmation.", style = MaterialTheme.typography.bodyMedium)
-                        Button(onClick = onOpenProfile) { Text("Open Profile") }
+                        Text(stringResource(R.string.status_profile_required), style = MaterialTheme.typography.titleSmall)
+                        Text(stringResource(R.string.affirmation_profile_required_body), style = MaterialTheme.typography.bodyMedium)
+                        Button(onClick = onOpenProfile) { Text(stringResource(R.string.action_open_profile)) }
                     }
                 }
                 return@Column
@@ -130,9 +133,9 @@ fun AffirmationScreen(
             errorMessage?.let { error ->
                 Card(modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("Could Not Load", style = MaterialTheme.typography.titleSmall)
+                        Text(stringResource(R.string.status_could_not_load), style = MaterialTheme.typography.titleSmall)
                         Text(error, style = MaterialTheme.typography.bodyMedium)
-                        OutlinedButton(onClick = { refreshVersion += 1 }) { Text("Retry") }
+                        OutlinedButton(onClick = { refreshVersion += 1 }) { Text(stringResource(R.string.action_retry)) }
                     }
                 }
                 return@Column
@@ -175,7 +178,7 @@ fun AffirmationScreen(
 
             if (!isLoading && affirmation != null) {
                 OutlinedButton(onClick = { refreshVersion += 1 }) {
-                    Text("New Affirmation")
+                    Text(stringResource(R.string.affirmation_new_button))
                 }
             }
 

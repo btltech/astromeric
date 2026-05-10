@@ -286,17 +286,24 @@ struct CycleDetail: Codable {
 }
 
 struct Pinnacle: Codable, Identifiable {
-    var id: Int { number }
+    // index (1–4) from backend; nil for cached data from before this fix
+    let index: Int?
     let number: Int
     let ages: String?
     let meaning: String?
+
+    // Use index as the SwiftUI stable ID so duplicate numerological values
+    // (e.g. two pinnacles both equal to 8) never collapse into one row.
+    var id: Int { index ?? number }
 }
 
 struct Challenge: Codable, Identifiable {
-    var id: Int { number }
+    let index: Int?
     let number: Int
     let ages: String?
     let meaning: String?
+
+    var id: Int { index ?? number }
 }
 
 struct KarmicDebt: Codable, Identifiable {

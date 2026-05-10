@@ -110,11 +110,10 @@ export function HomeLiveDesk() {
     <section className="live-desk" aria-labelledby="live-desk-title">
       <div className="live-desk__header">
         <div>
-          <span className="live-desk__eyebrow">Live timing desk</span>
-          <h2 id="live-desk-title">One homepage section now pulls real backend timing data instead of preview copy.</h2>
+          <span className="live-desk__eyebrow">This week</span>
+          <h2 id="live-desk-title">Your weekly timing, at a glance.</h2>
           <p>
-            This uses the live weekly forecast endpoint and current moon phase so the homepage feels active,
-            not just well-designed.
+            Live forecast data for the week ahead — score, mood, and the strongest window to act on.
           </p>
         </div>
 
@@ -167,7 +166,7 @@ export function HomeLiveDesk() {
                   : 'No standout day yet'}
               </strong>
               <p>
-                {strongestDay?.recommendation ?? 'The strongest day of the week will surface here.'}
+                {strongestDay?.recommendation ?? 'Check back tomorrow for the strongest window of the week.'}
               </p>
             </article>
 

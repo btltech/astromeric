@@ -46,11 +46,11 @@ struct JournalView: View {
                 
                 ScrollView {
                     VStack(spacing: 16) {
-                        PremiumHeroCard(
+                        PremiumScreenHeader(
                             eyebrow: "hero.journal.eyebrow".localized,
                             title: "hero.journal.title".localized,
-                            bodyText: "hero.journal.body".localized,
-                            accent: [Color(hex: "1a2038"), Color(hex: "4f4bb8"), Color(hex: "7a53b0")],
+                            subtitle: "hero.journal.body".localized,
+                            accent: .accentPrimary,
                             chips: ["hero.journal.chip.0".localized, "hero.journal.chip.1".localized, "hero.journal.chip.2".localized]
                         )
 
@@ -137,16 +137,18 @@ struct JournalView: View {
                                             }
                                         }
                                     }
-                                    .buttonStyle(.plain)
+                                    .buttonStyle(ScaleButtonStyle())
                                 }
                             }
                             
                             if vm.isLocalMode {
                                 Button {
-                                    let draft = vm.makeLocalDraft(profileId: profile.id)
-                                    selectedReading = draft
-                                    entryDraft = ""
-                                    outcomeDraft = .neutral
+                                    Task {
+                                        let draft = await vm.makeLocalDraft(profileId: profile.id)
+                                        selectedReading = draft
+                                        entryDraft = ""
+                                        outcomeDraft = .neutral
+                                    }
                                 } label: {
                                     Text("ui.journal.4".localized)
                                         .frame(maxWidth: .infinity)
@@ -212,14 +214,14 @@ struct JournalView: View {
                             HStack(spacing: 6) {
                                 Image(systemName: voiceRecorder.isRecording ? "tern.journal.3a".localized : "tern.journal.3b".localized)
                                     .font(.title2)
-                                    .foregroundStyle(voiceRecorder.isRecording ? .red : .purple)
+                                    .foregroundStyle(voiceRecorder.isRecording ? Color.negativeRed : Color.accentPrimary)
                                     .symbolEffect(.pulse, isActive: voiceRecorder.isRecording)
 
                                 Text(voiceRecorder.isRecording ? "tern.journal.4a".localized : "tern.journal.4b".localized)
                                     .font(.subheadline.weight(.medium))
                             }
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(ScaleButtonStyle())
 
                         if voiceRecorder.isRecording, !voiceRecorder.transcript.isEmpty {
                             Text(voiceRecorder.transcript)

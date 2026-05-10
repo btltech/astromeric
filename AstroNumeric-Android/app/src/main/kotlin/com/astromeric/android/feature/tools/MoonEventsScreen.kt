@@ -34,8 +34,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.astromeric.android.R
 import com.astromeric.android.core.data.remote.AstroRemoteDataSource
 import com.astromeric.android.core.model.MoonEventData
 import com.astromeric.android.core.model.MoonEventsData
@@ -52,6 +54,7 @@ fun MoonEventsScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val errorFallback = stringResource(R.string.moon_events_error_load)
     var refreshVersion by remember { mutableIntStateOf(0) }
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
@@ -61,7 +64,7 @@ fun MoonEventsScreen(
         isLoading = true
         errorMessage = null
         eventsData = remoteDataSource.fetchUpcomingMoonEvents(days = 60)
-            .onFailure { errorMessage = it.message ?: "Moon events could not be loaded." }
+            .onFailure { errorMessage = it.message ?: errorFallback }
             .getOrNull()
         isLoading = false
     }
@@ -69,10 +72,10 @@ fun MoonEventsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Upcoming Moon Events") },
+                title = { Text(stringResource(R.string.moon_events_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
                     }
                 },
                 actions = {
@@ -80,7 +83,7 @@ fun MoonEventsScreen(
                         onClick = { refreshVersion += 1 },
                         enabled = !isLoading,
                     ) {
-                        Icon(Icons.Filled.Refresh, contentDescription = "Refresh")
+                        Icon(Icons.Filled.Refresh, contentDescription = stringResource(R.string.action_refresh))
                     }
                 },
             )
@@ -96,22 +99,22 @@ fun MoonEventsScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Text(
-                text = "Track new moons, full moons, and phase milestones over the next two months.",
+                text = stringResource(R.string.moon_events_intro_body),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
 
             if (isLoading && eventsData == null) {
-                PremiumLoadingCard(title = "Loading moon events")
+                PremiumLoadingCard(title = stringResource(R.string.moon_events_loading_title))
                 return@Column
             }
 
             errorMessage?.let { error ->
                 PremiumStatusCard(
-                    title = "Could Not Load",
+                    title = stringResource(R.string.status_could_not_load),
                     message = error,
                     isError = true,
-                    actionLabel = "Retry",
+                    actionLabel = stringResource(R.string.action_retry),
                     onAction = { refreshVersion += 1 },
                 )
                 return@Column
@@ -121,8 +124,8 @@ fun MoonEventsScreen(
 
             if (events.isEmpty() && !isLoading) {
                 PremiumEmptyStateCard(
-                    title = "No moon events",
-                    message = "No upcoming moon events found.",
+                    title = stringResource(R.string.moon_events_empty_title),
+                    message = stringResource(R.string.moon_events_empty_message),
                 )
                 return@Column
             }
@@ -165,9 +168,9 @@ private fun MoonEventCard(event: MoonEventData, modifier: Modifier = Modifier) {
                         label = {
                             Text(
                                 text = when {
-                                    daysRounded == 0 -> "Today"
-                                    daysRounded == 1 -> "Tomorrow"
-                                    else -> "In $daysRounded days"
+                                    daysRounded == 0 -> stringResource(R.string.moon_events_today)
+                                    daysRounded == 1 -> stringResource(R.string.moon_events_tomorrow)
+                                    else -> stringResource(R.string.moon_events_in_days, daysRounded)
                                 },
                             )
                         },

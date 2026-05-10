@@ -1,76 +1,80 @@
 // ChartsView.swift
-// Consolidated view for Birth Chart, Numerology, Compatibility
+// Progressive disclosure chart hub — Big 3 → Numerology → Compatibility → Advanced
 
 import SwiftUI
 
 struct ChartsView: View {
     @Environment(AppStore.self) private var store
-    @State private var selectedTab: ChartTab = .birthChart
     @State private var isExporting = false
-    
-    enum ChartTab: String, CaseIterable {
-        case birthChart = "Birth Chart"
-        case numerology = "Numerology"
-        case compatibility = "Compatibility"
-        case advanced = "Advanced"
-        
-        var icon: String {
-            switch self {
-            case .birthChart: return "sun.and.horizon.fill"
-            case .numerology: return "number.circle.fill"
-            case .compatibility: return "heart.circle.fill"
-            case .advanced: return "sparkles"
-            }
-        }
-        
-        var color: Color {
-            switch self {
-            case .birthChart: return .orange
-            case .numerology: return .purple
-            case .compatibility: return .pink
-            case .advanced: return .blue
-            }
-        }
-    }
-    
+
     var body: some View {
         NavigationStack {
             ZStack {
                 CosmicBackgroundView(element: nil)
                     .ignoresSafeArea()
-                
-                VStack(spacing: 0) {
-                    PremiumHeroCard(
+
+                ScrollView {
+                    VStack(alignment: .leading, spacing: Space.lg) {
+                        PremiumScreenHeader(
                             eyebrow: "hero.charts.eyebrow".localized,
                             title: "hero.charts.title".localized,
-                            bodyText: "hero.charts.body".localized,
-                            accent: [Color(hex: "1d1635"), Color(hex: "6f3db8"), Color(hex: "c35b6e")],
-                            chips: ["hero.charts.chip.0".localized, "hero.charts.chip.1".localized, "hero.charts.chip.2".localized, "hero.charts.chip.3".localized]
+                            subtitle: "hero.charts.body".localized,
+                            accent: .accentPrimary,
+                            chips: [
+                                "hero.charts.chip.0".localized,
+                                "hero.charts.chip.1".localized,
+                                "hero.charts.chip.2".localized,
+                                "hero.charts.chip.3".localized
+                            ]
                         )
-                    .padding(.horizontal)
-                    .padding(.top)
 
-                    // Segmented control
-                    chartTabPicker
-                        .padding()
-                    
-                    // Content
-                    TabView(selection: $selectedTab) {
-                        birthChartContent
-                            .tag(ChartTab.birthChart)
-                        
-                        numerologyContent
-                            .tag(ChartTab.numerology)
-                        
-                        compatibilityContent
-                            .tag(ChartTab.compatibility)
-                        
-                        AdvancedChartsView()
-                            .tag(ChartTab.advanced)
+                        // SECTION: Birth Chart — always first, most fundamental
+                        ToolSectionHeader(
+                            title: "section.charts.birthChart.title".localized,
+                            subtitle: "section.charts.birthChart.subtitle".localized,
+                            badge: "badge.calculated".localized
+                        )
+                        EmbeddedChartView()
+
+                        // SECTION: Numerology
+                        ToolSectionHeader(
+                            title: "section.charts.numerology.title".localized,
+                            subtitle: "section.charts.numerology.subtitle".localized,
+                            badge: "badge.calculated".localized
+                        )
+                        numerologySection
+
+                        // SECTION: Compatibility
+                        ToolSectionHeader(
+                            title: "section.charts.compat.title".localized,
+                            subtitle: "section.charts.compat.subtitle".localized,
+                            badge: "badge.calculated".localized
+                        )
+                        compatibilitySection
+
+                        // SECTION: Advanced — gated behind a single link (progressive disclosure)
+                        ToolSectionHeader(
+                            title: "section.charts.advanced.title".localized,
+                            subtitle: "section.charts.advanced.subtitle".localized,
+                            badge: "badge.advanced".localized,
+                            accent: .cosmicBlue
+                        )
+                        NavigationLink {
+                            AdvancedChartsView()
+                        } label: {
+                            ChartsActionCard(
+                                title: "ui.charts.advancedCharts".localized,
+                                subtitle: "ui.charts.advancedChartsSubtitle".localized,
+                                icon: "sparkles",
+                                gradient: [.accentPrimary, .cosmicBlue]
+                            )
+                        }
+                        .buttonStyle(ScaleButtonStyle())
+                        .accessibilityLabel("section.charts.advanced.title".localized)
                     }
-                    .tabViewStyle(.page(indexDisplayMode: .never))
+                    .padding()
+                    .readableContainer()
                 }
-                .readableContainer()
             }
             .navigationTitle("charts.title".localized)
             .navigationBarTitleDisplayMode(.inline)
@@ -80,8 +84,7 @@ struct ChartsView: View {
                         exportChart()
                     } label: {
                         if isExporting {
-                            ProgressView()
-                                .scaleEffect(0.8)
+                            ProgressView().scaleEffect(0.8)
                         } else {
                             Image(systemName: "square.and.arrow.up")
                         }
@@ -91,215 +94,80 @@ struct ChartsView: View {
             }
         }
     }
-    
-    // MARK: - Tab Picker
-    
-    private var chartTabPicker: some View {
-        HStack(spacing: 0) {
-            ForEach(ChartTab.allCases, id: \.self) { tab in
-                Button {
-                    withAnimation(.spring(duration: 0.3)) {
-                        selectedTab = tab
-                    }
-                    HapticManager.impact(.light)
-                } label: {
-                    VStack(spacing: 6) {
-                        Image(systemName: tab.icon)
-                            .font(.title2)
-                        Text(tab.rawValue)
-                            .font(.caption)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .frame(minHeight: 44) // Apple HIG minimum tap target
-                    .padding(.vertical, 12)
-                    .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(selectedTab == tab ? tab.color.opacity(0.2) : Color.clear)
-                    )
-                    .foregroundStyle(selectedTab == tab ? tab.color : Color.subtleText)
-                }
-                .buttonStyle(.plain)
-            }
-        }
-        .padding(4)
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(.ultraThinMaterial)
-        )
-    }
-    
-    // MARK: - Birth Chart Content
-    
-    private var birthChartContent: some View {
-        // Use the embedded chart view for a full chart experience
-        EmbeddedChartView()
-    }
-    
-    // MARK: - Numerology Content
-    
-    private var numerologyContent: some View {
-        ScrollView {
-            VStack(spacing: 16) {
-                PremiumSectionHeader(
-                title: "section.charts.0.title".localized,
-                subtitle: "section.charts.0.subtitle".localized
-            )
 
-                if let profile = store.selectedProfile {
-                    // Profile card for numerology
+    // MARK: - Numerology Section
+
+    private var numerologySection: some View {
+        Group {
+            if let profile = store.selectedProfile {
+                VStack(spacing: Space.sm) {
                     CardView {
-                        VStack(alignment: .leading, spacing: 8) {
+                        VStack(alignment: .leading, spacing: Space.sm) {
                             Text("ui.charts.0".localized)
                                 .font(.headline)
-                            
                             Text(String(format: "fmt.charts.2".localized, "\(profile.displayName(hideSensitive: store.hideSensitiveDetailsEnabled, role: .activeUser))"))
                                 .font(.subtext)
-                            
                             Text("ui.charts.1".localized)
                                 .font(.label)
                                 .foregroundStyle(Color.textSecondary)
                         }
                     }
-                    
-                    // Navigate to full numerology
                     NavigationLink {
                         NumerologyView()
                     } label: {
                         ChartsActionCard(
-                            title: "Full Numerology Analysis",
-                            subtitle: "Deep dive into your number meanings",
+                            title: "ui.charts.numerologyFull".localized,
+                            subtitle: "ui.charts.numerologyFullSubtitle".localized,
                             icon: "number.circle.fill",
-                            gradient: [.purple, .blue]
+                            gradient: [.accentPrimary, .cosmicBlue]
                         )
                     }
-                    .buttonStyle(.plain)
-                    
-                    // Numerology info
-                    CardView {
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text("ui.charts.2".localized)
-                                .font(.headline)
-                            
-                            Text("ui.charts.3".localized)
-                                .font(.label)
-                                .foregroundStyle(Color.textMuted)
-                        }
-                    }
-                    
-                } else {
-                    ChartsNoProfileCard(
-                        title: "Discover Your Numbers",
-                        subtitle: "Enter your birth date to calculate your core numbers",
-                        icon: "number.circle.fill"
-                    )
+                    .buttonStyle(ScaleButtonStyle())
                 }
+            } else {
+                Text("charts.numerology.noProfile".localized)
+                    .font(.subtext)
+                    .foregroundStyle(Color.textMuted)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .padding()
         }
     }
-    
-    // MARK: - Compatibility Content
-    
-    private var compatibilityContent: some View {
-        ScrollView {
-            VStack(spacing: 16) {
-                PremiumSectionHeader(
-                title: "section.charts.1.title".localized,
-                subtitle: "section.charts.1.subtitle".localized
-            )
 
-                // New compatibility check
-                NavigationLink {
-                    CompatibilityView()
-                } label: {
-                    VStack(spacing: 16) {
-                        ZStack {
-                            Circle()
-                                .fill(
-                                    LinearGradient(
-                                        colors: [.pink, .purple],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                )
-                                .frame(width: 80, height: 80)
-                            
-                            Image(systemName: "heart.fill")
-                                .font(.largeTitle)
-                                .foregroundStyle(.white)
-                        }
-                        
-                        Text("ui.charts.4".localized)
-                            .font(.title2.bold())
-                        
-                        Text("ui.charts.5".localized)
-                            .font(.subheadline)
-                            .foregroundStyle(Color.textSecondary)
-                            .multilineTextAlignment(.center)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 32)
-                    .background(
-                        RoundedRectangle(cornerRadius: 20)
-                            .fill(.ultraThinMaterial)
-                    )
-                }
-                .buttonStyle(.plain)
-                
-                // Compatibility tips
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("ui.charts.6".localized)
-                        .font(.headline)
-                    
-                    ChartsCompatibilityTipRow(
-                        icon: "☀️",
-                        title: "Sun Signs",
-                        description: "Core personality compatibility"
-                    )
-                    
-                    ChartsCompatibilityTipRow(
-                        icon: "🌙",
-                        title: "Moon Signs",
-                        description: "Emotional understanding"
-                    )
-                    
-                    ChartsCompatibilityTipRow(
-                        icon: "💕",
-                        title: "Venus Signs",
-                        description: "Love language harmony"
-                    )
-                    
-                    ChartsCompatibilityTipRow(
-                        icon: "💬",
-                        title: "Mercury Signs",
-                        description: "Communication style"
-                    )
-                }
-                
-                // Saved relationships
-                NavigationLink {
-                    RelationshipsView()
-                } label: {
-                    CardView {
-                        HStack {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("ui.charts.7".localized)
-                                    .font(.headline)
-                                Text("ui.charts.8".localized)
-                                    .font(.label)
-                                    .foregroundStyle(Color.textSecondary)
-                            }
-                            
-                            Spacer()
-                            
-                            Image(systemName: "chevron.right")
-                                .foregroundStyle(Color.subtleText)
-                        }
-                    }
-                }
-                .buttonStyle(.plain)
+    // MARK: - Compatibility Section
+
+    private var compatibilitySection: some View {
+        VStack(spacing: Space.sm) {
+            NavigationLink {
+                CompatibilityView()
+            } label: {
+                ChartsActionCard(
+                    title: "ui.charts.4".localized,
+                    subtitle: "ui.charts.5".localized,
+                    icon: "heart.circle.fill",
+                    gradient: [.accentSecondary, .accentPrimary]
+                )
             }
-            .padding()
+            .buttonStyle(ScaleButtonStyle())
+
+            NavigationLink {
+                RelationshipsView()
+            } label: {
+                CardView {
+                    HStack {
+                        VStack(alignment: .leading, spacing: Space.xs) {
+                            Text("ui.charts.7".localized)
+                                .font(.headline)
+                            Text("ui.charts.8".localized)
+                                .font(.label)
+                                .foregroundStyle(Color.textSecondary)
+                        }
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .foregroundStyle(Color.subtleText)
+                    }
+                }
+            }
+            .buttonStyle(ScaleButtonStyle())
         }
     }
 }
@@ -556,7 +424,7 @@ struct ChartsActionCard: View {
         .foregroundStyle(.white)
         .padding()
         .background(
-            RoundedRectangle(cornerRadius: 16)
+            RoundedRectangle(cornerRadius: Radius.md)
                 .fill(
                     LinearGradient(
                         colors: gradient,
@@ -596,16 +464,16 @@ struct ChartsNoProfileCard: View {
                     .frame(maxWidth: .infinity)
                     .padding()
                     .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(Color.purple)
+                        RoundedRectangle(cornerRadius: Radius.sm)
+                            .fill(Color.accentPrimary)
                     )
             }
             .padding(.top)
         }
-        .padding(32)
+        .padding(Space.xl)
         .frame(maxWidth: .infinity)
         .background(
-            RoundedRectangle(cornerRadius: 20)
+            RoundedRectangle(cornerRadius: Radius.md)
                 .fill(.ultraThinMaterial)
         )
     }
@@ -633,7 +501,7 @@ struct ChartsCompatibilityTipRow: View {
         }
         .padding()
         .background(
-            RoundedRectangle(cornerRadius: 12)
+            RoundedRectangle(cornerRadius: Radius.sm)
                 .fill(.ultraThinMaterial)
         )
     }

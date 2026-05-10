@@ -231,6 +231,9 @@ data class ForecastRequest(
     val includeDetails: Boolean = true,
     @SerializedName("tone")
     val tone: String = "balanced_mystical",
+    /** ISO YYYY-MM-DD — null means today (server default). Used for ±N day time travel. */
+    @SerializedName("date")
+    val date: String? = null,
 )
 
 data class MorningBriefBullet(
@@ -279,6 +282,8 @@ data class DailyForecastData(
     val overallScore: Float? = null,
     @SerializedName("generated_at")
     val generatedAt: String? = null,
+    @SerializedName("tldr")
+    val tldr: String? = null,
 )
 
 data class RemoteProfileDto(

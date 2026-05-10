@@ -43,8 +43,8 @@ struct SectionCardView: View {
                 Button(action: onTap) {
                     HStack {
                         ZStack {
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(Color.purple.opacity(0.14))
+                            RoundedRectangle(cornerRadius: Radius.sm)
+                                .fill(Color.accentPrimary.opacity(0.14))
                                 .frame(width: 40, height: 40)
                             Text(section.icon ?? "✨")
                                 .font(.title3)
@@ -65,7 +65,7 @@ struct SectionCardView: View {
                             .foregroundStyle(Color.subtleText)
                     }
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(ScaleButtonStyle())
                 
                 // Expanded content
                 if isExpanded {
@@ -75,7 +75,7 @@ struct SectionCardView: View {
                             ForEach(highlights, id: \.self) { highlight in
                                 HStack(alignment: .top, spacing: 8) {
                                     Text("•")
-                                        .foregroundStyle(.purple)
+                                        .foregroundStyle(Color.accentPrimary)
                                     Text(highlight)
                                         .font(.subheadline)
                                         .foregroundStyle(Color.textMuted)

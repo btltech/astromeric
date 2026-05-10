@@ -84,13 +84,13 @@ struct CosmicGuideView: View {
     
     private var welcomeSection: some View {
         VStack(spacing: 16) {
-            PremiumHeroCard(
-                            eyebrow: "hero.cosmicGuide.eyebrow".localized,
-                            title: "hero.cosmicGuide.title".localized,
-                            bodyText: "hero.cosmicGuide.body".localized,
-                            accent: [Color(hex: "1d0f33"), Color(hex: "5f33b1"), Color(hex: "c05b78")],
-                            chips: ["hero.cosmicGuide.chip.0".localized, "hero.cosmicGuide.chip.1".localized, "hero.cosmicGuide.chip.2".localized, "hero.cosmicGuide.chip.3".localized]
-                        )
+            PremiumScreenHeader(
+                eyebrow: "hero.cosmicGuide.eyebrow".localized,
+                title: "hero.cosmicGuide.title".localized,
+                subtitle: "hero.cosmicGuide.body".localized,
+                accent: .accentPrimary,
+                chips: ["hero.cosmicGuide.chip.0".localized, "hero.cosmicGuide.chip.1".localized, "hero.cosmicGuide.chip.2".localized, "hero.cosmicGuide.chip.3".localized]
+            )
             
             // Tone badge
             Button {
@@ -107,7 +107,7 @@ struct CosmicGuideView: View {
                 .frame(minHeight: 44)
                 .background(Capsule().fill(.ultraThinMaterial))
             }
-            .buttonStyle(.plain)
+            .buttonStyle(ScaleButtonStyle())
             
             // Suggested prompts
             VStack(spacing: 8) {
@@ -155,7 +155,7 @@ struct CosmicGuideView: View {
                             .strokeBorder(vm.tone == tone ? Color.purple : Color.white.opacity(0.2), lineWidth: 1)
                     )
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(ScaleButtonStyle())
             }
         }
         .padding(.horizontal)

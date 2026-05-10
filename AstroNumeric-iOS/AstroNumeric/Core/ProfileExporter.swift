@@ -216,7 +216,7 @@ class ProfileExporter: ObservableObject {
         }
 
         if hideSensitive {
-            text += "\n\nSensitive details were hidden because privacy mode is enabled."
+            text += "\n\nSensitive details were hidden in this text export because privacy mode is enabled. The backup JSON export can still include full birth details for restore."
         }
         
         text += "\n\n✨ Generated with AstroNumeric"

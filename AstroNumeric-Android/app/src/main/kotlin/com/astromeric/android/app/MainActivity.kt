@@ -75,6 +75,7 @@ private fun AstroNumericApp(
             journalRepository = appContainer.journalRepository,
             preferencesStore = appContainer.preferencesStore,
             remoteDataSource = appContainer.remoteDataSource,
+            subscriptionRepository = appContainer.subscriptionRepository,
             launchRoute = launchRoute,
             launchRouteNonce = launchRouteNonce,
             showFirstRunPrompt = profiles.isEmpty() && !initialOnboardingCompleted,

@@ -133,6 +133,7 @@ struct EditProfileView: View {
                     .padding(12)
                     .background(.ultraThinMaterial)
                     .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .accessibilityLabel("Profile name")
             }
         }
     }
@@ -183,7 +184,7 @@ struct EditProfileView: View {
                                 Spacer()
                             }
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(ScaleButtonStyle())
                     }
                 }
 
@@ -246,6 +247,7 @@ struct EditProfileView: View {
                     .padding(12)
                     .background(.ultraThinMaterial)
                     .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .accessibilityLabel("Birth place")
                     .onChange(of: viewModel.placeQuery) { _, newValue in
                         viewModel.searchPlaces(query: newValue)
                     }
@@ -328,6 +330,7 @@ struct EditProfileView: View {
         .disabled(!viewModel.isValid || viewModel.isSaving)
         .opacity(viewModel.isValid ? 1 : 0.6)
         .padding(.top)
+        .accessibilityLabel(viewModel.isEditing ? "Save profile" : "Create profile")
     }
 }
 

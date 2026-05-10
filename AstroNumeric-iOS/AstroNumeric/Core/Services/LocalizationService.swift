@@ -6,17 +6,16 @@ import SwiftUI
 /// Supported languages in the app
 enum AppLanguage: String, CaseIterable, Identifiable {
     case english = "en"
-    case spanish = "es"
     case french = "fr"
     case romanian = "ro"
     case nepali = "ne"
+    // Spanish removed until translations are complete
     
     var id: String { rawValue }
     
     var displayName: String {
         switch self {
         case .english: return "English"
-        case .spanish: return "Español"
         case .french: return "Français"
         case .romanian: return "Română"
         case .nepali: return "नेपाली"
@@ -26,7 +25,6 @@ enum AppLanguage: String, CaseIterable, Identifiable {
     var flag: String {
         switch self {
         case .english: return "🇺🇸"
-        case .spanish: return "🇪🇸"
         case .french: return "🇫🇷"
         case .romanian: return "🇷🇴"
         case .nepali: return "🇳🇵"
@@ -58,14 +56,15 @@ final class LocalizationService {
     private(set) var bundle: Bundle = .main
     
     private init() {
-        // Load saved language or detect system language
+        // Load saved language preference, defaulting to English.
+        // System language is intentionally ignored — Spanish and other incomplete
+        // translations caused mixed-language UI on non-English devices.
         if let savedCode = UserDefaults.standard.string(forKey: languageKey),
            let language = AppLanguage(rawValue: savedCode) {
             self.currentLanguage = language
         } else {
-            // Use system language if supported, otherwise default to English
-            let systemCode = Locale.current.language.languageCode?.identifier ?? "en"
-            self.currentLanguage = AppLanguage(rawValue: systemCode) ?? .english
+            // No valid saved preference — always start in English
+            self.currentLanguage = .english
         }
         updateBundle()
     }

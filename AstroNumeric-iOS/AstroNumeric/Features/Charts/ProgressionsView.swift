@@ -16,11 +16,11 @@ struct ProgressionsView: View {
                 
                 ScrollView {
                     VStack(spacing: 16) {
-                        PremiumHeroCard(
+                        PremiumScreenHeader(
                             eyebrow: "hero.progressions.eyebrow".localized,
                             title: "hero.progressions.title".localized,
-                            bodyText: "hero.progressions.body".localized,
-                            accent: [Color(hex: "181f39"), Color(hex: "3e5ebf"), Color(hex: "8950b8")],
+                            subtitle: "hero.progressions.body".localized,
+                            accent: .accentPrimary,
                             chips: ["hero.progressions.chip.0".localized, "hero.progressions.chip.1".localized, "hero.progressions.chip.2".localized]
                         )
 

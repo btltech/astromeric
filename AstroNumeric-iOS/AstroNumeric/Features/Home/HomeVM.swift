@@ -16,6 +16,10 @@ final class HomeVM {
     var moonGuidance: String = ""
     var personalDayNumber: Int?
     var personalDayDescription: String?
+    var personalYearNumber: Int?
+    var personalMonthNumber: Int?
+    /// Combined cycle guidance — Day overrides Year/Month tone when they conflict
+    var cycleGuidance: String?
     var sunSignEmoji: String = "✨"
     var dailyAffirmation: String?
     var luckyNumbers: [Int] = []
@@ -24,9 +28,16 @@ final class HomeVM {
     var habitsCompletedToday: Int = 0
     var totalHabits: Int = 0
     
-    // API client
-    private let api = APIClient.shared
-    private let localHabitsKey = "astromeric.local_habits.v1"
+    private let dailyContent: DailyContentRepository
+    private let habitsRepository: HabitRepository
+
+    init(
+        dailyContent: DailyContentRepository = DefaultDailyContentRepository(),
+        habitsRepository: HabitRepository = DefaultHabitRepository()
+    ) {
+        self.dailyContent = dailyContent
+        self.habitsRepository = habitsRepository
+    }
     
     // Weekly cache for Time Travel slider
     private var weeklyCache: [String: DashboardData] = [:]
@@ -61,13 +72,15 @@ final class HomeVM {
     private func fetchDailyReading(for profile: Profile, date: Date, forceRefresh: Bool) async {
         do {
             let cachePolicy: CachePolicy = forceRefresh ? .networkFirst : .cacheFirst
-            let response: V2ApiResponse<PredictionData> = try await api.fetch(
-                .reading(profile: profile, scope: .daily, date: date),
+            let prediction = try await dailyContent.reading(
+                profile: profile,
+                scope: .daily,
+                date: date,
                 cachePolicy: cachePolicy
             )
             
             // Extract summary from prediction data
-            dailyReading = Self.makeDailyReadingSummary(from: response.data)
+            dailyReading = Self.makeDailyReadingSummary(from: prediction)
         } catch {
             // Preserve the raw error for troubleshooting.
             errorMessage = "📡 Reading: \(error.localizedDescription)"
@@ -82,15 +95,16 @@ final class HomeVM {
     @MainActor
     private func fetchDailyFeatures(for profile: Profile, date: Date? = nil, forceRefresh: Bool = false) async {
         do {
-            let response: V2ApiResponse<DailyFeaturesData> = try await api.fetch(
-                .dailyFeatures(profile: profile, date: date),
+            let features = try await dailyContent.dailyFeatures(
+                profile: profile,
+                date: date,
                 cachePolicy: forceRefresh ? .networkFirst : .cacheFirst
             )
             
-            dailyAffirmation = response.data.affirmation
-            luckyNumbers = response.data.luckyNumbers
-            luckyColor = response.data.luckyColor
-            dailyAdvice = response.data.advice
+            dailyAffirmation = features.affirmation
+            luckyNumbers = features.luckyNumbers
+            luckyColor = features.luckyColor
+            dailyAdvice = features.advice
         } catch {
             // Set fallback values and expose error for UI feedback
             dailyAffirmation = nil
@@ -103,14 +117,11 @@ final class HomeVM {
     @MainActor
     private func fetchMoonPhase() async {
         do {
-            let response: V2ApiResponse<MoonPhaseData> = try await api.fetch(
-                .currentMoon,
-                cachePolicy: .cacheFirst
-            )
+            let moon = try await dailyContent.currentMoon(cachePolicy: .cacheFirst)
             
-            moonPhaseName = response.data.phaseName
-            moonPhaseEmoji = response.data.emoji
-            moonGuidance = response.data.guidance ?? ""
+            moonPhaseName = moon.phaseName
+            moonPhaseEmoji = moon.emoji
+            moonGuidance = moon.guidance ?? ""
         } catch {
             moonPhaseName = "⚠️ Failed"
             moonPhaseEmoji = "❌"
@@ -121,15 +132,12 @@ final class HomeVM {
     @MainActor
     private func fetchHabitSummary(for profile: Profile) async {
         do {
-            let response: V2ApiResponse<[HabitResponse]> = try await api.fetch(
-                .habitsList,
-                cachePolicy: .cacheFirst
-            )
-            let summary = Self.habitSummary(from: response.data, timezoneID: profile.timezone)
+            let remoteHabits = try await habitsRepository.fetchHabits(cachePolicy: .cacheFirst)
+            let summary = Self.habitSummary(from: remoteHabits, timezoneID: profile.timezone)
             habitsCompletedToday = summary.completed
             totalHabits = summary.total
         } catch {
-            let localHabits = loadLocalHabits() ?? []
+            let localHabits = await habitsRepository.loadLocalHabits() ?? []
             habitsCompletedToday = localHabits.filter(\.isCompletedToday).count
             totalHabits = localHabits.count
         }
@@ -163,6 +171,9 @@ final class HomeVM {
 
         personalDayNumber = personalDay
         personalDayDescription = personalDayText(for: personalDay)
+        personalYearNumber = personalYear
+        personalMonthNumber = personalMonth
+        cycleGuidance = Self.buildCycleGuidance(day: personalDay, month: personalMonth, year: personalYear)
     }
     
     // MARK: - Helpers
@@ -193,18 +204,90 @@ final class HomeVM {
     }
     
     private func personalDayText(for number: Int) -> String {
+        return Self.personalDayText(for: number)
+    }
+
+    /// Shorter label shown in metric tile
+    static func personalDayText(for number: Int) -> String {
         let descriptions: [Int: String] = [
-            1: "New beginnings & independence",
-            2: "Cooperation & relationships",
-            3: "Creativity & expression",
-            4: "Building & organization",
-            5: "Change & adventure",
-            6: "Home & responsibility",
-            7: "Reflection & spirituality",
-            8: "Power & achievement",
-            9: "Completion & humanitarianism"
+            1: "Start something — action pays off today",
+            2: "Listen more than you speak",
+            3: "Put your ideas out there",
+            4: "Focus on one practical task",
+            5: "Stay flexible, changes are coming",
+            6: "Help someone or handle home matters",
+            7: "Reflect, research, or rest — do not rush",
+            8: "Execute — your effort gets rewarded",
+            9: "Finish what needs finishing"
         ]
-        return descriptions[number] ?? "Embrace the day"
+        return descriptions[number] ?? "Take things one step at a time"
+    }
+
+    /// Builds a short cycle-aware guidance sentence.
+    /// Day number sets the tone; Year and Month add context without overriding.
+    static func buildCycleGuidance(day: Int, month: Int, year: Int) -> String {
+        let dayTone = personalDayTone(day)
+        let yearContext = personalYearContext(year)
+        let monthContext = personalMonthContext(month)
+
+        // Day 7 is explicitly quiet — always lead with that, never override with active language
+        if day == 7 {
+            let yearNote = year == 1 ? " Your Personal Year 1 supports new beginnings, but today asks you to pause, think clearly, and refine what you have already started." : " \(yearContext)"
+            return "Today is better for reflection, research, and quiet planning than rushing into action.\(yearNote)"
+        }
+
+        // Low-activity days (2, 4, 6, 9) — use supportive not pushy language
+        if [2, 4, 6, 9].contains(day) {
+            return "\(dayTone) \(monthContext)"
+        }
+
+        // High-activity days (1, 3, 5, 8) — can reference year context
+        return "\(dayTone) \(yearContext)"
+    }
+
+    private static func personalDayTone(_ day: Int) -> String {
+        switch day {
+        case 1: return "Good day to start. Pick one thing and take the first real step."
+        case 2: return "A cooperative day — listen, collaborate, and avoid forcing decisions."
+        case 3: return "Express yourself. Share ideas, write, or have the creative conversation you have been delaying."
+        case 4: return "A building day — focus on one practical task and see it through."
+        case 5: return "Expect the unexpected. Stay flexible and open to what comes up."
+        case 6: return "A responsibility day — attend to home, family, or someone who needs support."
+        case 7: return "A reflective day — research, plan quietly, and trust your intuition."
+        case 8: return "An execution day — your effort gets rewarded. Push forward on your most important goal."
+        case 9: return "A completion day — close open loops, finish lingering tasks, and let go of what is no longer useful."
+        default: return "Take things one step at a time today."
+        }
+    }
+
+    private static func personalYearContext(_ year: Int) -> String {
+        switch year {
+        case 1: return "Your Personal Year 1 is still in its opening chapter — today's action plants seeds."
+        case 2: return "Your Personal Year 2 rewards patience over force right now."
+        case 3: return "Your Personal Year 3 favours visibility — small wins build momentum."
+        case 4: return "Your Personal Year 4 asks for steady, consistent effort."
+        case 5: return "Your Personal Year 5 is about change — stay adaptable."
+        case 6: return "Your Personal Year 6 is centred on responsibility and repair."
+        case 7: return "Your Personal Year 7 is a year for inner development — depth over breadth."
+        case 8: return "Your Personal Year 8 rewards decisive moves."
+        case 9: return "Your Personal Year 9 is about completion and clearing — what no longer fits can go."
+        default: return ""
+        }
+    }
+
+    private static func personalMonthContext(_ month: Int) -> String {
+        switch month {
+        case 1: return "This month opens a new cycle — a supportive window for beginnings."
+        case 2: return "This month favours patience and cooperation."
+        case 3: return "A creative month — expression and connection flow well now."
+        case 4: return "A grounding month — steady work pays off."
+        case 5: return "This month brings movement and change — stay nimble."
+        case 6: return "A month for home, family, service, and stability."
+        case 7: return "A quieter month — good for research, reflection, and refinement."
+        case 8: return "An ambitious month — execution and results are in focus."
+        case 9: return "A completion month — wrap up, release, and prepare to move forward."
+        default: return ""
+        }
     }
     
     // MARK: - Time Travel Cache
@@ -219,6 +302,7 @@ final class HomeVM {
         var utcCalendar = Calendar(identifier: .gregorian)
         utcCalendar.timeZone = TimeZone(identifier: "UTC")!
         let baseDate = Date()
+        let dailyContent = self.dailyContent
         
         var fetched: [(String, DashboardData)] = []
         await withTaskGroup(of: (String, DashboardData?).self) { group in
@@ -228,7 +312,7 @@ final class HomeVM {
                 guard !existingKeys.contains(key) else { continue }
                 
                 group.addTask {
-                    let data = await Self.fetchDashboardData(api: APIClient.shared, profile: profile, date: date)
+                    let data = await Self.fetchDashboardData(dailyContent: dailyContent, profile: profile, date: date)
                     return (key, data)
                 }
             }
@@ -264,6 +348,9 @@ final class HomeVM {
     func applyCachedData(_ data: DashboardData) {
         personalDayNumber = data.personalDayNumber
         personalDayDescription = data.personalDayDescription
+        personalYearNumber = data.personalYearNumber
+        personalMonthNumber = data.personalMonthNumber
+        cycleGuidance = data.cycleGuidance
         dailyAffirmation = data.affirmation
         luckyNumbers = data.luckyNumbers
         luckyColor = data.luckyColor
@@ -282,14 +369,14 @@ final class HomeVM {
         return String(format: "%04d-%02d-%02d", year, month, day)
     }
     
-    private static func fetchDashboardData(api: APIClient, profile: Profile, date: Date) async -> DashboardData? {
+    private static func fetchDashboardData(dailyContent: DailyContentRepository, profile: Profile, date: Date) async -> DashboardData? {
         async let featuresData: DailyFeaturesData? = {
             do {
-                let response: V2ApiResponse<DailyFeaturesData> = try await api.fetch(
-                    .dailyFeatures(profile: profile, date: date),
+                return try await dailyContent.dailyFeatures(
+                    profile: profile,
+                    date: date,
                     cachePolicy: .networkFirst
                 )
-                return response.data
             } catch {
                 return nil
             }
@@ -297,11 +384,12 @@ final class HomeVM {
 
         async let readingData: PredictionData? = {
             do {
-                let response: V2ApiResponse<PredictionData> = try await api.fetch(
-                    .reading(profile: profile, scope: .daily, date: date),
+                return try await dailyContent.reading(
+                    profile: profile,
+                    scope: .daily,
+                    date: date,
                     cachePolicy: .networkFirst
                 )
-                return response.data
             } catch {
                 return nil
             }
@@ -320,6 +408,9 @@ final class HomeVM {
             date: date,
             personalDayNumber: personalDay.number,
             personalDayDescription: personalDay.description,
+            personalYearNumber: personalDay.year,
+            personalMonthNumber: personalDay.month,
+            cycleGuidance: buildCycleGuidance(day: personalDay.number, month: personalDay.month, year: personalDay.year),
             affirmation: features?.affirmation,
             luckyNumbers: luckyNumbers,
             luckyColor: features?.luckyColor,
@@ -328,13 +419,13 @@ final class HomeVM {
         )
     }
     
-    private static func calculatePersonalDaySync(for profile: Profile, date: Date) -> (number: Int, description: String) {
+    private static func calculatePersonalDaySync(for profile: Profile, date: Date) -> (number: Int, description: String, year: Int, month: Int) {
         let parts = profile.dateOfBirth.split(separator: "-").map(String.init)
         guard parts.count == 3,
               let birthMonth = Int(parts[1]),
               let birthDay = Int(parts[2])
         else {
-            return (1, "New beginnings & independence")
+            return (1, "New beginnings & independence", 1, 1)
         }
 
         let tz = TimeZone(identifier: profile.timezone ?? "") ?? TimeZone(identifier: "UTC")!
@@ -346,14 +437,14 @@ final class HomeVM {
               let targetMonth = comps.month,
               let targetDay = comps.day
         else {
-            return (1, "New beginnings & independence")
+            return (1, "New beginnings & independence", 1, 1)
         }
 
         let personalYear = reduceToSingleDigit(birthMonth + birthDay + targetYear)
         let personalMonth = reduceToSingleDigit(personalYear + targetMonth)
         let personalDay = reduceToSingleDigit(personalMonth + targetDay)
 
-        return (personalDay, personalDayText(for: personalDay))
+        return (personalDay, personalDayText(for: personalDay), personalYear, personalMonth)
     }
     
     private static func reduceToSingleDigit(_ number: Int) -> Int {
@@ -370,31 +461,16 @@ final class HomeVM {
         return n
     }
     
-    private static func personalDayText(for number: Int) -> String {
-        let descriptions: [Int: String] = [
-            1: "New beginnings & independence",
-            2: "Cooperation & relationships",
-            3: "Creativity & expression",
-            4: "Building & organization",
-            5: "Change & adventure",
-            6: "Home & responsibility",
-            7: "Reflection & spirituality",
-            8: "Power & achievement",
-            9: "Completion & humanitarianism"
-        ]
-        return descriptions[number] ?? "Embrace the day"
-    }
-
     static func makeDailyReadingSummary(from prediction: PredictionData) -> DailyReadingSummary {
-        let headline = prediction.sections.first?.summary ?? "Your cosmic forecast is ready ✨"
+        let headline = prediction.sections.first?.summary ?? "Your cosmic forecast is ready."
         let score = prediction.overallScore
         let energy: String
         if score >= 7.0 {
-            energy = "High"
+            energy = "Strong flow"
         } else if score >= 4.0 {
-            energy = "Moderate"
+            energy = "Steady energy"
         } else {
-            energy = "Low"
+            energy = "Quieter day"
         }
 
         return DailyReadingSummary(
@@ -417,11 +493,6 @@ final class HomeVM {
 
         return (completed, habits.count)
     }
-
-    private func loadLocalHabits() -> [LocalHabit]? {
-        guard let data = UserDefaults.standard.data(forKey: localHabitsKey) else { return nil }
-        return try? JSONDecoder().decode([LocalHabit].self, from: data)
-    }
 }
 
 // MARK: - Models
@@ -437,6 +508,9 @@ struct DashboardData {
     let date: Date
     let personalDayNumber: Int?
     let personalDayDescription: String?
+    let personalYearNumber: Int?
+    let personalMonthNumber: Int?
+    let cycleGuidance: String?
     let affirmation: String?
     let luckyNumbers: [Int]
     let luckyColor: String?

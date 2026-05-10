@@ -10,7 +10,7 @@ struct EmbeddedChartView: View {
     
     var body: some View {
         ScrollView {
-            VStack(spacing: 24) {
+            VStack(alignment: .leading, spacing: Space.md) {
                 if viewModel.isLoading {
                     loadingView
                 } else if let error = viewModel.error {
@@ -21,7 +21,8 @@ struct EmbeddedChartView: View {
                     emptyView
                 }
             }
-            .padding()
+            .padding(.horizontal, Space.sm)
+            .padding(.vertical, Space.sm)
             .readableContainer()
         }
         .task(id: store.activeProfile?.id) {
@@ -39,60 +40,56 @@ struct EmbeddedChartView: View {
     // MARK: - Chart Content
     
     private var chartContent: some View {
-        VStack(spacing: 20) {
-            // Profile info card
+        VStack(alignment: .leading, spacing: Space.md) {
             if let profile = store.activeProfile {
                 ChartsProfileInfoCard(profile: profile)
             }
 
-            PremiumSectionHeader(
-                title: "section.embeddedChart.0.title".localized,
-                subtitle: "section.embeddedChart.0.subtitle".localized
-            )
-            
-            // Big Three Card
+            chartStartCard
+
             bigThreeCard
-            
-            // Planet Placements
+
             placementsSection
-            
-            // Aspects (if any)
+
             if !viewModel.aspects.isEmpty {
                 aspectsSection
             }
-            
-            // Houses (if any)
+
             if !viewModel.houses.isEmpty {
                 housesSection
             }
         }
     }
+
+    private var chartStartCard: some View {
+        PremiumActionCard(
+            title: "section.embeddedChart.0.title".localized,
+            subtitle: "section.embeddedChart.0.subtitle".localized,
+            icon: "sparkles",
+            label: "label.startHere".localized,
+            accent: .accentPrimary,
+            emphasized: true,
+            showsChevron: false
+        )
+    }
     
     // MARK: - Big Three
     
     private var bigThreeCard: some View {
-        CardView {
-            VStack(spacing: 16) {
+        CardView(padding: Space.sm, cornerRadius: Radius.md, materialOpacity: 0.04) {
+            VStack(alignment: .leading, spacing: Space.sm) {
                 PremiumSectionHeader(
-                title: "charts.yourBigThree".localized,
-                subtitle: "section.embeddedChart.1.subtitle".localized
-            )
+                    title: "charts.yourBigThree".localized,
+                    subtitle: "section.embeddedChart.1.subtitle".localized
+                )
                 
-                HStack(spacing: 0) {
+                LazyVGrid(columns: [
+                    GridItem(.flexible()),
+                    GridItem(.flexible()),
+                    GridItem(.flexible())
+                ], spacing: Space.xs) {
                     ForEach(viewModel.bigThree) { item in
-                        VStack(spacing: 8) {
-                            Text(item.emoji)
-                                .font(.largeTitle)
-                            
-                            Text(item.name)
-                                .font(.label)
-                                .foregroundStyle(Color.textSecondary)
-                            
-                            Text(item.sign)
-                                .font(.subheadline.bold())
-                                .foregroundStyle(.purple)
-                        }
-                        .frame(maxWidth: .infinity)
+                        ChartAnchorCard(item: item)
                     }
                 }
             }
@@ -242,7 +239,7 @@ struct EmbeddedChartView: View {
     // MARK: - States
     
     private var loadingView: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: Space.sm) {
             ProgressView()
                 .scaleEffect(1.5)
             Text("common.consultingStars".localized)
@@ -331,6 +328,38 @@ struct EmbeddedChartView: View {
         case "sextile": return .blue
         default: return .secondary
         }
+    }
+}
+
+private struct ChartAnchorCard: View {
+    let item: BigThreeItem
+
+    var body: some View {
+        VStack(spacing: 8) {
+            Text(item.emoji)
+                .font(.largeTitle)
+
+            Text(item.name)
+                .font(.metadata.weight(.semibold))
+                .foregroundStyle(Color.textMuted)
+
+            Text(item.sign)
+                .font(.cardTitle)
+                .foregroundStyle(Color.textPrimary)
+                .multilineTextAlignment(.center)
+                .minimumScaleFactor(0.8)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 12)
+        .padding(.horizontal, 8)
+        .background(
+            RoundedRectangle(cornerRadius: Radius.sm)
+                .fill(Color.surfaceBase)
+                .overlay(
+                    RoundedRectangle(cornerRadius: Radius.sm)
+                        .stroke(Color.borderSubtle, lineWidth: Stroke.hairline)
+                )
+        )
     }
 }
 

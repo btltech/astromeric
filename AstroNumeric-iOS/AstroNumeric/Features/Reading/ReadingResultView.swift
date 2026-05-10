@@ -68,8 +68,6 @@ struct ReadingResultView: View {
                         .staggeredReveal(index: 1, isRevealing: isRevealing, baseDelay: 0.1, staggerDelay: 0.08)
                 }
 
-                aiInsightsCard
-
                 ForEach(Array(data.sections.enumerated()), id: \.element.id) { index, section in
                     readingSectionCard(section)
                     .staggeredReveal(index: index, isRevealing: isRevealing, baseDelay: 0.1, staggerDelay: 0.08)
@@ -83,6 +81,12 @@ struct ReadingResultView: View {
             .padding(.horizontal, Space.sm)
             .padding(.vertical, Space.sm)
             .readableContainer()
+        }
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            aiInsightsCard
+                .padding(.horizontal, Space.sm)
+                .padding(.vertical, Space.xs)
+                .background(.ultraThinMaterial)
         }
         .onAppear {
             // Trigger reveal animation
@@ -365,7 +369,42 @@ struct ReadingResultView: View {
         return reduceNumber(personalMonth + day)
     }
 
+    private var derivedPersonalYear: Int? {
+        guard let profile = data.profile,
+              let readingDate = parsedReadingDate,
+              let birthMonthDay = birthMonthDay(from: profile.dateOfBirth)
+        else { return nil }
+
+        let tz = TimeZone(identifier: profile.timezone ?? "") ?? TimeZone(identifier: "UTC")!
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = tz
+
+        guard let year = calendar.dateComponents([.year], from: readingDate).year else { return nil }
+        return reduceNumber(birthMonthDay.month + birthMonthDay.day + year)
+    }
+
+    private var derivedPersonalMonth: Int? {
+        guard let personalYear = derivedPersonalYear,
+              let readingDate = parsedReadingDate
+        else { return nil }
+
+        let tzId = data.profile?.timezone ?? "UTC"
+        let tz = TimeZone(identifier: tzId) ?? TimeZone(identifier: "UTC")!
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = tz
+        guard let month = calendar.dateComponents([.month], from: readingDate).month else { return nil }
+        return reduceNumber(personalYear + month)
+    }
+
     private var todayMeaningSummary: String {
+        // Daily scope: Personal Day number overrides generic API summary
+        if scope == .daily, let day = personalDayNumber {
+            let personalYear = derivedPersonalYear ?? 0
+            let personalMonth = derivedPersonalMonth ?? 0
+            let guidance = HomeVM.buildCycleGuidance(day: day, month: personalMonth, year: personalYear)
+            if !guidance.isEmpty { return guidance }
+        }
+
         if let firstSection = data.sections.first {
             return firstSection.summary
         }

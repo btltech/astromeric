@@ -160,6 +160,61 @@ final class AstroNumericTests: XCTestCase {
         XCTAssertEqual(summary.total, 2)
     }
 
+    func testHabitRepositoryPersistsLocalHabits() async throws {
+        let repository = DefaultHabitRepository()
+        await repository.saveLocalHabits([])
+        defer { Task { await repository.saveLocalHabits([]) } }
+
+        let habit = LocalHabit(
+            id: "local-test",
+            name: "Morning walk",
+            category: "exercise",
+            emoji: "🏃",
+            currentStreak: 3,
+            longestStreak: 5,
+            completionRate: 0.75,
+            isCompletedToday: true,
+            lastCompleted: Date(timeIntervalSince1970: 1_777_000_000)
+        )
+
+        await repository.saveLocalHabits([habit])
+        let loadedHabits = await repository.loadLocalHabits()
+        let loaded = try XCTUnwrap(loadedHabits)
+
+        XCTAssertEqual(loaded.count, 1)
+        XCTAssertEqual(loaded.first?.id, habit.id)
+        XCTAssertEqual(loaded.first?.name, habit.name)
+        XCTAssertEqual(loaded.first?.isCompletedToday, true)
+    }
+
+    func testRelationshipRepositoryPersistsSavedRelationships() async throws {
+        let repository = DefaultRelationshipRepository()
+        await repository.saveRelationships([])
+        defer { Task { await repository.saveRelationships([]) } }
+
+        let relationship = SavedRelationship(
+            personAName: "Jane",
+            personBName: "Alex",
+            personADOB: "1991-04-03",
+            personBDOB: "1990-02-01",
+            type: .romantic,
+            overallScore: 82,
+            categories: [CompatibilityCategorySummary(name: "Communication", score: 80, emoji: "💬")],
+            strengths: ["Easy rapport"],
+            challenges: ["Timing"],
+            createdAt: Date(timeIntervalSince1970: 1_777_000_000),
+            lastUpdated: Date(timeIntervalSince1970: 1_777_000_100)
+        )
+
+        await repository.saveRelationships([relationship])
+        let loaded = await repository.loadRelationships()
+
+        XCTAssertEqual(loaded.count, 1)
+        XCTAssertEqual(loaded.first?.personAName, "Jane")
+        XCTAssertEqual(loaded.first?.personBName, "Alex")
+        XCTAssertEqual(loaded.first?.overallScore, 82)
+    }
+
     @MainActor
     func testPrivacyModeExportUsesAnonymousFilenameAndRedactedText() throws {
         let previousValue = AppStore.shared.hideSensitiveDetailsEnabled
@@ -176,7 +231,8 @@ final class AstroNumericTests: XCTestCase {
         XCTAssertFalse(text.contains(profile.dateOfBirth))
         XCTAssertTrue(text.contains(PrivacyRedaction.privateProfile))
         XCTAssertTrue(text.contains(PrivacyRedaction.maskedDate))
-        XCTAssertTrue(text.contains("Sensitive details were hidden because privacy mode is enabled."))
+        XCTAssertTrue(text.contains("Sensitive details were hidden in this text export because privacy mode is enabled."))
+        XCTAssertTrue(text.contains("The backup JSON export can still include full birth details for restore."))
 
         let url = try XCTUnwrap(exporter.exportAsFile(profile))
         defer { try? FileManager.default.removeItem(at: url) }

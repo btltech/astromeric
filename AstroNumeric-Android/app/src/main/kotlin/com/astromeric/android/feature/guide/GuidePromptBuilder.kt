@@ -14,6 +14,7 @@ import com.astromeric.android.core.model.zodiacSignName
 fun buildGuideSystemPrompt(
     profile: AppProfile,
     tone: GuideTone,
+    isMystic: Boolean = true,
     hideSensitiveDetailsEnabled: Boolean,
     moonSign: String?,
     risingSign: String?,
@@ -21,6 +22,7 @@ fun buildGuideSystemPrompt(
     userQuery: String? = null,
     calendarContext: String?,
     biometricSnapshot: GuideBiometricSnapshot?,
+    bioCosmicContext: String? = null,
 ): String {
     val sections = mutableListOf<String>()
     sections += """
@@ -29,6 +31,11 @@ fun buildGuideSystemPrompt(
         End with one useful next step or reflection prompt.
     """.trimIndent()
     sections += "TONE: ${tone.prompt}"
+    sections += if (isMystic) {
+        "FRAMING: Use mystical, archetypal, and cosmic language. Lean into symbolic interpretation and spiritual resonance."
+    } else {
+        "FRAMING: Use practical, grounded, down-to-earth language. Avoid mystical jargon. Focus on actionable, real-world implications."
+    }
 
     val sunSign = profile.zodiacSignName()?.replaceFirstChar { it.uppercase() } ?: "Unknown"
     sections += buildString {
@@ -69,6 +76,10 @@ fun buildGuideSystemPrompt(
         sections += "TODAY'S BIOMETRIC CONTEXT:\n${snapshot.promptDescription}"
     }
 
+    bioCosmicContext?.takeIf { it.isNotBlank() }?.let {
+        sections += it
+    }
+
     sections += """
         RESPONSE RULES:
         - Keep the answer to 2-4 short paragraphs.
@@ -81,34 +92,64 @@ fun buildGuideSystemPrompt(
     return sections.filter { it.isNotBlank() }.joinToString(separator = "\n\n")
 }
 
+private val STOP_WORDS = setOf(
+    "the", "and", "for", "are", "but", "not", "you", "all", "can", "had",
+    "her", "was", "one", "our", "out", "day", "get", "has", "him", "his",
+    "how", "its", "now", "old", "see", "two", "way", "who", "did", "let",
+    "put", "say", "she", "too", "use", "that", "this", "with", "have",
+    "from", "they", "will", "been", "more", "just", "into", "when", "your",
+    "what", "some", "than", "them", "then", "well", "were", "also",
+)
+
+private fun tokenize(text: String): List<String> =
+    text.lowercase()
+        .split(Regex("[^a-z0-9]+"))
+        .filter { it.length >= 3 && it !in STOP_WORDS }
+
 private fun buildJournalContextBlock(
     entries: List<LocalJournalEntryData>,
     query: String?,
 ): String? {
-    val queryTerms = query
-        .orEmpty()
-        .lowercase()
-        .split(Regex("[^a-z0-9]+"))
-        .filter { it.length >= 3 }
-        .toSet()
+    val corpus = entries.filter { it.entry.isNotBlank() }
+    if (corpus.isEmpty()) return null
 
-    val scoredEntries = entries
-        .filter { it.entry.isNotBlank() }
-        .map { entry ->
-            val body = entry.entry.lowercase()
-            val score = queryTerms.count { term -> body.contains(term) }
-            entry to score
+    val queryTerms = tokenize(query.orEmpty()).toSet()
+
+    // Pre-tokenize all documents
+    val tokenizedCorpus = corpus.map { it to tokenize(it.entry) }
+
+    // Compute IDF: log((N + 1) / (df + 1)) with smoothing
+    val N = corpus.size.toDouble()
+    val idf: Map<String, Double> = if (queryTerms.isNotEmpty()) {
+        queryTerms.associateWith { term ->
+            val df = tokenizedCorpus.count { (_, tokens) -> term in tokens }
+            Math.log((N + 1.0) / (df + 1.0)) + 1.0
         }
+    } else emptyMap()
+
+    val scoredEntries = tokenizedCorpus.map { (entry, tokens) ->
+        val score = if (queryTerms.isEmpty()) {
+            0.0
+        } else {
+            val tokenCount = tokens.size.coerceAtLeast(1)
+            queryTerms.sumOf { term ->
+                val tf = tokens.count { it == term }.toDouble() / tokenCount
+                tf * (idf[term] ?: 1.0)
+            }
+        }
+        entry to score
+    }
 
     val selectedEntries = if (queryTerms.isEmpty()) {
-        scoredEntries
+        scoredEntries.sortedByDescending { it.first.updatedAt }
     } else {
-        scoredEntries.filter { it.second > 0 }
+        scoredEntries
+            .filter { it.second > 0.0 }
+            .sortedWith(
+                compareByDescending<Pair<LocalJournalEntryData, Double>> { it.second }
+                    .thenByDescending { it.first.updatedAt },
+            )
     }
-        .sortedWith(
-            compareByDescending<Pair<LocalJournalEntryData, Int>> { it.second }
-                .thenByDescending { it.first.updatedAt },
-        )
         .take(3)
         .map { it.first }
 

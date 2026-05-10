@@ -38,9 +38,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.astromeric.android.R
 import com.astromeric.android.core.data.remote.AstroRemoteDataSource
 import com.astromeric.android.core.model.TarotCardData
 
@@ -51,6 +53,7 @@ fun TarotScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val errorFallback = stringResource(R.string.tarot_error_load)
     var drawVersion by remember { mutableIntStateOf(0) }
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
@@ -63,7 +66,7 @@ fun TarotScreen(
         revealed = false
         card = null
         card = remoteDataSource.drawTarotCard()
-            .onFailure { errorMessage = it.message ?: "Tarot card could not be drawn." }
+            .onFailure { errorMessage = it.message ?: errorFallback }
             .getOrNull()
         isLoading = false
         if (card != null) revealed = true
@@ -72,15 +75,15 @@ fun TarotScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Tarot") },
+                title = { Text(stringResource(R.string.tarot_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
                     }
                 },
                 actions = {
                     IconButton(onClick = { drawVersion += 1 }, enabled = !isLoading) {
-                        Icon(Icons.Filled.Refresh, contentDescription = "Draw new card")
+                        Icon(Icons.Filled.Refresh, contentDescription = stringResource(R.string.tarot_draw_new_content_description))
                     }
                 },
             )
@@ -97,7 +100,7 @@ fun TarotScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
-                text = "Draw a card to receive a symbolic reflection for today.",
+                text = stringResource(R.string.tarot_intro_body),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
@@ -111,9 +114,9 @@ fun TarotScreen(
             errorMessage?.let { error ->
                 Card(modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("Draw Failed", style = MaterialTheme.typography.titleSmall)
+                        Text(stringResource(R.string.tarot_draw_failed_title), style = MaterialTheme.typography.titleSmall)
                         Text(error, style = MaterialTheme.typography.bodyMedium)
-                        OutlinedButton(onClick = { drawVersion += 1 }) { Text("Try Again") }
+                        OutlinedButton(onClick = { drawVersion += 1 }) { Text(stringResource(R.string.tarot_try_again)) }
                     }
                 }
                 return@Column
@@ -151,7 +154,13 @@ fun TarotScreen(
                                 AssistChip(
                                     onClick = {},
                                     label = {
-                                        Text(if (card?.upright == true) "Upright" else "Reversed")
+                                        Text(
+                                            if (card?.upright == true) {
+                                                stringResource(R.string.tarot_orientation_upright)
+                                            } else {
+                                                stringResource(R.string.tarot_orientation_reversed)
+                                            },
+                                        )
                                     },
                                 )
                                 card?.number?.takeIf { it > 0 }?.let { num ->
@@ -164,7 +173,7 @@ fun TarotScreen(
                     // Meaning
                     Card(modifier = Modifier.fillMaxWidth()) {
                         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text("Meaning", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+                            Text(stringResource(R.string.tarot_meaning_title), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
                             Text(card?.meaning.orEmpty(), style = MaterialTheme.typography.bodyMedium)
                         }
                     }
@@ -173,7 +182,7 @@ fun TarotScreen(
                     card?.interpretation?.takeIf { it.isNotBlank() }?.let { interpretation ->
                         Card(modifier = Modifier.fillMaxWidth()) {
                             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Text("Reflection", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+                                Text(stringResource(R.string.tarot_reflection_title), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
                                 Text(interpretation, style = MaterialTheme.typography.bodyMedium)
                             }
                         }
@@ -183,7 +192,7 @@ fun TarotScreen(
                         onClick = { drawVersion += 1 },
                         modifier = Modifier.fillMaxWidth(),
                     ) {
-                        Text("Draw Another Card")
+                        Text(stringResource(R.string.tarot_draw_another))
                     }
                 }
             }

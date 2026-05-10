@@ -10,14 +10,12 @@ import SwiftUI
 
 // MARK: - Readable Width Container
 
-/// Caps content width on regular size class so iPad / Pro Max landscape
-/// don't stretch text edge-to-edge. iPhone portrait is unaffected.
+/// Caps content width on any wide layout so iPad and wide iPhone landscape
+/// don't stretch text edge-to-edge. Narrow phones are unaffected.
 struct ReadableContainer: ViewModifier {
-    @Environment(\.horizontalSizeClass) private var hSize
-
     func body(content: Content) -> some View {
         content
-            .frame(maxWidth: hSize == .regular ? 760 : .infinity)
+            .frame(maxWidth: 760)
             .frame(maxWidth: .infinity, alignment: .center)
     }
 }

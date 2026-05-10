@@ -2,6 +2,7 @@ package com.astromeric.android.app
 
 import android.app.Application
 import androidx.room.Room
+import com.astromeric.android.core.data.billing.SubscriptionRepository
 import com.astromeric.android.core.localization.AppLanguageManager
 import com.astromeric.android.core.data.local.AstroDatabase
 import com.astromeric.android.core.data.preferences.AppPreferencesStore
@@ -64,5 +65,10 @@ class AppContainer(application: Application) {
     val journalRepository = JournalRepository(
         preferencesStore = preferencesStore,
         remoteDataSource = remoteDataSource,
+    )
+
+    val subscriptionRepository = SubscriptionRepository(
+        context = application,
+        preferencesStore = preferencesStore,
     )
 }

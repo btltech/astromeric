@@ -5,106 +5,98 @@ import SwiftUI
 
 struct TimingAdvisorView: View {
     @Environment(AppStore.self) private var store
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var selectedActivity: TimingActivity?
     @State private var timingResult: TimingResult?
     @State private var cachedResult: TimingResult?
     @State private var isLoading = false
     @State private var error: String?
     @State private var resultsRevealing = true
+
+    private var activityColumns: [GridItem] {
+        if dynamicTypeSize.isAccessibilitySize { return [GridItem(.flexible())] }
+        if horizontalSizeClass == .regular { return Array(repeating: GridItem(.flexible(), spacing: 12), count: 3) }
+        return [GridItem(.flexible()), GridItem(.flexible())]
+    }
     
     var body: some View {
         ZStack {
-            CosmicBackgroundView(element: nil)
-                .ignoresSafeArea()
+            Color.appBackground.ignoresSafeArea()
             
             ScrollView {
-                VStack(spacing: 20) {
-                    PremiumHeroCard(
-                            eyebrow: "hero.timingAdvisor.eyebrow".localized,
-                            title: "hero.timingAdvisor.title".localized,
-                            bodyText: "hero.timingAdvisor.body".localized,
-                            accent: [Color(hex: "15263a"), Color(hex: "1e8b7a"), Color(hex: "6bb45d")],
-                            chips: ["hero.timingAdvisor.chip.0".localized, "hero.timingAdvisor.chip.1".localized, "hero.timingAdvisor.chip.2".localized]
+                VStack(alignment: .leading, spacing: Space.md) {
+                    PremiumScreenHeader(
+                        eyebrow: "hero.timingAdvisor.eyebrow".localized,
+                        title: "hero.timingAdvisor.title".localized,
+                        subtitle: "hero.timingAdvisor.body".localized,
+                        accent: .accentPrimary,
+                        chips: [
+                            "hero.timingAdvisor.chip.0".localized,
+                            "hero.timingAdvisor.chip.1".localized,
+                            "hero.timingAdvisor.chip.2".localized,
+                        ]
+                    )
+
+                    if store.selectedProfile == nil {
+                        noProfileCard
+                    } else {
+                        PremiumActionCard(
+                            title: "section.timingAdvisor.0.title".localized,
+                            subtitle: "section.timingAdvisor.0.subtitle".localized,
+                            icon: "clock.badge.checkmark.fill",
+                            label: "label.startHere".localized,
+                            accent: .green,
+                            emphasized: true,
+                            showsChevron: false
                         )
 
-                    CardView {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("ui.timingAdvisor.0".localized)
-                                .font(.headline)
-                            Text("ui.timingAdvisor.1".localized)
-                                .font(.caption)
-                                .foregroundStyle(Color.textSecondary)
-                        }
-                    }
+                        actionPanel
 
-                    PremiumSectionHeader(
-                title: "section.timingAdvisor.0.title".localized,
-                subtitle: "section.timingAdvisor.0.subtitle".localized
-            )
-
-                    // Activity picker
+                        // Activity picker
                     activityPicker
-                    
-                    // Fetch button with helper text
-                    VStack(spacing: 8) {
-                        GradientButton("Get Timing Advice", icon: "clock.badge.checkmark", isLoading: isLoading) {
-                            Task { await fetchTiming() }
-                        }
-                        .disabled(selectedActivity == nil || isLoading)
-                        .opacity(selectedActivity == nil ? 0.6 : 1.0)
-                        
-                        if selectedActivity == nil {
-                            Text("ui.timingAdvisor.2".localized)
-                                .font(.caption)
-                                .foregroundStyle(Color.textSecondary)
-                        }
-                    }
-                    
-                    if let result = timingResult {
-                        PremiumSectionHeader(
-                title: "section.timingAdvisor.1.title".localized,
-                subtitle: "section.timingAdvisor.1.subtitle".localized
-            )
 
-                        // Results with staggered reveal
-                        timingResultCard(result)
-                            .slideUpReveal(isRevealing: resultsRevealing, offset: 30, delay: 0.0)
-                        
-                        // Best Times
-                        bestTimesCard(result.bestTimes)
-                            .slideUpReveal(isRevealing: resultsRevealing, offset: 30, delay: 0.1)
-                        
-                        // Avoid Times
-                        avoidTimesCard(result.avoidTimes)
-                            .slideUpReveal(isRevealing: resultsRevealing, offset: 30, delay: 0.2)
-                        
-                        // Tips
-                        tipsCard(result.tips)
-                            .slideUpReveal(isRevealing: resultsRevealing, offset: 30, delay: 0.3)
-                        
-                    } else if isLoading {
-                        // Loading skeleton with animated message
-                        loadingStateView
-                        
-                    } else if let error {
-                        ErrorStateView(message: error) {
-                            await fetchTiming()
-                        }
-                    } else {
-                        // Preview card - what you'll get
-                        whatYoullGetCard
-                        
-                        // Show cached result if available
-                        if let cached = cachedResult {
-                            cachedResultCard(cached)
+                        if let result = timingResult {
+                            PremiumSectionHeader(
+                                title: "section.timingAdvisor.1.title".localized,
+                                subtitle: "section.timingAdvisor.1.subtitle".localized
+                            )
+
+                            timingResultCard(result)
+                                .slideUpReveal(isRevealing: resultsRevealing, offset: 30, delay: 0.0)
+
+                            bestTimesCard(result.bestTimes)
+                                .slideUpReveal(isRevealing: resultsRevealing, offset: 30, delay: 0.1)
+
+                            avoidTimesCard(result.avoidTimes)
+                                .slideUpReveal(isRevealing: resultsRevealing, offset: 30, delay: 0.2)
+
+                            tipsCard(result.tips)
+                                .slideUpReveal(isRevealing: resultsRevealing, offset: 30, delay: 0.3)
+
+                        } else if isLoading {
+                            loadingStateView
+
+                        } else if let error {
+                            ErrorStateView(message: error) {
+                                await fetchTiming()
+                            }
+                        } else {
+                            emptyStateCard
+
+                            if let cached = cachedResult {
+                                cachedResultCard(cached)
+                            }
                         }
                     }
                 }
-                .padding()
-                .padding(.bottom, 80) // Extra padding to avoid FAB overlap
+                .padding(.horizontal, Space.sm)
+                .padding(.top, Space.sm)
+                .padding(.bottom, Space.lg)
                 .readableContainer()
             }
         }
+        .accessibilityIdentifier("TimingAdvisorScreen")
         .navigationTitle("screen.timingAdvisor".localized)
         .navigationBarTitleDisplayMode(.inline)
         .onChange(of: timingResult) { oldValue, newValue in
@@ -114,6 +106,45 @@ struct TimingAdvisorView: View {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
                     resultsRevealing = false
                 }
+            }
+        }
+    }
+
+    private var noProfileCard: some View {
+        PremiumActionCard(
+            title: "ui.content.0".localized,
+            subtitle: "ui.content.1".localized,
+            icon: "person.crop.circle.badge.plus",
+            label: "label.startHere".localized,
+            accent: .accentPrimary,
+            emphasized: true,
+            showsChevron: false
+        )
+    }
+
+    private var actionPanel: some View {
+        CardView(withShadow: false) {
+            VStack(alignment: .leading, spacing: Space.sm) {
+                HStack(alignment: .top, spacing: Space.sm) {
+                    Text(selectedActivity?.emoji ?? "⏰")
+                        .font(.title2)
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("ui.timingAdvisor.0".localized)
+                            .font(.sectionTitle)
+                            .foregroundStyle(Color.textPrimary)
+
+                        Text(selectedActivity?.displayName ?? "ui.timingAdvisor.2".localized)
+                            .font(.bodyCopy)
+                            .foregroundStyle(Color.textMuted)
+                    }
+                }
+
+                GradientButton("Get Timing Advice", icon: "clock.badge.checkmark", isLoading: isLoading) {
+                    Task { await fetchTiming() }
+                }
+                .disabled(selectedActivity == nil || isLoading)
+                .opacity(selectedActivity == nil ? 0.6 : 1.0)
             }
         }
     }
@@ -148,29 +179,14 @@ struct TimingAdvisorView: View {
     
     // MARK: - What You'll Get Card
     
-    private var whatYoullGetCard: some View {
-        CardView {
-            VStack(alignment: .leading, spacing: 16) {
-                HStack {
-                    Text("⏰")
-                        .font(.title)
-                    Text("ui.timingAdvisor.4".localized)
-                        .font(.headline)
-                    Spacer()
-                }
-                
-                VStack(alignment: .leading, spacing: 12) {
-                    TimingBenefitRow(icon: "clock.badge.checkmark", color: .green, text: "Best times for your activity")
-                    TimingBenefitRow(icon: "exclamationmark.triangle", color: .orange, text: "Times to avoid")
-                    TimingBenefitRow(icon: "chart.line.uptrend.xyaxis", color: .purple, text: "Cosmic score percentage")
-                    TimingBenefitRow(icon: "lightbulb", color: .yellow, text: "Personalized tips")
-                }
-                
-                Text("ui.timingAdvisor.5".localized)
-                    .font(.caption)
-                    .foregroundStyle(Color.textSecondary)
-            }
-        }
+    private var emptyStateCard: some View {
+        PremiumActionCard(
+            title: "ui.timingAdvisor.4".localized,
+            subtitle: "ui.timingAdvisor.5".localized,
+            icon: "clock.arrow.circlepath",
+            accent: .green,
+            showsChevron: false
+        )
     }
     
     // MARK: - Cached Result Card
@@ -215,9 +231,13 @@ struct TimingAdvisorView: View {
         CardView {
             VStack(alignment: .leading, spacing: 12) {
                 Text("ui.timingAdvisor.8".localized)
-                    .font(.headline)
+                    .font(.sectionTitle)
                 
-                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+                Text("ui.timingAdvisor.1".localized)
+                    .font(.bodyCopy)
+                    .foregroundStyle(Color.textMuted)
+                
+                LazyVGrid(columns: activityColumns, spacing: 12) {
                     ForEach(TimingActivity.allCases, id: \.self) { activity in
                         Button {
                             // Allow deselect by tapping same activity
@@ -246,19 +266,19 @@ struct TimingAdvisorView: View {
                             .frame(maxWidth: .infinity, minHeight: 44)
                             .background(
                                 RoundedRectangle(cornerRadius: 12)
-                                    .fill(selectedActivity == activity ? .purple.opacity(0.25) : Color.borderSubtle)
+                                    .fill(selectedActivity == activity ? Color.accentPrimary.opacity(0.18) : Color.surfaceBase)
                             )
                             .overlay(
                                 RoundedRectangle(cornerRadius: 12)
                                     .strokeBorder(
-                                        selectedActivity == activity ? Color.purple : Color.clear,
-                                        lineWidth: 2
+                                        selectedActivity == activity ? Color.accentPrimary : Color.borderSubtle,
+                                        lineWidth: selectedActivity == activity ? Stroke.emphasized : Stroke.hairline
                                     )
                             )
-                            .foregroundStyle(selectedActivity == activity ? .purple : .primary)
-                            .shadow(color: selectedActivity == activity ? .purple.opacity(0.3) : .clear, radius: 8)
+                            .foregroundStyle(selectedActivity == activity ? Color.accentPrimary : Color.textPrimary)
+                            .shadow(color: selectedActivity == activity ? Color.accentPrimary.opacity(0.16) : .clear, radius: 8)
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(ScaleButtonStyle())
                     }
                 }
             }
@@ -269,13 +289,14 @@ struct TimingAdvisorView: View {
     
     private func timingResultCard(_ result: TimingResult) -> some View {
         CardView {
-            VStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 12) {
                 HStack {
                     Text(TimingActivity(rawValue: result.activity)?.emoji ?? selectedActivity?.emoji ?? "⏰")
                         .font(.title)
                     Text(String(format: "fmt.timingAdvisor.0".localized, "\(TimingActivity(rawValue: result.activity)?.displayName ?? selectedActivity?.displayName ?? "Activity")"))
-                        .font(.headline)
+                        .font(.sectionTitle)
                     Spacer()
+                    PremiumBadge(text: result.rating)
                 }
                 
                 // Score
@@ -288,9 +309,8 @@ struct TimingAdvisorView: View {
                         .font(.title2.bold())
                         .foregroundStyle(result.score > 0.7 ? .green : result.score > 0.4 ? .orange : .red)
                 }
-                
-                // Rating
-                Text(result.rating)
+
+                Text(result.generatedAt)
                     .font(.body)
                     .foregroundStyle(Color.textSecondary)
             }

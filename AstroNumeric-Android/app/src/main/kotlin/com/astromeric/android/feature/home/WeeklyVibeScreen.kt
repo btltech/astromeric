@@ -1,5 +1,7 @@
 package com.astromeric.android.feature.home
 
+import android.content.Context
+import android.content.Intent
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -41,11 +43,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import android.content.Context
-import android.content.Intent
+import com.astromeric.android.R
 import com.astromeric.android.core.data.remote.AstroRemoteDataSource
 import com.astromeric.android.core.model.AppProfile
 import com.astromeric.android.core.model.DailyForecastData
@@ -71,6 +73,14 @@ fun WeeklyVibeScreen(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
+    val weeklyVibeLoadError = stringResource(R.string.weekly_vibe_error_load)
+    val screenTitle = stringResource(R.string.weekly_vibe_title)
+    val backDescription = stringResource(R.string.action_back)
+    val shareDescription = stringResource(R.string.action_share)
+    val refreshDescription = stringResource(R.string.action_refresh)
+    val openProfileLabel = stringResource(R.string.action_open_profile)
+    val updateProfileLabel = stringResource(R.string.action_update_profile)
+    val retryLabel = stringResource(R.string.action_retry)
     var refreshVersion by remember(selectedProfile?.id) { mutableIntStateOf(0) }
     var isLoading by remember(selectedProfile?.id) { mutableStateOf(false) }
     var errorMessage by remember(selectedProfile?.id) { mutableStateOf<String?>(null) }
@@ -92,7 +102,7 @@ fun WeeklyVibeScreen(
         isLoading = true
         errorMessage = null
         weeklyForecast = remoteDataSource.fetchForecast(profile, "weekly")
-            .onFailure { errorMessage = it.message ?: "Weekly vibe could not be loaded." }
+            .onFailure { errorMessage = it.message ?: weeklyVibeLoadError }
             .getOrNull()
         isLoading = false
     }
@@ -100,10 +110,10 @@ fun WeeklyVibeScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Weekly Vibe") },
+                title = { Text(screenTitle) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = backDescription)
                     }
                 },
                 actions = {
@@ -119,11 +129,11 @@ fun WeeklyVibeScreen(
                             },
                             enabled = !isLoading,
                         ) {
-                            Icon(Icons.Filled.Share, contentDescription = "Share")
+                            Icon(Icons.Filled.Share, contentDescription = shareDescription)
                         }
                     }
                     IconButton(onClick = { refreshVersion += 1 }, enabled = !isLoading) {
-                        Icon(Icons.Filled.Refresh, contentDescription = "Refresh")
+                        Icon(Icons.Filled.Refresh, contentDescription = refreshDescription)
                     }
                 },
             )
@@ -142,12 +152,12 @@ fun WeeklyVibeScreen(
                 Column(modifier = Modifier.padding(horizontal = 20.dp)) {
                     Card(modifier = Modifier.fillMaxWidth()) {
                         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text("Profile Required", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                            Text(stringResource(R.string.status_profile_required), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
                             Text(
-                                "Create or select a profile to see your weekly cosmic vibe.",
+                                stringResource(R.string.weekly_vibe_profile_required_body),
                                 style = MaterialTheme.typography.bodyMedium,
                             )
-                            OutlinedButton(onClick = onOpenProfile) { Text("Open Profile") }
+                            OutlinedButton(onClick = onOpenProfile) { Text(openProfileLabel) }
                         }
                     }
                 }
@@ -158,12 +168,12 @@ fun WeeklyVibeScreen(
                 Column(modifier = Modifier.padding(horizontal = 20.dp)) {
                     Card(modifier = Modifier.fillMaxWidth()) {
                         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text("Birth Time & Place Required", style = MaterialTheme.typography.titleSmall)
+                            Text(stringResource(R.string.weekly_vibe_time_required_title), style = MaterialTheme.typography.titleSmall)
                             Text(
-                                "Add your birth time and location to your profile for personalised weekly insights.",
+                                stringResource(R.string.weekly_vibe_time_required_body),
                                 style = MaterialTheme.typography.bodyMedium,
                             )
-                            OutlinedButton(onClick = onOpenProfile) { Text("Update Profile") }
+                            OutlinedButton(onClick = onOpenProfile) { Text(updateProfileLabel) }
                         }
                     }
                 }
@@ -191,9 +201,9 @@ fun WeeklyVibeScreen(
                 Column(modifier = Modifier.padding(horizontal = 20.dp)) {
                     Card(modifier = Modifier.fillMaxWidth()) {
                         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text("Could Not Load", style = MaterialTheme.typography.titleSmall)
+                            Text(stringResource(R.string.status_could_not_load), style = MaterialTheme.typography.titleSmall)
                             Text(error, style = MaterialTheme.typography.bodyMedium)
-                            OutlinedButton(onClick = { refreshVersion += 1 }) { Text("Retry") }
+                            OutlinedButton(onClick = { refreshVersion += 1 }) { Text(retryLabel) }
                         }
                     }
                 }
@@ -213,7 +223,7 @@ fun WeeklyVibeScreen(
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
-                                Text("This Week", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                                Text(stringResource(R.string.reading_scope_this_week), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                                 Text(
                                     "${(score * 100).toInt()}%",
                                     style = MaterialTheme.typography.headlineSmall,
@@ -251,7 +261,7 @@ fun WeeklyVibeScreen(
                         },
                     ) {
                         Icon(Icons.Filled.Share, contentDescription = null)
-                        Text("Share")
+                        Text(shareDescription)
                     }
                 }
             }
@@ -275,7 +285,7 @@ fun WeeklyVibeScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     Text(
-                        "Full Breakdown",
+                        stringResource(R.string.weekly_vibe_full_breakdown),
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.SemiBold,
                         modifier = Modifier.padding(top = 4.dp),
@@ -286,13 +296,13 @@ fun WeeklyVibeScreen(
                                 Text(section.title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
                                 Text(section.summary, style = MaterialTheme.typography.bodyMedium)
                                 if (section.embrace.isNotEmpty()) {
-                                    Text("Embrace", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+                                    Text(stringResource(R.string.section_embrace), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
                                     section.embrace.forEach { item ->
                                         Text("• $item", style = MaterialTheme.typography.bodySmall)
                                     }
                                 }
                                 if (section.avoid.isNotEmpty()) {
-                                    Text("Avoid", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.error)
+                                    Text(stringResource(R.string.section_avoid), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.error)
                                     section.avoid.forEach { item ->
                                         Text("• $item", style = MaterialTheme.typography.bodySmall)
                                     }
@@ -344,32 +354,39 @@ private fun shareWeeklyVibe(
         putExtra(
             Intent.EXTRA_TEXT,
             buildWeeklyVibeShareText(
+                context = context,
                 profile = profile,
                 forecast = forecast,
                 hideSensitiveDetailsEnabled = hideSensitiveDetailsEnabled,
             ),
         )
     }
-    context.startActivity(Intent.createChooser(intent, "Share weekly vibe"))
+    context.startActivity(Intent.createChooser(intent, context.getString(R.string.weekly_vibe_share_chooser_title)))
 }
 
 private fun buildWeeklyVibeShareText(
+    context: Context,
     profile: AppProfile?,
     forecast: DailyForecastData,
     hideSensitiveDetailsEnabled: Boolean,
 ): String = buildString {
-    appendLine("AstroNumeric Weekly Vibe")
+    appendLine(context.getString(R.string.weekly_vibe_share_heading))
     appendLine()
     profile?.let {
-        appendLine("Profile: ${it.displayName(hideSensitiveDetailsEnabled, PrivacyDisplayRole.SHARE)}")
+        appendLine(
+            context.getString(
+                R.string.share_profile_line,
+                it.displayName(hideSensitiveDetailsEnabled, PrivacyDisplayRole.SHARE),
+            ),
+        )
     }
     forecast.overallScore?.let { score ->
-        appendLine("Week score: ${(score * 100).toInt()}%")
+        appendLine(context.getString(R.string.weekly_vibe_share_score, (score * 100).toInt()))
     }
     appendLine()
     forecast.sections.take(5).forEach { section ->
         appendLine("• ${section.title}: ${section.summary}")
     }
     appendLine()
-    append("Generated with AstroNumeric")
+    append(context.getString(R.string.share_generated_with))
 }

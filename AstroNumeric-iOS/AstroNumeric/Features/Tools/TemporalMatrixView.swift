@@ -24,13 +24,13 @@ struct TemporalMatrixView: View {
             
             ScrollView {
                 VStack(spacing: 16) {
-                    PremiumHeroCard(
-                            eyebrow: "hero.temporalMatrix.eyebrow".localized,
-                            title: "hero.temporalMatrix.title".localized,
-                            bodyText: "hero.temporalMatrix.body".localized,
-                            accent: [Color(hex: "101f39"), Color(hex: "2f55b3"), Color(hex: "14808a")],
-                            chips: ["hero.temporalMatrix.chip.0".localized, "hero.temporalMatrix.chip.1".localized, "hero.temporalMatrix.chip.2".localized]
-                        )
+                    PremiumScreenHeader(
+                        eyebrow: "hero.temporalMatrix.eyebrow".localized,
+                        title: "hero.temporalMatrix.title".localized,
+                        subtitle: "hero.temporalMatrix.body".localized,
+                        accent: .accentPrimary,
+                        chips: ["hero.temporalMatrix.chip.0".localized, "hero.temporalMatrix.chip.1".localized, "hero.temporalMatrix.chip.2".localized]
+                    )
 
                     headerSection
 

@@ -27,11 +27,11 @@ struct HabitsView: View {
                 
                 ScrollView {
                     VStack(spacing: 20) {
-                        PremiumHeroCard(
+                        PremiumScreenHeader(
                             eyebrow: "hero.habits.eyebrow".localized,
                             title: "hero.habits.title".localized,
-                            bodyText: "hero.habits.body".localized,
-                            accent: [Color(hex: "13283b"), Color(hex: "1d7b83"), Color(hex: "66a65f")],
+                            subtitle: "hero.habits.body".localized,
+                            accent: .accentPrimary,
                             chips: ["hero.habits.chip.0".localized, "hero.habits.chip.1".localized, "hero.habits.chip.2".localized]
                         )
 

@@ -7,10 +7,10 @@ struct TLDRBoxView: View {
     let text: String
     
     var body: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: Space.sm) {
             Text("ui.tLDRBox.0".localized)
                 .font(.caption.weight(.bold))
-                .foregroundStyle(.purple)
+                .foregroundStyle(Color.accentPrimary)
             
             Text(text)
                 .font(.subheadline)
@@ -20,12 +20,12 @@ struct TLDRBoxView: View {
         .padding()
         .frame(maxWidth: .infinity)
         .background(
-            RoundedRectangle(cornerRadius: 16)
+            RoundedRectangle(cornerRadius: Radius.md)
                 .fill(
                     LinearGradient(
                         colors: [
-                            Color.purple.opacity(0.2),
-                            Color.purple.opacity(0.1)
+                            Color.accentPrimary.opacity(0.2),
+                            Color.accentPrimary.opacity(0.1)
                         ],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
@@ -33,8 +33,8 @@ struct TLDRBoxView: View {
                 )
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .strokeBorder(Color.purple.opacity(0.3), lineWidth: 1)
+            RoundedRectangle(cornerRadius: Radius.md)
+                .strokeBorder(Color.accentPrimary.opacity(0.3), lineWidth: 1)
         )
     }
 }

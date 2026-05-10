@@ -66,12 +66,20 @@ final class EditProfileVM: NSObject {
     private let searchCompleter = MKLocalSearchCompleter()
     private var searchDebounceTask: Task<Void, Never>?
     private let locationManager = CLLocationManager()
+
+    private var isUITesting: Bool {
+        #if DEBUG
+        ProcessInfo.processInfo.arguments.contains("-ui_testing")
+        #else
+        false
+        #endif
+    }
     
     // MARK: - Computed Properties
     
     var isValid: Bool {
         !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
-        selectedPlace != nil
+        (selectedPlace != nil || uiTestingFallbackPlace != nil)
     }
     
     var timezoneDisplay: String {
@@ -380,7 +388,7 @@ final class EditProfileVM: NSObject {
             timeString = timeFormatter.string(from: birthTime)
         }
         
-        guard let place = selectedPlace else {
+        guard let place = selectedPlace ?? uiTestingFallbackPlace else {
             await MainActor.run {
                 showError = true
                 errorMessage = "Please select a birth location"
@@ -463,6 +471,21 @@ final class EditProfileVM: NSObject {
                 errorMessage = "Failed to save profile: \(error.localizedDescription)"
             }
         }
+    }
+}
+
+private extension EditProfileVM {
+    var uiTestingFallbackPlace: PlaceSuggestion? {
+        guard isUITesting else { return nil }
+        let trimmed = placeQuery.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+        return PlaceSuggestion(
+            id: "ui-testing-place",
+            displayName: trimmed,
+            latitude: 6.5244,
+            longitude: 3.3792,
+            timezone: "Africa/Lagos"
+        )
     }
 }
 

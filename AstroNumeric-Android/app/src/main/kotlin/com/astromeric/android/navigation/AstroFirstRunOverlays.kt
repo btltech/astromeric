@@ -26,7 +26,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.astromeric.android.R
 import com.astromeric.android.core.data.local.NatalChartCacheStore
 import com.astromeric.android.core.data.preferences.AppPreferencesStore
 import com.astromeric.android.core.data.remote.AstroRemoteDataSource
@@ -61,37 +63,37 @@ internal fun FirstRunProfilePromptOverlay(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 Text(
-                    text = "Create Your Private Cosmic Profile",
+                    text = stringResource(R.string.onboarding_first_run_title_create_profile),
                     style = MaterialTheme.typography.headlineSmall,
                 )
                 Text(
-                    text = "Add your birth details once so Home, Charts, and timing can feel personal instead of generic. You can also explore first and create it later from Profile.",
+                    text = stringResource(R.string.onboarding_first_run_body_create_profile),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 FirstRunProofPoint(
-                    title = "Local-first by default",
-                    detail = "Your first profile stays on this device unless you later choose account sync.",
+                    title = stringResource(R.string.onboarding_first_run_proof_local_title),
+                    detail = stringResource(R.string.onboarding_first_run_proof_local_detail),
                 )
                 FirstRunProofPoint(
-                    title = "Chart and numerology together",
-                    detail = "The same profile powers Charts, daily guidance, and timing tools.",
+                    title = stringResource(R.string.onboarding_first_run_proof_chart_title),
+                    detail = stringResource(R.string.onboarding_first_run_proof_chart_detail),
                 )
                 FirstRunProofPoint(
-                    title = "Explore stays open",
-                    detail = "You can skip this and browse the shell first, then create your profile when ready.",
+                    title = stringResource(R.string.onboarding_first_run_proof_explore_title),
+                    detail = stringResource(R.string.onboarding_first_run_proof_explore_detail),
                 )
                 Button(
                     onClick = onCreateProfile,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Text("Create Profile")
+                    Text(stringResource(R.string.onboarding_first_run_button_create))
                 }
                 TextButton(
                     onClick = onExploreFirst,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Text("Explore First")
+                    Text(stringResource(R.string.onboarding_first_run_button_explore))
                 }
             }
         }
@@ -174,35 +176,35 @@ internal fun FirstRunProfileCompleteOverlay(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 Text(
-                    text = "Your Profile Is Ready",
+                    text = stringResource(R.string.onboarding_first_run_complete_title),
                     style = MaterialTheme.typography.headlineSmall,
                 )
                 Text(
-                    text = "AstroNumeric can now combine your chart, core numbers, and daily timing into personal guidance.",
+                    text = stringResource(R.string.onboarding_first_run_complete_body),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 FirstRunSignalRow(
-                    title = sunSign?.let { "$it Sun" } ?: "Sun Sign Syncing",
-                    detail = sunSign?.let { zodiacDescriptor(it) } ?: "Your core chart signature starts with your birth date.",
+                    title = sunSign?.let { "$it Sun" } ?: stringResource(R.string.onboarding_first_run_complete_sun),
+                    detail = sunSign?.let { zodiacDescriptor(it) } ?: stringResource(R.string.onboarding_first_run_complete_sun_detail),
                 )
                 FirstRunSignalRow(
-                    title = moonSign?.let { "$it Moon" } ?: "Moon Sign Syncing",
+                    title = moonSign?.let { "$it Moon" } ?: stringResource(R.string.onboarding_first_run_complete_moon),
                     detail = if (moonSign == null) {
-                        "Your emotional rhythm will appear after chart sync."
+                        stringResource(R.string.onboarding_first_run_complete_moon_detail)
                     } else {
                         buildString {
-                            append("Emotional needs and instinctive responses")
+                            append(stringResource(R.string.onboarding_first_run_complete_emotions))
                             if (!risingSign.isNullOrBlank()) {
-                                append(" · Rising ")
+                                append(" · ${stringResource(R.string.onboarding_first_run_complete_rising)} ")
                                 append(risingSign)
                             }
                         }
                     },
                 )
                 FirstRunSignalRow(
-                    title = lifePathNumber?.let { "Life Path $it" } ?: "Life Path Syncing",
-                    detail = lifePathNumber?.let(::lifePathDetail) ?: "Your core numerology theme will appear from your birth date.",
+                    title = lifePathNumber?.let { "Life Path $it" } ?: stringResource(R.string.onboarding_first_run_complete_life_path),
+                    detail = lifePathNumber?.let(::lifePathDetail) ?: stringResource(R.string.onboarding_first_run_complete_life_path_detail),
                 )
                 FirstRunSignalRow(
                     title = profile.dataQuality.label,
@@ -213,20 +215,20 @@ internal fun FirstRunProfileCompleteOverlay(
                         onClick = onOpenHome,
                         modifier = Modifier.weight(1f),
                     ) {
-                        Text("See Daily Guide")
+                        Text(stringResource(R.string.onboarding_first_run_complete_button_guide))
                     }
                     Button(
                         onClick = onOpenCharts,
                         modifier = Modifier.weight(1f),
                     ) {
-                        Text("Open Chart")
+                        Text(stringResource(R.string.onboarding_first_run_complete_button_chart))
                     }
                 }
                 TextButton(
                     onClick = onDismiss,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Text("Continue")
+                    Text(stringResource(R.string.onboarding_first_run_complete_button_continue))
                 }
             }
         }
@@ -317,11 +319,11 @@ fun OnboardingScaffold(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
-            text = "Create your private cosmic profile",
+            text = stringResource(R.string.onboarding_scaffold_title),
             style = MaterialTheme.typography.headlineMedium,
         )
         Text(
-            text = "Start with the same local-first profile contract used on iOS so charts, numerology, and timing can stay aligned.",
+            text = stringResource(R.string.onboarding_scaffold_body),
             style = MaterialTheme.typography.bodyLarge,
             modifier = Modifier
                 .padding(top = 12.dp, bottom = 24.dp)
@@ -334,7 +336,7 @@ fun OnboardingScaffold(
                 }
             },
         ) {
-            Text("Skip for now")
+            Text(stringResource(R.string.onboarding_scaffold_button_skip))
         }
         ProfileEditorScreen(
             existingProfile = null,

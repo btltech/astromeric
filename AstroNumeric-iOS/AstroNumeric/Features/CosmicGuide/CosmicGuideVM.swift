@@ -53,7 +53,11 @@ final class CosmicGuideVM {
 
     // MARK: - Dependencies
 
-    private let api = APIClient.shared
+    private let repository: CosmicGuideRepository
+
+    init(repository: CosmicGuideRepository = DefaultCosmicGuideRepository()) {
+        self.repository = repository
+    }
 
     // MARK: - Actions
 
@@ -147,16 +151,14 @@ final class CosmicGuideVM {
                 history: messages.suffix(10).map { $0 }
             )
 
-            let response: V2ApiResponse<ChatResponse> = try await api.fetch(
-                .cosmicGuideChat(
-                    message: message,
-                    context: context,
-                    systemPrompt: systemPrompt,
-                    tone: tone.rawValue
-                )
+            let chatResponse = try await repository.chat(
+                message: message,
+                context: context,
+                systemPrompt: systemPrompt,
+                tone: tone.rawValue
             )
 
-            let assistantMessage = ChatMessage(role: .assistant, content: response.data.response)
+            let assistantMessage = ChatMessage(role: .assistant, content: chatResponse.response)
             messages.append(assistantMessage)
             HapticManager.notification(.success)
         } catch {

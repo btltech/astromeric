@@ -19,11 +19,11 @@ struct BirthstoneGuidanceView: View {
             ScrollView {
                 VStack(spacing: 20) {
                     if let sign = zodiacSign {
-                        PremiumHeroCard(
+                        PremiumScreenHeader(
                             eyebrow: "hero.birthstoneGuidance.eyebrow".localized,
                             title: "hero.birthstoneGuidance.title".localized,
-                            bodyText: "hero.birthstoneGuidance.body".localized,
-                            accent: [Color(hex: "1f1738"), Color(hex: "8e45af"), Color(hex: "1d9aa0")],
+                            subtitle: "hero.birthstoneGuidance.body".localized,
+                            accent: .accentPrimary,
                             chips: ["hero.birthstoneGuidance.chip.0".localized, "hero.birthstoneGuidance.chip.1".localized, "hero.birthstoneGuidance.chip.2".localized]
                         )
 
@@ -40,11 +40,11 @@ struct BirthstoneGuidanceView: View {
 
                         usageTipBanner
                     } else {
-                        PremiumHeroCard(
+                        PremiumScreenHeader(
                             eyebrow: "hero.birthstoneGuidance2.eyebrow".localized,
                             title: "hero.birthstoneGuidance2.title".localized,
-                            bodyText: "hero.birthstoneGuidance2.body".localized,
-                            accent: [Color(hex: "1f1738"), Color(hex: "8e45af"), Color(hex: "1d9aa0")],
+                            subtitle: "hero.birthstoneGuidance2.body".localized,
+                            accent: .accentPrimary,
                             chips: []
                         )
 

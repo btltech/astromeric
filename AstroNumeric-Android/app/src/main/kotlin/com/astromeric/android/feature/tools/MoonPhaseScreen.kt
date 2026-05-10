@@ -2,7 +2,6 @@ package com.astromeric.android.feature.tools
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -26,7 +25,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.astromeric.android.R
 import com.astromeric.android.core.data.remote.AstroRemoteDataSource
 import com.astromeric.android.core.model.AppProfile
 import com.astromeric.android.core.model.MoonEventData
@@ -48,6 +49,9 @@ fun MoonPhaseScreen(
     hideSensitiveDetailsEnabled: Boolean,
     modifier: Modifier = Modifier,
 ) {
+    val moonPhaseLoadError = stringResource(R.string.moon_phase_error_phase_load)
+    val moonRitualLoadError = stringResource(R.string.moon_phase_error_ritual_load)
+    val moonEventsLoadError = stringResource(R.string.moon_phase_error_events_load)
     var refreshVersion by remember(selectedProfile?.id) { mutableIntStateOf(0) }
     var isLoading by remember(selectedProfile?.id) { mutableStateOf(false) }
     var moonError by remember(selectedProfile?.id) { mutableStateOf<String?>(null) }
@@ -66,15 +70,15 @@ fun MoonPhaseScreen(
             val eventsRequest = async { remoteDataSource.fetchUpcomingMoonEvents() }
 
             moonPhase = moonRequest.await()
-                .onFailure { moonError = it.message ?: "Moon phase could not be loaded." }
+                .onFailure { moonError = it.message ?: moonPhaseLoadError }
                 .getOrNull()
 
             moonRitual = ritualRequest.await()
-                .onFailure { moonError = moonError ?: it.message ?: "Moon ritual could not be loaded." }
+                .onFailure { moonError = moonError ?: it.message ?: moonRitualLoadError }
                 .getOrNull()
 
             moonEvents = eventsRequest.await()
-                .onFailure { moonError = moonError ?: it.message ?: "Upcoming moon events could not be loaded." }
+                .onFailure { moonError = moonError ?: it.message ?: moonEventsLoadError }
                 .getOrNull()
         }
 
@@ -89,39 +93,51 @@ fun MoonPhaseScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         MoonSectionCard(
-            title = "Moon Phase",
-            body = "Read the lunar weather before you decide how to use your energy. This destination now owns both the phase read and the ritual layer, matching the way iOS treats them as one lunar workflow.",
+            title = stringResource(R.string.tools_launcher_moon_phase_title),
+            body = stringResource(R.string.moon_phase_hero_body),
         ) {
             selectedProfile?.let { profile ->
                 AssistChip(
                     onClick = {},
                     label = {
                         Text(
-                            "Active profile: ${profile.displayName(hideSensitiveDetailsEnabled, PrivacyDisplayRole.ACTIVE_USER)}",
+                            stringResource(
+                                R.string.tools_active_profile,
+                                profile.displayName(hideSensitiveDetailsEnabled, PrivacyDisplayRole.ACTIVE_USER),
+                            ),
                         )
                     },
                 )
             }
             OutlinedButton(onClick = { refreshVersion += 1 }, enabled = !isLoading) {
-                Text(if (isLoading) "Refreshing..." else "Refresh lunar weather")
+                Text(
+                    if (isLoading) {
+                        stringResource(R.string.tools_refreshing)
+                    } else {
+                        stringResource(R.string.moon_phase_refresh)
+                    },
+                )
             }
         }
 
         if (isLoading && moonPhase == null && moonRitual == null) {
-            PremiumLoadingCard(title = "Loading lunar weather")
+            PremiumLoadingCard(title = stringResource(R.string.moon_phase_loading_title))
         } else {
                 MoonSectionCard(
                     title = "${phasePresentation.emoji} ${phasePresentation.phaseName}",
                     body = phasePresentation.influence,
                 ) {
                     Text(
-                        text = "Illumination ${phasePresentation.illuminationPercent}%",
+                        text = stringResource(
+                            R.string.moon_phase_illumination_format,
+                            phasePresentation.illuminationPercent,
+                        ),
                         style = MaterialTheme.typography.titleMedium,
                     )
                     if (phasePresentation.isFallback) {
                         AssistChip(
                             onClick = {},
-                            label = { Text("Approximate local fallback") },
+                            label = { Text(stringResource(R.string.moon_phase_approximate_fallback)) },
                         )
                         moonError?.takeIf { it.isNotBlank() }?.let { message ->
                             Text(
@@ -133,14 +149,14 @@ fun MoonPhaseScreen(
                     }
                     phasePresentation.nextNewMoon?.takeIf { it.isNotBlank() }?.let { nextNewMoon ->
                         Text(
-                            text = "Next new moon: $nextNewMoon",
+                            text = stringResource(R.string.moon_phase_next_new_moon_format, nextNewMoon),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                     phasePresentation.nextFullMoon?.takeIf { it.isNotBlank() }?.let { nextFullMoon ->
                         Text(
-                            text = "Next full moon: $nextFullMoon",
+                            text = stringResource(R.string.moon_phase_next_full_moon_format, nextFullMoon),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -148,13 +164,13 @@ fun MoonPhaseScreen(
                 }
 
                 MoonSectionCard(
-                    title = "Work with the phase",
+                    title = stringResource(R.string.moon_phase_work_with_phase_title),
                     body = phasePresentation.guidance,
                 ) {
                     Row(modifier = Modifier.fillMaxWidth()) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "Best For",
+                                text = stringResource(R.string.moon_phase_best_for_title),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
@@ -166,7 +182,7 @@ fun MoonPhaseScreen(
                         Spacer(modifier = Modifier.width(12.dp))
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "Avoid",
+                                text = stringResource(R.string.moon_phase_avoid_title),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
@@ -179,8 +195,8 @@ fun MoonPhaseScreen(
 
                 moonRitual?.ritual?.let { ritual ->
                     MoonSectionCard(
-                        title = "Moon Ritual",
-                        body = ritual.theme ?: "Use the lunar weather to choose a ritual focus.",
+                        title = stringResource(R.string.moon_phase_ritual_title),
+                        body = ritual.theme ?: stringResource(R.string.moon_phase_ritual_fallback_body),
                     ) {
                         ritual.energy?.takeIf { it.isNotBlank() }?.let { energy ->
                             Text(
@@ -203,21 +219,21 @@ fun MoonPhaseScreen(
                         }
                         if (ritual.avoid.isNotEmpty()) {
                             Text(
-                                text = "Avoid: ${ritual.avoid.joinToString()}",
+                                text = stringResource(R.string.tools_avoid_format, ritual.avoid.joinToString()),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
                         if (ritual.crystals.isNotEmpty()) {
                             Text(
-                                text = "Crystals: ${ritual.crystals.joinToString()}",
+                                text = stringResource(R.string.moon_phase_crystals_format, ritual.crystals.joinToString()),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
                         if (ritual.colors.isNotEmpty()) {
                             Text(
-                                text = "Colors: ${ritual.colors.joinToString()}",
+                                text = stringResource(R.string.moon_phase_colors_format, ritual.colors.joinToString()),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
@@ -235,8 +251,8 @@ fun MoonPhaseScreen(
                 val upcomingEvents = moonEvents?.events.orEmpty().ifEmpty { moonRitual?.upcomingEvents.orEmpty() }
                 if (upcomingEvents.isNotEmpty()) {
                     MoonSectionCard(
-                        title = "Upcoming Moon Events",
-                        body = "Use these to see when the next lunar shifts will change the tone.",
+                        title = stringResource(R.string.moon_events_title),
+                        body = stringResource(R.string.moon_phase_upcoming_events_body),
                     ) {
                         upcomingEvents.take(5).forEach { event ->
                             MoonEventLine(event)
@@ -396,7 +412,7 @@ private fun calculateLocalMoonPhaseFallback(): Pair<LocalMoonPhaseGuide, Int> {
 private fun MoonSectionCard(
     title: String,
     body: String?,
-    content: @Composable ColumnScope.() -> Unit,
+    content: @Composable () -> Unit,
 ) {
     PremiumContentCard(
         title = title,

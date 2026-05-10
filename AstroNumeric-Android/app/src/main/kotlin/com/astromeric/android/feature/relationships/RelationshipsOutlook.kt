@@ -10,7 +10,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.astromeric.android.R
 import com.astromeric.android.core.model.AppProfile
 import com.astromeric.android.core.model.PrivacyDisplayRole
 import com.astromeric.android.core.model.RelationshipBestDayData
@@ -37,25 +39,28 @@ internal fun RelationshipOutlookSection(
     relationshipPhases: RelationshipPhasesData?,
     relationshipTimeline: RelationshipTimelineData?,
 ) {
-    RelationshipSectionCard(title = "Relationship outlook", error = null) {
-        AssistChip(onClick = {}, label = { Text("Saved history stays local") })
+    RelationshipSectionCard(title = stringResource(R.string.relationships_section_outlook), error = null) {
+        AssistChip(onClick = {}, label = { Text(stringResource(R.string.relationships_outlook_local_history_chip)) })
         AssistChip(
             onClick = {},
             label = {
                 Text(
                     if (comparisonProfile != null) {
-                        "Pair timing: ${comparisonProfile.displayName(hideSensitiveDetailsEnabled, PrivacyDisplayRole.PARTNER)}"
+                        stringResource(
+                            R.string.relationships_outlook_pair_timing_chip,
+                            comparisonProfile.displayName(hideSensitiveDetailsEnabled, PrivacyDisplayRole.PARTNER),
+                        )
                     } else {
-                        "Sign timing: no second profile selected"
+                        stringResource(R.string.relationships_outlook_sign_only_chip)
                     },
                 )
             },
         )
         Text(
             text = if (comparisonProfile != null) {
-                "Live timing and timeline cues below are calculated for this profile pair."
+                stringResource(R.string.relationships_outlook_pair_body)
             } else {
-                "Live timing below currently uses the active profile sign only until you choose a second profile."
+                stringResource(R.string.relationships_outlook_sign_only_body)
             },
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -65,11 +70,11 @@ internal fun RelationshipOutlookSection(
         relationshipTiming?.let { RelationshipTimingSummary(timing = it) }
         relationshipVenusStatus?.let { RelationshipTransitSummary(status = it) }
         relationshipBestDays?.bestDays?.take(3)?.takeIf { it.isNotEmpty() }?.let { bestDays ->
-            Text(text = "Best upcoming days", style = MaterialTheme.typography.titleSmall)
+            Text(text = stringResource(R.string.relationships_best_upcoming_days_title), style = MaterialTheme.typography.titleSmall)
             bestDays.forEach { day -> RelationshipBestDayRow(day = day) }
         }
         relationshipEvents?.events?.take(3)?.takeIf { it.isNotEmpty() }?.let { events ->
-            Text(text = "Upcoming events", style = MaterialTheme.typography.titleSmall)
+            Text(text = stringResource(R.string.relationships_upcoming_events_title), style = MaterialTheme.typography.titleSmall)
             events.forEach { event -> RelationshipEventRow(event = event) }
         }
         relationshipPhases?.let { phases -> RelationshipPhaseSummary(phases = phases) }
@@ -90,9 +95,9 @@ private fun RelationshipErrorText(errorMessage: String?) {
 
 @Composable
 private fun RelationshipTimingSummary(timing: RelationshipTimingData) {
-    Text(text = "Timing lens", style = MaterialTheme.typography.titleSmall)
+    Text(text = stringResource(R.string.relationships_timing_lens_title), style = MaterialTheme.typography.titleSmall)
     Text(
-        text = "Today in love: ${timing.ratingEmoji} ${timing.rating} · ${timing.score}%",
+        text = stringResource(R.string.relationships_today_in_love, timing.ratingEmoji, timing.rating, timing.score),
         style = MaterialTheme.typography.titleSmall,
     )
     Text(
@@ -108,21 +113,21 @@ private fun RelationshipTimingSummary(timing: RelationshipTimingData) {
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
-    timing.venusTransit?.let { transit -> RelationshipTransitText(name = "Venus", sign = transit.sign, start = transit.start, end = transit.end) }
-    timing.marsTransit?.let { transit -> RelationshipTransitText(name = "Mars", sign = transit.sign, start = transit.start, end = transit.end) }
+    timing.venusTransit?.let { transit -> RelationshipTransitText(name = stringResource(R.string.relationships_planet_venus), sign = transit.sign, start = transit.start, end = transit.end) }
+    timing.marsTransit?.let { transit -> RelationshipTransitText(name = stringResource(R.string.relationships_planet_mars), sign = transit.sign, start = transit.start, end = transit.end) }
     timing.venusRetrograde.warning?.let { warning ->
         Text(text = warning, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
     if (timing.recommendations.isNotEmpty()) {
-        Text(text = "Timing cues: ${timing.recommendations.take(2).joinToString()}", style = MaterialTheme.typography.bodyMedium)
+        Text(text = stringResource(R.string.relationships_timing_cues, timing.recommendations.take(2).joinToString()), style = MaterialTheme.typography.bodyMedium)
     }
     if (timing.factors.isNotEmpty()) {
-        Text(text = "Key factors", style = MaterialTheme.typography.titleSmall)
+        Text(text = stringResource(R.string.relationships_key_factors_title), style = MaterialTheme.typography.titleSmall)
         timing.factors.take(3).forEach { factor -> RelationshipFactorRow(factor = factor) }
     }
     if (timing.warnings.isNotEmpty()) {
         Text(
-            text = "Watchouts: ${timing.warnings.take(2).joinToString()}",
+            text = stringResource(R.string.relationships_watchouts, timing.warnings.take(2).joinToString()),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -140,9 +145,9 @@ private fun RelationshipTimingSummary(timing: RelationshipTimingData) {
 
 @Composable
 private fun RelationshipTransitSummary(status: RelationshipVenusStatusData) {
-    Text(text = "Current transits", style = MaterialTheme.typography.titleSmall)
-    status.venus?.let { transit -> RelationshipTransitText(name = "Venus", sign = transit.sign, start = transit.start, end = transit.end) }
-    status.mars?.let { transit -> RelationshipTransitText(name = "Mars", sign = transit.sign, start = transit.start, end = transit.end) }
+    Text(text = stringResource(R.string.relationships_current_transits_title), style = MaterialTheme.typography.titleSmall)
+    status.venus?.let { transit -> RelationshipTransitText(name = stringResource(R.string.relationships_planet_venus), sign = transit.sign, start = transit.start, end = transit.end) }
+    status.mars?.let { transit -> RelationshipTransitText(name = stringResource(R.string.relationships_planet_mars), sign = transit.sign, start = transit.start, end = transit.end) }
     status.venusRetrograde.message?.takeIf { it.isNotBlank() }?.let { message ->
         Text(text = message, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
@@ -156,7 +161,7 @@ private fun RelationshipTransitText(
     end: String,
 ) {
     Text(
-        text = "$name in $sign · $start to $end",
+        text = stringResource(R.string.relationships_transit_text, name, sign, start, end),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
@@ -164,7 +169,7 @@ private fun RelationshipTransitText(
 
 @Composable
 private fun RelationshipPhaseSummary(phases: RelationshipPhasesData) {
-    Text(text = "Relationship phases", style = MaterialTheme.typography.titleSmall)
+    Text(text = stringResource(R.string.relationships_phases_title), style = MaterialTheme.typography.titleSmall)
     Text(text = phases.description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     phases.houseOrder.take(3).forEach { house ->
         phases.phases[house.toString()]?.let { phase ->
@@ -175,9 +180,9 @@ private fun RelationshipPhaseSummary(phases: RelationshipPhasesData) {
 
 @Composable
 private fun RelationshipTimelineSummary(timeline: RelationshipTimelineData) {
-    Text(text = "Timeline outlook", style = MaterialTheme.typography.titleSmall)
+    Text(text = stringResource(R.string.relationships_timeline_title), style = MaterialTheme.typography.titleSmall)
     Text(
-        text = "${timeline.period.start} to ${timeline.period.end} · ${timeline.periodScore}%",
+        text = stringResource(R.string.relationships_period_score, timeline.period.start, timeline.period.end, timeline.periodScore),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
@@ -192,16 +197,16 @@ private fun RelationshipTimelineSummary(timeline: RelationshipTimelineData) {
         )
     }
     Text(
-        text = "${timeline.totalEvents} total events · ${timeline.personalEvents} personal",
+        text = stringResource(R.string.relationships_total_events_summary, timeline.totalEvents, timeline.personalEvents),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
     if (timeline.bestUpcomingDays.isNotEmpty()) {
-        Text(text = "Best windows in this period", style = MaterialTheme.typography.titleSmall)
+        Text(text = stringResource(R.string.relationships_best_windows_title), style = MaterialTheme.typography.titleSmall)
         timeline.bestUpcomingDays.take(3).forEach { day -> RelationshipBestDayRow(day = day) }
     }
     if (timeline.eventsByMonth.isNotEmpty()) {
-        Text(text = "By month", style = MaterialTheme.typography.titleSmall)
+        Text(text = stringResource(R.string.relationships_by_month_title), style = MaterialTheme.typography.titleSmall)
         timeline.eventsByMonth.entries.sortedBy { it.key }.take(3).forEach { (month, events) ->
             RelationshipTimelineMonthRow(month = month, events = events)
         }
@@ -210,12 +215,15 @@ private fun RelationshipTimelineSummary(timeline: RelationshipTimelineData) {
 
 @Composable
 private fun RelationshipBestDayRow(day: RelationshipBestDayData) {
+    var bestDayText = stringResource(R.string.relationships_best_day_base, day.ratingEmoji, day.weekday, day.date, day.score)
+    day.keyFactor?.takeIf { it.isNotBlank() }?.let { keyFactor ->
+        bestDayText = stringResource(R.string.relationships_best_day_with_factor, bestDayText, keyFactor)
+    }
+    if (day.isToday) {
+        bestDayText = stringResource(R.string.relationships_best_day_today, bestDayText)
+    }
     Text(
-        text = buildString {
-            append("${day.ratingEmoji} ${day.weekday} ${day.date} · ${day.score}%")
-            day.keyFactor?.takeIf { it.isNotBlank() }?.let { append(" · $it") }
-            if (day.isToday) append(" · Today")
-        },
+        text = bestDayText,
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
@@ -223,17 +231,15 @@ private fun RelationshipBestDayRow(day: RelationshipBestDayData) {
 
 @Composable
 private fun RelationshipFactorRow(factor: RelationshipFactorData) {
+    val factorLabel = buildString {
+        factor.emoji?.takeIf { it.isNotBlank() }?.let {
+            append(it)
+            append(' ')
+        }
+        append(factor.factor.toRelationshipLabel())
+    }
     Text(
-        text = buildString {
-            factor.emoji?.takeIf { it.isNotBlank() }?.let {
-                append(it)
-                append(' ')
-            }
-            append(factor.factor.toRelationshipLabel())
-            append(" · ")
-            append(factor.impact)
-            append(" impact")
-        },
+        text = stringResource(R.string.relationships_factor_impact, factorLabel, factor.impact),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
@@ -251,7 +257,11 @@ private fun RelationshipEventRow(event: RelationshipEventData) {
                 style = MaterialTheme.typography.titleSmall,
             )
             Text(
-                text = "${event.date} · ${event.impact.replace('_', ' ')}${if (event.isPersonal) " · Personal" else ""}",
+                text = if (event.isPersonal) {
+                    stringResource(R.string.relationships_event_meta_personal, event.date, event.impact.replace('_', ' '))
+                } else {
+                    stringResource(R.string.relationships_event_meta, event.date, event.impact.replace('_', ' '))
+                },
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -270,7 +280,7 @@ private fun RelationshipPhaseRow(
     description: String,
 ) {
     Text(
-        text = "House $house · $theme: $description",
+        text = stringResource(R.string.relationships_house_format, house, theme, description),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
@@ -291,7 +301,11 @@ private fun RelationshipTimelineMonthRow(
                 style = MaterialTheme.typography.titleSmall,
             )
             Text(
-                text = "${events.size} event${if (events.size == 1) "" else "s"}",
+                text = if (events.size == 1) {
+                    stringResource(R.string.relationships_month_events_one, events.size)
+                } else {
+                    stringResource(R.string.relationships_month_events_many, events.size)
+                },
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

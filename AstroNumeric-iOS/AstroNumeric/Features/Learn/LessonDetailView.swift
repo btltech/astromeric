@@ -17,13 +17,13 @@ struct LessonDetailView: View {
             
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
-                    PremiumHeroCard(
-                            eyebrow: module.difficulty.capitalized,
-                            title: module.title,
-                            bodyText: module.description,
-                            accent: [Color(hex: "182039"), Color(hex: "4b5dbe"), Color(hex: "7b55b2")],
-                            chips: [module.formattedDuration, module.category.capitalized]
-                        )
+                    PremiumScreenHeader(
+                        eyebrow: module.difficulty.capitalized,
+                        title: module.title,
+                        subtitle: module.description,
+                        accent: .accentPrimary,
+                        chips: [module.formattedDuration, module.category.capitalized]
+                    )
 
                     // Header
                     headerSection

@@ -37,9 +37,11 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.astromeric.android.R
 import com.astromeric.android.core.data.remote.AstroRemoteDataSource
 import com.astromeric.android.core.model.AppProfile
 import com.astromeric.android.core.model.PrivacyDisplayRole
@@ -59,6 +61,7 @@ fun OracleScreen(
     modifier: Modifier = Modifier,
 ) {
     val scope = rememberCoroutineScope()
+    val oracleErrorMessage = stringResource(R.string.oracle_error_respond)
     var question by remember { mutableStateOf("") }
     var isConsulting by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
@@ -67,10 +70,10 @@ fun OracleScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Oracle") },
+                title = { Text(stringResource(R.string.oracle_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
                     }
                 },
             )
@@ -88,9 +91,9 @@ fun OracleScreen(
             if (selectedProfile == null) {
                 Card(modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("Profile Required", style = MaterialTheme.typography.titleSmall)
-                        Text("A profile is needed to consult the oracle.", style = MaterialTheme.typography.bodyMedium)
-                        Button(onClick = onOpenProfile) { Text("Open Profile") }
+                        Text(stringResource(R.string.status_profile_required), style = MaterialTheme.typography.titleSmall)
+                        Text(stringResource(R.string.oracle_profile_required_body), style = MaterialTheme.typography.bodyMedium)
+                        Button(onClick = onOpenProfile) { Text(stringResource(R.string.action_open_profile)) }
                     }
                 }
                 return@Column
@@ -98,17 +101,17 @@ fun OracleScreen(
 
             Card(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text("Ask the Oracle", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.oracle_prompt_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                     Text(
-                        "Frame a clear yes or no question and let the sky weigh in.",
+                        stringResource(R.string.oracle_prompt_body),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     OutlinedTextField(
                         value = question,
                         onValueChange = { question = it },
-                        label = { Text("Your question") },
-                        placeholder = { Text("Will this decision serve me well?") },
+                        label = { Text(stringResource(R.string.oracle_question_label)) },
+                        placeholder = { Text(stringResource(R.string.oracle_question_placeholder)) },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = false,
                         maxLines = 3,
@@ -122,7 +125,7 @@ fun OracleScreen(
                                 errorMessage = null
                                 guidance = null
                                 guidance = remoteDataSource.fetchYesNoGuidance(q, selectedProfile)
-                                    .onFailure { errorMessage = it.message ?: "Oracle could not respond." }
+                                    .onFailure { errorMessage = it.message ?: oracleErrorMessage }
                                     .getOrNull()
                                 isConsulting = false
                             }
@@ -130,7 +133,13 @@ fun OracleScreen(
                         enabled = question.isNotBlank() && !isConsulting,
                         modifier = Modifier.fillMaxWidth(),
                     ) {
-                        Text(if (isConsulting) "Consulting..." else "Consult Oracle")
+                        Text(
+                            if (isConsulting) {
+                                stringResource(R.string.oracle_consulting)
+                            } else {
+                                stringResource(R.string.oracle_consult)
+                            },
+                        )
                     }
                 }
             }
@@ -142,7 +151,7 @@ fun OracleScreen(
             errorMessage?.let { error ->
                 Card(modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("Oracle Silent", style = MaterialTheme.typography.titleSmall)
+                        Text(stringResource(R.string.oracle_silent_title), style = MaterialTheme.typography.titleSmall)
                         Text(error, style = MaterialTheme.typography.bodyMedium)
                     }
                 }
@@ -162,14 +171,18 @@ fun OracleScreen(
                                 verticalArrangement = Arrangement.spacedBy(10.dp),
                             ) {
                                 Text(
-                                    text = if (g.answer.equals("yes", ignoreCase = true)) "Yes ✨" else "No 🌑",
+                                    text = if (g.answer.equals("yes", ignoreCase = true)) {
+                                        stringResource(R.string.oracle_answer_yes)
+                                    } else {
+                                        stringResource(R.string.oracle_answer_no)
+                                    },
                                     style = MaterialTheme.typography.displaySmall,
                                     textAlign = TextAlign.Center,
                                     color = if (g.answer.equals("yes", ignoreCase = true)) MaterialTheme.colorScheme.primary
                                     else MaterialTheme.colorScheme.error,
                                 )
                                 Text(
-                                    text = "${(g.confidence * 100).roundToInt()}% confidence",
+                                    text = stringResource(R.string.oracle_confidence, (g.confidence * 100).roundToInt()),
                                     style = MaterialTheme.typography.labelLarge,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
@@ -177,12 +190,12 @@ fun OracleScreen(
                         }
                         Card(modifier = Modifier.fillMaxWidth()) {
                             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Text("Question", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(stringResource(R.string.oracle_section_question), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 Text(g.question, style = MaterialTheme.typography.bodyMedium)
-                                Text("Reading", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+                                Text(stringResource(R.string.oracle_section_reading), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
                                 Text(g.reasoning, style = MaterialTheme.typography.bodyMedium)
                                 if (g.guidance.isNotEmpty()) {
-                                    Text("Guidance", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+                                    Text(stringResource(R.string.oracle_section_guidance), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
                                     g.guidance.forEach { item ->
                                         Text("• $item", style = MaterialTheme.typography.bodySmall)
                                     }
@@ -193,7 +206,7 @@ fun OracleScreen(
                             onClick = { guidance = null; question = "" },
                             modifier = Modifier.fillMaxWidth(),
                         ) {
-                            Text("Ask Another Question")
+                            Text(stringResource(R.string.oracle_ask_another))
                         }
                     }
                 }

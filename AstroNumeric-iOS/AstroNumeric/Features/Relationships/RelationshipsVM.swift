@@ -14,26 +14,23 @@ final class RelationshipsVM {
     
     // MARK: - Dependencies
     
-    private let api = APIClient.shared
-    private let defaults = UserDefaults.standard
-    private let storageKey = "savedRelationships"
+    private let repository: RelationshipRepository
     
     // MARK: - Initialization
     
-    init() {
-        loadFromStorage()
-        if AppStore.shared.hideSensitiveDetailsEnabled {
-            scrubSensitiveDetails()
-        }
+    init(repository: RelationshipRepository = DefaultRelationshipRepository()) {
+        self.repository = repository
+        Task { await loadRelationships() }
     }
     
     // MARK: - Actions
     
     @MainActor
     func loadRelationships() async {
-        // For now, relationships are stored locally
-        // Backend sync can be added later
-        loadFromStorage()
+        savedRelationships = await repository.loadRelationships()
+        if AppStore.shared.hideSensitiveDetailsEnabled {
+            await scrubSensitiveDetails()
+        }
     }
     
     @MainActor
@@ -79,37 +76,23 @@ final class RelationshipsVM {
     
     // MARK: - Storage
     
-    private func loadFromStorage() {
-        guard let data = defaults.data(forKey: storageKey),
-              let relationships = try? JSONDecoder().decode([SavedRelationship].self, from: data) else {
-            // Use sample data for empty state demo
-            savedRelationships = []
-            return
-        }
-        savedRelationships = relationships
-    }
-    
     private func persistToStorage() {
-        guard let data = try? JSONEncoder().encode(savedRelationships) else { return }
-        defaults.set(data, forKey: storageKey)
+        let relationships = savedRelationships
+        Task { await repository.saveRelationships(relationships) }
     }
 
-    private func scrubSensitiveDetails() {
+    private func scrubSensitiveDetails() async {
         savedRelationships = savedRelationships.map { $0.redactedCopy() }
-        persistToStorage()
+        await repository.saveRelationships(savedRelationships)
     }
 
     static func scrubStoredSensitiveDetails() {
-        let defaults = UserDefaults.standard
-        let storageKey = "savedRelationships"
-        guard let data = defaults.data(forKey: storageKey),
-              let relationships = try? JSONDecoder().decode([SavedRelationship].self, from: data) else {
-            return
+        Task {
+            let repository = DefaultRelationshipRepository()
+            let relationships = await repository.loadRelationships()
+            let scrubbed = relationships.map { $0.redactedCopy() }
+            await repository.saveRelationships(scrubbed)
         }
-
-        let scrubbed = relationships.map { $0.redactedCopy() }
-        guard let scrubbedData = try? JSONEncoder().encode(scrubbed) else { return }
-        defaults.set(scrubbedData, forKey: storageKey)
     }
     
     // MARK: - Computed Properties
@@ -264,5 +247,39 @@ extension SavedRelationship {
         if normalized.contains("intellectual") || normalized.contains("mental") { return "🧠" }
         if normalized.contains("spiritual") { return "✨" }
         return "💫"
+    }
+}
+
+protocol RelationshipRepository {
+    func loadRelationships() async -> [SavedRelationship]
+    func saveRelationships(_ relationships: [SavedRelationship]) async
+}
+
+struct DefaultRelationshipRepository: RelationshipRepository {
+    private let localDomain = "relationships"
+    private let localKey = "saved_relationships.v1"
+    private let legacyKey = "savedRelationships"
+
+    func loadRelationships() async -> [SavedRelationship] {
+        if let relationships = await LocalDomainDatabase.shared.load([SavedRelationship].self, domain: localDomain, key: localKey) {
+            return relationships
+        }
+
+        guard let data = UserDefaults.standard.data(forKey: legacyKey),
+              let relationships = try? JSONDecoder().decode([SavedRelationship].self, from: data) else {
+            return []
+        }
+
+        await saveRelationships(relationships)
+        UserDefaults.standard.removeObject(forKey: legacyKey)
+        return relationships
+    }
+
+    func saveRelationships(_ relationships: [SavedRelationship]) async {
+        if relationships.isEmpty {
+            await LocalDomainDatabase.shared.remove(domain: localDomain, key: localKey)
+        } else {
+            await LocalDomainDatabase.shared.save(relationships, domain: localDomain, key: localKey)
+        }
     }
 }

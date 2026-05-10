@@ -1,6 +1,8 @@
 package com.astromeric.android.navigation
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -8,6 +10,8 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -19,14 +23,17 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -37,6 +44,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.res.stringResource
+import com.astromeric.android.R
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Modifier
@@ -50,6 +59,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import com.astromeric.android.app.PushRegistrationManager
 import com.astromeric.android.core.data.local.NatalChartCacheStore
 import com.astromeric.android.core.data.remote.AstroRemoteDataSource
@@ -63,14 +74,17 @@ import com.astromeric.android.core.model.AppProfile
 import com.astromeric.android.core.model.DefaultHouseSystem
 import com.astromeric.android.core.model.ProfileDraft
 import com.astromeric.android.core.model.TimeConfidence
-import com.astromeric.android.core.model.zodiacSignName
+import com.astromeric.android.core.ui.CosmicBackgroundCanvas
 import com.astromeric.android.feature.charts.BirthChartDetailScreen
 import com.astromeric.android.feature.charts.CompositeChartScreen
 import com.astromeric.android.feature.charts.ChartsScreen
+import com.astromeric.android.feature.charts.NumerologyScreen
 import com.astromeric.android.feature.charts.ProgressionsScreen
 import com.astromeric.android.feature.charts.SynastryChartScreen
 import com.astromeric.android.feature.explore.ExploreScreen
 import com.astromeric.android.feature.guide.CosmicGuideScreen
+import com.astromeric.android.feature.onboarding.OnboardingScreen
+import com.astromeric.android.feature.relationships.CompatibilityScreen
 import com.astromeric.android.feature.habits.HabitsScreen
 import com.astromeric.android.feature.home.HomeScreen
 import com.astromeric.android.feature.journal.JournalScreen
@@ -97,6 +111,8 @@ import com.astromeric.android.feature.tools.TemporalMatrixScreen
 import com.astromeric.android.feature.tools.TimingAdvisorScreen
 import com.astromeric.android.feature.tools.ToolsScreen
 import com.astromeric.android.feature.tools.YearAheadScreen
+import com.astromeric.android.core.data.billing.SubscriptionRepository
+import com.astromeric.android.feature.premium.PremiumScreen
 import kotlinx.coroutines.launch
 
 const val ProfileEditorBaseRoute = "profile/editor"
@@ -131,6 +147,10 @@ const val OracleRoute = "oracle"
 const val TarotRoute = "tarot"
 const val FriendsRoute = "friends"
 const val LessonDetailRoute = "lesson-detail"
+const val NumerologyRoute = "numerology"
+const val CompatibilityRoute = "compatibility"
+const val OnboardingRoute = "onboarding"
+const val PremiumRoute = "premium"
 const val DebugSwissSeedProfileName = "Swiss Offline Test"
 
 enum class TopLevelDestination(
@@ -143,6 +163,16 @@ enum class TopLevelDestination(
     CHARTS("charts", "Charts", Icons.Filled.BarChart),
     PROFILE("profile", "Profile", Icons.Filled.Person),
 }
+
+@Composable
+private fun getNavigationLabel(destination: TopLevelDestination): String = stringResource(
+    when (destination) {
+        TopLevelDestination.HOME -> R.string.nav_home
+        TopLevelDestination.TOOLS -> R.string.nav_tools
+        TopLevelDestination.CHARTS -> R.string.nav_charts
+        TopLevelDestination.PROFILE -> R.string.nav_profile
+    }
+)
 
 fun profileEditorRoute(profileId: Int? = null): String =
     "$ProfileEditorBaseRoute/${profileId ?: 0}"
@@ -169,21 +199,24 @@ fun AstroShell(
     journalRepository: JournalRepository,
     preferencesStore: AppPreferencesStore,
     remoteDataSource: AstroRemoteDataSource,
+    subscriptionRepository: SubscriptionRepository,
     launchRoute: String? = null,
     launchRouteNonce: Int = 0,
     showFirstRunPrompt: Boolean = false,
 ) {
     val navController = rememberNavController()
+    val haptic = LocalHapticFeedback.current
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    var showFirstRunProfileComplete by rememberSaveable { mutableStateOf(false) }
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
-    var showFirstRunProfileComplete by rememberSaveable { mutableStateOf(false) }
     val currentTopLevelRoute = currentDestination?.hierarchy
         ?.mapNotNull { destination -> destination.route }
         ?.firstOrNull { route -> TopLevelDestination.entries.any { it.route == route } }
         ?: TopLevelDestination.HOME.route
     val isProfileEditorRoute = currentDestination?.route?.startsWith(ProfileEditorBaseRoute) == true
+    val completionProfile = selectedProfile ?: profiles.lastOrNull()
 
     LaunchedEffect(launchRouteNonce) {
         if (launchRoute.isNullOrBlank()) return@LaunchedEffect
@@ -196,45 +229,49 @@ fun AstroShell(
         }
     }
 
-    Scaffold(
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
-        bottomBar = {
-            if (!isProfileEditorRoute) {
-                NavigationBar {
-                    TopLevelDestination.entries.forEach { destination ->
-                        NavigationBarItem(
-                            selected = currentDestination?.hierarchy?.any { it.route == destination.route } == true,
-                            onClick = {
-                                navController.navigate(destination.route) {
-                                    popUpTo(navController.graph.findStartDestination().id) {
-                                        saveState = true
-                                    }
-                                    launchSingleTop = true
-                                    restoreState = true
+    Box(modifier = Modifier.fillMaxSize()) {
+        CosmicBackgroundCanvas(
+            element = null,
+            modifier = Modifier.fillMaxSize(),
+        )
+
+        Scaffold(
+            containerColor = Color.Transparent,
+            snackbarHost = {
+                SnackbarHost(
+                    hostState = snackbarHostState,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                )
+            },
+            bottomBar = {
+                if (!isProfileEditorRoute) {
+                    PremiumBottomBar(
+                        currentDestination = currentDestination,
+                        onNavigate = { destination ->
+                            navController.navigate(destination.route) {
+                                popUpTo(navController.graph.findStartDestination().id) {
+                                    saveState = true
                                 }
-                            },
-                            icon = { Icon(destination.icon, contentDescription = destination.label) },
-                            label = { Text(destination.label) },
-                        )
-                    }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        },
+                    )
                 }
-            }
-        },
-        floatingActionButton = {
-            if (!isProfileEditorRoute && !currentTopLevelRoute.startsWith(TopLevelDestination.PROFILE.route)) {
-                FloatingActionButton(
-                    onClick = {
-                        navController.navigate(CosmicGuideRoute) {
-                            launchSingleTop = true
-                        }
-                    },
-                ) {
-                    Icon(Icons.Filled.AutoAwesome, contentDescription = "Open Cosmic Guide")
+            },
+            floatingActionButton = {
+                if (!isProfileEditorRoute && !currentTopLevelRoute.startsWith(TopLevelDestination.PROFILE.route)) {
+                    PremiumGuideFab(
+                        onClick = {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            navController.navigate(CosmicGuideRoute) {
+                                launchSingleTop = true
+                            }
+                        },
+                    )
                 }
-            }
-        },
-    ) { innerPadding ->
-        Box(modifier = Modifier.fillMaxSize()) {
+            },
+        ) { innerPadding ->
             AstroNavHost(
                 navController = navController,
                 innerPadding = innerPadding,
@@ -245,60 +282,133 @@ fun AstroShell(
                 journalRepository = journalRepository,
                 preferencesStore = preferencesStore,
                 remoteDataSource = remoteDataSource,
+                subscriptionRepository = subscriptionRepository,
                 snackbarHostState = snackbarHostState,
                 showFirstRunPrompt = showFirstRunPrompt,
                 onFirstProfileCreated = {
                     showFirstRunProfileComplete = true
                 },
             )
+        }
 
-            if (showFirstRunPrompt && !isProfileEditorRoute && !showFirstRunProfileComplete) {
-                FirstRunProfilePromptOverlay(
-                    modifier = Modifier.padding(innerPadding),
-                    onCreateProfile = {
-                        navController.navigate(profileEditorRoute()) {
-                            launchSingleTop = true
-                        }
-                    },
-                    onExploreFirst = {
-                        scope.launch {
-                            preferencesStore.setInitialOnboardingCompleted(true)
-                        }
-                    },
-                )
-            }
+        if (showFirstRunPrompt && profiles.isEmpty() && !isProfileEditorRoute && !showFirstRunProfileComplete) {
+            FirstRunProfilePromptOverlay(
+                onCreateProfile = {
+                    navController.navigate(profileEditorRoute()) {
+                        launchSingleTop = true
+                    }
+                },
+                onExploreFirst = {
+                    scope.launch {
+                        preferencesStore.setInitialOnboardingCompleted(true)
+                    }
+                },
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
 
-            if (showFirstRunProfileComplete && selectedProfile != null) {
-                FirstRunProfileCompleteOverlay(
-                    profile = selectedProfile,
-                    remoteDataSource = remoteDataSource,
-                    modifier = Modifier.padding(innerPadding),
-                    onOpenHome = {
-                        showFirstRunProfileComplete = false
-                        navController.navigate(TopLevelDestination.HOME.route) {
-                            popUpTo(navController.graph.findStartDestination().id) {
-                                saveState = true
-                            }
-                            launchSingleTop = true
-                            restoreState = true
+        if (showFirstRunProfileComplete && completionProfile != null && !isProfileEditorRoute) {
+            FirstRunProfileCompleteOverlay(
+                profile = completionProfile,
+                remoteDataSource = remoteDataSource,
+                onOpenHome = {
+                    showFirstRunProfileComplete = false
+                    navController.navigate(TopLevelDestination.HOME.route) {
+                        popUpTo(navController.graph.findStartDestination().id) {
+                            saveState = true
                         }
-                    },
-                    onOpenCharts = {
-                        showFirstRunProfileComplete = false
-                        navController.navigate(TopLevelDestination.CHARTS.route) {
-                            popUpTo(navController.graph.findStartDestination().id) {
-                                saveState = true
-                            }
-                            launchSingleTop = true
-                            restoreState = true
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                },
+                onOpenCharts = {
+                    showFirstRunProfileComplete = false
+                    navController.navigate(TopLevelDestination.CHARTS.route) {
+                        popUpTo(navController.graph.findStartDestination().id) {
+                            saveState = true
                         }
-                    },
-                    onDismiss = {
-                        showFirstRunProfileComplete = false
-                    },
-                )
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                },
+                onDismiss = {
+                    showFirstRunProfileComplete = false
+                },
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
+    }
+}
+
+@Composable
+private fun PremiumBottomBar(
+    currentDestination: androidx.navigation.NavDestination?,
+    onNavigate: (TopLevelDestination) -> Unit,
+) {
+    val colorScheme = MaterialTheme.colorScheme
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(28.dp),
+            color = colorScheme.surface.copy(alpha = 0.88f),
+            tonalElevation = 0.dp,
+            shadowElevation = 16.dp,
+            border = BorderStroke(1.dp, Color.White.copy(alpha = 0.10f)),
+        ) {
+            NavigationBar(
+                containerColor = Color.Transparent,
+                tonalElevation = 0.dp,
+            ) {
+                TopLevelDestination.entries.forEach { destination ->
+                    NavigationBarItem(
+                        selected = currentDestination?.hierarchy?.any { it.route == destination.route } == true,
+                        onClick = { onNavigate(destination) },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = colorScheme.onPrimary,
+                            selectedTextColor = colorScheme.onSurface,
+                            indicatorColor = colorScheme.primary.copy(alpha = 0.92f),
+                            unselectedIconColor = colorScheme.onSurfaceVariant,
+                            unselectedTextColor = colorScheme.onSurfaceVariant,
+                        ),
+                        icon = { Icon(destination.icon, contentDescription = getNavigationLabel(destination)) },
+                        label = { Text(getNavigationLabel(destination)) },
+                    )
+                }
             }
         }
+    }
+}
+
+@Composable
+private fun PremiumGuideFab(
+    onClick: () -> Unit,
+) {
+    FloatingActionButton(
+        onClick = onClick,
+        modifier = Modifier.border(
+            border = BorderStroke(1.dp, Color.White.copy(alpha = 0.16f)),
+            shape = CircleShape,
+        ),
+        shape = CircleShape,
+        containerColor = MaterialTheme.colorScheme.primary,
+        contentColor = MaterialTheme.colorScheme.onPrimary,
+        elevation = FloatingActionButtonDefaults.elevation(
+            defaultElevation = 12.dp,
+            pressedElevation = 18.dp,
+            focusedElevation = 14.dp,
+            hoveredElevation = 14.dp,
+        ),
+    ) {
+        Icon(
+            Icons.Filled.AutoAwesome,
+            contentDescription = stringResource(R.string.nav_open_cosmic_guide),
+        )
     }
 }
 
@@ -313,17 +423,22 @@ private fun AstroNavHost(
     journalRepository: JournalRepository,
     preferencesStore: AppPreferencesStore,
     remoteDataSource: AstroRemoteDataSource,
+    subscriptionRepository: SubscriptionRepository,
     snackbarHostState: SnackbarHostState,
     showFirstRunPrompt: Boolean,
     onFirstProfileCreated: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
+    val haptic = LocalHapticFeedback.current
     val pushRegistrationManager = remember { PushRegistrationManager(context, preferencesStore, remoteDataSource) }
     val hideSensitiveDetailsEnabled by preferencesStore.hideSensitiveDetailsEnabled.collectAsStateWithLifecycle(initialValue = false)
     val personalModeEnabled by preferencesStore.personalModeEnabled.collectAsStateWithLifecycle(initialValue = com.astromeric.android.BuildConfig.PERSONAL_MODE)
     val authAccessToken by preferencesStore.authAccessToken.collectAsStateWithLifecycle(initialValue = "")
     val authUserEmail by preferencesStore.authUserEmail.collectAsStateWithLifecycle(initialValue = "")
+    val authUserPaid by preferencesStore.authUserPaid.collectAsStateWithLifecycle(initialValue = false)
+    val googlePlayPremium by preferencesStore.googlePlayPremiumEnabled.collectAsStateWithLifecycle(initialValue = false)
+    val isPremiumUser = true
     val effectiveAuthAccessToken = if (personalModeEnabled) "" else authAccessToken
     val accountSyncEnabled = !personalModeEnabled && authAccessToken.isNotBlank()
     var selectedLesson by remember { mutableStateOf<com.astromeric.android.core.model.LearningModuleData?>(null) }
@@ -503,6 +618,43 @@ private fun AstroNavHost(
                         launchSingleTop = true
                     }
                 },
+            )
+        }
+        composable(NumerologyRoute) {
+            NumerologyScreen(
+                selectedProfile = selectedProfile,
+                remoteDataSource = remoteDataSource,
+                authAccessToken = effectiveAuthAccessToken,
+                onBack = { navController.popBackStack() },
+            )
+        }
+        composable(CompatibilityRoute) {
+            CompatibilityScreen(
+                profiles = profiles,
+                selectedProfile = selectedProfile,
+                preferencesStore = preferencesStore,
+                remoteDataSource = remoteDataSource,
+                hideSensitiveDetailsEnabled = hideSensitiveDetailsEnabled,
+                onBack = { navController.popBackStack() },
+            )
+        }
+        composable(OnboardingRoute) {
+            OnboardingScreen(
+                profileRepository = profileRepository,
+                preferencesStore = preferencesStore,
+                onComplete = {
+                    navController.navigate(TopLevelDestination.HOME.route) {
+                        popUpTo(OnboardingRoute) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                },
+            )
+        }
+        composable(PremiumRoute) {
+            PremiumScreen(
+                subscriptionRepository = subscriptionRepository,
+                isPremiumUser = isPremiumUser,
+                onBack = { navController.popBackStack() },
             )
         }
         composable(BirthstonesRoute) {
@@ -764,6 +916,8 @@ private fun AstroNavHost(
             remoteDataSource = remoteDataSource,
             effectiveAuthAccessToken = effectiveAuthAccessToken,
             hideSensitiveDetailsEnabled = hideSensitiveDetailsEnabled,
+            onOpenNumerology = { navController.navigateSingleTop(NumerologyRoute) },
+            onOpenCompatibility = { navController.navigateSingleTop(CompatibilityRoute) },
             scope = scope,
             snackbarHostState = snackbarHostState,
         )
@@ -779,10 +933,12 @@ private fun AstroNavHost(
             personalModeEnabled = personalModeEnabled,
             accountSyncEnabled = accountSyncEnabled,
             authUserEmail = authUserEmail,
+            isPremiumUser = isPremiumUser,
             showFirstRunPrompt = showFirstRunPrompt,
             scope = scope,
             snackbarHostState = snackbarHostState,
             onFirstProfileCreated = onFirstProfileCreated,
+            onOpenPremium = { navController.navigateSingleTop(PremiumRoute) },
         )
     }
 }

@@ -1,5 +1,11 @@
 package com.astromeric.android.feature.reading
 
+import android.content.Context
+import androidx.annotation.StringRes
+import com.astromeric.android.core.ui.ReadingShareCard
+import com.astromeric.android.core.ui.renderComposableToBitmap
+import com.astromeric.android.core.ui.shareBitmapCard
+import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -23,6 +29,7 @@ import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -43,9 +50,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.astromeric.android.R
 import com.astromeric.android.core.data.remote.AstroRemoteDataSource
 import com.astromeric.android.core.model.AppProfile
 import com.astromeric.android.core.model.DailyForecastData
@@ -56,13 +67,16 @@ import com.astromeric.android.core.model.displayName
 import com.astromeric.android.core.ui.PremiumContentCard
 import com.astromeric.android.core.ui.PremiumLoadingCard
 import com.astromeric.android.core.ui.PremiumMetricTile
-import android.content.Context
-import android.content.Intent
+import com.astromeric.android.core.ui.CosmicBackgroundCanvas
+import com.astromeric.android.core.ui.MysticModeToggle
+import com.astromeric.android.core.ui.TimeScrubber
+import com.astromeric.android.core.ui.forecastTone
+import java.util.Locale
 
-private enum class ReadingScope(val wireValue: String, val label: String) {
-    DAILY("daily", "Today"),
-    WEEKLY("weekly", "This Week"),
-    MONTHLY("monthly", "This Month"),
+private enum class ReadingScope(val wireValue: String, @StringRes val labelRes: Int) {
+    DAILY("daily", R.string.reading_scope_today),
+    WEEKLY("weekly", R.string.reading_scope_this_week),
+    MONTHLY("monthly", R.string.reading_scope_this_month),
 }
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
@@ -76,13 +90,24 @@ fun ReadingScreen(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
+    val haptic = LocalHapticFeedback.current
+    val readingLoadError = stringResource(R.string.reading_error_load)
+    val screenTitle = stringResource(R.string.reading_title)
+    val backDescription = stringResource(R.string.action_back)
+    val shareDescription = stringResource(R.string.action_share)
+    val refreshDescription = stringResource(R.string.action_refresh)
+    val openProfileLabel = stringResource(R.string.action_open_profile)
+    val updateProfileLabel = stringResource(R.string.action_update_profile)
+    val retryLabel = stringResource(R.string.action_retry)
     var selectedScope by remember { mutableStateOf(ReadingScope.DAILY) }
+    var isMystic by remember { mutableStateOf(true) }
+    var dayOffset by remember { mutableIntStateOf(0) }
     var refreshVersion by remember(selectedProfile?.id) { mutableIntStateOf(0) }
-    var isLoading by remember(selectedProfile?.id, selectedScope) { mutableStateOf(false) }
-    var errorMessage by remember(selectedProfile?.id, selectedScope) { mutableStateOf<String?>(null) }
-    var forecast by remember(selectedProfile?.id, selectedScope, refreshVersion) { mutableStateOf<DailyForecastData?>(null) }
+    var isLoading by remember(selectedProfile?.id, selectedScope, isMystic, dayOffset) { mutableStateOf(false) }
+    var errorMessage by remember(selectedProfile?.id, selectedScope, isMystic, dayOffset) { mutableStateOf<String?>(null) }
+    var forecast by remember(selectedProfile?.id, selectedScope, isMystic, dayOffset, refreshVersion) { mutableStateOf<DailyForecastData?>(null) }
 
-    LaunchedEffect(selectedProfile?.id, selectedScope, refreshVersion) {
+    LaunchedEffect(selectedProfile?.id, selectedScope, isMystic, dayOffset, refreshVersion) {
         val profile = selectedProfile ?: run {
             forecast = null
             isLoading = false
@@ -97,19 +122,26 @@ fun ReadingScreen(
         }
         isLoading = true
         errorMessage = null
-        forecast = remoteDataSource.fetchForecast(profile, selectedScope.wireValue)
-            .onFailure { errorMessage = it.message ?: "Reading could not be loaded." }
+        forecast = remoteDataSource.fetchForecast(
+            profile = profile,
+            scope = selectedScope.wireValue,
+            tone = isMystic.forecastTone,
+            dateOffset = dayOffset,
+        )
+            .onFailure { errorMessage = it.message ?: readingLoadError }
             .getOrNull()
         isLoading = false
     }
 
+    val selectedScopeLabel = stringResource(selectedScope.labelRes)
+
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Reading") },
+                title = { Text(screenTitle) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = backDescription)
                     }
                 },
                 actions = {
@@ -125,20 +157,22 @@ fun ReadingScreen(
                             },
                             enabled = !isLoading,
                         ) {
-                            Icon(Icons.Filled.Share, contentDescription = "Share")
+                            Icon(Icons.Filled.Share, contentDescription = shareDescription)
                         }
                     }
                     IconButton(
                         onClick = { refreshVersion += 1 },
                         enabled = !isLoading,
                     ) {
-                        Icon(Icons.Filled.Refresh, contentDescription = "Refresh")
+                        Icon(Icons.Filled.Refresh, contentDescription = refreshDescription)
                     }
                 },
             )
         },
         modifier = modifier,
     ) { innerPadding ->
+        Box(modifier = Modifier.fillMaxSize()) {
+            CosmicBackgroundCanvas(element = null, modifier = Modifier.matchParentSize())
         Column(
             modifier = Modifier
                 .padding(innerPadding)
@@ -154,38 +188,58 @@ fun ReadingScreen(
                 ReadingScope.entries.forEach { scope ->
                     FilterChip(
                         selected = selectedScope == scope,
-                        onClick = { selectedScope = scope },
-                        label = { Text(scope.label) },
+                        onClick = {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            selectedScope = scope
+                        },
+                        label = { Text(stringResource(scope.labelRes)) },
                     )
                 }
             }
 
+            // Mystic / Mundane toggle
+            MysticModeToggle(
+                isMystic = isMystic,
+                onToggle = { isMystic = it },
+            )
+
+            // Time scrubber (only for daily scope)
+            if (selectedScope == ReadingScope.DAILY) {
+                TimeScrubber(
+                    offset = dayOffset,
+                    onOffsetChange = { dayOffset = it },
+                )
+            }
+
             if (selectedProfile == null) {
                 ReadingInfoCard(
-                    title = "Profile Required",
-                    body = "Create or select a profile to generate a personalized reading across daily, weekly, and monthly scopes.",
+                    title = stringResource(R.string.status_profile_required),
+                    body = stringResource(R.string.reading_profile_required_body),
                 ) {
-                    Button(onClick = onOpenProfile) { Text("Open Profile") }
+                    Button(onClick = onOpenProfile) { Text(openProfileLabel) }
                 }
                 return@Column
             }
 
             if (selectedProfile.dataQuality == DataQuality.DATE_ONLY) {
                 ReadingInfoCard(
-                    title = "Add Birth Location",
-                    body = "A birth location is required for forecast readings. Add it to your profile to unlock ${selectedScope.label.lowercase()} insights.",
+                    title = stringResource(R.string.reading_birth_location_title),
+                    body = stringResource(
+                        R.string.reading_birth_location_body,
+                        selectedScopeLabel.lowercase(Locale.getDefault()),
+                    ),
                 ) {
-                    OutlinedButton(onClick = onOpenProfile) { Text("Update Profile") }
+                    OutlinedButton(onClick = onOpenProfile) { Text(updateProfileLabel) }
                 }
                 return@Column
             }
 
             if (!selectedProfile.canRequestForecast) {
                 ReadingInfoCard(
-                    title = "Add Birth Time",
-                    body = "A confirmed birth time and place are required for forecast readings.",
+                    title = stringResource(R.string.reading_birth_time_title),
+                    body = stringResource(R.string.reading_birth_time_body),
                 ) {
-                    OutlinedButton(onClick = onOpenProfile) { Text("Update Profile") }
+                    OutlinedButton(onClick = onOpenProfile) { Text(updateProfileLabel) }
                 }
                 return@Column
             }
@@ -197,10 +251,10 @@ fun ReadingScreen(
 
             errorMessage?.let { error ->
                 ReadingInfoCard(
-                    title = "Could Not Load",
+                    title = stringResource(R.string.status_could_not_load),
                     body = error,
                 ) {
-                    OutlinedButton(onClick = { refreshVersion += 1 }) { Text("Retry") }
+                    OutlinedButton(onClick = { refreshVersion += 1 }) { Text(retryLabel) }
                 }
                 return@Column
             }
@@ -214,8 +268,8 @@ fun ReadingScreen(
             // Overall score header
             data.overallScore?.let { score ->
                 PremiumContentCard(
-                    title = "${selectedScope.label} Overview",
-                    body = if (isLoading) "Refreshing..." else null,
+                    title = stringResource(R.string.reading_overview_title, selectedScopeLabel),
+                    body = if (isLoading) stringResource(R.string.status_refreshing) else null,
                 ) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -223,7 +277,7 @@ fun ReadingScreen(
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Text(
-                                text = "${selectedScope.label} Overview",
+                                text = stringResource(R.string.reading_overview_title, selectedScopeLabel),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.SemiBold,
                             )
@@ -239,7 +293,7 @@ fun ReadingScreen(
                         )
                         if (isLoading) {
                             Text(
-                                text = "Refreshing...",
+                                text = stringResource(R.string.status_refreshing),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
@@ -271,9 +325,14 @@ fun ReadingScreen(
                         },
                     ) {
                         Icon(Icons.Filled.Share, contentDescription = null)
-                        Text("Share")
+                        Text(shareDescription)
                     }
                 }
+            }
+
+            // TLDR summary box
+            data.tldr?.takeIf { it.isNotBlank() }?.let { tldr ->
+                TldrCard(text = tldr)
             }
 
             // Section cards
@@ -283,14 +342,57 @@ fun ReadingScreen(
 
             if (data.sections.isEmpty() && !isLoading) {
                 ReadingInfoCard(
-                    title = "No sections",
-                    body = "The reading returned no sections. Try refreshing.",
+                    title = stringResource(R.string.reading_no_sections_title),
+                    body = stringResource(R.string.reading_no_sections_body),
                 ) {
-                    OutlinedButton(onClick = { refreshVersion += 1 }) { Text("Refresh") }
+                    OutlinedButton(onClick = { refreshVersion += 1 }) { Text(refreshDescription) }
                 }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
+        }
+        } // Box (cosmic bg)
+    }
+}
+
+@Composable
+private fun TldrCard(text: String, modifier: Modifier = Modifier) {
+    val primary = MaterialTheme.colorScheme.primary
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.medium,
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    Brush.linearGradient(
+                        listOf(
+                            primary.copy(alpha = 0.18f),
+                            primary.copy(alpha = 0.08f),
+                        )
+                    )
+                )
+                .padding(horizontal = 20.dp, vertical = 16.dp),
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(
+                    text = stringResource(R.string.reading_tldr_label),
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = primary,
+                )
+                Text(
+                    text = text,
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+            }
         }
     }
 }
@@ -305,7 +407,7 @@ private fun ReadingSectionCard(section: ForecastSectionData, modifier: Modifier 
     ) {
             if (section.embrace.isNotEmpty()) {
                 Text(
-                    text = "Embrace",
+                    text = stringResource(R.string.section_embrace),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.primary,
                 )
@@ -318,7 +420,7 @@ private fun ReadingSectionCard(section: ForecastSectionData, modifier: Modifier 
             }
             if (section.avoid.isNotEmpty()) {
                 Text(
-                    text = "Avoid",
+                    text = stringResource(R.string.section_avoid),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.error,
                 )
@@ -348,7 +450,7 @@ private fun ReadingSectionCard(section: ForecastSectionData, modifier: Modifier 
 @Composable
 private fun ReadingSkeletonCard(modifier: Modifier = Modifier) {
     PremiumLoadingCard(
-        title = "Loading reading",
+        title = stringResource(R.string.reading_loading),
         modifier = modifier,
     )
 }
@@ -375,49 +477,17 @@ private fun shareReadingForecast(
     forecast: DailyForecastData,
     hideSensitiveDetailsEnabled: Boolean,
 ) {
-    val intent = Intent(Intent.ACTION_SEND).apply {
-        type = "text/plain"
-        putExtra(
-            Intent.EXTRA_TEXT,
-            buildReadingShareText(
-                profile = profile,
-                forecast = forecast,
-                hideSensitiveDetailsEnabled = hideSensitiveDetailsEnabled,
-            ),
-        )
+    val density = context.resources.displayMetrics.density
+    val widthPx = (300 * density * 3).toInt()  // 3× for high-res
+    val bitmap = renderComposableToBitmap(context, widthPx, 0) {
+        ReadingShareCard(forecast = forecast)
     }
-    context.startActivity(Intent.createChooser(intent, "Share reading"))
+    shareBitmapCard(
+        context = context,
+        bitmap = bitmap,
+        filename = "reading_share.png",
+        chooserTitle = context.getString(R.string.reading_share_chooser_title),
+    )
 }
 
-private fun buildReadingShareText(
-    profile: AppProfile?,
-    forecast: DailyForecastData,
-    hideSensitiveDetailsEnabled: Boolean,
-): String = buildString {
-    val scopeLabel = forecast.scope
-        ?.replaceFirstChar { character ->
-            if (character.isLowerCase()) character.titlecase() else character.toString()
-        }
-        ?: "Daily"
-    appendLine("AstroNumeric $scopeLabel Reading")
-    appendLine()
-    profile?.let {
-        appendLine("Profile: ${it.displayName(hideSensitiveDetailsEnabled, PrivacyDisplayRole.SHARE)}")
-    }
-    forecast.overallScore?.let { score ->
-        appendLine("Overall score: ${(score * 100).toInt()}%")
-    }
-    appendLine()
-    forecast.sections.take(3).forEach { section ->
-        appendLine(section.title)
-        appendLine(section.summary)
-        if (section.embrace.isNotEmpty()) {
-            appendLine("Embrace: ${section.embrace.take(2).joinToString()}")
-        }
-        if (section.avoid.isNotEmpty()) {
-            appendLine("Avoid: ${section.avoid.take(2).joinToString()}")
-        }
-        appendLine()
-    }
-    append("Generated with AstroNumeric")
-}
+

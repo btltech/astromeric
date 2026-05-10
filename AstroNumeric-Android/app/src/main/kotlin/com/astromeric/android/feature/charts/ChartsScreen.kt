@@ -1,39 +1,34 @@
 package com.astromeric.android.feature.charts
 
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.horizontalScroll
+import android.content.Context
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AssistChip
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.astromeric.android.R
 import com.astromeric.android.core.data.local.NatalChartCacheStore
 import com.astromeric.android.core.data.remote.AstroRemoteDataSource
 import com.astromeric.android.core.ephemeris.LocalSwissEphemerisEngine
@@ -56,6 +51,7 @@ import com.astromeric.android.core.ui.PremiumActionRow
 import com.astromeric.android.core.ui.PremiumContentCard
 import com.astromeric.android.core.ui.PremiumHeroCard
 import com.astromeric.android.core.ui.PremiumLoadingCard
+import com.astromeric.android.core.ui.PremiumSectionHeader
 import com.astromeric.android.core.ui.PremiumStatusCard
 import java.time.Instant
 import java.time.OffsetDateTime
@@ -63,42 +59,20 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-private enum class ChartsStudioTab(
-    val label: String,
-    val subtitle: String,
-) {
-    BIRTH(
-        label = "Birth Chart",
-        subtitle = "Read the natal structure first, then branch into timing or compatibility when the base pattern is clear.",
-    ),
-    NUMEROLOGY(
-        label = "Numerology",
-        subtitle = "Use numbers as a parallel system for identity, timing, and motivation instead of treating them like detached trivia.",
-    ),
-    COMPATIBILITY(
-        label = "Compatibility",
-        subtitle = "Move from general chemistry into relationship timing and aspect-level comparison when you need more precision.",
-    ),
-    ADVANCED(
-        label = "Advanced",
-        subtitle = "Choose the chart layer that matches the question: year-ahead timing, inner development, or relational structure.",
-    ),
-}
-
 internal enum class NumerologyMethod(
     val wireValue: String,
-    val label: String,
-    val description: String,
+    @StringRes val labelRes: Int,
+    @StringRes val descriptionRes: Int,
 ) {
     PYTHAGOREAN(
         wireValue = "pythagorean",
-        label = "Pythagorean",
-        description = "Default Western system with familiar 1-9 number reduction.",
+        labelRes = R.string.charts_method_pythagorean_label,
+        descriptionRes = R.string.charts_method_pythagorean_description,
     ),
     CHALDEAN(
         wireValue = "chaldean",
-        label = "Chaldean",
-        description = "Older 1-8 system that shifts name-number emphasis and tone.",
+        labelRes = R.string.charts_method_chaldean_label,
+        descriptionRes = R.string.charts_method_chaldean_description,
     ),
 }
 
@@ -110,6 +84,8 @@ fun ChartsScreen(
     remoteDataSource: AstroRemoteDataSource,
     authAccessToken: String,
     hideSensitiveDetailsEnabled: Boolean,
+    onOpenNumerology: () -> Unit,
+    onOpenCompatibility: () -> Unit,
     onOpenRelationships: () -> Unit,
     onOpenYearAhead: () -> Unit,
     onOpenBirthChart: () -> Unit,
@@ -124,7 +100,6 @@ fun ChartsScreen(
     val partnerProfiles = remember(profiles, selectedProfile?.id) {
         profiles.filter { profile -> profile.id != selectedProfile?.id }
     }
-    var selectedTab by rememberSaveable { mutableStateOf(ChartsStudioTab.BIRTH) }
 
     var refreshVersion by remember(selectedProfile?.id) { mutableIntStateOf(0) }
     var isLoadingBirthChart by remember(selectedProfile?.id) { mutableStateOf(false) }
@@ -190,7 +165,7 @@ fun ChartsScreen(
             .onSuccess { numerologyData = it }
             .onFailure {
                 numerologyData = null
-                numerologyError = it.message ?: "Numerology profile could not be loaded."
+                numerologyError = it.message ?: context.getString(R.string.charts_numerology_error_load)
             }
         isLoadingNumerology = false
     }
@@ -203,15 +178,11 @@ fun ChartsScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         ChartsStudioHeroCard()
-        ChartStudioTabRow(selectedTab = selectedTab, onSelected = { selectedTab = it })
-        Text(
-            text = selectedTab.subtitle,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-
-        when (selectedTab) {
-            ChartsStudioTab.BIRTH -> BirthChartTab(
+        ChartsHubSection(
+            title = stringResource(R.string.charts_tab_birth_label),
+            subtitle = stringResource(R.string.charts_tab_birth_subtitle),
+        ) {
+            BirthChartTab(
                 selectedProfile = selectedProfile,
                 natalChart = natalChart,
                 isLoading = isLoadingBirthChart,
@@ -223,8 +194,13 @@ fun ChartsScreen(
                 onOpenBirthChart = onOpenBirthChart,
                 hideSensitiveDetailsEnabled = hideSensitiveDetailsEnabled,
             )
+        }
 
-            ChartsStudioTab.NUMEROLOGY -> NumerologyTab(
+        ChartsHubSection(
+            title = stringResource(R.string.charts_tab_numerology_label),
+            subtitle = stringResource(R.string.charts_tab_numerology_subtitle),
+        ) {
+            NumerologyTab(
                 selectedProfile = selectedProfile,
                 selectedMethod = selectedMethod,
                 onSelectMethod = { selectedMethod = it },
@@ -233,16 +209,28 @@ fun ChartsScreen(
                 numerology = numerologyData,
                 isExplaining = isExplainingNumerology,
                 onExplain = { isExplainingNumerology = true },
+                onOpenFullScreen = onOpenNumerology,
             )
+        }
 
-            ChartsStudioTab.COMPATIBILITY -> CompatibilityTab(
+        ChartsHubSection(
+            title = stringResource(R.string.charts_tab_compatibility_label),
+            subtitle = stringResource(R.string.charts_tab_compatibility_subtitle),
+        ) {
+            CompatibilityTab(
                 selectedProfile = selectedProfile,
                 partnerProfiles = partnerProfiles,
+                onOpenCompatibility = onOpenCompatibility,
                 onOpenRelationships = onOpenRelationships,
                 onOpenSynastry = onOpenSynastry,
             )
+        }
 
-            ChartsStudioTab.ADVANCED -> AdvancedChartsTab(
+        ChartsHubSection(
+            title = stringResource(R.string.charts_tab_advanced_label),
+            subtitle = stringResource(R.string.charts_tab_advanced_subtitle),
+        ) {
+            AdvancedChartsTab(
                 selectedProfile = selectedProfile,
                 partnerProfiles = partnerProfiles,
                 onOpenYearAhead = onOpenYearAhead,
@@ -279,13 +267,12 @@ fun ChartsScreen(
             return@LaunchedEffect
         }
 
-        val fallback = buildNumerologyFallbackSummary(profile, loadedNumerology)
         val explainResult = remoteDataSource.fetchAIExplain(
             authToken = authAccessToken.takeIf { it.isNotBlank() },
-            request = buildNumerologyExplainRequest(profile, loadedNumerology),
+            request = buildNumerologyExplainRequest(context, profile, loadedNumerology),
         ).getOrNull()
 
-        numerologyExplanationSummary = explainResult?.summary ?: fallback
+        numerologyExplanationSummary = explainResult?.summary ?: buildNumerologyFallbackSummary(context, profile, loadedNumerology)
         numerologyExplanationProvider = explainResult?.provider ?: "fallback"
         numerologyExplanationGeneratedAt = Instant.now()
         showNumerologyExplanationSheet = true
@@ -296,29 +283,30 @@ fun ChartsScreen(
 @Composable
 private fun ChartsStudioHeroCard() {
     PremiumHeroCard(
-        eyebrow = "Charts",
-        title = "Charts Studio",
-        body = "See your structure, not just isolated symbols. Move between birth chart, numerology, compatibility, and advanced timing without losing the thread.",
-        chips = listOf("Birth chart", "Numerology", "Compatibility", "Advanced timing"),
+        eyebrow = stringResource(R.string.charts_hero_eyebrow),
+        title = stringResource(R.string.charts_hero_title),
+        body = stringResource(R.string.charts_hero_body),
+        chips = listOf(
+            stringResource(R.string.charts_hero_chip_birth),
+            stringResource(R.string.charts_hero_chip_numerology),
+            stringResource(R.string.charts_hero_chip_compatibility),
+            stringResource(R.string.charts_hero_chip_advanced),
+        ),
     )
 }
 
 @Composable
-private fun ChartStudioTabRow(
-    selectedTab: ChartsStudioTab,
-    onSelected: (ChartsStudioTab) -> Unit,
+private fun ChartsHubSection(
+    title: String,
+    subtitle: String,
+    content: @Composable () -> Unit,
 ) {
-    Row(
-        modifier = Modifier.horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        ChartsStudioTab.entries.forEach { tab ->
-            FilterChip(
-                selected = selectedTab == tab,
-                onClick = { onSelected(tab) },
-                label = { Text(tab.label) },
-            )
-        }
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        PremiumSectionHeader(
+            title = title,
+            subtitle = subtitle,
+        )
+        content()
     }
 }
 
@@ -369,7 +357,7 @@ fun StatusCard(
     isError: Boolean,
 ) {
     PremiumStatusCard(
-        title = if (isError) "Charts unavailable" else "Charts status",
+        title = if (isError) stringResource(R.string.charts_status_unavailable) else stringResource(R.string.charts_status_normal),
         message = message,
         isError = isError,
     )
@@ -377,14 +365,14 @@ fun StatusCard(
 
 @Composable
 fun PlanetPlacementRow(placement: PlanetPlacement) {
+    val houseLabel = placement.house?.let { stringResource(R.string.charts_row_house, it) }
+    val retrogradeLabel = if (placement.retrograde == true) stringResource(R.string.charts_row_retrograde) else null
     Text(
         text = buildString {
             append("${placement.name}: ${placement.sign} ${"%.1f".format(placement.degree)}°")
-            placement.house?.let { append(" · House $it") }
+            houseLabel?.let { append(" · $it") }
             placement.dignity?.takeIf { it.isNotBlank() }?.let { append(" · $it") }
-            if (placement.retrograde == true) {
-                append(" · Rx")
-            }
+            retrogradeLabel?.let { append(" · $it") }
         },
         style = MaterialTheme.typography.bodyMedium,
     )
@@ -392,19 +380,24 @@ fun PlanetPlacementRow(placement: PlanetPlacement) {
 
 @Composable
 fun HousePlacementRow(house: HousePlacement) {
+    val text = house.degree?.let { degree ->
+        stringResource(R.string.charts_house_placement_format_degree, house.house, house.sign, degree)
+    } ?: stringResource(R.string.charts_house_placement_format, house.house, house.sign)
     Text(
-        text = "House ${house.house}: ${house.sign}${house.degree?.let { " ${"%.1f".format(it)}°" } ?: ""}",
+        text = text,
         style = MaterialTheme.typography.bodyMedium,
     )
 }
 
 @Composable
 fun AspectRow(aspect: ChartAspect) {
+    val orbLabel = aspect.orb?.let { stringResource(R.string.charts_row_orb, it) }
+    val strengthLabel = aspect.strength?.let { stringResource(R.string.charts_row_strength, (it * 100).toInt()) }
     Text(
         text = buildString {
             append("${aspect.planetA} ${aspect.type} ${aspect.planetB}")
-            aspect.orb?.let { append(" · orb ${"%.1f".format(it)}°") }
-            aspect.strength?.let { append(" · ${(it * 100).toInt()}%") }
+            orbLabel?.let { append(" · $it") }
+            strengthLabel?.let { append(" · $it") }
         },
         style = MaterialTheme.typography.bodyMedium,
     )
@@ -412,8 +405,16 @@ fun AspectRow(aspect: ChartAspect) {
 
 @Composable
 fun SynastryAspectRow(aspect: SynastryAspectData) {
+    val applyingSuffix = if (aspect.applying) " · ${stringResource(R.string.charts_row_applying)}" else ""
     Text(
-        text = "${aspect.planet1} ${aspect.aspect} ${aspect.planet2} · orb ${"%.1f".format(aspect.orb)}°${if (aspect.applying) " · applying" else ""}",
+        text = stringResource(
+            R.string.charts_synastry_aspect_row,
+            aspect.planet1,
+            aspect.aspect,
+            aspect.planet2,
+            aspect.orb,
+            applyingSuffix,
+        ),
         style = MaterialTheme.typography.bodyMedium,
     )
 }
@@ -421,37 +422,42 @@ fun SynastryAspectRow(aspect: SynastryAspectData) {
 @Composable
 fun CompositePlanetRow(planet: ChartPoint) {
     Text(
-        text = "${planet.name}: ${planet.sign} ${"%.1f".format(planet.degree)}°",
+        text = stringResource(R.string.charts_composite_planet_row, planet.name, planet.sign, planet.degree),
         style = MaterialTheme.typography.bodyMedium,
     )
 }
 
-private fun buildNumerologyExplainRequest(
+internal fun buildNumerologyExplainRequest(
+    context: Context,
     profile: AppProfile,
     numerology: NumerologyData,
 ): AIExplainRequestData {
     val sections = buildList {
         add(
             AIExplainSectionData(
-                title = "Life Path ${numerology.lifePath.number}",
+                title = context.getString(R.string.charts_numerology_ai_title_life_path, numerology.lifePath.number),
                 highlights = listOfNotNull(numerology.lifePath.meaning, numerology.lifePath.lifePurpose).take(3),
             ),
         )
         add(
             AIExplainSectionData(
-                title = "Core Numbers",
+                title = context.getString(R.string.charts_numerology_ai_title_core_numbers),
                 highlights = buildList {
-                    add("Destiny ${numerology.destinyNumber}: ${numerology.destinyInterpretation}")
-                    add("Personal Year ${numerology.personalYear.cycleNumber}: ${numerology.personalYear.interpretation}")
-                    numerology.numerologyInsights["soul_urge"]?.takeIf { it.isNotBlank() }?.let { add("Soul Urge: $it") }
-                    numerology.numerologyInsights["personality"]?.takeIf { it.isNotBlank() }?.let { add("Personality: $it") }
+                    add(context.getString(R.string.charts_numerology_ai_destiny_highlight, numerology.destinyNumber, numerology.destinyInterpretation))
+                    add(context.getString(R.string.charts_numerology_ai_personal_year_highlight, numerology.personalYear.cycleNumber, numerology.personalYear.interpretation))
+                    numerology.numerologyInsights["soul_urge"]?.takeIf { it.isNotBlank() }?.let {
+                        add(context.getString(R.string.charts_numerology_ai_soul_urge_highlight, it))
+                    }
+                    numerology.numerologyInsights["personality"]?.takeIf { it.isNotBlank() }?.let {
+                        add(context.getString(R.string.charts_numerology_ai_personality_highlight, it))
+                    }
                 },
             ),
         )
         if (numerology.personalYear.focusAreas.isNotEmpty()) {
             add(
                 AIExplainSectionData(
-                    title = "Current Focus",
+                    title = context.getString(R.string.charts_numerology_ai_title_current_focus),
                     highlights = numerology.personalYear.focusAreas.take(5),
                 ),
             )
@@ -460,23 +466,39 @@ private fun buildNumerologyExplainRequest(
             if (synthesis.dominantNumbers.isNotEmpty()) {
                 add(
                     AIExplainSectionData(
-                        title = "Dominant Numbers",
-                        highlights = synthesis.dominantNumbers.take(4).map { "${it.label} ${it.number}: ${it.meaning}" },
+                        title = context.getString(R.string.charts_numerology_ai_title_dominant_numbers),
+                        highlights = synthesis.dominantNumbers.take(4).map {
+                            context.getString(R.string.charts_numerology_dominant_highlight_format, it.label, it.number, it.meaning)
+                        },
                     ),
                 )
             }
             if (synthesis.strengths.isNotEmpty()) {
-                add(AIExplainSectionData(title = "Strengths", highlights = synthesis.strengths.take(4)))
+                add(
+                    AIExplainSectionData(
+                        title = context.getString(R.string.charts_numerology_ai_title_strengths),
+                        highlights = synthesis.strengths.take(4),
+                    ),
+                )
             }
             if (synthesis.growthEdges.isNotEmpty()) {
-                add(AIExplainSectionData(title = "Growth Edges", highlights = synthesis.growthEdges.take(4)))
+                add(
+                    AIExplainSectionData(
+                        title = context.getString(R.string.charts_numerology_ai_title_growth_edges),
+                        highlights = synthesis.growthEdges.take(4),
+                    ),
+                )
             }
         }
     }
 
     return AIExplainRequestData(
         scope = "numerology",
-        headline = "Numerology for ${profile.displayName(false, PrivacyDisplayRole.ACTIVE_USER)} • Life Path ${numerology.lifePath.number}",
+        headline = context.getString(
+            R.string.charts_numerology_headline,
+            profile.displayName(false, PrivacyDisplayRole.ACTIVE_USER),
+            numerology.lifePath.number,
+        ),
         theme = numerology.synthesis?.currentFocus ?: numerology.lifePath.meaning,
         sections = sections,
         numerologySummary = numerology.synthesis?.summary,
@@ -484,7 +506,8 @@ private fun buildNumerologyExplainRequest(
     )
 }
 
-private fun buildNumerologyFallbackSummary(
+internal fun buildNumerologyFallbackSummary(
+    context: Context,
     profile: AppProfile,
     numerology: NumerologyData,
 ): String {
@@ -492,35 +515,47 @@ private fun buildNumerologyFallbackSummary(
     val growthEdges = numerology.synthesis?.growthEdges?.take(2).orEmpty()
     val focusAreas = numerology.personalYear.focusAreas.take(3)
     return buildString {
-        appendLine("## TL;DR")
+        appendLine(context.getString(R.string.charts_numerology_fallback_tldr))
         appendLine()
-        appendLine("${profile.displayName(false, PrivacyDisplayRole.ACTIVE_USER)} is moving through a **Life Path ${numerology.lifePath.number}** story. The current year emphasizes **${numerology.personalYear.interpretation.lowercase()}** through Personal Year ${numerology.personalYear.cycleNumber}.")
+        appendLine(
+            context.getString(
+                R.string.charts_numerology_fallback_story,
+                profile.displayName(false, PrivacyDisplayRole.ACTIVE_USER),
+                numerology.lifePath.number,
+                numerology.personalYear.interpretation.lowercase(),
+                numerology.personalYear.cycleNumber,
+            ),
+        )
         appendLine()
         appendLine("---")
         appendLine()
-        appendLine("## Core thread")
-        appendLine("- Life Path ${numerology.lifePath.number}: ${numerology.lifePath.meaning}")
-        appendLine("- Destiny ${numerology.destinyNumber}: ${numerology.destinyInterpretation}")
-        numerology.numerologyInsights["soul_urge"]?.takeIf { it.isNotBlank() }?.let { appendLine("- Soul Urge: $it") }
-        numerology.numerologyInsights["personality"]?.takeIf { it.isNotBlank() }?.let { appendLine("- Personality: $it") }
+        appendLine(context.getString(R.string.charts_numerology_fallback_core_thread))
+        appendLine(context.getString(R.string.charts_numerology_fallback_life_path_line, numerology.lifePath.number, numerology.lifePath.meaning))
+        appendLine(context.getString(R.string.charts_numerology_fallback_destiny_line, numerology.destinyNumber, numerology.destinyInterpretation))
+        numerology.numerologyInsights["soul_urge"]?.takeIf { it.isNotBlank() }?.let {
+            appendLine("- ${context.getString(R.string.charts_numerology_ai_soul_urge_highlight, it)}")
+        }
+        numerology.numerologyInsights["personality"]?.takeIf { it.isNotBlank() }?.let {
+            appendLine("- ${context.getString(R.string.charts_numerology_ai_personality_highlight, it)}")
+        }
         if (focusAreas.isNotEmpty()) {
             appendLine()
-            appendLine("## Current focus")
+            appendLine(context.getString(R.string.charts_numerology_fallback_current_focus))
             focusAreas.forEach { focusArea -> appendLine("- $focusArea") }
         }
         if (strengths.isNotEmpty()) {
             appendLine()
-            appendLine("## Strengths to lean on")
+            appendLine(context.getString(R.string.charts_numerology_fallback_strengths))
             strengths.forEach { strength -> appendLine("- $strength") }
         }
         if (growthEdges.isNotEmpty()) {
             appendLine()
-            appendLine("## Growth edge")
+            appendLine(context.getString(R.string.charts_numerology_fallback_growth_edge))
             growthEdges.forEach { edge -> appendLine("- $edge") }
         }
         appendLine()
-        appendLine("## Practical next step")
-        append("Pick **one focus area** from this Personal Year and pair it with **one Life Path strength** you can practice consistently this week.")
+        appendLine(context.getString(R.string.charts_numerology_fallback_practical_next_step_heading))
+        append(context.getString(R.string.charts_numerology_fallback_practical_next_step_body))
     }.trim()
 }
 

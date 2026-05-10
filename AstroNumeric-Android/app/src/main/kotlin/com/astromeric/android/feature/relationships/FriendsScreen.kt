@@ -41,13 +41,14 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.astromeric.android.R
 import com.astromeric.android.core.data.remote.AstroRemoteDataSource
 import com.astromeric.android.core.model.AppProfile
 import com.astromeric.android.core.model.FriendCompatibilityData
 import com.astromeric.android.core.model.FriendProfileData
-import com.astromeric.android.core.model.friendRelationshipLabel
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -63,6 +64,13 @@ fun FriendsScreen(
     modifier: Modifier = Modifier,
 ) {
     val scope = rememberCoroutineScope()
+    val friendsLoadError = stringResource(R.string.friends_error_load)
+    val friendAddError = stringResource(R.string.friends_error_add)
+    val friendRemoveError = stringResource(R.string.friends_error_remove)
+    val screenTitle = stringResource(R.string.relationships_section_cosmic_circle)
+    val backDescription = stringResource(R.string.action_back)
+    val refreshDescription = stringResource(R.string.action_refresh)
+    val addFriendDescription = stringResource(R.string.relationships_add_friend)
     var isLoading by remember(selectedProfile?.id) { mutableStateOf(false) }
     var errorMessage by remember(selectedProfile?.id) { mutableStateOf<String?>(null) }
     var friends by remember(selectedProfile?.id) { mutableStateOf<List<FriendProfileData>>(emptyList()) }
@@ -80,7 +88,7 @@ fun FriendsScreen(
         coroutineScope {
             val friendsDeferred = async { remoteDataSource.listFriends(ownerId) }
             val friendsResult = friendsDeferred.await()
-            friendsResult.onFailure { errorMessage = it.message ?: "Could not load friends." }
+            friendsResult.onFailure { errorMessage = it.message ?: friendsLoadError }
             friends = friendsResult.getOrDefault(emptyList())
 
             if (selectedProfile != null && friends.isNotEmpty()) {
@@ -94,18 +102,18 @@ fun FriendsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Cosmic Circle") },
+                title = { Text(screenTitle) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = backDescription)
                     }
                 },
                 actions = {
                     IconButton(onClick = { refreshVersion += 1 }, enabled = !isLoading) {
-                        Icon(Icons.Filled.Refresh, contentDescription = "Refresh")
+                        Icon(Icons.Filled.Refresh, contentDescription = refreshDescription)
                     }
                     IconButton(onClick = { showAddSheet = true }) {
-                        Icon(Icons.Filled.Add, contentDescription = "Add friend")
+                        Icon(Icons.Filled.Add, contentDescription = addFriendDescription)
                     }
                 },
             )
@@ -123,9 +131,9 @@ fun FriendsScreen(
             if (selectedProfile == null) {
                 Card(modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("Profile Required", style = MaterialTheme.typography.titleSmall)
-                        Text("A profile is needed to view your Cosmic Circle.", style = MaterialTheme.typography.bodyMedium)
-                        Button(onClick = onOpenProfile) { Text("Open Profile") }
+                        Text(stringResource(R.string.status_profile_required), style = MaterialTheme.typography.titleSmall)
+                        Text(stringResource(R.string.friends_profile_required_body), style = MaterialTheme.typography.bodyMedium)
+                        Button(onClick = onOpenProfile) { Text(stringResource(R.string.action_open_profile)) }
                     }
                 }
                 return@Column
@@ -138,9 +146,9 @@ fun FriendsScreen(
             errorMessage?.let { error ->
                 Card(modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("Could Not Load", style = MaterialTheme.typography.titleSmall)
+                        Text(stringResource(R.string.status_could_not_load), style = MaterialTheme.typography.titleSmall)
                         Text(error, style = MaterialTheme.typography.bodyMedium)
-                        Button(onClick = { refreshVersion += 1 }) { Text("Retry") }
+                        Button(onClick = { refreshVersion += 1 }) { Text(stringResource(R.string.action_retry)) }
                     }
                 }
             }
@@ -152,16 +160,16 @@ fun FriendsScreen(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
-                        Text("Your Cosmic Circle is empty", style = MaterialTheme.typography.titleMedium)
+                        Text(stringResource(R.string.friends_empty_title), style = MaterialTheme.typography.titleMedium)
                         Text(
-                            "Add people whose birth data you know to see cosmic compatibility rankings.",
+                            stringResource(R.string.friends_empty_body),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                         Button(onClick = { showAddSheet = true }) {
                             Icon(Icons.Filled.Add, contentDescription = null, modifier = Modifier.size(18.dp))
                             Spacer(Modifier.width(8.dp))
-                            Text("Add Your First Friend")
+                            Text(stringResource(R.string.friends_add_first_friend))
                         }
                     }
                 }
@@ -173,7 +181,7 @@ fun FriendsScreen(
                     val ranked = compatibilities.sortedByDescending { it.overallScore }
                     Card(modifier = Modifier.fillMaxWidth()) {
                         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                            Text("Compatibility Rankings", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                            Text(stringResource(R.string.friends_rankings_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                             ranked.forEach { compat ->
                                 FriendCompatibilityRow(compat)
                             }
@@ -184,7 +192,7 @@ fun FriendsScreen(
                 // Friends list
                 Card(modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        Text("All Friends (${friends.size})", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                        Text(stringResource(R.string.friends_all_title, friends.size), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                         friends.forEach { friend ->
                             FriendRow(
                                 friend = friend,
@@ -192,7 +200,7 @@ fun FriendsScreen(
                                     scope.launch {
                                         remoteDataSource.removeFriend(ownerId, friend.id)
                                             .onSuccess { refreshVersion += 1 }
-                                            .onFailure { errorMessage = it.message ?: "Could not remove friend." }
+                                            .onFailure { errorMessage = it.message ?: friendRemoveError }
                                     }
                                 },
                             )
@@ -222,7 +230,7 @@ fun FriendsScreen(
                             showAddSheet = false
                             refreshVersion += 1
                         }
-                        .onFailure { errorMessage = it.message ?: "Could not add friend." }
+                        .onFailure { errorMessage = it.message ?: friendAddError }
                 }
             },
         )
@@ -245,7 +253,11 @@ private fun FriendCompatibilityRow(compat: FriendCompatibilityData) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Text(
-                "${(compat.overallScore * 100).roundToInt()}% · ${friendRelationshipLabel(compat.relationshipType)}",
+                stringResource(
+                    R.string.relationships_score_type_line,
+                    (compat.overallScore * 100).roundToInt(),
+                    relationshipTypeLabel(compat.relationshipType),
+                ),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.primary,
             )
@@ -267,13 +279,21 @@ private fun FriendRow(
         Column(modifier = Modifier.weight(1f)) {
             Text(friend.name, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
             Text(
-                "${friend.dateOfBirth} · ${friendRelationshipLabel(friend.relationshipType)}",
+                stringResource(
+                    R.string.friends_friend_meta,
+                    friend.dateOfBirth,
+                    relationshipTypeLabel(friend.relationshipType),
+                ),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
         IconButton(onClick = onRemove) {
-            Icon(Icons.Filled.Delete, contentDescription = "Remove ${friend.name}", tint = MaterialTheme.colorScheme.error)
+            Icon(
+                Icons.Filled.Delete,
+                contentDescription = stringResource(R.string.friends_remove_content_description, friend.name),
+                tint = MaterialTheme.colorScheme.error,
+            )
         }
     }
 }
@@ -303,31 +323,31 @@ private fun AddFriendBottomSheet(
                 .padding(bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            Text("Add to Cosmic Circle", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.friends_add_sheet_title), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
-                label = { Text("Name") },
+                label = { Text(stringResource(R.string.relationships_name_label)) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
             )
             OutlinedTextField(
                 value = dob,
                 onValueChange = { dob = it },
-                label = { Text("Date of Birth (YYYY-MM-DD)") },
+                label = { Text(stringResource(R.string.friends_birth_date_label)) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
             )
-            Text("Relationship", style = MaterialTheme.typography.labelMedium)
+            Text(stringResource(R.string.relationships_relationship_type_title), style = MaterialTheme.typography.labelMedium)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 relationshipTypes.forEach { type ->
                     AssistChip(
                         onClick = { relType = type },
-                        label = { Text(friendRelationshipLabel(type)) },
+                        label = { Text(relationshipTypeLabel(type)) },
                     )
                 }
             }
-            Text("Avatar", style = MaterialTheme.typography.labelMedium)
+            Text(stringResource(R.string.relationships_avatar_title), style = MaterialTheme.typography.labelMedium)
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 avatarOptions.take(6).forEach { emoji ->
                     TextButton(onClick = { avatar = emoji }) {
@@ -344,8 +364,15 @@ private fun AddFriendBottomSheet(
                 enabled = name.isNotBlank() && dob.isNotBlank(),
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                Text("Add to Circle")
+                Text(stringResource(R.string.friends_add_to_circle))
             }
         }
     }
+}
+
+@Composable
+private fun relationshipTypeLabel(type: String): String = when (type) {
+    "romantic" -> stringResource(R.string.relationship_type_romantic)
+    "professional" -> stringResource(R.string.relationship_type_professional)
+    else -> stringResource(R.string.relationship_type_friendship)
 }

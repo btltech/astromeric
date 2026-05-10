@@ -6,10 +6,14 @@ import SwiftUI
 struct ToolsView: View {
     @Environment(AppStore.self) private var store
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
     private var toolColumns: [GridItem] {
         if dynamicTypeSize.isAccessibilitySize {
             return [GridItem(.flexible())]
+        }
+        if horizontalSizeClass == .regular {
+            return Array(repeating: GridItem(.flexible(), spacing: 16), count: 3)
         }
         return [GridItem(.flexible()), GridItem(.flexible())]
     }
@@ -21,150 +25,146 @@ struct ToolsView: View {
                     .ignoresSafeArea()
                 
                 ScrollView {
-                    VStack(spacing: 20) {
-                        PremiumHeroCard(
+                    VStack(spacing: Space.lg) {
+                        PremiumScreenHeader(
                             eyebrow: "hero.tools.eyebrow".localized,
                             title: "hero.tools.title".localized,
-                            bodyText: "hero.tools.body".localized,
-                            accent: [Color(hex: "25103f"), Color(hex: "5531a7"), Color(hex: "0f6a7d")],
+                            subtitle: "hero.tools.body".localized,
+                            accent: .accentPrimary,
                             chips: ["hero.tools.chip.0".localized, "hero.tools.chip.1".localized, "hero.tools.chip.2".localized]
                         )
                         .padding(.horizontal)
 
-                        PremiumSectionHeader(
-                title: "section.tools.0.title".localized,
-                subtitle: "section.tools.0.subtitle".localized
-            )
-                        .padding(.horizontal)
-
-                        CardView {
-                            VStack(alignment: .leading, spacing: 10) {
-                                Text("ui.tools.0".localized)
-                                    .font(.headline)
-
-                                Text("ui.tools.1".localized)
-                                    .font(.subheadline)
-                                    .foregroundStyle(Color.textSecondary)
-
-                                HStack(spacing: 8) {
-                                    FeatureProvenanceBadge(provenance: .calculated, compact: true)
-                                    FeatureProvenanceBadge(provenance: .hybrid, compact: true)
-                                    FeatureProvenanceBadge(provenance: .interpretive, compact: true)
-                                    FeatureProvenanceBadge(provenance: .reference, compact: true)
-                                }
-                            }
-                        }
-                        .padding(.horizontal)
-
-                        PremiumSectionHeader(
-                title: "section.tools.1.title".localized,
-                subtitle: "section.tools.1.subtitle".localized
-            )
-                        .padding(.horizontal)
-
-                        // Tool Cards
-                        LazyVGrid(columns: toolColumns, spacing: 16) {
+                        // SECTION: Daily Tools
+                        toolSection(
+                            title: "Daily Tools",
+                            subtitle: "Symbolic & mood-based guidance",
+                            badge: "Interpretive"
+                        ) {
                             ToolCard(
                                 title: "Tarot",
                                 icon: "suit.spade.fill",
-                                color: .purple,
+                                color: .cosmicPurple,
                                 description: "Card pull for symbolic reflection.",
                                 provenance: .interpretive
-                            ) {
-                                TarotView()
-                            }
-                            
+                            ) { TarotView() }
+
                             ToolCard(
                                 title: "Oracle",
                                 icon: "questionmark.circle.fill",
-                                color: .blue,
+                                color: .cosmicBlue,
                                 description: "Yes/no guidance using your day number and moon phase.",
                                 provenance: .hybrid
-                            ) {
-                                OracleView()
-                            }
-                            
+                            ) { OracleView() }
+
                             ToolCard(
                                 title: "Affirmation",
                                 icon: "star.fill",
                                 color: .orange,
                                 description: "Supportive language tuned to today's mood.",
                                 provenance: .interpretive
-                            ) {
-                                AffirmationView()
-                            }
-                            
+                            ) { AffirmationView() }
+
                             ToolCard(
                                 title: "Moon Phase",
                                 icon: "moon.fill",
                                 color: .indigo,
                                 description: "Current lunar phase, sign, and ritual timing.",
                                 provenance: .calculated
-                            ) {
-                                MoonPhaseView()
-                            }
-                            
+                            ) { MoonPhaseView() }
+                        }
+
+                        // SECTION: Timing & Planning
+                        toolSection(
+                            title: "Timing & Planning",
+                            subtitle: "Live sky scored for activity windows",
+                            badge: "Calculated"
+                        ) {
                             ToolCard(
-                                title: "Birth Chart",
-                                icon: "circle.grid.3x3",
-                                color: .teal,
-                                description: "Planetary placements from your birth data.",
-                                provenance: .calculated
-                            ) {
-                                ChartView()
-                            }
-                            
-                            ToolCard(
-                                title: "Compatibility",
-                                icon: "heart.fill",
-                                color: .pink,
-                                description: "Synastry and numerology between two profiles.",
-                                provenance: .calculated
-                            ) {
-                                CompatibilityView()
-                            }
-                            
-                            ToolCard(
-                                title: "Daily Guide",
-                                icon: "sparkles",
-                                color: .yellow,
-                                description: "Personal day, moon phase, retrogrades, and cues.",
-                                provenance: .calculated
-                            ) {
-                                DailyFeaturesView()
-                            }
-                            
-                            ToolCard(
-                                title: "Timing",
+                                title: "Timing Advisor",
                                 icon: "clock.badge.checkmark",
                                 color: .green,
                                 description: "Activity windows scored from the live sky.",
                                 provenance: .calculated
-                            ) {
-                                TimingAdvisorView()
-                            }
-                            
+                            ) { TimingAdvisorView() }
+
                             ToolCard(
                                 title: "Temporal Matrix",
                                 icon: "calendar.badge.clock",
-                                color: .cyan,
+                                color: .teal,
                                 description: "48-hour transit weather for planning and pacing.",
                                 provenance: .calculated
-                            ) {
-                                TemporalMatrixView()
-                            }
+                            ) { TemporalMatrixView() }
 
+                            ToolCard(
+                                title: "Daily Guide",
+                                icon: "sparkles",
+                                color: .yellow,
+                                description: "Personal day, moon phases, retrogrades, and cues.",
+                                provenance: .calculated
+                            ) { DailyFeaturesView() }
+
+                            ToolCard(
+                                title: "Moon Events",
+                                icon: "moonrise.fill",
+                                color: .purple,
+                                description: "Upcoming new and full moons with themes.",
+                                provenance: .calculated
+                            ) { MoonEventsView() }
+                        }
+
+                        // SECTION: Core Charts
+                        toolSection(
+                            title: "Core Charts",
+                            subtitle: "Your natal chart and numerology",
+                            badge: "Calculated"
+                        ) {
+                            ToolCard(
+                                title: "Birth Chart",
+                                icon: "circle.grid.3x3",
+                                color: .cyan,
+                                description: "Planetary placements from your birth data.",
+                                provenance: .calculated
+                            ) { ChartView() }
+
+                            ToolCard(
+                                title: "Numerology",
+                                icon: "number",
+                                color: .cosmicPink,
+                                description: "Life path, expression, and personal year numbers.",
+                                provenance: .calculated
+                            ) { NumerologyView() }
+                        }
+
+                        // SECTION: Relationships
+                        toolSection(
+                            title: "Relationships",
+                            subtitle: "Synastry and compatibility between two profiles",
+                            badge: ""
+                        ) {
+                            ToolCard(
+                                title: "Compatibility",
+                                icon: "heart.fill",
+                                color: .cosmicPink,
+                                description: "Synastry and numerology between two profiles.",
+                                provenance: .calculated
+                            ) { CompatibilityView() }
+                        }
+
+                        // SECTION: Reference
+                        toolSection(
+                            title: "Reference",
+                            subtitle: "Lookup guides and learning resources",
+                            badge: "Reference"
+                        ) {
                             ToolCard(
                                 title: "Birthstones",
                                 icon: "sparkle",
                                 color: .mint,
                                 description: "Gemstone guide matched to sign and month traditions.",
                                 provenance: .reference
-                            ) {
-                                BirthstoneGuidanceView()
-                            }
+                            ) { BirthstoneGuidanceView() }
                         }
-                        .padding(.horizontal)
                     }
                     .padding(.vertical)
                     .readableContainer()
@@ -174,7 +174,24 @@ struct ToolsView: View {
             .navigationBarTitleDisplayMode(.inline)
         }
     }
-    
+
+    @ViewBuilder
+    private func toolSection<Content: View>(
+        title: String,
+        subtitle: String,
+        badge: String,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        VStack(alignment: .leading, spacing: Space.sm) {
+            ToolSectionHeader(title: title, subtitle: subtitle, badge: badge)
+                .padding(.horizontal)
+
+            LazyVGrid(columns: toolColumns, spacing: Space.sm) {
+                content()
+            }
+            .padding(.horizontal)
+        }
+    }
 }
 
 // MARK: - Tool Card
@@ -222,14 +239,15 @@ struct ToolCard<Destination: View>: View {
             .frame(maxWidth: .infinity)
             .padding()
             .background(
-                RoundedRectangle(cornerRadius: 16)
+                RoundedRectangle(cornerRadius: Radius.md)
                     .fill(.ultraThinMaterial)
                     .overlay(
-                        RoundedRectangle(cornerRadius: 16)
+                        RoundedRectangle(cornerRadius: Radius.md)
                             .stroke(Color.white.opacity(0.08), lineWidth: 1)
                     )
             )
         }
+        .buttonStyle(ScaleButtonStyle())
         .accessibilityElement(children: .combine)
         .accessibilityLabel(title)
         .accessibilityHint("\(description) \(provenance.description)")

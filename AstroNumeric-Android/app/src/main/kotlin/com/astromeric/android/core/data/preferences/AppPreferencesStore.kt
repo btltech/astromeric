@@ -68,6 +68,7 @@ class AppPreferencesStore(
     private val authUserIdKey = stringPreferencesKey("auth_user_id")
     private val authUserEmailKey = stringPreferencesKey("auth_user_email")
     private val authUserPaidKey = booleanPreferencesKey("auth_user_paid")
+    private val googlePlayPremiumKey = booleanPreferencesKey("google_play_premium")
     private val tonePreferenceKey = doublePreferencesKey("tone_preference")
     private val completedLearningModulesKey = stringSetPreferencesKey("completed_learning_modules")
     private val savedRelationshipsKey = stringPreferencesKey("saved_relationships")
@@ -318,6 +319,12 @@ class AppPreferencesStore(
         }
         .map { preferences -> preferences[authUserPaidKey] ?: false }
 
+    val googlePlayPremiumEnabled: Flow<Boolean> = context.dataStore.data
+        .catch { exception ->
+            if (exception is IOException) emit(emptyPreferences()) else throw exception
+        }
+        .map { preferences -> preferences[googlePlayPremiumKey] ?: false }
+
     val completedLearningModuleIds: Flow<Set<String>> = context.dataStore.data
         .catch { exception ->
             if (exception is IOException) {
@@ -542,6 +549,12 @@ class AppPreferencesStore(
             preferences.remove(authUserIdKey)
             preferences.remove(authUserEmailKey)
             preferences.remove(authUserPaidKey)
+        }
+    }
+
+    suspend fun setGooglePlayPremium(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[googlePlayPremiumKey] = enabled
         }
     }
 

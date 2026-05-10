@@ -36,6 +36,8 @@ internal fun NavGraphBuilder.chartsGraph(
     remoteDataSource: AstroRemoteDataSource,
     effectiveAuthAccessToken: String,
     hideSensitiveDetailsEnabled: Boolean,
+    onOpenNumerology: () -> Unit,
+    onOpenCompatibility: () -> Unit,
     scope: CoroutineScope,
     snackbarHostState: SnackbarHostState,
 ) {
@@ -47,6 +49,8 @@ internal fun NavGraphBuilder.chartsGraph(
                 remoteDataSource = remoteDataSource,
                 authAccessToken = effectiveAuthAccessToken,
                 hideSensitiveDetailsEnabled = hideSensitiveDetailsEnabled,
+                onOpenNumerology = onOpenNumerology,
+                onOpenCompatibility = onOpenCompatibility,
                 onOpenRelationships = { navController.navigateSingleTop(RelationshipsRoute) },
                 onOpenYearAhead = { navController.navigateSingleTop(ChartsYearAheadRoute) },
                 onOpenBirthChart = { navController.navigateSingleTop(BirthChartDetailRoute) },
@@ -111,10 +115,12 @@ internal fun NavGraphBuilder.profileGraph(
     personalModeEnabled: Boolean,
     accountSyncEnabled: Boolean,
     authUserEmail: String,
+    isPremiumUser: Boolean,
     showFirstRunPrompt: Boolean,
     scope: CoroutineScope,
     snackbarHostState: SnackbarHostState,
     onFirstProfileCreated: () -> Unit,
+    onOpenPremium: () -> Unit,
 ) {
     composable(TopLevelDestination.PROFILE.route) {
         ProfileListScreen(
@@ -125,6 +131,7 @@ internal fun NavGraphBuilder.profileGraph(
             personalModeEnabled = personalModeEnabled,
             isAuthenticated = accountSyncEnabled,
             accountEmail = authUserEmail,
+            isPremiumUser = isPremiumUser,
             onCreateProfile = { navController.navigate(profileEditorRoute()) },
             onOpenLearn = { navController.navigateSingleTop(LearnRoute) },
             onOpenGuide = { navController.navigateSingleTop(CosmicGuideRoute) },
@@ -132,6 +139,7 @@ internal fun NavGraphBuilder.profileGraph(
             onOpenHelp = { navController.navigateSingleTop(HelpRoute) },
             onOpenNotifications = { navController.navigateSingleTop(NotificationsRoute) },
             onOpenPrivacy = { navController.navigateSingleTop(PrivacyRoute) },
+            onOpenPremium = onOpenPremium,
             onSyncProfiles = {
                 scope.launch {
                     profileRepository.syncProfilesToAccount()
@@ -196,6 +204,6 @@ internal fun NavGraphBuilder.profileGraph(
     }
 }
 
-private fun NavHostController.navigateSingleTop(route: String) {
+internal fun NavHostController.navigateSingleTop(route: String) {
     navigate(route) { launchSingleTop = true }
 }

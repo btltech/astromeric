@@ -41,13 +41,13 @@ struct LearnView: View {
 
             ScrollView {
                 VStack(spacing: 24) {
-                    PremiumHeroCard(
-                            eyebrow: "hero.learn.eyebrow".localized,
-                            title: "hero.learn.title".localized,
-                            bodyText: "hero.learn.body".localized,
-                            accent: [Color(hex: "142341"), Color(hex: "315cc4"), Color(hex: "4e8ea3")],
-                            chips: ["hero.learn.chip.0".localized, "hero.learn.chip.1".localized, "hero.learn.chip.2".localized]
-                        )
+                    PremiumScreenHeader(
+                        eyebrow: "hero.learn.eyebrow".localized,
+                        title: "hero.learn.title".localized,
+                        subtitle: "hero.learn.body".localized,
+                        accent: .accentPrimary,
+                        chips: ["hero.learn.chip.0".localized, "hero.learn.chip.1".localized, "hero.learn.chip.2".localized]
+                    )
 
                     // Glossary shortcut (clarifies reading terminology)
                     Button {
@@ -71,7 +71,7 @@ struct LearnView: View {
                             }
                         }
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(ScaleButtonStyle())
 
                     PremiumSectionHeader(
                 title: "section.learn.0.title".localized,
@@ -154,7 +154,7 @@ struct LearnView: View {
                         } label: {
                             LessonCard(module: module)
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(ScaleButtonStyle())
                     }
                 }
             }

@@ -62,11 +62,11 @@ struct WeeklyVibeView: View {
                         .frame(minHeight: 44)
                         .background(
                             Capsule()
-                                .fill(Color.purple.opacity(0.2))
+                                .fill(Color.accentPrimary.opacity(0.2))
                         )
-                        .foregroundStyle(.purple)
+                        .foregroundStyle(Color.accentPrimary)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(ScaleButtonStyle())
                 }
             }
         }
@@ -186,23 +186,23 @@ struct VibeDayCard: View {
         .frame(width: 70, height: 110)
         .padding(.vertical, 8)
         .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(day.isToday ? Color.purple : Color.clear)
+            RoundedRectangle(cornerRadius: Radius.md)
+                .fill(day.isToday ? Color.accentPrimary : Color.clear)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 16)
+                    RoundedRectangle(cornerRadius: Radius.md)
                         .fill(.ultraThinMaterial)
                         .opacity(day.isToday ? 0 : 1)
                 )
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .strokeBorder(day.isToday ? Color.purple : Color.clear, lineWidth: 2)
+            RoundedRectangle(cornerRadius: Radius.md)
+                .strokeBorder(day.isToday ? Color.accentPrimary : Color.clear, lineWidth: 2)
         )
     }
     
     private var scoreColor: Color {
         if day.score >= 80 { return .yellow }
-        if day.score >= 60 { return .purple }
+        if day.score >= 60 { return .accentPrimary }
         return .red
     }
 }

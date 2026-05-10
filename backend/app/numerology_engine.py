@@ -18,6 +18,7 @@ from .engine.constants import (
 )
 from .engine.numerology import calculate_life_path_number_chaldean
 from .engine.numerology_extended import (
+    NUMBER_MEANINGS,
     _find_karmic_debts,
     calculate_challenges,
     calculate_pinnacles,
@@ -49,10 +50,13 @@ def life_path(dob: str, method: str = "pythagorean") -> int:
     if method == "chaldean":
         return calculate_life_path_number_chaldean(dob)
     y, m, d = map(int, dob.split("-"))
-    month_r = reduce_number(m, keep_master=True)
-    day_r = reduce_number(d, keep_master=True)
-    year_r = reduce_number(y, keep_master=True)
-    return reduce_number(month_r + day_r + year_r)
+    # Components are NOT preserved as master numbers before summing — only the
+    # final sum can be a master number. This matches calculate_pinnacles() and
+    # the standard Pythagorean method used everywhere else in the engine.
+    month_r = reduce_number(m, keep_master=False)
+    day_r = reduce_number(d, keep_master=False)
+    year_r = reduce_number(y, keep_master=False)
+    return reduce_number(month_r + day_r + year_r, keep_master=True)
 
 
 def _letter_values(method: str) -> dict:
@@ -200,7 +204,8 @@ def _build_synthesis(
         )
     elif challenges:
         primary_challenge = challenges[0]
-        keyword = primary_challenge.get("keyword") or "Challenge"
+        num_keyword = NUMBER_MEANINGS.get(primary_challenge.get("number", 0), {}).get("keyword", "")
+        keyword = primary_challenge.get("keyword") or num_keyword or "Challenge"
         description = _compact_text(
             primary_challenge.get(
                 "description", "A recurring lesson is asking for patience and maturity."
@@ -218,7 +223,7 @@ def _build_synthesis(
     if pinnacles:
         current_focus += (
             f" Your longer arc is still shaped by Pinnacle {pinnacles[0].get('number', 0)}, "
-            f"which emphasizes {_sentence_fragment(pinnacles[0].get('description', ''), 'long-term development')}"
+            f"which emphasizes {_sentence_fragment(pinnacles[0].get('short_meaning') or pinnacles[0].get('description', ''), 'long-term development')}"
             f"."
         )
 

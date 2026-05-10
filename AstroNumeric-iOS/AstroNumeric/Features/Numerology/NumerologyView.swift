@@ -5,6 +5,8 @@ import SwiftUI
 
 struct NumerologyView: View {
     @Environment(AppStore.self) private var store
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var numerologyData: NumerologyData?
     @State private var isLoading = false
     @State private var error: String?
@@ -15,6 +17,12 @@ struct NumerologyView: View {
     @State private var explanationSource: AIInsightSource = .fallback
     @State private var explanationGeneratedAt: Date = Date()
     @State private var showExplanation = false
+
+    private var numerologyColumns: [GridItem] {
+        if dynamicTypeSize.isAccessibilitySize { return [GridItem(.flexible())] }
+        if horizontalSizeClass == .regular { return Array(repeating: GridItem(.flexible(), spacing: 12), count: 3) }
+        return [GridItem(.flexible()), GridItem(.flexible())]
+    }
     
     var body: some View {
         NavigationStack {
@@ -27,6 +35,32 @@ struct NumerologyView: View {
                         if let data = numerologyData {
                             ScrollView {
                                 VStack(spacing: 20) {
+                                    // Chaldean / Pythagorean toggle
+                                    NumerologySystemToggle(useChaldean: $useChaldean) {
+                                        numerologyData = nil
+                                        Task { await fetchNumerology(for: profile, useChaldean: useChaldean) }
+                                    }
+
+                                    if let synthesis = data.synthesis {
+                                        synthesisSection(synthesis)
+                                    }
+
+                                    // Life Purpose (main feature)
+                                    if let lifePath = data.lifePath, let purpose = lifePath.lifePurpose {
+                                        lifePurposeSection(lifePath: lifePath, purpose: purpose)
+                                    }
+                                    
+                                    // Core Numbers
+                                    if let core = data.coreNumbers {
+                                        coreNumbersSection(core)
+                                    }
+                                    
+                                    // Cycles
+                                    if let cycles = data.cycles {
+                                        cyclesSection(cycles)
+                                    }
+
+                                    // AI Explain button — placed after cycles so user has full context first
                                     Button {
                                         Task { @MainActor in
                                             await explain(
@@ -53,33 +87,9 @@ struct NumerologyView: View {
                                         .padding(.vertical, 10)
                                         .background(Color.purple.opacity(0.15))
                                         .clipShape(Capsule())
+                                        .frame(maxWidth: .infinity)
                                     }
                                     .disabled(isExplaining)
-
-                                    // Chaldean / Pythagorean toggle
-                                    NumerologySystemToggle(useChaldean: $useChaldean) {
-                                        numerologyData = nil
-                                        Task { await fetchNumerology(for: profile, useChaldean: useChaldean) }
-                                    }
-
-                                    if let synthesis = data.synthesis {
-                                        synthesisSection(synthesis)
-                                    }
-
-                                    // Life Purpose (main feature)
-                                    if let lifePath = data.lifePath, let purpose = lifePath.lifePurpose {
-                                        lifePurposeSection(lifePath: lifePath, purpose: purpose)
-                                    }
-                                    
-                                    // Core Numbers
-                                    if let core = data.coreNumbers {
-                                        coreNumbersSection(core)
-                                    }
-                                    
-                                    // Cycles
-                                    if let cycles = data.cycles {
-                                        cyclesSection(cycles)
-                                    }
                                     
                                     // Lucky Numbers
                                     if let lucky = data.luckyNumbers, !lucky.isEmpty {
@@ -231,6 +241,8 @@ struct NumerologyView: View {
                 Text(synthesis.summary)
                     .font(.body)
                     .foregroundStyle(.primary)
+                    .lineLimit(5)
+                    .fixedSize(horizontal: false, vertical: true)
 
                 VStack(alignment: .leading, spacing: 8) {
                     Text("ui.numerology.2".localized)
@@ -238,6 +250,8 @@ struct NumerologyView: View {
                     Text(synthesis.currentFocus)
                         .font(.subheadline)
                         .foregroundStyle(Color.textSecondary)
+                        .lineLimit(4)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
 
                 ScrollView(.horizontal, showsIndicators: false) {
@@ -278,6 +292,8 @@ struct NumerologyView: View {
                         Text(growthEdge)
                             .font(.caption)
                             .foregroundStyle(Color.textSecondary)
+                            .lineLimit(4)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                 }
 
@@ -383,7 +399,7 @@ struct NumerologyView: View {
             Text("ui.numerology.10".localized)
                 .font(.headline)
             
-            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+            LazyVGrid(columns: numerologyColumns, spacing: 12) {
                 if let lifePath = core.lifePath {
                     NumberCardView(title: "Life Path", number: lifePath.number, meaning: lifePath.meaning)
                 }
@@ -405,15 +421,42 @@ struct NumerologyView: View {
             VStack(alignment: .leading, spacing: 12) {
                 Text("ui.numerology.11".localized)
                     .font(.headline)
-                
-                if let year = cycles.personalYear {
-                    CycleRow(label: "Personal Year", number: year.number, meaning: year.meaning)
+
+                // Priority banner — Personal Day is the active timing guide
+                if let day = cycles.personalDay {
+                    HStack(spacing: 8) {
+                        Image(systemName: "clock.fill")
+                            .font(.caption)
+                            .foregroundStyle(Color.accentPrimary)
+                        Text("Personal Day \(day.number) is your active guide today.")
+                            .font(.caption.weight(.medium))
+                            .foregroundStyle(Color.accentPrimary)
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color.accentPrimary.opacity(0.1))
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
                 }
-                if let month = cycles.personalMonth {
-                    CycleRow(label: "Personal Month", number: month.number, meaning: month.meaning)
-                }
+
                 if let day = cycles.personalDay {
                     CycleRow(label: "Personal Day", number: day.number, meaning: day.meaning)
+                }
+                if let month = cycles.personalMonth {
+                    CycleRow(
+                        label: "Personal Month",
+                        number: month.number,
+                        meaning: month.meaning,
+                        note: "Sets the monthly backdrop."
+                    )
+                }
+                if let year = cycles.personalYear {
+                    CycleRow(
+                        label: "Personal Year",
+                        number: year.number,
+                        meaning: year.meaning,
+                        note: "Your overarching yearly theme."
+                    )
                 }
             }
         }
@@ -469,29 +512,53 @@ struct NumerologyView: View {
     }
 
     private func pinnaclesSection(_ pinnacles: [Pinnacle]) -> some View {
-        CardView {
+        // Validate: flag any two pinnacles that share both number AND age range
+        // (indicates a data or rendering error, not a legitimate mathematical repeat)
+        let uniqueKeys = Set(pinnacles.map { "\($0.number)|\($0.ages ?? "")" })
+        let hasDuplicates = uniqueKeys.count < pinnacles.count
+
+        return CardView {
             VStack(alignment: .leading, spacing: 12) {
                 Text("ui.numerology.14".localized)
                     .font(.headline)
-                
-                ForEach(pinnacles) { pinnacle in
-                    VStack(alignment: .leading, spacing: 4) {
-                        HStack {
-                            Text(String(format: "fmt.numerology.1".localized, "\(pinnacle.number)"))
-                                .font(.subheadline.weight(.medium))
-                            if let ages = pinnacle.ages {
-                                Text("(\(ages))")
-                                    .font(.caption)
-                                    .foregroundStyle(Color.textSecondary)
+
+                if hasDuplicates {
+                    Text("Pinnacle data appears inconsistent — try refreshing your profile.")
+                        .font(.caption)
+                        .foregroundStyle(.orange)
+                }
+
+                // Use enumerated offset as SwiftUI key so identical numerological
+                // values in different phases never deduplicate into a single row.
+                ForEach(Array(pinnacles.enumerated()), id: \.offset) { offset, pinnacle in
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack(alignment: .firstTextBaseline, spacing: 10) {
+                            // Numerological value badge
+                            Text("\(pinnacle.number)")
+                                .font(.title3.weight(.bold))
+                                .foregroundStyle(Color.accentColor)
+                                .frame(minWidth: 28, alignment: .leading)
+
+                            VStack(alignment: .leading, spacing: 2) {
+                                HStack(spacing: 4) {
+                                    Text("Pinnacle \(pinnacle.index ?? (offset + 1))")
+                                        .font(.subheadline.weight(.medium))
+                                    if let ages = pinnacle.ages {
+                                        Text("(\(ages))")
+                                            .font(.caption)
+                                            .foregroundStyle(Color.textSecondary)
+                                    }
+                                }
+                                if let meaning = pinnacle.meaning, !meaning.isEmpty {
+                                    Text(meaning)
+                                        .font(.caption)
+                                        .foregroundStyle(Color.textSecondary)
+                                        .lineLimit(2)
+                                }
                             }
                         }
-                        if let meaning = pinnacle.meaning {
-                            Text(meaning)
-                                .font(.caption)
-                                .foregroundStyle(Color.textSecondary)
-                        }
                     }
-                    if pinnacle.number != pinnacles.last?.number {
+                    if offset < pinnacles.count - 1 {
                         Divider()
                     }
                 }
@@ -505,7 +572,7 @@ struct NumerologyView: View {
                 Text("ui.numerology.15".localized)
                     .font(.headline)
 
-                ForEach(challenges) { challenge in
+                ForEach(Array(challenges.enumerated()), id: \.offset) { offset, challenge in
                     VStack(alignment: .leading, spacing: 4) {
                         HStack {
                             Text(String(format: "fmt.numerology.0".localized, "\(challenge.number)"))
@@ -522,7 +589,7 @@ struct NumerologyView: View {
                                 .foregroundStyle(Color.textSecondary)
                         }
                     }
-                    if challenge.number != challenges.last?.number {
+                    if offset < challenges.count - 1 {
                         Divider()
                     }
                 }
@@ -671,17 +738,33 @@ struct CycleRow: View {
     let label: String
     let number: Int
     let meaning: String?
-    
+    var note: String? = nil
+
     var body: some View {
-        HStack {
-            Text(label)
-                .font(.subheadline)
-                .foregroundStyle(Color.textSecondary)
-            Spacer()
-            Text("\(number)")
-                .font(.title3.weight(.bold))
-                .foregroundStyle(.purple)
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Text(label)
+                    .font(.subheadline)
+                    .foregroundStyle(Color.textSecondary)
+                Spacer()
+                Text("\(number)")
+                    .font(.title3.weight(.bold))
+                    .foregroundStyle(.purple)
+            }
+            if let meaning, !meaning.isEmpty {
+                Text(meaning)
+                    .font(.caption)
+                    .foregroundStyle(Color.textSecondary)
+                    .lineLimit(3)
+            }
+            if let note, !note.isEmpty {
+                Text(note)
+                    .font(.caption2)
+                    .foregroundStyle(Color.textMuted)
+                    .italic()
+            }
         }
+        .padding(.vertical, 2)
     }
 }
 
@@ -771,7 +854,7 @@ struct NumerologySystemToggle: View {
                     .font(.caption)
                     .foregroundStyle(Color.textMuted)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(ScaleButtonStyle())
         }
         .sheet(isPresented: $showInfo) {
             NavigationStack {

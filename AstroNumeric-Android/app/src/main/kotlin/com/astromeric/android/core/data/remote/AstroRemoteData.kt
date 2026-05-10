@@ -795,9 +795,25 @@ class AstroRemoteDataSource(
             apiService.fetchDailyForecast(ForecastRequest(profile = profile.toPayload(), scope = "daily")).data
         }
 
-    suspend fun fetchForecast(profile: AppProfile, scope: String): Result<DailyForecastData> =
+    suspend fun fetchForecast(
+        profile: AppProfile,
+        scope: String,
+        tone: String = "balanced_mystical",
+        dateOffset: Int = 0,
+    ): Result<DailyForecastData> =
         runCatching {
-            apiService.fetchDailyForecast(ForecastRequest(profile = profile.toPayload(), scope = scope)).data
+            val date = if (dateOffset == 0) null else {
+                java.time.LocalDate.now().plusDays(dateOffset.toLong())
+                    .format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE)
+            }
+            apiService.fetchDailyForecast(
+                ForecastRequest(
+                    profile = profile.toPayload(),
+                    scope = scope,
+                    tone = tone,
+                    date = date,
+                )
+            ).data
         }
 
     suspend fun fetchNatalChart(profile: AppProfile): Result<ChartData> =

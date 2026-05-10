@@ -7,6 +7,7 @@ import android.content.ContentUris
 import android.provider.CalendarContract
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -30,8 +31,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import com.astromeric.android.R
 import com.astromeric.android.core.data.local.TimingAdviceCacheStore
 import com.astromeric.android.core.data.remote.AstroRemoteDataSource
 import com.astromeric.android.core.data.repository.loadTimingAdviceWithCacheFallback
@@ -68,6 +71,7 @@ fun TemporalMatrixScreen(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
+    val loadErrorFallback = stringResource(R.string.temporal_matrix_error_load)
     val timingAdviceCacheStore = remember(context) { TimingAdviceCacheStore(context.applicationContext) }
     var refreshVersion by remember(selectedProfile?.id) { mutableIntStateOf(0) }
     var hasCalendarPermission by remember { mutableStateOf(hasCalendarPermission(context)) }
@@ -96,8 +100,8 @@ fun TemporalMatrixScreen(
 
     if (showCalendarRationale) {
         PermissionRationaleDialog(
-            title = "Allow calendar access",
-            message = "Temporal Matrix reads the next 48 hours from your device calendar so it can compare event timing against the live sky. Event titles and exact locations stay on this phone.",
+            title = stringResource(R.string.temporal_matrix_permission_dialog_title),
+            message = stringResource(R.string.temporal_matrix_permission_dialog_message),
             onConfirm = {
                 showCalendarRationale = false
                 permissionLauncher.launch(Manifest.permission.READ_CALENDAR)
@@ -162,7 +166,7 @@ fun TemporalMatrixScreen(
                 }
             }
         } catch (error: Exception) {
-            loadError = error.message ?: "Temporal Matrix could not read your upcoming events."
+            loadError = error.message ?: loadErrorFallback
         }
 
         isLoading = false
@@ -181,11 +185,11 @@ fun TemporalMatrixScreen(
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 Text(
-                    text = "Temporal Matrix",
+                    text = stringResource(R.string.temporal_matrix_title),
                     style = MaterialTheme.typography.headlineMedium,
                 )
                 Text(
-                    text = "Overlay the next 48 hours with your calendar and live timing weather. This Android version stays honest about its inputs: event titles and locations remain on-device, while timing guidance comes from the same shared backend the rest of the app uses.",
+                    text = stringResource(R.string.temporal_matrix_body),
                     style = MaterialTheme.typography.bodyMedium,
                 )
                 selectedProfile?.let { profile ->
@@ -193,21 +197,37 @@ fun TemporalMatrixScreen(
                         onClick = {},
                         label = {
                             Text(
-                                "Active profile: ${profile.displayName(hideSensitiveDetailsEnabled, PrivacyDisplayRole.ACTIVE_USER)}",
+                                stringResource(
+                                    R.string.tools_active_profile,
+                                    profile.displayName(hideSensitiveDetailsEnabled, PrivacyDisplayRole.ACTIVE_USER),
+                                ),
                             )
                         },
                     )
                 } ?: Button(onClick = onOpenProfile) {
-                    Text("Add Profile For Personal Timing")
+                    Text(stringResource(R.string.temporal_matrix_add_profile))
                 }
                 if (moonPhase != null) {
                     AssistChip(
                         onClick = {},
-                        label = { Text("Moon: ${moonPhase?.phase.orEmpty()}") },
+                        label = {
+                            Text(
+                                stringResource(
+                                    R.string.temporal_matrix_moon_chip_format,
+                                    moonPhase?.phase.orEmpty(),
+                                ),
+                            )
+                        },
                     )
                 }
                 OutlinedButton(onClick = { refreshVersion += 1 }, enabled = !isLoading) {
-                    Text(if (isLoading) "Refreshing..." else "Refresh Matrix")
+                    Text(
+                        if (isLoading) {
+                            stringResource(R.string.tools_refreshing)
+                        } else {
+                            stringResource(R.string.temporal_matrix_refresh)
+                        },
+                    )
                 }
             }
         }
@@ -219,15 +239,19 @@ fun TemporalMatrixScreen(
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
                     Text(
-                        text = if (permissionRequested) "Calendar Access Needed" else "Enable Calendar Access",
+                        text = if (permissionRequested) {
+                            stringResource(R.string.temporal_matrix_permission_needed_title)
+                        } else {
+                            stringResource(R.string.temporal_matrix_enable_permission_title)
+                        },
                         style = MaterialTheme.typography.titleMedium,
                     )
                     Text(
-                        text = "The Temporal Matrix reads your next 48 hours directly from the device calendar so it can compare event timing against the live sky. Titles and exact locations stay local to this phone.",
+                        text = stringResource(R.string.temporal_matrix_permission_card_body),
                         style = MaterialTheme.typography.bodyMedium,
                     )
                     Button(onClick = { requestCalendarPermission() }) {
-                        Text("Allow Calendar Access")
+                        Text(stringResource(R.string.temporal_matrix_allow_calendar_access))
                     }
                 }
             }
@@ -246,7 +270,7 @@ fun TemporalMatrixScreen(
                         verticalArrangement = Arrangement.spacedBy(10.dp),
                     ) {
                         Text(
-                            text = "Unable to Build the Matrix",
+                            text = stringResource(R.string.temporal_matrix_error_title),
                             style = MaterialTheme.typography.titleMedium,
                         )
                         Text(
@@ -254,7 +278,7 @@ fun TemporalMatrixScreen(
                             style = MaterialTheme.typography.bodyMedium,
                         )
                         Button(onClick = { refreshVersion += 1 }) {
-                            Text("Try Again")
+                            Text(stringResource(R.string.action_try_again))
                         }
                     }
                 }
@@ -267,11 +291,11 @@ fun TemporalMatrixScreen(
                         verticalArrangement = Arrangement.spacedBy(10.dp),
                     ) {
                         Text(
-                            text = "No Events in the Next 48 Hours",
+                            text = stringResource(R.string.temporal_matrix_empty_title),
                             style = MaterialTheme.typography.titleMedium,
                         )
                         Text(
-                            text = "Your schedule is open. Use the free space intentionally instead of treating it as empty by default.",
+                            text = stringResource(R.string.temporal_matrix_empty_body),
                             style = MaterialTheme.typography.bodyMedium,
                         )
                     }
@@ -285,15 +309,19 @@ fun TemporalMatrixScreen(
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         Text(
-                            text = "Next 48 Hours",
+                            text = stringResource(R.string.temporal_matrix_next_48_hours_title),
                             style = MaterialTheme.typography.titleMedium,
                         )
                         Text(
-                            text = "${events.size} event(s) scanned across ${events.map { it.start.toLocalDate() }.distinct().size} day(s).",
+                            text = stringResource(
+                                R.string.temporal_matrix_events_summary,
+                                events.size,
+                                events.map { it.start.toLocalDate() }.distinct().size,
+                            ),
                             style = MaterialTheme.typography.bodyMedium,
                         )
                         Text(
-                            text = "Timing weather is inferred from the event title, its time window, and the shared timing endpoint. When the app cannot classify an event cleanly, it falls back to a meeting-style timing read instead of pretending to know more.",
+                            text = stringResource(R.string.temporal_matrix_events_note),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -301,7 +329,13 @@ fun TemporalMatrixScreen(
                 }
 
                 events.forEach { event ->
-                    val insight = buildTemporalInsight(event, adviceByActivity, cachedAdviceActivities, moonPhase)
+                    val insight = buildTemporalInsight(
+                        context = context,
+                        event = event,
+                        adviceByActivity = adviceByActivity,
+                        cachedAdviceActivities = cachedAdviceActivities,
+                        moonPhase = moonPhase,
+                    )
                     TemporalMatrixEventCard(event = event, insight = insight, moonPhase = moonPhase)
                 }
             }
@@ -338,7 +372,7 @@ private fun TemporalMatrixEventCard(
             }
             AssistChip(
                 onClick = {},
-                label = { Text("${insight.threatLevel.emoji} ${insight.threatLevel.label}") },
+                label = { Text("${insight.threatLevel.emoji} ${stringResource(insight.threatLevel.labelRes)}") },
             )
             AssistChip(
                 onClick = {},
@@ -353,12 +387,12 @@ private fun TemporalMatrixEventCard(
             if (insight.usesCachedTiming) {
                 AssistChip(
                     onClick = {},
-                    label = { Text("Cached timing") },
+                    label = { Text(stringResource(R.string.temporal_matrix_cached_timing)) },
                 )
             }
             moonPhase?.phase?.takeIf { it.isNotBlank() }?.let { phase ->
                 Text(
-                    text = "Moon phase: $phase",
+                    text = stringResource(R.string.temporal_matrix_moon_phase_format, phase),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -369,14 +403,17 @@ private fun TemporalMatrixEventCard(
             )
             insight.matchedWindow?.let { matchedWindow ->
                 Text(
-                    text = "Aligned window: $matchedWindow",
+                    text = stringResource(R.string.temporal_matrix_aligned_window_format, matchedWindow),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
             if (insight.warnings.isNotEmpty()) {
                 Text(
-                    text = "Watch-outs: ${insight.warnings.take(2).joinToString()}",
+                    text = stringResource(
+                        R.string.temporal_matrix_watch_outs_format,
+                        insight.warnings.take(2).joinToString(),
+                    ),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -409,15 +446,16 @@ private data class TemporalMatrixInsight(
 )
 
 private enum class TemporalThreatLevel(
-    val label: String,
+    @StringRes val labelRes: Int,
     val emoji: String,
 ) {
-    SUPPORTIVE("Supportive", "🟢"),
-    MIXED("Mixed", "🟡"),
-    FRICTION("Friction", "🔴"),
+    SUPPORTIVE(R.string.temporal_matrix_supportive, "🟢"),
+    MIXED(R.string.temporal_matrix_mixed, "🟡"),
+    FRICTION(R.string.temporal_matrix_friction, "🔴"),
 }
 
 private fun buildTemporalInsight(
+    context: Context,
     event: TemporalMatrixEvent,
     adviceByActivity: Map<TimingActivity, TimingAdvicePayload>,
     cachedAdviceActivities: Set<TimingActivity>,
@@ -430,7 +468,9 @@ private fun buildTemporalInsight(
         event.overlaps(hour)
     }?.toWindowLabel()
     val warnings = dayPayload?.warnings.orEmpty().filter { it.isNotBlank() }
-    val scoreLabel = dayPayload?.let { "${it.score}% ${it.rating}" }
+    val scoreLabel = dayPayload?.let {
+        context.getString(R.string.temporal_matrix_score_label, it.score, it.rating)
+    }
 
     val threatLevel = when {
         matchedWindow != null -> TemporalThreatLevel.SUPPORTIVE
@@ -439,11 +479,25 @@ private fun buildTemporalInsight(
     }
 
     val summary = when {
-        matchedWindow != null -> "This event lands inside one of the stronger ${activity.displayName.lowercase(Locale.getDefault())} windows."
-        dayPayload != null && dayPayload.bestHours.orEmpty().isNotEmpty() -> "Timing reads ${dayPayload.rating.lowercase(Locale.getDefault())}. If this event can move, bias it toward ${dayPayload.bestHours.orEmpty().first().toWindowLabel()}."
-        dayPayload != null -> "Timing reads ${dayPayload.rating.lowercase(Locale.getDefault())} for ${activity.displayName.lowercase(Locale.getDefault())}. Keep expectations realistic and reduce extra friction around the edges."
-        moonPhase != null -> "No personalized timing read was available for this event, so treat the current ${moonPhase.phase.lowercase(Locale.getDefault())} phase as the broader weather."
-        else -> "No live timing overlay was available for this event."
+        matchedWindow != null -> context.getString(
+            R.string.temporal_matrix_summary_match_window,
+            activity.displayName.lowercase(Locale.getDefault()),
+        )
+        dayPayload != null && dayPayload.bestHours.orEmpty().isNotEmpty() -> context.getString(
+            R.string.temporal_matrix_summary_shift_to_window,
+            dayPayload.rating.lowercase(Locale.getDefault()),
+            dayPayload.bestHours.orEmpty().first().toWindowLabel(),
+        )
+        dayPayload != null -> context.getString(
+            R.string.temporal_matrix_summary_low_timing,
+            dayPayload.rating.lowercase(Locale.getDefault()),
+            activity.displayName.lowercase(Locale.getDefault()),
+        )
+        moonPhase != null -> context.getString(
+            R.string.temporal_matrix_summary_moon_fallback,
+            moonPhase.phase.lowercase(Locale.getDefault()),
+        )
+        else -> context.getString(R.string.temporal_matrix_summary_no_overlay)
     }
 
     return TemporalMatrixInsight(
@@ -534,7 +588,8 @@ private suspend fun loadUpcomingEvents(
 
                 add(
                     TemporalMatrixEvent(
-                        title = cursor.getString(titleIndex)?.takeIf { it.isNotBlank() } ?: "Untitled event",
+                        title = cursor.getString(titleIndex)?.takeIf { it.isNotBlank() }
+                            ?: context.getString(R.string.temporal_matrix_untitled_event),
                         location = cursor.getString(locationIndex),
                         start = Instant.ofEpochMilli(begin).atZone(zoneId),
                         end = Instant.ofEpochMilli(finish).atZone(zoneId),

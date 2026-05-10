@@ -23,11 +23,11 @@ struct YearAheadView: View {
                 
                 ScrollView {
                     VStack(spacing: 16) {
-                        PremiumHeroCard(
+                        PremiumScreenHeader(
                             eyebrow: "hero.yearAhead.eyebrow".localized,
                             title: "hero.yearAhead.title".localized,
-                            bodyText: "hero.yearAhead.body".localized,
-                            accent: [Color(hex: "18203a"), Color(hex: "4060bf"), Color(hex: "8a4cb3")],
+                            subtitle: "hero.yearAhead.body".localized,
+                            accent: .accentPrimary,
                             chips: ["hero.yearAhead.chip.0".localized, "hero.yearAhead.chip.1".localized, "hero.yearAhead.chip.2".localized]
                         )
 

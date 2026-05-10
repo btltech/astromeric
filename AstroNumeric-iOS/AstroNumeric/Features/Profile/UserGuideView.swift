@@ -11,13 +11,13 @@ struct UserGuideView: View {
             CosmicBackgroundView(element: nil).ignoresSafeArea()
             ScrollView {
                 VStack(spacing: 16) {
-                    PremiumHeroCard(
-                            eyebrow: "hero.userGuide.eyebrow".localized,
-                            title: "hero.userGuide.title".localized,
-                            bodyText: "hero.userGuide.body".localized,
-                            accent: [Color(hex: "191f39"), Color(hex: "4660be"), Color(hex: "7a58b3")],
-                            chips: ["hero.userGuide.chip.0".localized, "hero.userGuide.chip.1".localized, "hero.userGuide.chip.2".localized]
-                        )
+                    PremiumScreenHeader(
+                        eyebrow: "hero.userGuide.eyebrow".localized,
+                        title: "hero.userGuide.title".localized,
+                        subtitle: "hero.userGuide.body".localized,
+                        accent: .accentPrimary,
+                        chips: ["hero.userGuide.chip.0".localized, "hero.userGuide.chip.1".localized, "hero.userGuide.chip.2".localized]
+                    )
 
                     PremiumSectionHeader(
                 title: "section.userGuide.0.title".localized,
@@ -235,7 +235,7 @@ struct GuideSection: View {
                             .accessibilityHidden(true)
                     }
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(ScaleButtonStyle())
                 .accessibilityLabel(section.title)
                 .accessibilityHint(isExpanded ? "tern.userGuide.1a".localized : "tern.userGuide.1b".localized)
                 .accessibilityAddTraits(.isButton)

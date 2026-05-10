@@ -17,6 +17,36 @@ enum Radius {
     static let legacy: CGFloat = 14
 }
 
+// MARK: - Spacing Scale
+
+enum Space {
+    /// 4pt – tightest intra-element gap.
+    static let xs: CGFloat = 4
+    /// 8pt – small card padding, intra-section gap.
+    static let sm: CGFloat = 8
+    /// 16pt – standard between-section gap.
+    static let md: CGFloat = 16
+    /// 24pt – generous between-card gap.
+    static let lg: CGFloat = 24
+    /// 32pt – generous between-section spacing.
+    static let xl: CGFloat = 32
+    /// 48pt – hero / page-top inset.
+    static let xxl: CGFloat = 48
+}
+
+// MARK: - Typography Helpers
+
+extension View {
+    /// Eyebrow label style: monospaced, uppercase, tracked. Used above section titles.
+    func eyebrowStyle(color: Color = Color(red: 0.75, green: 0.78, blue: 0.84)) -> some View {
+        self
+            .font(.system(.caption2, design: .monospaced).weight(.bold))
+            .textCase(.uppercase)
+            .tracking(1.6)
+            .foregroundStyle(color)
+    }
+}
+
 // MARK: - Stroke Scale
 
 enum Stroke {

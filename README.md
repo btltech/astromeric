@@ -171,6 +171,15 @@ cd /path/to/project
 python -m pytest backend/tests/ -v
 # 24 tests covering astrology, numerology, compatibility, and glossary
 
+npm run test:e2e:railway-auth
+# targeted Cypress smoke for the /reading register+migrate Railway handoff
+# creates a disposable account, asserts the migrated Railway profile hydrates immediately,
+# and deletes the account afterward
+
+npm run test:e2e:critical-paths
+# current-route Cypress smoke for the live home, reading, numerology, and relationships shells
+# verifies the modern route structure instead of the old hash-based legacy flow
+
 # Validate Asc/house accuracy against astro.com/Astro-Seek:
 python -m backend.app.tools.asc_validation
 ```

@@ -6,6 +6,8 @@ import UIKit
 
 struct DailyFeaturesView: View {
     @Environment(AppStore.self) private var store
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var dailyData: DailyFeaturesData?
     @State private var doDontData: DoDontData?
     @State private var briefData: MorningBriefData?
@@ -14,82 +16,76 @@ struct DailyFeaturesView: View {
     @State private var showAllPowerHours = false
     @State private var tappedLuckyNumber: Int?
     @State private var copiedAffirmation = false
+
+    private var metricsColumns: [GridItem] {
+        if dynamicTypeSize.isAccessibilitySize { return [GridItem(.flexible())] }
+        if horizontalSizeClass == .regular { return Array(repeating: GridItem(.flexible(), spacing: Space.xs), count: 4) }
+        return Array(repeating: GridItem(.flexible(), spacing: Space.xs), count: 3)
+    }
+
+    private var hasLoadedContent: Bool {
+        dailyData != nil || doDontData != nil || briefData != nil
+    }
     
     var body: some View {
         ZStack {
-            CosmicBackgroundView(element: nil)
-                .ignoresSafeArea()
+            Color.appBackground.ignoresSafeArea()
             
             ScrollView {
-                VStack(spacing: 20) {
-                    // Morning Brief — appears first, loads instantly
-                    if let brief = briefData {
-                        MorningBriefCard(data: brief)
-                    }
-
-                    // Do's and Don'ts — the day's key guidance
-                    if let doDont = doDontData {
-                        DoDontCard(data: doDont)
-                    } else if isLoading {
-                        SkeletonCard()
-                    }
-
-                    if let data = dailyData {
-                        // Affirmation card
-                        affirmationCard(data.affirmation)
-                        
-                        // Lucky Numbers
-                        luckyNumbersCard(data.luckyNumbers)
-                        
-                        // Lucky Color
-                        luckyColorCard(data.luckyColor ?? "Cosmic Violet")
-                        
-                        // Power Hours
-                        powerHoursCard(data.powerHours)
-                        
-                        // Daily Luck Score
-                        if let dailyLuck = data.dailyLuck {
-                            dailyLuckCard(dailyLuck)
-                        } else {
-                            CardView {
-                                HStack(spacing: 12) {
-                                    Text("🍀")
-                                        .font(.title)
-                                    VStack(alignment: .leading, spacing: 4) {
-                                        Text("ui.dailyFeatures.0".localized)
-                                            .font(.headline)
-                                        Text("ui.dailyFeatures.1".localized)
-                                            .font(.caption)
-                                            .foregroundStyle(Color.textSecondary)
-                                    }
-                                    Spacer()
-                                }
-                            }
-                        }
-                        
-                    } else if isLoading {
-                        VStack(spacing: 16) {
+                VStack(alignment: .leading, spacing: Space.md) {
+                    if store.selectedProfile == nil {
+                        noProfileCard
+                    } else if !hasLoadedContent && isLoading {
+                        VStack(spacing: Space.sm) {
                             SkeletonCard()
                             SkeletonCard()
                             SkeletonCard()
                         }
-                        .padding()
-                    } else if let error {
+                    } else if !hasLoadedContent, let error {
                         ErrorStateView(message: error) {
                             await fetchDailyFeatures()
                         }
                     } else {
-                        VStack(spacing: 16) {
-                            SkeletonCard()
+                        if let data = dailyData {
+                            dailyFocusCard(data)
+                        }
+
+                        if let brief = briefData {
+                            MorningBriefCard(data: brief)
+                        }
+
+                        if let doDont = doDontData {
+                            DoDontCard(data: doDont)
+                        } else if isLoading && briefData == nil {
                             SkeletonCard()
                         }
-                        .padding()
+
+                        if let data = dailyData {
+                            affirmationCard(data.affirmation)
+                            luckyNumbersCard(data.luckyNumbers)
+                            luckyColorCard(data.luckyColor ?? "Cosmic Violet")
+                            powerHoursCard(data.powerHours)
+
+                            if let dailyLuck = data.dailyLuck {
+                                dailyLuckCard(dailyLuck)
+                            } else {
+                                emptyLuckCard
+                            }
+                        } else if isLoading {
+                            VStack(spacing: Space.sm) {
+                                SkeletonCard()
+                                SkeletonCard()
+                            }
+                        }
                     }
                 }
-                .padding()
+                .padding(.horizontal, Space.sm)
+                .padding(.top, Space.sm)
+                .padding(.bottom, Space.lg)
                 .readableContainer()
             }
         }
+        .accessibilityIdentifier("DailyGuideScreen")
         .navigationTitle("screen.dailyCosmic".localized)
         .navigationBarTitleDisplayMode(.inline)
         .task {
@@ -98,6 +94,71 @@ struct DailyFeaturesView: View {
     }
     
     // MARK: - Cards
+
+    private var noProfileCard: some View {
+        PremiumActionCard(
+            title: "ui.content.0".localized,
+            subtitle: "ui.content.1".localized,
+            icon: "person.crop.circle.badge.plus",
+            label: "label.startHere".localized,
+            accent: .accentPrimary,
+            emphasized: true,
+            showsChevron: false
+        )
+    }
+
+    private func dailyFocusCard(_ data: DailyFeaturesData) -> some View {
+        CardView(padding: Space.sm, cornerRadius: Radius.lg, materialOpacity: 0.06) {
+            VStack(alignment: .leading, spacing: Space.sm) {
+                HStack(alignment: .top) {
+                    PremiumBadge(text: "label.recommended".localized)
+                    Spacer()
+                    Text(briefData?.greeting ?? "✨")
+                        .font(.metadata.weight(.semibold))
+                        .foregroundStyle(Color.textMuted)
+                }
+
+                VStack(alignment: .leading, spacing: Space.xs) {
+                    Text("ui.home.1".localized)
+                        .font(.sectionTitle)
+                        .foregroundStyle(Color.textPrimary)
+
+                    Text(data.advice)
+                        .font(.bodyCopy)
+                        .foregroundStyle(Color.textPrimary)
+
+                    if let vibe = briefData?.vibe, !vibe.isEmpty {
+                        Text(vibe)
+                            .font(.bodyCopy)
+                            .foregroundStyle(Color.textMuted)
+                    }
+                }
+
+                LazyVGrid(columns: metricsColumns, spacing: Space.xs) {
+                    DailyGuideMetricCard(title: "ui.dailyFeatures.8".localized, value: focusLuckValue)
+                    DailyGuideMetricCard(title: "numerology.personalDay".localized, value: focusPersonalDayValue)
+                    DailyGuideMetricCard(title: "screen.moonPhase".localized, value: focusMoonPhaseValue)
+                }
+            }
+        }
+    }
+
+    private var emptyLuckCard: some View {
+        CardView {
+            HStack(spacing: 12) {
+                Text("🍀")
+                    .font(.title)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("ui.dailyFeatures.0".localized)
+                        .font(.headline)
+                    Text("ui.dailyFeatures.1".localized)
+                        .font(.caption)
+                        .foregroundStyle(Color.textSecondary)
+                }
+                Spacer()
+            }
+        }
+    }
     
     private func affirmationCard(_ affirmation: String) -> some View {
         CardView {
@@ -122,7 +183,7 @@ struct DailyFeaturesView: View {
                             .font(.caption)
                             .foregroundStyle(Color.textSecondary)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(ScaleButtonStyle())
 
                     Button {
                         UIPasteboard.general.string = affirmation
@@ -135,7 +196,7 @@ struct DailyFeaturesView: View {
                             .font(.caption)
                             .foregroundStyle(copiedAffirmation ? .green : Color.textSecondary)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(ScaleButtonStyle())
                 }
             }
         }
@@ -253,7 +314,7 @@ struct DailyFeaturesView: View {
                                 .font(.caption)
                                 .foregroundStyle(.purple)
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(ScaleButtonStyle())
                     }
                 }
             }
@@ -291,6 +352,24 @@ struct DailyFeaturesView: View {
                 .frame(width: 80, height: 8)
             }
         }
+    }
+
+    private var focusLuckValue: String {
+        guard let dailyLuck = dailyData?.dailyLuck else { return "--" }
+        return "\(Int(DailyFeaturePresentation.normalizedLuckPercentage(dailyLuck)))%"
+    }
+
+    private var focusPersonalDayValue: String {
+        if let personalDay = briefData?.personalDay ?? doDontData?.personalDay {
+            return String(personalDay)
+        }
+        return "--"
+    }
+
+    private var focusMoonPhaseValue: String {
+        let phase = briefData?.moonPhase ?? doDontData?.moonPhase
+        guard let phase, !phase.isEmpty else { return "--" }
+        return phase
     }
     
     // MARK: - Helpers
@@ -392,6 +471,36 @@ struct DailyFeaturesView: View {
 }
 
 // MARK: - Data Model
+
+struct DailyGuideMetricCard: View {
+    let title: String
+    let value: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title)
+                .font(.metadata.weight(.semibold))
+                .foregroundStyle(Color.textMuted)
+                .lineLimit(1)
+
+            Text(value)
+                .font(.cardTitle)
+                .foregroundStyle(Color.textPrimary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: Radius.sm)
+                .fill(Color.surfaceBase)
+                .overlay(
+                    RoundedRectangle(cornerRadius: Radius.sm)
+                        .stroke(Color.borderSubtle, lineWidth: Stroke.hairline)
+                )
+        )
+    }
+}
 
 struct DailyFeaturesData: Codable {
     let date: Date

@@ -1,92 +1,94 @@
 // JournalVM.swift
-// Journal ViewModel, local store, and response models
-// Extracted from JournalView.swift for maintainability
+// Journal ViewModel and response models
+// Local persistence + remote API access live behind JournalRepository.
 
 import SwiftUI
 
 // MARK: - View Model
 
 @Observable
+@MainActor
 final class JournalVM {
     var readings: [JournalReading] = []
     var prompts: [String] = []
     var isLoading = false
     var error: String?
     private(set) var isLocalMode: Bool = true
-    
-    private let api = APIClient.shared
-    private let localStore = LocalJournalStore.shared
+
+    private let repository: JournalRepository
     private var currentProfileId: Int?
-    
-    @MainActor
+    private var pendingEmbedderRebuild: Task<Void, Never>?
+
+    init(repository: JournalRepository = DefaultJournalRepository.shared) {
+        self.repository = repository
+    }
+
     func load(profile: Profile?, isAuthenticated: Bool, forceRefresh: Bool = false) async {
         guard let profile else { return }
         currentProfileId = profile.id
         isLoading = true
         defer { isLoading = false }
-        
+
         isLocalMode = AppConfig.personalMode || !isAuthenticated || profile.id <= 0
         if isLocalMode {
-            readings = localStore.list(profileId: profile.id).map { mapLocalEntry($0) }
+            let entries = await repository.loadLocalEntries(profileId: profile.id)
+            readings = entries.map { mapLocalEntry($0) }
         } else {
             do {
                 let cachePolicy: CachePolicy = forceRefresh ? .networkFirst : .cacheFirst
-                let readingsResponse: V2ApiResponse<JournalReadingsResponse> = try await api.fetch(
-                    .journalReadings(profileId: profile.id),
+                readings = try await repository.fetchRemoteReadings(
+                    profileId: profile.id,
                     cachePolicy: cachePolicy
                 )
-                readings = readingsResponse.data.readings
             } catch {
                 self.error = error.localizedDescription
             }
         }
-        
+
         do {
-            let promptsResponse: V2ApiResponse<JournalPromptsResponse> = try await api.fetch(.journalPrompts)
-            prompts = promptsResponse.data.prompts
+            prompts = try await repository.fetchPrompts()
         } catch {
             // Prompts are optional
         }
     }
-    
-    @MainActor
+
     func saveEntry(readingId: Int, entry: String) async {
         if isLocalMode, let profileId = currentProfileId {
-            let existing = localStore.list(profileId: profileId).first(where: { $0.id == readingId })
-            localStore.upsert(profileId: profileId, id: readingId, entry: entry, outcome: existing?.outcome)
-            readings = localStore.list(profileId: profileId).map { mapLocalEntry($0) }
-            // Re-index for semantic search
-            Task { await JournalEmbedder.shared.rebuildIndex(profileId: profileId) }
+            let entries = await repository.saveLocalEntryText(
+                profileId: profileId,
+                id: readingId,
+                entry: entry
+            )
+            readings = entries.map { mapLocalEntry($0) }
+            scheduleEmbedderRebuild(profileId: profileId, entries: entries)
             return
         }
         do {
-            let _: V2ApiResponse<JournalEntryResponse> = try await api.fetch(
-                .journalEntry(body: JournalEntryRequest(readingId: readingId, entry: entry))
-            )
+            try await repository.saveRemoteEntry(readingId: readingId, entry: entry)
         } catch {
             self.error = error.localizedDescription
         }
     }
-    
-    @MainActor
+
     func saveOutcome(readingId: Int, outcome: JournalOutcome) async {
         if isLocalMode, let profileId = currentProfileId {
-            let existing = localStore.list(profileId: profileId).first(where: { $0.id == readingId })
-            localStore.upsert(profileId: profileId, id: readingId, entry: existing?.entry ?? "", outcome: outcome.rawValue)
-            readings = localStore.list(profileId: profileId).map { mapLocalEntry($0) }
+            let entries = await repository.saveLocalEntryOutcome(
+                profileId: profileId,
+                id: readingId,
+                outcome: outcome.rawValue
+            )
+            readings = entries.map { mapLocalEntry($0) }
             return
         }
         do {
-            let _: V2ApiResponse<JournalOutcomeResponse> = try await api.fetch(
-                .journalOutcome(body: JournalOutcomeRequest(readingId: readingId, outcome: outcome.rawValue, notes: nil))
-            )
+            try await repository.saveRemoteOutcome(readingId: readingId, outcome: outcome.rawValue)
         } catch {
             self.error = error.localizedDescription
         }
     }
-    
-    func makeLocalDraft(profileId: Int) -> JournalReading {
-        let id = localStore.nextId(profileId: profileId)
+
+    func makeLocalDraft(profileId: Int) async -> JournalReading {
+        let id = await repository.nextLocalId(profileId: profileId)
         return JournalReading(
             id: id,
             scope: "local",
@@ -101,11 +103,23 @@ final class JournalVM {
             contentSummary: nil
         )
     }
-    
+
+    /// Coalesce embedder rebuilds: postpone work briefly so a burst of saves
+    /// produces a single re-index pass instead of one per keystroke/save.
+    private func scheduleEmbedderRebuild(profileId: Int, entries: [LocalJournalEntry]) {
+        pendingEmbedderRebuild?.cancel()
+        pendingEmbedderRebuild = Task { @MainActor [weak self] in
+            try? await Task.sleep(nanoseconds: 1_000_000_000)
+            if Task.isCancelled { return }
+            await JournalEmbedder.shared.rebuildIndex(profileId: profileId, entries: entries)
+            self?.pendingEmbedderRebuild = nil
+        }
+    }
+
     private func mapLocalEntry(_ e: LocalJournalEntry) -> JournalReading {
         let trimmed = e.entry.trimmingCharacters(in: .whitespacesAndNewlines)
         let preview = trimmed.isEmpty ? nil : String(trimmed.prefix(160))
-        
+
         return JournalReading(
             id: e.id,
             scope: "local",
@@ -120,7 +134,7 @@ final class JournalVM {
             contentSummary: nil
         )
     }
-    
+
     private func outcomeEmoji(_ value: String?) -> String? {
         switch JournalOutcome.from(value) {
         case .yes: return "✅"
@@ -129,11 +143,11 @@ final class JournalVM {
         case .neutral: return "➖"
         }
     }
-    
+
     private func iso(date: Date) -> String {
         ISO8601DateFormatter().string(from: date)
     }
-    
+
     private func format(date: Date) -> String {
         let f = DateFormatter()
         f.dateStyle = .medium
@@ -142,7 +156,7 @@ final class JournalVM {
     }
 }
 
-// MARK: - Local Journal (Personal Mode)
+// MARK: - Local Journal Entry (used by repository + embedder)
 
 struct LocalJournalEntry: Codable, Identifiable, Hashable {
     let id: Int
@@ -151,67 +165,6 @@ struct LocalJournalEntry: Codable, Identifiable, Hashable {
     var updatedAt: Date
     var entry: String
     var outcome: String? // yes|no|partial|neutral
-}
-
-final class LocalJournalStore {
-    static let shared = LocalJournalStore()
-    private init() {}
-    
-    private let encoder: JSONEncoder = {
-        let e = JSONEncoder()
-        e.dateEncodingStrategy = .iso8601
-        return e
-    }()
-    
-    private let decoder: JSONDecoder = {
-        let d = JSONDecoder()
-        d.dateDecodingStrategy = .iso8601
-        return d
-    }()
-    
-    private func key(profileId: Int) -> String {
-        "astromeric.local_journal.v1.profile.\(profileId)"
-    }
-    
-    func list(profileId: Int) -> [LocalJournalEntry] {
-        guard let data = UserDefaults.standard.data(forKey: key(profileId: profileId)),
-              let entries = try? decoder.decode([LocalJournalEntry].self, from: data) else {
-            return []
-        }
-        return entries.sorted(by: { $0.createdAt > $1.createdAt })
-    }
-    
-    func nextId(profileId: Int) -> Int {
-        let entries = list(profileId: profileId)
-        return (entries.map(\.id).max() ?? 0) + 1
-    }
-    
-    func upsert(profileId: Int, id: Int, entry: String, outcome: String?) {
-        var entries = list(profileId: profileId)
-        let now = Date()
-        
-        if let idx = entries.firstIndex(where: { $0.id == id }) {
-            entries[idx].entry = entry
-            entries[idx].outcome = outcome
-            entries[idx].updatedAt = now
-        } else {
-            entries.append(
-                LocalJournalEntry(
-                    id: id,
-                    profileId: profileId,
-                    createdAt: now,
-                    updatedAt: now,
-                    entry: entry,
-                    outcome: outcome
-                )
-            )
-        }
-        
-        entries.sort(by: { $0.createdAt > $1.createdAt })
-        if let data = try? encoder.encode(entries) {
-            UserDefaults.standard.set(data, forKey: key(profileId: profileId))
-        }
-    }
 }
 
 // MARK: - Response Models

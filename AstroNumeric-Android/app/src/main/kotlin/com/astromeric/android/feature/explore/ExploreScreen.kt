@@ -1,5 +1,6 @@
 package com.astromeric.android.feature.explore
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -20,8 +21,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.astromeric.android.R
 import com.astromeric.android.core.data.preferences.AppPreferencesStore
 import com.astromeric.android.core.data.remote.AstroRemoteDataSource
 import com.astromeric.android.core.model.AppProfile
@@ -39,11 +43,11 @@ import com.astromeric.android.feature.learn.LearningFeed
 import com.astromeric.android.feature.learn.rememberLearningContentState
 import kotlinx.coroutines.launch
 
-private enum class ExploreCategory(val label: String) {
-    TOOLS("Tools"),
-    LEARN("Learn"),
-    HABITS("Habits"),
-    RELATIONSHIPS("Relationships"),
+private enum class ExploreCategory(@StringRes val labelRes: Int) {
+    TOOLS(R.string.explore_category_tools),
+    LEARN(R.string.explore_category_learn),
+    HABITS(R.string.explore_category_habits),
+    RELATIONSHIPS(R.string.explore_category_relationships),
 }
 
 private enum class ExploreDestination {
@@ -87,6 +91,7 @@ fun ExploreScreen(
     modifier: Modifier = Modifier,
 ) {
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
     val completedLearningModuleIds by preferencesStore.completedLearningModuleIds.collectAsStateWithLifecycle(initialValue = emptySet())
     var selectedCategory by remember { mutableStateOf(ExploreCategory.TOOLS) }
     var searchQuery by remember { mutableStateOf("") }
@@ -95,114 +100,114 @@ fun ExploreScreen(
         remoteDataSource = remoteDataSource,
     )
 
-    val items = remember(completedLearningModuleIds.size) {
+    val items = remember(completedLearningModuleIds.size, context) {
         listOf(
             ExploreItem(
-                title = "Oracle",
-                description = "Yes or no guidance using your current profile context and daily signal.",
+                title = context.getString(R.string.explore_oracle_title),
+                description = context.getString(R.string.explore_oracle_body),
                 category = ExploreCategory.TOOLS,
                 destination = ExploreDestination.TOOLS,
-                actionLabel = "Open Tools",
+                actionLabel = context.getString(R.string.action_open_tools),
                 provenance = ToolProvenance.HYBRID,
             ),
             ExploreItem(
-                title = "Timing",
-                description = "Choose the best window for a date, interview, meeting, or launch.",
+                title = context.getString(R.string.explore_timing_title),
+                description = context.getString(R.string.explore_timing_body),
                 category = ExploreCategory.TOOLS,
                 destination = ExploreDestination.TOOLS,
-                actionLabel = "Open Tools",
+                actionLabel = context.getString(R.string.action_open_tools),
                 provenance = ToolProvenance.CALCULATED,
             ),
             ExploreItem(
-                title = "Year Ahead",
-                description = "Long-range forecast from your solar return and numerology cycle.",
+                title = context.getString(R.string.explore_year_ahead_title),
+                description = context.getString(R.string.explore_year_ahead_body),
                 category = ExploreCategory.TOOLS,
                 destination = ExploreDestination.YEAR_AHEAD,
-                actionLabel = "Open Year Ahead",
+                actionLabel = context.getString(R.string.charts_action_open_year_ahead),
                 provenance = ToolProvenance.CALCULATED,
             ),
             ExploreItem(
-                title = "Life Phase",
-                description = "Your current cycle interpreted inside the fuller year-ahead forecast.",
+                title = context.getString(R.string.explore_life_phase_title),
+                description = context.getString(R.string.explore_life_phase_body),
                 category = ExploreCategory.TOOLS,
                 destination = ExploreDestination.YEAR_AHEAD,
-                actionLabel = "Open Year Ahead",
+                actionLabel = context.getString(R.string.charts_action_open_year_ahead),
                 provenance = ToolProvenance.HYBRID,
             ),
             ExploreItem(
-                title = "Moon + Daily Guide",
-                description = "Read the current moon phase, daily guide, ritual weather, and supportive cues in one place.",
+                title = context.getString(R.string.explore_moon_daily_guide_title),
+                description = context.getString(R.string.explore_moon_daily_guide_body),
                 category = ExploreCategory.TOOLS,
                 destination = ExploreDestination.TOOLS,
-                actionLabel = "Open Tools",
+                actionLabel = context.getString(R.string.action_open_tools),
                 provenance = ToolProvenance.CALCULATED,
             ),
             ExploreItem(
-                title = "Chart Reading",
-                description = "Jump to the chart screen when you want placements, houses, and aspects instead of daily guidance.",
+                title = context.getString(R.string.explore_chart_reading_title),
+                description = context.getString(R.string.explore_chart_reading_body),
                 category = ExploreCategory.TOOLS,
                 destination = ExploreDestination.CHARTS,
-                actionLabel = "Open Charts",
+                actionLabel = context.getString(R.string.action_open_charts),
                 provenance = ToolProvenance.CALCULATED,
             ),
             ExploreItem(
-                title = "Learning Modules",
-                description = "Use structured lessons when you want guided understanding instead of quick lookup.",
+                title = context.getString(R.string.explore_learning_modules_title),
+                description = context.getString(R.string.explore_learning_modules_body),
                 category = ExploreCategory.LEARN,
                 destination = ExploreDestination.LEARN,
-                actionLabel = "Open Learn",
-                note = "${completedLearningModuleIds.size} modules completed locally",
+                actionLabel = context.getString(R.string.action_open_learn),
+                note = context.getString(R.string.explore_learning_modules_note, completedLearningModuleIds.size),
             ),
             ExploreItem(
-                title = "Glossary",
-                description = "Open term definitions fast when a reading introduces language you want clarified.",
+                title = context.getString(R.string.explore_glossary_title),
+                description = context.getString(R.string.explore_glossary_body),
                 category = ExploreCategory.LEARN,
                 destination = ExploreDestination.LEARN,
-                actionLabel = "Open Learn",
+                actionLabel = context.getString(R.string.action_open_learn),
             ),
             ExploreItem(
-                title = "Zodiac Guidance",
-                description = "Start with your sign summary when you want a fast orientation layer before going deeper.",
+                title = context.getString(R.string.explore_zodiac_guidance_title),
+                description = context.getString(R.string.explore_zodiac_guidance_body),
                 category = ExploreCategory.LEARN,
                 destination = ExploreDestination.LEARN,
-                actionLabel = "Open Learn",
+                actionLabel = context.getString(R.string.action_open_learn),
             ),
             ExploreItem(
-                title = "Lunar Habits",
-                description = "Track practices that align with moon phases and reflection cycles.",
+                title = context.getString(R.string.explore_lunar_habits_title),
+                description = context.getString(R.string.explore_lunar_habits_body),
                 category = ExploreCategory.HABITS,
                 destination = ExploreDestination.HABITS,
-                actionLabel = "Open Habits",
-                note = "Habits now supports local-first tracking with backend sync attempts.",
+                actionLabel = context.getString(R.string.action_open_habits),
+                note = context.getString(R.string.explore_lunar_habits_note),
             ),
             ExploreItem(
-                title = "Journal Loop",
-                description = "Capture outcomes against readings so the app becomes more useful over time.",
+                title = context.getString(R.string.explore_journal_loop_title),
+                description = context.getString(R.string.explore_journal_loop_body),
                 category = ExploreCategory.HABITS,
                 destination = ExploreDestination.JOURNAL,
-                actionLabel = "Open Journal",
-                note = "Journal now mirrors the local-first personal mode from iOS.",
+                actionLabel = context.getString(R.string.action_open_journal),
+                note = context.getString(R.string.explore_journal_loop_note),
             ),
             ExploreItem(
-                title = "Cosmic Circle",
-                description = "Manage your synced people and see who ranks strongest right now.",
+                title = context.getString(R.string.explore_cosmic_circle_title),
+                description = context.getString(R.string.explore_cosmic_circle_body),
                 category = ExploreCategory.RELATIONSHIPS,
                 destination = ExploreDestination.RELATIONSHIPS,
-                actionLabel = "Open Relationships",
+                actionLabel = context.getString(R.string.action_open_relationships),
             ),
             ExploreItem(
-                title = "Compatibility",
-                description = "Compare either a saved profile or a manually entered second person.",
+                title = context.getString(R.string.explore_compatibility_title),
+                description = context.getString(R.string.explore_compatibility_body),
                 category = ExploreCategory.RELATIONSHIPS,
                 destination = ExploreDestination.RELATIONSHIPS,
-                actionLabel = "Open Relationships",
+                actionLabel = context.getString(R.string.action_open_relationships),
             ),
             ExploreItem(
-                title = "Saved Relationship History",
-                description = "Review your local relationship history alongside timing, events, and phase guidance.",
+                title = context.getString(R.string.explore_saved_relationship_history_title),
+                description = context.getString(R.string.explore_saved_relationship_history_body),
                 category = ExploreCategory.RELATIONSHIPS,
                 destination = ExploreDestination.RELATIONSHIPS,
-                actionLabel = "Open Relationships",
+                actionLabel = context.getString(R.string.action_open_relationships),
             ),
         )
     }
@@ -224,18 +229,22 @@ fun ExploreScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         PremiumHeroCard(
-            eyebrow = "Explore",
-            title = "Explore Workspace",
-            body = "Start with the category that matches whether you need a tool, lesson, practice, or relationship view.",
+            eyebrow = stringResource(R.string.explore_hero_eyebrow),
+            title = stringResource(R.string.explore_hero_title),
+            body = stringResource(R.string.explore_hero_body),
             chips = selectedProfile?.let { profile ->
                 listOf(
-                    "Active profile: ${profile.displayName(hideSensitiveDetailsEnabled, PrivacyDisplayRole.ACTIVE_USER)} · ${profile.dataQuality.label}",
+                    stringResource(
+                        R.string.explore_active_profile_chip,
+                        profile.displayName(hideSensitiveDetailsEnabled, PrivacyDisplayRole.ACTIVE_USER),
+                        profile.dataQuality.label,
+                    ),
                 )
             }.orEmpty(),
         ) {
             if (selectedProfile == null) {
                 Text(
-                    text = "Create a profile first so Explore can route you into personalized tools and learning.",
+                    text = stringResource(R.string.explore_no_profile_hint),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -245,7 +254,7 @@ fun ExploreScreen(
         OutlinedTextField(
             value = searchQuery,
             onValueChange = { searchQuery = it },
-            label = { Text("Search explore") },
+            label = { Text(stringResource(R.string.explore_search_label)) },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
         )
@@ -258,14 +267,14 @@ fun ExploreScreen(
                 FilterChip(
                     selected = selectedCategory == category,
                     onClick = { selectedCategory = category },
-                    label = { Text(category.label) },
+                    label = { Text(stringResource(category.labelRes)) },
                 )
             }
         }
 
         PremiumSectionHeader(
-            title = selectedCategory.label,
-            subtitle = sectionSubtitle(selectedCategory),
+            title = stringResource(selectedCategory.labelRes),
+            subtitle = sectionSubtitle(context, selectedCategory),
         )
 
         if (selectedCategory == ExploreCategory.LEARN) {
@@ -278,15 +287,15 @@ fun ExploreScreen(
                         preferencesStore.setLearningModuleCompleted(moduleId, completed)
                     }
                 },
-                actionButtonLabel = "Browse all lessons",
+                actionButtonLabel = stringResource(R.string.explore_browse_all_lessons),
                 onActionClick = onOpenLearn,
                 moduleLimit = 3,
                 glossaryLimit = 3,
             )
         } else if (filteredItems.isEmpty()) {
             PremiumEmptyStateCard(
-                title = "No matches",
-                message = "No curated items match this search yet.",
+                title = stringResource(R.string.explore_no_matches_title),
+                message = stringResource(R.string.explore_no_matches_message),
             )
         } else {
             filteredItems.forEach { item ->
@@ -302,7 +311,7 @@ fun ExploreScreen(
                             ExploreDestination.HABITS -> onOpenHabits()
                             ExploreDestination.JOURNAL -> onOpenJournal()
                             ExploreDestination.PROFILE -> onOpenProfile()
-                            ExploreDestination.UPCOMING -> onShowMessage(item.note ?: "This Android slice is staged next.")
+                            ExploreDestination.UPCOMING -> onShowMessage(item.note ?: context.getString(R.string.explore_upcoming_staged_message))
                         }
                     },
                 )
@@ -336,9 +345,9 @@ private fun ExploreItemCard(
     }
 }
 
-private fun sectionSubtitle(category: ExploreCategory): String = when (category) {
-    ExploreCategory.TOOLS -> "Use Tools when you want to decide, interpret, or act on something concrete today."
-    ExploreCategory.LEARN -> "Use Learn when you want structured understanding, glossary support, or sign-based orientation."
-    ExploreCategory.HABITS -> "Use Habits when you want repeatable practice, lunar timing cues, and local-first completion tracking."
-    ExploreCategory.RELATIONSHIPS -> "Use Relationships when you want live comparison, synced people, or timing context around connection."
+private fun sectionSubtitle(context: android.content.Context, category: ExploreCategory): String = when (category) {
+    ExploreCategory.TOOLS -> context.getString(R.string.explore_tools_subtitle)
+    ExploreCategory.LEARN -> context.getString(R.string.explore_learn_subtitle)
+    ExploreCategory.HABITS -> context.getString(R.string.explore_habits_subtitle)
+    ExploreCategory.RELATIONSHIPS -> context.getString(R.string.explore_relationships_subtitle)
 }

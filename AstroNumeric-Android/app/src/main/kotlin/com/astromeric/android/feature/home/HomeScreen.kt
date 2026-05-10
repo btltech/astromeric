@@ -1,5 +1,8 @@
 package com.astromeric.android.feature.home
 
+import android.content.Context
+import android.content.Intent
+import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,11 +17,15 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -28,12 +35,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.astromeric.android.R
 import com.astromeric.android.app.MorningBriefWidgetProvider
 import com.astromeric.android.app.MorningBriefWidgetSnapshotStore
 import com.astromeric.android.core.data.remote.AstroRemoteDataSource
@@ -46,8 +56,10 @@ import com.astromeric.android.core.model.ForecastSectionData
 import com.astromeric.android.core.model.LocalHabitData
 import com.astromeric.android.core.model.PrivacyDisplayRole
 import com.astromeric.android.core.model.displayName
+import com.astromeric.android.core.model.zodiacSignName
 import com.astromeric.android.core.ui.PremiumBentoCard
 import com.astromeric.android.core.ui.PremiumHeroCard
+import com.astromeric.android.core.ui.scaleReveal
 
 @Composable
 @OptIn(ExperimentalLayoutApi::class)
@@ -73,11 +85,14 @@ fun HomeScreen(
     var morningBriefError by remember(selectedProfile?.id) { mutableStateOf<String?>(null) }
     var forecastError by remember(selectedProfile?.id) { mutableStateOf<String?>(null) }
     var moonPhaseError by remember(selectedProfile?.id) { mutableStateOf<String?>(null) }
+    val moonPhaseLoadError = stringResource(R.string.home_load_error_moon_phase)
+    val morningBriefLoadError = stringResource(R.string.home_load_error_morning_brief)
+    val dailyForecastLoadError = stringResource(R.string.home_load_error_daily_forecast)
 
     LaunchedEffect(selectedProfile?.id, refreshVersion) {
         moonPhaseError = null
         moonPhase = remoteDataSource.fetchMoonPhase()
-            .onFailure { moonPhaseError = it.message ?: "Moon phase could not be loaded." }
+            .onFailure { moonPhaseError = it.message ?: moonPhaseLoadError }
             .getOrNull()
 
         if (selectedProfile != null) {
@@ -87,7 +102,7 @@ fun HomeScreen(
             val widgetSnapshotStore = MorningBriefWidgetSnapshotStore(context)
 
             morningBrief = remoteDataSource.fetchMorningBrief(selectedProfile)
-                .onFailure { morningBriefError = it.message ?: "Morning brief could not be loaded." }
+                .onFailure { morningBriefError = it.message ?: morningBriefLoadError }
                 .getOrNull()
 
             widgetSnapshotStore.writeSnapshot(
@@ -99,7 +114,7 @@ fun HomeScreen(
 
             dailyForecast = if (selectedProfile.canRequestForecast) {
                 remoteDataSource.fetchDailyForecast(selectedProfile)
-                    .onFailure { forecastError = it.message ?: "Daily forecast could not be loaded." }
+                    .onFailure { forecastError = it.message ?: dailyForecastLoadError }
                     .getOrNull()
             } else {
                 null
@@ -117,6 +132,7 @@ fun HomeScreen(
 
     val completedHabits = localHabits.count { it.isCompletedToday }
     val openHabits = localHabits.filterNot { it.isCompletedToday }.take(3)
+    var bentoRevealed by remember(selectedProfile?.id) { mutableStateOf(false) }
 
     Column(
         modifier = modifier
@@ -125,20 +141,45 @@ fun HomeScreen(
             .padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        PremiumHeroCard(
-            eyebrow = "Home",
-            title = if (selectedProfile == null) "Build Your Cosmic Blueprint" else "Your Cosmic Blueprint",
-            body = if (selectedProfile == null) {
-                "Create a profile to unlock the same daily reading, moon context, and planning dashboard shape used across iOS."
-            } else {
-                "Personal day, moon context, forecasts, and planning windows in one daily dashboard."
-            },
-            chips = listOfNotNull(
-                selectedProfile?.displayName(hideSensitiveDetailsEnabled, PrivacyDisplayRole.ACTIVE_USER)?.let { "Active profile: $it" },
-                morningBrief?.personalDay?.let { "Personal day $it" },
-                moonPhase?.phase,
-            ),
-        )
+        Box {
+            PremiumHeroCard(
+                eyebrow = stringResource(R.string.home_hero_eyebrow),
+                title = if (selectedProfile == null) stringResource(R.string.home_hero_title_no_profile) else stringResource(R.string.home_hero_title_profile),
+                body = if (selectedProfile == null) {
+                    stringResource(R.string.home_hero_body_no_profile)
+                } else {
+                    stringResource(R.string.home_hero_body_profile)
+                },
+                chips = listOfNotNull(
+                    selectedProfile?.displayName(hideSensitiveDetailsEnabled, PrivacyDisplayRole.ACTIVE_USER)?.let {
+                        stringResource(R.string.home_active_profile_chip, it)
+                    },
+                    morningBrief?.personalDay?.let { stringResource(R.string.home_personal_day_chip, it) },
+                    moonPhase?.phase,
+                ),
+            )
+            if (selectedProfile != null) {
+                val ctx = LocalContext.current
+                val shareLabel = stringResource(R.string.home_share_cosmic_id)
+                IconButton(
+                    onClick = {
+                        shareCosmicID(
+                            context = ctx,
+                            profile = selectedProfile,
+                            personalDay = morningBrief?.personalDay,
+                            hideSensitiveDetailsEnabled = hideSensitiveDetailsEnabled,
+                            shareLabel = shareLabel,
+                        )
+                    },
+                    modifier = Modifier.align(Alignment.TopEnd),
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Share,
+                        contentDescription = shareLabel,
+                    )
+                }
+            }
+        }
 
         if (selectedProfile == null) {
             NoProfileHeroCard(
@@ -146,6 +187,10 @@ fun HomeScreen(
                 onOpenTools = onOpenTools,
             )
         } else {
+            LaunchedEffect(morningBrief, dailyForecast) {
+                if (morningBrief != null || dailyForecast != null) bentoRevealed = true
+            }
+
             HomeHeroCard(
                 selectedProfile = selectedProfile,
                 morningBrief = morningBrief,
@@ -164,6 +209,7 @@ fun HomeScreen(
                 onOpenWeeklyVibe = onOpenWeeklyVibe,
                 onOpenTools = onOpenTools,
                 onOpenCharts = onOpenCharts,
+                modifier = Modifier.scaleReveal(visible = bentoRevealed),
             )
 
             FlowRow(
@@ -171,23 +217,23 @@ fun HomeScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 DashboardMetricCard(
-                    label = "Personal day",
+                    label = stringResource(R.string.home_metric_personal_day),
                     value = morningBrief?.personalDay?.toString() ?: "--",
                 )
                 DashboardMetricCard(
-                    label = "Forecast",
+                    label = stringResource(R.string.home_metric_forecast),
                     value = when {
                         selectedProfile.canRequestForecast && dailyForecast?.overallScore != null -> "${(dailyForecast?.overallScore?.times(100) ?: 0f).toInt()}%"
-                        selectedProfile.canRequestForecast -> "Syncing"
-                        else -> "Needs time"
+                        selectedProfile.canRequestForecast -> stringResource(R.string.home_metric_forecast_syncing)
+                        else -> stringResource(R.string.home_metric_forecast_needs_time)
                     },
                 )
                 DashboardMetricCard(
-                    label = "Moon",
+                    label = stringResource(R.string.home_metric_moon),
                     value = moonPhase?.phase?.let(::moonPhaseEmoji) ?: "🌙",
                 )
                 DashboardMetricCard(
-                    label = "Profile",
+                    label = stringResource(R.string.home_metric_profile),
                     value = selectedProfile.dataQuality.label,
                 )
             }
@@ -198,7 +244,7 @@ fun HomeScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     Text(
-                        text = "Today's pulse",
+                        text = stringResource(R.string.home_todays_pulse_title),
                         style = MaterialTheme.typography.titleMedium,
                     )
 
@@ -234,7 +280,7 @@ fun HomeScreen(
 
                         else -> {
                             Text(
-                                text = "The API layer is wired but has not returned a brief yet.",
+                                text = stringResource(R.string.home_no_brief_message),
                                 style = MaterialTheme.typography.bodyMedium,
                             )
                         }
@@ -246,7 +292,7 @@ fun HomeScreen(
                         },
                         enabled = !isLoading,
                     ) {
-                        Text("Refresh dashboard")
+                        Text(stringResource(R.string.home_refresh_dashboard))
                     }
                 }
             }
@@ -258,7 +304,7 @@ fun HomeScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Text(
-                    text = "Live sky",
+                        text = stringResource(R.string.home_live_sky_title),
                     style = MaterialTheme.typography.titleMedium,
                 )
 
@@ -277,7 +323,7 @@ fun HomeScreen(
                             style = MaterialTheme.typography.titleLarge,
                         )
                         Text(
-                            text = "Illumination ${(moonPhase?.illumination ?: 0f).toInt()}%",
+                            text = stringResource(R.string.home_illumination, (moonPhase?.illumination ?: 0f).toInt()),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -288,13 +334,13 @@ fun HomeScreen(
                     }
 
                     else -> Text(
-                        text = "The moon snapshot has not loaded yet.",
+                        text = stringResource(R.string.home_moon_snapshot_missing),
                         style = MaterialTheme.typography.bodyMedium,
                     )
                 }
 
                 TextButton(onClick = onOpenTools) {
-                    Text("Open moon tools")
+                    Text(stringResource(R.string.home_open_moon_tools))
                 }
             }
         }
@@ -305,20 +351,20 @@ fun HomeScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 Text(
-                    text = "Today's habits",
+                    text = stringResource(R.string.home_todays_habits_title),
                     style = MaterialTheme.typography.titleMedium,
                 )
                 when {
                     localHabits.isEmpty() -> {
                         Text(
-                            text = "Build a few habits to turn the daily forecast into something trackable. The habits workspace is already wired on Android.",
+                            text = stringResource(R.string.home_habits_empty),
                             style = MaterialTheme.typography.bodyMedium,
                         )
                     }
 
                     else -> {
                         Text(
-                            text = "$completedHabits of ${localHabits.size} habits completed today",
+                            text = stringResource(R.string.home_habits_progress, completedHabits, localHabits.size),
                             style = MaterialTheme.typography.bodyLarge,
                         )
                         FlowRow(
@@ -335,7 +381,7 @@ fun HomeScreen(
                     }
                 }
                 TextButton(onClick = onOpenTools) {
-                    Text("Open habits workspace")
+                    Text(stringResource(R.string.home_open_habits_workspace))
                 }
             }
         }
@@ -346,20 +392,20 @@ fun HomeScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Text(
-                    text = "Forecast spotlight",
+                    text = stringResource(R.string.home_forecast_spotlight_title),
                     style = MaterialTheme.typography.titleMedium,
                 )
 
                 when {
                     selectedProfile == null -> Text(
-                        text = "Create a profile to unlock personal forecast sections, scores, and timing guidance.",
+                        text = stringResource(R.string.home_forecast_requires_profile),
                         style = MaterialTheme.typography.bodyMedium,
                     )
 
                     isLoading && dailyForecast == null && selectedProfile.canRequestForecast -> CircularProgressIndicator()
 
                     !selectedProfile.canRequestForecast -> Text(
-                        text = "Forecasts require birth time, coordinates, and timezone. The dashboard still keeps the brief and moon context live while profile quality is incomplete.",
+                        text = stringResource(R.string.home_forecast_requires_details),
                         style = MaterialTheme.typography.bodyMedium,
                     )
 
@@ -373,7 +419,7 @@ fun HomeScreen(
                         dailyForecast?.overallScore?.let { score ->
                             AssistChip(
                                 onClick = {},
-                                label = { Text("Overall ${(score * 100).toInt()}%") },
+                                label = { Text(stringResource(R.string.home_forecast_overall_score, (score * 100).toInt())) },
                             )
                         }
                         dailyForecast?.sections?.take(2)?.forEach { section ->
@@ -382,7 +428,7 @@ fun HomeScreen(
                     }
 
                     else -> Text(
-                        text = "No daily forecast has been returned yet.",
+                        text = stringResource(R.string.home_forecast_none),
                         style = MaterialTheme.typography.bodyMedium,
                     )
                 }
@@ -395,11 +441,11 @@ fun HomeScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 Text(
-                    text = "Quick Tools",
+                    text = stringResource(R.string.home_quick_tools_title),
                     style = MaterialTheme.typography.titleMedium,
                 )
                 Text(
-                    text = "Jump into the same daily tool set the iOS home dashboard surfaces first.",
+                    text = stringResource(R.string.home_quick_tools_body),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -410,12 +456,12 @@ fun HomeScreen(
                     homeQuickTools.forEach { tool ->
                         AssistChip(
                             onClick = onOpenTools,
-                            label = { Text("${tool.emoji} ${tool.title}") },
+                            label = { Text("${tool.emoji} ${stringResource(tool.titleRes)}") },
                         )
                     }
                 }
                 Text(
-                    text = "Each shortcut opens Tools, where the live module is already loaded.",
+                    text = stringResource(R.string.home_quick_tools_footer),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -434,14 +480,17 @@ private fun HomeBentoGrid(
     onOpenWeeklyVibe: () -> Unit,
     onOpenTools: () -> Unit,
     onOpenCharts: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(12.dp)) {
         PremiumBentoCard(
-            title = "Daily Reading",
+            title = stringResource(R.string.home_bento_daily_reading_title),
             body = dailyForecast?.sections?.firstOrNull()?.summary
-                ?: "Pull a full personalized reading for today, this week, or the month ahead.",
+                ?: stringResource(R.string.home_bento_daily_reading_body),
             icon = "☀",
-            badge = dailyForecast?.overallScore?.let { "${(it * 100).toInt()}% forecast" } ?: "Personalized",
+            badge = dailyForecast?.overallScore?.let {
+                stringResource(R.string.home_bento_daily_reading_badge, (it * 100).toInt())
+            } ?: stringResource(R.string.home_bento_daily_reading_badge_fallback),
             minHeight = 132,
             onClick = onOpenReading,
         )
@@ -450,18 +499,18 @@ private fun HomeBentoGrid(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             PremiumBentoCard(
-                title = "Chart Studio",
-                body = "Birth chart, progressed, synastry, and composite entry points.",
+                title = stringResource(R.string.home_bento_chart_studio_title),
+                body = stringResource(R.string.home_bento_chart_studio_body),
                 icon = "◎",
-                badge = "Calculated",
+                badge = stringResource(R.string.home_bento_chart_studio_badge),
                 modifier = Modifier.weight(1f),
                 onClick = onOpenCharts,
             )
             PremiumBentoCard(
-                title = "Daily Guide",
-                body = "Personal day, moon phase, retrogrades, and cues.",
+                title = stringResource(R.string.home_bento_daily_guide_title),
+                body = stringResource(R.string.home_bento_daily_guide_body),
                 icon = "✦",
-                badge = "Live",
+                badge = stringResource(R.string.home_bento_daily_guide_badge),
                 modifier = Modifier.weight(1f),
                 onClick = onOpenTools,
             )
@@ -471,32 +520,32 @@ private fun HomeBentoGrid(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             PremiumBentoCard(
-                title = "Weekly Vibe",
-                body = "Themes, energy patterns, and what to embrace across seven days.",
+                title = stringResource(R.string.home_bento_weekly_vibe_title),
+                body = stringResource(R.string.home_bento_weekly_vibe_body),
                 icon = "↗",
-                badge = "Timeline",
+                badge = stringResource(R.string.home_bento_weekly_vibe_badge),
                 modifier = Modifier.weight(1f),
                 onClick = onOpenWeeklyVibe,
             )
             PremiumBentoCard(
-                title = "Moon",
+                title = stringResource(R.string.home_bento_moon_title),
                 body = moonPhase?.influence?.takeIf { it.isNotBlank() }
-                    ?: "Current lunar phase and ritual weather.",
+                    ?: stringResource(R.string.home_bento_moon_body),
                 icon = moonPhaseEmoji(moonPhase?.phase),
-                badge = moonPhase?.phase ?: "Live sky",
+                badge = moonPhase?.phase ?: stringResource(R.string.home_bento_moon_badge_fallback),
                 modifier = Modifier.weight(1f),
                 onClick = onOpenTools,
             )
         }
         PremiumBentoCard(
-            title = "Habits",
+            title = stringResource(R.string.home_bento_habits_title),
             body = if (totalHabits == 0) {
-                "Turn the forecast into something trackable."
+                stringResource(R.string.home_bento_habits_empty_body)
             } else {
-                "$completedHabits of $totalHabits habits completed today."
+                stringResource(R.string.home_bento_habits_progress_body, completedHabits, totalHabits)
             },
             icon = "✓",
-            badge = "Practice",
+            badge = stringResource(R.string.home_bento_habits_badge),
             minHeight = 132,
             onClick = onOpenTools,
         )
@@ -528,11 +577,11 @@ private fun NoProfileHeroCard(
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
-                    text = "Start your cosmic dashboard",
+                    text = stringResource(R.string.home_no_profile_title),
                     style = MaterialTheme.typography.headlineSmall,
                 )
                 Text(
-                    text = "You can browse the shell now, but a profile is what unlocks the real dashboard: chart context, personal day, forecast sections, and timing that feels specific.",
+                    text = stringResource(R.string.home_no_profile_body),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -541,13 +590,13 @@ private fun NoProfileHeroCard(
                         onClick = onCreateProfile,
                         modifier = Modifier.weight(1f),
                     ) {
-                        Text("Create profile")
+                        Text(stringResource(R.string.home_create_profile))
                     }
                     TextButton(
                         onClick = onOpenTools,
                         modifier = Modifier.weight(1f),
                     ) {
-                        Text("Open tools")
+                        Text(stringResource(R.string.home_open_tools))
                     }
                 }
             }
@@ -593,12 +642,16 @@ private fun HomeHeroCard(
                 Text(
                     text = morningBrief?.vibe?.takeIf { it.isNotBlank() }
                         ?: dailyForecast?.sections?.firstOrNull()?.summary
-                        ?: "Your chart, forecast, and timing stack are ready for a proper daily read.",
+                        ?: stringResource(R.string.home_profile_default_vibe),
                     style = MaterialTheme.typography.headlineSmall,
                 )
                 Text(
                     text = morningBrief?.greeting?.takeIf { it.isNotBlank() }
-                        ?: "${selectedProfile.dataQuality.label} · ${selectedProfile.timezone ?: "Timezone missing"}",
+                        ?: stringResource(
+                            R.string.home_profile_details_fallback,
+                            selectedProfile.dataQuality.label,
+                            selectedProfile.timezone ?: stringResource(R.string.home_timezone_missing),
+                        ),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -607,13 +660,13 @@ private fun HomeHeroCard(
                         onClick = onOpenTools,
                         modifier = Modifier.weight(1f),
                     ) {
-                        Text("Open tools")
+                        Text(stringResource(R.string.home_open_tools))
                     }
                     TextButton(
                         onClick = onOpenCharts,
                         modifier = Modifier.weight(1f),
                     ) {
-                        Text("Open charts")
+                        Text(stringResource(R.string.home_open_charts))
                     }
                 }
             }
@@ -645,15 +698,15 @@ private fun DashboardMetricCard(
 }
 
 private val homeQuickTools = listOf(
-    HomeQuickTool(title = "Tarot", emoji = "♠"),
-    HomeQuickTool(title = "Oracle", emoji = "?"),
-    HomeQuickTool(title = "Affirmation", emoji = "★"),
-    HomeQuickTool(title = "Moon", emoji = "☾"),
-    HomeQuickTool(title = "Timing", emoji = "◷"),
+    HomeQuickTool(titleRes = R.string.home_quick_tool_tarot, emoji = "♠"),
+    HomeQuickTool(titleRes = R.string.home_quick_tool_oracle, emoji = "?"),
+    HomeQuickTool(titleRes = R.string.home_quick_tool_affirmation, emoji = "★"),
+    HomeQuickTool(titleRes = R.string.home_quick_tool_moon, emoji = "☾"),
+    HomeQuickTool(titleRes = R.string.home_quick_tool_timing, emoji = "◷"),
 )
 
 private data class HomeQuickTool(
-    val title: String,
+    @StringRes val titleRes: Int,
     val emoji: String,
 )
 
@@ -699,17 +752,54 @@ private fun ForecastSectionCard(section: ForecastSectionData) {
 
             if (section.embrace.isNotEmpty()) {
                 Text(
-                    text = "Embrace: ${section.embrace.joinToString()}",
+                    text = stringResource(R.string.home_forecast_embrace, section.embrace.joinToString()),
                     style = MaterialTheme.typography.bodySmall,
                 )
             }
 
             if (section.avoid.isNotEmpty()) {
                 Text(
-                    text = "Avoid: ${section.avoid.joinToString()}",
+                    text = stringResource(R.string.home_forecast_avoid, section.avoid.joinToString()),
                     style = MaterialTheme.typography.bodySmall,
                 )
             }
         }
     }
+}
+
+private fun shareCosmicID(
+    context: Context,
+    profile: AppProfile,
+    personalDay: Int?,
+    hideSensitiveDetailsEnabled: Boolean,
+    shareLabel: String,
+) {
+    val name = if (hideSensitiveDetailsEnabled) "Cosmic Traveler" else profile.name
+    val sunSign = profile.zodiacSignName()?.replaceFirstChar { it.uppercase() } ?: "—"
+    val lifePath = homeLifePathNumber(profile)?.toString() ?: "—"
+    val text = buildString {
+        appendLine("✦ ASTRONUMERIC")
+        appendLine()
+        appendLine(name.uppercase())
+        appendLine("☀ Sun Sign: $sunSign")
+        appendLine("🔢 Life Path: $lifePath")
+        if (personalDay != null) appendLine("📅 Personal Day: $personalDay")
+    }
+    val intent = Intent(Intent.ACTION_SEND).apply {
+        type = "text/plain"
+        putExtra(Intent.EXTRA_TEXT, text.trim())
+    }
+    context.startActivity(Intent.createChooser(intent, shareLabel))
+}
+
+private fun homeLifePathNumber(profile: AppProfile): Int? = runCatching {
+    homeReduceLifePathNumber(profile.dateOfBirth.filter(Char::isDigit).sumOf(Char::digitToInt))
+}.getOrNull()
+
+private fun homeReduceLifePathNumber(value: Int): Int {
+    var current = value
+    while (current !in setOf(11, 22, 33) && current > 9) {
+        current = current.toString().sumOf(Char::digitToInt)
+    }
+    return current
 }

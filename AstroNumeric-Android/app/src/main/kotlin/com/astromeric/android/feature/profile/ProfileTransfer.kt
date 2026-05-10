@@ -1,5 +1,7 @@
 package com.astromeric.android.feature.profile
 
+import android.content.Context
+import com.astromeric.android.R
 import com.astromeric.android.core.model.AppProfile
 import com.astromeric.android.core.model.DefaultHouseSystem
 import com.astromeric.android.core.model.HiddenValueLabel
@@ -68,7 +70,7 @@ fun AppProfile.toProfileExportJson(): String = ProfileTransferGson.toJson(
     ),
 )
 
-fun decodeProfileDraftFromJson(json: String): Result<ProfileDraft> = runCatching {
+fun decodeProfileDraftFromJson(context: Context, json: String): Result<ProfileDraft> = runCatching {
     val export = ProfileTransferGson.fromJson(json, ProfileExportEnvelope::class.java)
     val profile = export.profile
 
@@ -79,11 +81,13 @@ fun decodeProfileDraftFromJson(json: String): Result<ProfileDraft> = runCatching
     val longitude = profile.longitude
     val timezone = profile.timezone?.trim().orEmpty()
 
-    require(name.isNotEmpty()) { "Imported profile is missing a name." }
-    require(dateOfBirth.matches(Regex("^\\d{4}-\\d{2}-\\d{2}$"))) { "Imported profile needs a YYYY-MM-DD birth date." }
-    require(placeOfBirth.isNotEmpty()) { "Imported profile is missing a birthplace." }
-    require(latitude != null && longitude != null) { "Imported profile is missing coordinates." }
-    require(timezone.isNotEmpty()) { "Imported profile is missing a timezone." }
+    require(name.isNotEmpty()) { context.getString(R.string.profile_transfer_import_missing_name) }
+    require(dateOfBirth.matches(Regex("^\\d{4}-\\d{2}-\\d{2}$"))) {
+        context.getString(R.string.profile_transfer_import_invalid_birth_date)
+    }
+    require(placeOfBirth.isNotEmpty()) { context.getString(R.string.profile_transfer_import_missing_birthplace) }
+    require(latitude != null && longitude != null) { context.getString(R.string.profile_transfer_import_missing_coordinates) }
+    require(timezone.isNotEmpty()) { context.getString(R.string.profile_transfer_import_missing_timezone) }
 
     val normalizedTime = profile.timeOfBirth?.trim()?.takeIf { it.isNotEmpty() }
     ProfileDraft(
@@ -103,37 +107,42 @@ fun decodeProfileDraftFromJson(json: String): Result<ProfileDraft> = runCatching
     )
 }
 
-fun AppProfile.toShareSummaryText(hideSensitive: Boolean): String = buildString {
-    appendLine("AstroNumeric Profile")
+fun AppProfile.toShareSummaryText(context: Context, hideSensitive: Boolean): String = buildString {
+    appendLine(context.getString(R.string.profile_transfer_share_heading))
     appendLine()
-    appendLine("Name: ${displayName(hideSensitive, PrivacyDisplayRole.SHARE)}")
-    appendLine("Date of Birth: ${maskedDateOfBirth(hideSensitive)}")
-    appendLine("Time of Birth: ${maskedBirthTime(hideSensitive)}")
-    appendLine("Place of Birth: ${maskedBirthplace(hideSensitive)}")
+    appendLine(
+        context.getString(
+            R.string.profile_transfer_share_name,
+            displayName(hideSensitive, PrivacyDisplayRole.SHARE),
+        ),
+    )
+    appendLine(context.getString(R.string.profile_transfer_share_date_of_birth, maskedDateOfBirth(hideSensitive)))
+    appendLine(context.getString(R.string.profile_transfer_share_time_of_birth, maskedBirthTime(hideSensitive)))
+    appendLine(context.getString(R.string.profile_transfer_share_place_of_birth, maskedBirthplace(hideSensitive)))
     appendLine()
-    appendLine("Chart Accuracy: ${dataQuality.label}")
+    appendLine(context.getString(R.string.profile_transfer_share_chart_accuracy, dataQuality.label))
     appendLine(dataQuality.description)
     if (hideSensitive) {
         appendLine()
-        appendLine("Sensitive details were hidden because privacy mode is enabled.")
+        appendLine(context.getString(R.string.profile_transfer_share_sensitive_hidden))
     } else if (timeOfBirth == null) {
         appendLine()
-        appendLine("Time of birth is unknown, so exact rising sign and house precision may be reduced.")
+        appendLine(context.getString(R.string.profile_transfer_share_unknown_time))
     }
     appendLine()
-    append("Generated with AstroNumeric")
+    append(context.getString(R.string.profile_transfer_share_generated_with))
 }
 
-fun privacyModeSummary(enabled: Boolean): String = if (enabled) {
-    "Names, birth details, and some share surfaces are masked in the UI, but server-backed features still use the profile data required to calculate results. Backup exports still contain full details so they can be restored later."
+fun privacyModeSummary(context: Context, enabled: Boolean): String = if (enabled) {
+    context.getString(R.string.profile_transfer_privacy_mode_enabled_summary)
 } else {
-    "Profile details display in full inside the app. You can still export a backup, import a backup, or share a redacted summary whenever you need to control what leaves the screen."
+    context.getString(R.string.profile_transfer_privacy_mode_disabled_summary)
 }
 
-fun privacySupportEmailBody(): String = buildString {
-    append("Privacy question from Android app")
+fun privacySupportEmailBody(context: Context): String = buildString {
+    append(context.getString(R.string.profile_transfer_privacy_email_intro))
     append("\n\n")
-    append("Device privacy mode is about UI redaction, not a network kill switch.")
+    append(context.getString(R.string.profile_transfer_privacy_email_body_line_1))
     append("\n")
-    append("Please describe the backend-held or device-held data question here.")
+    append(context.getString(R.string.profile_transfer_privacy_email_body_line_2))
 }

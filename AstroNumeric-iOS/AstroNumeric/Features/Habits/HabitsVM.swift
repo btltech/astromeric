@@ -62,8 +62,11 @@ final class HabitsVM {
     
     // MARK: - Dependencies
     
-    private let api = APIClient.shared
-    private let localHabitsKey = "astromeric.local_habits.v1"
+    private let repository: HabitRepository
+
+    init(repository: HabitRepository = DefaultHabitRepository()) {
+        self.repository = repository
+    }
     
     // MARK: - Actions
     
@@ -98,12 +101,8 @@ final class HabitsVM {
     @MainActor
     private func fetchHabits() async {
         do {
-            let response: V2ApiResponse<[HabitResponse]> = try await api.fetch(
-                .habitsList,
-                cachePolicy: .networkFirst
-            )
-
-            habits = response.data.map { apiHabit in
+            let remoteHabits = try await repository.fetchHabits(cachePolicy: .networkFirst)
+            habits = remoteHabits.map { apiHabit in
                 LocalHabit(
                     id: apiHabit.id,
                     name: apiHabit.name,
@@ -116,10 +115,10 @@ final class HabitsVM {
                     lastCompleted: apiHabit.summary.lastCompleted.flatMap { parseISO8601($0) }
                 )
             }
-            saveLocalHabits()
+            await repository.saveLocalHabits(habits)
         } catch {
             // Backend not available/deployed yet: fall back to locally saved habits.
-            if let cached = loadLocalHabits() {
+            if let cached = await repository.loadLocalHabits() {
                 habits = cached
             } else if habits.isEmpty {
                 habits = []
@@ -134,24 +133,22 @@ final class HabitsVM {
         
         do {
             let request = CreateHabitRequest(name: name, category: category, frequency: "daily", description: description)
-            let response: V2ApiResponse<HabitResponse> = try await api.fetch(
-                .createHabit(request)
-            )
+            let response = try await repository.createHabit(request)
             
             // Convert response to local habit model
             let newHabit = LocalHabit(
-                id: response.data.id,
-                name: response.data.name,
-                category: response.data.category,
+                id: response.id,
+                name: response.name,
+                category: response.category,
                 emoji: categoryEmoji(for: category),
-                currentStreak: response.data.summary.currentStreak,
-                longestStreak: response.data.summary.longestStreak,
-                completionRate: response.data.summary.completionRate,
+                currentStreak: response.summary.currentStreak,
+                longestStreak: response.summary.longestStreak,
+                completionRate: response.summary.completionRate,
                 isCompletedToday: false,
                 lastCompleted: nil
             )
             habits.insert(newHabit, at: 0)
-            saveLocalHabits()
+            await repository.saveLocalHabits(habits)
             HapticManager.notification(.success)
             return true
         } catch {
@@ -168,7 +165,7 @@ final class HabitsVM {
                 lastCompleted: nil
             )
             habits.insert(newHabit, at: 0)
-            saveLocalHabits()
+            await repository.saveLocalHabits(habits)
             self.error = "Saved locally (sync unavailable)"
             HapticManager.notification(.warning)
             return true
@@ -194,21 +191,19 @@ final class HabitsVM {
         }
         
         HapticManager.impact(.medium)
-        saveLocalHabits()
+        await repository.saveLocalHabits(habits)
         
         // Sync with backend
         do {
             // Only attempt sync when we have a server-style numeric habit id.
             guard let habitIdInt = Int(habit.id) else { return }
-            let _: V2ApiResponse<HabitEntry> = try await api.fetch(
-                .logHabitEntry(habitId: habitIdInt, completed: !wasCompleted, note: nil)
-            )
+            _ = try await repository.logHabitEntry(habitId: habitIdInt, completed: !wasCompleted, note: nil)
         } catch {
             // Revert on failure
             withAnimation {
                 habits[index] = previous
             }
-            saveLocalHabits()
+            await repository.saveLocalHabits(habits)
         }
     }
     
@@ -217,7 +212,7 @@ final class HabitsVM {
         withAnimation {
             habits.removeAll { $0.id == habit.id }
         }
-        saveLocalHabits()
+        Task { await repository.saveLocalHabits(habits) }
         HapticManager.notification(.warning)
     }
     
@@ -248,16 +243,6 @@ final class HabitsVM {
         return Calendar.current.isDateInToday(date)
     }
 
-    private func saveLocalHabits() {
-        guard let data = try? JSONEncoder().encode(habits) else { return }
-        UserDefaults.standard.set(data, forKey: localHabitsKey)
-    }
-
-    private func loadLocalHabits() -> [LocalHabit]? {
-        guard let data = UserDefaults.standard.data(forKey: localHabitsKey) else { return nil }
-        return try? JSONDecoder().decode([LocalHabit].self, from: data)
-    }
-    
     func isPhaseGoodFor(category: String) -> Bool {
         guard let guidance = lunarGuidance else { return true }
         return guidance.idealHabits.contains(category)
@@ -301,6 +286,67 @@ struct LocalHabitCategory: Identifiable, Codable {
         LocalHabitCategory(id: "health", name: "Health", emoji: "🥗", description: "Diet & self-care", bestPhases: ["new_moon", "waxing_crescent"], avoidPhases: []),
         LocalHabitCategory(id: "spiritual", name: "Spiritual", emoji: "✨", description: "Practice & ritual", bestPhases: ["new_moon", "full_moon"], avoidPhases: [])
     ]
+}
+
+protocol HabitRepository {
+    func fetchHabits(cachePolicy: CachePolicy) async throws -> [HabitResponse]
+    func createHabit(_ request: CreateHabitRequest) async throws -> HabitResponse
+    func logHabitEntry(habitId: Int, completed: Bool, note: String?) async throws -> HabitEntry
+    func loadLocalHabits() async -> [LocalHabit]?
+    func saveLocalHabits(_ habits: [LocalHabit]) async
+}
+
+struct DefaultHabitRepository: HabitRepository {
+    private let api: APIService
+    private let localDomain = "habits"
+    private let localKey = "local_habits.v1"
+    private let legacyKey = "astromeric.local_habits.v1"
+
+    init(api: APIService = LiveAPIService()) {
+        self.api = api
+    }
+
+    func fetchHabits(cachePolicy: CachePolicy = .networkFirst) async throws -> [HabitResponse] {
+        let response: V2ApiResponse<[HabitResponse]> = try await api.fetch(
+            .habitsList,
+            cachePolicy: cachePolicy
+        )
+        return response.data
+    }
+
+    func createHabit(_ request: CreateHabitRequest) async throws -> HabitResponse {
+        let response: V2ApiResponse<HabitResponse> = try await api.fetch(.createHabit(request), cachePolicy: .networkFirst)
+        return response.data
+    }
+
+    func logHabitEntry(habitId: Int, completed: Bool, note: String? = nil) async throws -> HabitEntry {
+        let response: V2ApiResponse<HabitEntry> = try await api.fetch(
+            .logHabitEntry(habitId: habitId, completed: completed, note: note),
+            cachePolicy: .networkFirst
+        )
+        return response.data
+    }
+
+    func loadLocalHabits() async -> [LocalHabit]? {
+        if let habits = await LocalDomainDatabase.shared.load([LocalHabit].self, domain: localDomain, key: localKey) {
+            return habits
+        }
+        guard let data = UserDefaults.standard.data(forKey: legacyKey),
+              let habits = try? JSONDecoder().decode([LocalHabit].self, from: data) else {
+            return nil
+        }
+        await saveLocalHabits(habits)
+        UserDefaults.standard.removeObject(forKey: legacyKey)
+        return habits
+    }
+
+    func saveLocalHabits(_ habits: [LocalHabit]) async {
+        if habits.isEmpty {
+            await LocalDomainDatabase.shared.remove(domain: localDomain, key: localKey)
+        } else {
+            await LocalDomainDatabase.shared.save(habits, domain: localDomain, key: localKey)
+        }
+    }
 }
 
 struct LunarHabitGuidance: Codable {

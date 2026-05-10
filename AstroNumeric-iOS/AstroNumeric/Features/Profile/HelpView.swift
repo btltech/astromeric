@@ -49,11 +49,11 @@ struct HelpView: View {
 
                 ScrollView {
                     VStack(spacing: 16) {
-                        PremiumHeroCard(
+                        PremiumScreenHeader(
                             eyebrow: "hero.help.eyebrow".localized,
                             title: "hero.help.title".localized,
-                            bodyText: "hero.help.body".localized,
-                            accent: [Color(hex: "1a1f38"), Color(hex: "3f63bc"), Color(hex: "7d59b1")],
+                            subtitle: "hero.help.body".localized,
+                            accent: .accentPrimary,
                             chips: ["hero.help.chip.0".localized, "hero.help.chip.1".localized, "hero.help.chip.2".localized]
                         )
 
@@ -293,7 +293,7 @@ struct FAQSectionView: View {
                                 }
                                 .padding(.vertical, 10)
                             }
-                            .buttonStyle(.plain)
+                            .buttonStyle(ScaleButtonStyle())
                             .accessibilityLabel(item.question)
                             .accessibilityHint(expandedQuestion == item.question ? "tern.help.1a".localized : "tern.help.1b".localized)
 

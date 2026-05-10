@@ -17,11 +17,11 @@ struct RelationshipsView: View {
                 
                 ScrollView {
                     VStack(spacing: 20) {
-                        PremiumHeroCard(
+                        PremiumScreenHeader(
                             eyebrow: "hero.relationships.eyebrow".localized,
                             title: "hero.relationships.title".localized,
-                            bodyText: "hero.relationships.body".localized,
-                            accent: [Color(hex: "301230"), Color(hex: "9a3f78"), Color(hex: "5b46b7")],
+                            subtitle: "hero.relationships.body".localized,
+                            accent: .accentPrimary,
                             chips: ["hero.relationships.chip.0".localized, "hero.relationships.chip.1".localized, "hero.relationships.chip.2".localized]
                         )
 
@@ -346,7 +346,7 @@ struct RelationshipCard: View {
                 radius: isHighCompatibility ? 12 : 0
             )
         }
-        .buttonStyle(.plain)
+        .buttonStyle(ScaleButtonStyle())
     }
 }
 

@@ -31,7 +31,6 @@ export default defineConfig(({ mode: _mode }) => {
           assetFileNames: 'assets/[name].[hash][extname]',
           manualChunks: {
             'vendor-react': ['react', 'react-dom', 'react-router-dom', 'zustand'],
-            'vendor-three': ['three', '@react-three/fiber', '@react-three/drei'],
             'vendor-utils': ['jspdf', 'html-to-image', 'i18next'],
           },
         },

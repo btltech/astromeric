@@ -38,9 +38,11 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.astromeric.android.R
 import com.astromeric.android.app.AstroBackgroundScheduler
 import com.astromeric.android.app.ExactTransitAlarmScheduler
 import com.astromeric.android.app.PushRegistrationManager
@@ -68,17 +70,17 @@ private enum class NotificationPermissionTarget {
     TRANSIT_ALERTS,
 }
 
-private fun notificationPermissionRationale(target: NotificationPermissionTarget): String = when (target) {
+private fun notificationPermissionRationale(context: android.content.Context, target: NotificationPermissionTarget): String = when (target) {
     NotificationPermissionTarget.DAILY_READING ->
-        "Daily reading reminders need notification access so AstroNumeric can deliver your morning brief at the time you choose."
+        context.getString(R.string.notification_settings_permission_rationale_daily_reading)
     NotificationPermissionTarget.MOON_EVENTS ->
-        "Moon event alerts need notification access so AstroNumeric can surface new-moon and full-moon moments without forcing you to open the app."
+        context.getString(R.string.notification_settings_permission_rationale_moon_events)
     NotificationPermissionTarget.HABIT_REMINDER ->
-        "Habit reminders need notification access so AstroNumeric can nudge you when your local ritual list still has open items for the day."
+        context.getString(R.string.notification_settings_permission_rationale_habit_reminder)
     NotificationPermissionTarget.TIMING_ALERT ->
-        "Timing alerts need notification access so AstroNumeric can send one focused daily timing nudge instead of making you manually check the screen."
+        context.getString(R.string.notification_settings_permission_rationale_timing_alert)
     NotificationPermissionTarget.TRANSIT_ALERTS ->
-        "Transit alerts need notification access so AstroNumeric can warn you about upcoming exact aspects and scheduled transit windows."
+        context.getString(R.string.notification_settings_permission_rationale_transit_alerts)
 }
 
 @Composable
@@ -95,6 +97,9 @@ fun NotificationSettingsScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val timeFormatter = remember { DateTimeFormatter.ofPattern("h:mm a") }
+    val alertPreferencesSyncFailedMessage = stringResource(R.string.notification_settings_sync_failed)
+    val alertPreferencesRefreshFailedMessage = stringResource(R.string.notification_settings_refresh_failed)
+    val notificationPermissionRequiredMessage = stringResource(R.string.notification_settings_permission_required)
     val exactTransitCacheStore = remember(context) { ExactTransitCacheStore(context.applicationContext) }
     val exactTransitLoadStatusStore = remember(context) { ExactTransitLoadStatusStore(context.applicationContext) }
     val exactTransitCacheSnapshot = remember(selectedProfile?.id) {
@@ -146,7 +151,7 @@ fun NotificationSettingsScreen(
         val token = authAccessToken.takeIf { it.isNotBlank() } ?: return
         remoteDataSource.updateAlertPreferences(token, alertsEnabled, frequency)
             .onFailure { error ->
-                onShowMessage(error.message ?: "Alert preferences were saved locally but backend sync failed.")
+                onShowMessage(error.message ?: alertPreferencesSyncFailedMessage)
             }
     }
 
@@ -159,7 +164,7 @@ fun NotificationSettingsScreen(
                 preferencesStore.setAlertFrequency(AlertFrequency.fromWireValue(remotePrefs.alertFrequency))
             }
             .onFailure { error ->
-                onShowMessage(error.message ?: "Signed-in alert preferences could not be refreshed.")
+                onShowMessage(error.message ?: alertPreferencesRefreshFailedMessage)
             }
     }
 
@@ -182,7 +187,7 @@ fun NotificationSettingsScreen(
             if (granted) {
                 AstroBackgroundScheduler.scheduleImmediateRefresh(context)
             } else {
-                onShowMessage("Notification permission is required before alerts can be enabled.")
+                onShowMessage(notificationPermissionRequiredMessage)
             }
         }
     }
@@ -213,8 +218,8 @@ fun NotificationSettingsScreen(
 
     showNotificationRationaleFor?.let { target ->
         PermissionRationaleDialog(
-            title = "Allow notification access",
-            message = notificationPermissionRationale(target),
+            title = stringResource(R.string.notification_settings_permission_title),
+            message = notificationPermissionRationale(context, target),
             onConfirm = {
                 showNotificationRationaleFor = null
                 notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
@@ -234,18 +239,18 @@ fun NotificationSettingsScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Text(
-            text = "Notifications",
+            text = stringResource(R.string.notification_settings_title),
             style = MaterialTheme.typography.headlineMedium,
         )
 
         PremiumContentCard(
-            title = "Android now has the first native background pipeline for alerts and widgets.",
-            body = "A WorkManager refresh runs every few hours, updates the morning brief widget cache, and can deliver daily brief, moon-event, and transit alerts once their local rules are met.",
+            title = stringResource(R.string.notification_settings_hero_title),
+            body = stringResource(R.string.notification_settings_hero_body),
         )
 
         NotificationToggleCard(
-            title = "Daily reading reminder",
-            description = "Delivers the morning brief once during your preferred morning window and keeps the widget cache warm.",
+            title = stringResource(R.string.notification_settings_daily_title),
+            description = stringResource(R.string.notification_settings_daily_description),
             checked = dailyReadingEnabled,
             onCheckedChange = { enabled ->
                 requestPermissionIfNeeded(NotificationPermissionTarget.DAILY_READING, enabled) {
@@ -275,8 +280,8 @@ fun NotificationSettingsScreen(
         )
 
         NotificationToggleCard(
-            title = "Moon event alerts",
-            description = "Sends a lunar alert when the refresh pipeline catches a new moon or full moon state.",
+            title = stringResource(R.string.notification_settings_moon_events_title),
+            description = stringResource(R.string.notification_settings_moon_events_description),
             checked = moonEventsEnabled,
             onCheckedChange = { enabled ->
                 requestPermissionIfNeeded(NotificationPermissionTarget.MOON_EVENTS, enabled) {
@@ -286,8 +291,8 @@ fun NotificationSettingsScreen(
         )
 
         NotificationToggleCard(
-            title = "Habit reminder",
-            description = "Looks at your local habit list and nudges you once if today still has open rituals.",
+            title = stringResource(R.string.notification_settings_habit_title),
+            description = stringResource(R.string.notification_settings_habit_description),
             checked = habitReminderEnabled,
             onCheckedChange = { enabled ->
                 requestPermissionIfNeeded(NotificationPermissionTarget.HABIT_REMINDER, enabled) {
@@ -317,8 +322,8 @@ fun NotificationSettingsScreen(
         )
 
         NotificationToggleCard(
-            title = "Timing tip",
-            description = "Fetches a live timing reading for your chosen activity and turns it into one daily nudge.",
+            title = stringResource(R.string.notification_settings_timing_title),
+            description = stringResource(R.string.notification_settings_timing_description),
             checked = timingAlertEnabled,
             onCheckedChange = { enabled ->
                 requestPermissionIfNeeded(NotificationPermissionTarget.TIMING_ALERT, enabled) {
@@ -367,8 +372,8 @@ fun NotificationSettingsScreen(
         )
 
         NotificationToggleCard(
-            title = "Transit alerts",
-            description = "Checks the backend daily transit report, schedules exact local alarms for upcoming exact aspects when Android allows it, and still falls back to your preferred delivery window.",
+            title = stringResource(R.string.notification_settings_transit_title),
+            description = stringResource(R.string.notification_settings_transit_description),
             checked = transitAlertsEnabled,
             onCheckedChange = { enabled ->
                 requestPermissionIfNeeded(NotificationPermissionTarget.TRANSIT_ALERTS, enabled) {
@@ -398,7 +403,7 @@ fun NotificationSettingsScreen(
 
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !canScheduleExactTransitAlarms) {
                         Text(
-                            text = "Exact transit alarms are currently off for AstroNumeric, so Android will fall back to the broader delivery window instead of minute-level alerts.",
+                            text = stringResource(R.string.notification_settings_exact_alarm_fallback),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -410,17 +415,17 @@ fun NotificationSettingsScreen(
                                 )
                             },
                         ) {
-                            Text("Enable exact alarms")
+                            Text(stringResource(R.string.notification_settings_enable_exact_alarms))
                         }
                     }
 
                     Text(
-                        text = exactTransitCacheDetailLabel(exactTransitCacheSnapshot),
+                        text = exactTransitCacheDetailLabel(context, exactTransitCacheSnapshot),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Text(
-                        text = exactTransitLoadStatusDetailLabel(exactTransitLoadStatus),
+                        text = exactTransitLoadStatusDetailLabel(context, exactTransitLoadStatus),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -429,8 +434,8 @@ fun NotificationSettingsScreen(
         )
 
         NotificationToggleCard(
-            title = "Major transits only",
-            description = "Keep proactive transit alerts scoped to stronger squares, oppositions, and tight conjunctions.",
+            title = stringResource(R.string.notification_settings_major_transits_title),
+            description = stringResource(R.string.notification_settings_major_transits_description),
             checked = transitMajorOnly,
             enabled = transitAlertsEnabled,
             onCheckedChange = { enabled ->

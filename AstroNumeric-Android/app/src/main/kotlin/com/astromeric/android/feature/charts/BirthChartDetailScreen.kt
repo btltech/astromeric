@@ -1,5 +1,6 @@
 package com.astromeric.android.feature.charts
 
+import android.content.Context
 import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -30,7 +31,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.astromeric.android.R
 import com.astromeric.android.core.data.local.NatalChartCacheStore
 import com.astromeric.android.core.data.remote.AstroRemoteDataSource
 import com.astromeric.android.core.ephemeris.LocalSwissEphemerisEngine
@@ -43,6 +46,9 @@ import com.astromeric.android.core.model.displayName
 import com.astromeric.android.core.model.maskedBirthplace
 import com.astromeric.android.core.model.maskedBirthTime
 import com.astromeric.android.core.model.maskedDateOfBirth
+import com.astromeric.android.core.ui.ChartShareCard
+import com.astromeric.android.core.ui.renderComposableToBitmap
+import com.astromeric.android.core.ui.shareBitmapCard
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -91,9 +97,9 @@ fun BirthChartDetailScreen(
             }
             onShowMessage(
                 if (result.isSuccess) {
-                    "Birth chart summary exported."
+                    context.getString(R.string.charts_export_success)
                 } else {
-                    result.exceptionOrNull()?.message ?: "Birth chart export failed."
+                    result.exceptionOrNull()?.message ?: context.getString(R.string.charts_export_failed)
                 },
             )
         }
@@ -128,7 +134,7 @@ fun BirthChartDetailScreen(
         cachedChartActive = result.isCached
         cachedAtEpochMillis = result.cachedAtEpochMillis
         errorMessage = if (result.chart == null) {
-            result.errorMessage ?: "Birth chart could not be loaded."
+            result.errorMessage ?: context.getString(R.string.charts_birth_load_error)
         } else {
             null
         }
@@ -143,25 +149,25 @@ fun BirthChartDetailScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Text(
-            text = "Birth Chart",
+            text = stringResource(R.string.charts_birth_title),
             style = MaterialTheme.typography.headlineMedium,
         )
 
         StudioSectionCard(
-            title = "Full chart detail",
-            subtitle = "This dedicated flow mirrors iOS more closely: read the big three first, then move into placements, aspects, houses, and a portable chart summary.",
+            title = stringResource(R.string.charts_birth_full_detail_title),
+            subtitle = stringResource(R.string.charts_birth_full_detail_subtitle),
         ) {
             TextButton(onClick = onBackToCharts) {
-                Text("Back to Charts Studio")
+                Text(stringResource(R.string.charts_action_back_to_studio))
             }
             when {
                 selectedProfile == null -> Text(
-                    text = "Select or create a profile before opening the birth chart.",
+                    text = stringResource(R.string.charts_birth_profile_required),
                     style = MaterialTheme.typography.bodyMedium,
                 )
 
                 !selectedProfile.canRequestNatalChart -> Text(
-                    text = "Add birthplace coordinates and timezone to unlock the natal chart detail flow.",
+                    text = stringResource(R.string.charts_birth_require_location_timezone),
                     style = MaterialTheme.typography.bodyMedium,
                 )
 
@@ -172,44 +178,50 @@ fun BirthChartDetailScreen(
                             onClick = { refreshVersion += 1 },
                             enabled = !isLoading,
                         ) {
-                            Text(if (isLoading) "Refreshing..." else "Refresh chart")
+                            Text(
+                                if (isLoading) {
+                                    stringResource(R.string.status_refreshing)
+                                } else {
+                                    stringResource(R.string.charts_action_refresh_chart)
+                                },
+                            )
                         }
                         OutlinedButton(
                             onClick = {
                                 val chart = natalChart
                                 if (chart == null) {
-                                    onShowMessage("Load the birth chart first.")
+                                    onShowMessage(context.getString(R.string.charts_load_birth_chart_first))
                                     return@OutlinedButton
                                 }
-                                val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                                    type = "text/plain"
-                                    putExtra(Intent.EXTRA_SUBJECT, "AstroNumeric birth chart")
-                                    putExtra(Intent.EXTRA_TEXT, buildBirthChartExportSummary(profile, chart, hideSensitiveDetailsEnabled, chartSource, cachedChartActive, cachedAtEpochMillis))
-                                }
-                                context.startActivity(Intent.createChooser(shareIntent, "Share birth chart summary"))
+                                shareChartCard(
+                                    context = context,
+                                    chart = chart,
+                                    profile = profile,
+                                    hideSensitiveDetailsEnabled = hideSensitiveDetailsEnabled,
+                                )
                             },
                             enabled = natalChart != null,
                         ) {
-                            Text("Share summary")
+                            Text(stringResource(R.string.charts_action_share_summary))
                         }
                     }
                     OutlinedButton(
                         onClick = {
                             val chart = natalChart
                             if (chart == null) {
-                                onShowMessage("Load the birth chart first.")
+                                onShowMessage(context.getString(R.string.charts_load_birth_chart_first))
                                 return@OutlinedButton
                             }
                             val export = PendingBirthChartExport(
                                 fileName = buildBirthChartExportFileName(profile, hideSensitiveDetailsEnabled),
-                                content = buildBirthChartExportSummary(profile, chart, hideSensitiveDetailsEnabled, chartSource, cachedChartActive, cachedAtEpochMillis),
+                                content = buildBirthChartExportSummary(context, profile, chart, hideSensitiveDetailsEnabled, chartSource, cachedChartActive, cachedAtEpochMillis),
                             )
                             pendingExport = export
                             exportLauncher.launch(export.fileName)
                         },
                         enabled = natalChart != null,
                     ) {
-                        Text("Export summary")
+                        Text(stringResource(R.string.charts_action_export_summary))
                     }
                 }
             }
@@ -217,12 +229,12 @@ fun BirthChartDetailScreen(
 
         if (cachedChartActive && natalChart != null) {
             StudioSectionCard(
-                title = "Offline chart snapshot",
-                subtitle = chartSourceDetail(chartSource, cachedChartActive),
+                title = stringResource(R.string.charts_offline_snapshot_title),
+                subtitle = chartSourceDetail(context, chartSource, cachedChartActive),
             ) {
                 cachedAtEpochMillis?.let { cachedAt ->
                     Text(
-                        text = "Cached ${formatChartCacheTimestamp(cachedAt)}",
+                        text = stringResource(R.string.charts_cached_at_format, formatChartCacheTimestamp(cachedAt)),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -238,7 +250,7 @@ fun BirthChartDetailScreen(
                 ) {
                     CircularProgressIndicator()
                     Text(
-                        text = "Loading birth chart...",
+                        text = stringResource(R.string.charts_loading_birth_chart),
                         style = MaterialTheme.typography.bodyMedium,
                     )
                 }
@@ -257,26 +269,35 @@ fun BirthChartDetailScreen(
 
                 chart.metadata?.let { metadata ->
                     StudioSectionCard(
-                        title = "Calculation context",
-                        subtitle = "Read this first so you know where the chart is exact and where it is estimated.",
+                        title = stringResource(R.string.charts_calculation_context_title),
+                        subtitle = stringResource(R.string.charts_calculation_context_subtitle),
                     ) {
                         metadata.dataQuality?.let { quality ->
                             AssistChip(onClick = {}, label = { Text(quality) })
                         }
                         chartSource?.let { source ->
-                            AssistChip(onClick = {}, label = { Text(chartSourceLabel(source, cachedChartActive)) })
+                            AssistChip(onClick = {}, label = { Text(chartSourceLabel(context, source, cachedChartActive)) })
                         }
                         Text(
-                            text = "House system: ${metadata.houseSystem ?: selectedProfile.houseSystem}",
+                            text = stringResource(
+                                R.string.charts_house_system_format,
+                                metadata.houseSystem ?: selectedProfile.houseSystem,
+                            ),
                             style = MaterialTheme.typography.bodyMedium,
                         )
                         Text(
-                            text = "Timezone: ${metadata.timezone ?: selectedProfile.timezone ?: "Unknown"}",
+                            text = stringResource(
+                                R.string.charts_timezone_format,
+                                metadata.timezone ?: selectedProfile.timezone ?: stringResource(R.string.charts_unknown),
+                            ),
                             style = MaterialTheme.typography.bodyMedium,
                         )
                         if (metadata.birthTimeAssumed == true) {
                             Text(
-                                text = "Birth time was assumed at ${metadata.assumedTimeOfBirth ?: "12:00"}.",
+                                text = stringResource(
+                                    R.string.charts_birth_time_assumed_format,
+                                    metadata.assumedTimeOfBirth ?: "12:00",
+                                ),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
@@ -286,8 +307,8 @@ fun BirthChartDetailScreen(
 
                 if (chart.planets.isNotEmpty()) {
                     StudioSectionCard(
-                        title = "Planet placements",
-                        subtitle = "These placements show what part of you is speaking and the sign shows how it speaks.",
+                        title = stringResource(R.string.charts_planet_placements_title),
+                        subtitle = stringResource(R.string.charts_planet_placements_subtitle),
                     ) {
                         chart.planets.forEach { placement ->
                             PlanetPlacementRow(placement = placement)
@@ -297,8 +318,8 @@ fun BirthChartDetailScreen(
 
                 if (chart.aspects.isNotEmpty()) {
                     StudioSectionCard(
-                        title = "Key aspects",
-                        subtitle = "Aspects tell you where energies reinforce each other, clash, or create useful tension.",
+                        title = stringResource(R.string.charts_key_aspects_title),
+                        subtitle = stringResource(R.string.charts_key_aspects_subtitle),
                     ) {
                         chart.aspects.take(10).forEach { aspect ->
                             AspectRow(aspect = aspect)
@@ -308,8 +329,8 @@ fun BirthChartDetailScreen(
 
                 if (chart.houses.isNotEmpty()) {
                     StudioSectionCard(
-                        title = "Houses",
-                        subtitle = "Houses show where each part of the chart tends to play out in real life.",
+                        title = stringResource(R.string.charts_houses_title),
+                        subtitle = stringResource(R.string.charts_houses_subtitle),
                     ) {
                         chart.houses.forEach { house ->
                             HousePlacementRow(house = house)
@@ -329,18 +350,18 @@ private fun BirthChartIdentityCard(
 ) {
     StudioSectionCard(
         title = profile.displayName(hideSensitiveDetailsEnabled, PrivacyDisplayRole.ACTIVE_USER),
-        subtitle = "Start with the chart identity before diving into the technical layers.",
+        subtitle = stringResource(R.string.charts_birth_identity_subtitle),
     ) {
         Text(
-            text = "Birth date: ${profile.maskedDateOfBirth(hideSensitiveDetailsEnabled)}",
+            text = stringResource(R.string.charts_birth_date_format, profile.maskedDateOfBirth(hideSensitiveDetailsEnabled)),
             style = MaterialTheme.typography.bodyMedium,
         )
         Text(
-            text = "Birth time: ${profile.maskedBirthTime(hideSensitiveDetailsEnabled)}",
+            text = stringResource(R.string.charts_birth_time_format, profile.maskedBirthTime(hideSensitiveDetailsEnabled)),
             style = MaterialTheme.typography.bodyMedium,
         )
         Text(
-            text = "Birthplace: ${profile.maskedBirthplace(hideSensitiveDetailsEnabled)}",
+            text = stringResource(R.string.charts_birthplace_format, profile.maskedBirthplace(hideSensitiveDetailsEnabled)),
             style = MaterialTheme.typography.bodyMedium,
         )
         Row(
@@ -348,9 +369,13 @@ private fun BirthChartIdentityCard(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             listOfNotNull(
-                chart.planets.firstOrNull { it.name.equals("Sun", ignoreCase = true) }?.let { "Sun ${it.sign}" },
-                chart.planets.firstOrNull { it.name.equals("Moon", ignoreCase = true) }?.let { "Moon ${it.sign}" },
-                findAscendantSign(chart)?.let { "Rising $it" },
+                chart.planets.firstOrNull { it.name.equals("Sun", ignoreCase = true) }?.let {
+                    stringResource(R.string.charts_chip_sun_format, it.sign)
+                },
+                chart.planets.firstOrNull { it.name.equals("Moon", ignoreCase = true) }?.let {
+                    stringResource(R.string.charts_chip_moon_format, it.sign)
+                },
+                findAscendantSign(chart)?.let { stringResource(R.string.charts_chip_rising_format, it) },
             ).forEach { chip ->
                 AssistChip(onClick = {}, label = { Text(chip) })
             }
@@ -365,16 +390,28 @@ private fun BirthChartBigThreeCard(chart: ChartData) {
     val ascendantSign = findAscendantSign(chart)
 
     StudioSectionCard(
-        title = "Your Big Three",
-        subtitle = "These are the fastest anchors for identity, emotional pattern, and presentation.",
+        title = stringResource(R.string.charts_big_three_title),
+        subtitle = stringResource(R.string.charts_big_three_subtitle),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            BigThreeMetric(label = "Sun", value = sun?.sign ?: "Unknown", modifier = Modifier.weight(1f))
-            BigThreeMetric(label = "Moon", value = moon?.sign ?: "Unknown", modifier = Modifier.weight(1f))
-            BigThreeMetric(label = "Rising", value = ascendantSign ?: "Unknown", modifier = Modifier.weight(1f))
+            BigThreeMetric(
+                label = stringResource(R.string.charts_big_three_sun_label),
+                value = sun?.sign ?: stringResource(R.string.charts_unknown),
+                modifier = Modifier.weight(1f),
+            )
+            BigThreeMetric(
+                label = stringResource(R.string.charts_big_three_moon_label),
+                value = moon?.sign ?: stringResource(R.string.charts_unknown),
+                modifier = Modifier.weight(1f),
+            )
+            BigThreeMetric(
+                label = stringResource(R.string.charts_big_three_rising_label),
+                value = ascendantSign ?: stringResource(R.string.charts_unknown),
+                modifier = Modifier.weight(1f),
+            )
         }
     }
 }
@@ -416,6 +453,7 @@ private fun buildBirthChartExportFileName(
 }
 
 private fun buildBirthChartExportSummary(
+    context: android.content.Context,
     profile: AppProfile,
     chart: ChartData,
     hideSensitiveDetailsEnabled: Boolean,
@@ -423,48 +461,65 @@ private fun buildBirthChartExportSummary(
     cachedChartActive: Boolean,
     cachedAtEpochMillis: Long?,
 ): String {
-    val sun = chart.planets.firstOrNull { it.name.equals("Sun", ignoreCase = true) }?.sign ?: "Unknown"
-    val moon = chart.planets.firstOrNull { it.name.equals("Moon", ignoreCase = true) }?.sign ?: "Unknown"
-    val rising = findAscendantSign(chart) ?: "Unknown"
+    val unknown = context.getString(R.string.charts_unknown)
+    val sun = chart.planets.firstOrNull { it.name.equals("Sun", ignoreCase = true) }?.sign ?: unknown
+    val moon = chart.planets.firstOrNull { it.name.equals("Moon", ignoreCase = true) }?.sign ?: unknown
+    val rising = findAscendantSign(chart) ?: unknown
     return buildString {
-        appendLine("AstroNumeric Birth Chart")
+        appendLine(context.getString(R.string.charts_export_heading_birth_chart))
         appendLine()
-        appendLine("Profile: ${profile.displayName(hideSensitiveDetailsEnabled, PrivacyDisplayRole.SHARE)}")
-        appendLine("Birth date: ${profile.maskedDateOfBirth(hideSensitiveDetailsEnabled)}")
-        appendLine("Birth time: ${profile.maskedBirthTime(hideSensitiveDetailsEnabled)}")
-        appendLine("Birthplace: ${profile.maskedBirthplace(hideSensitiveDetailsEnabled)}")
-        appendLine("House system: ${chart.metadata?.houseSystem ?: profile.houseSystem}")
-        appendLine("Timezone: ${chart.metadata?.timezone ?: profile.timezone ?: "Unknown"}")
-        chartSource?.let { appendLine("Chart source: ${chartSourceLabel(it, cachedChartActive)}") }
+        appendLine(context.getString(R.string.share_profile_line, profile.displayName(hideSensitiveDetailsEnabled, PrivacyDisplayRole.SHARE)))
+        appendLine(context.getString(R.string.charts_birth_date_format, profile.maskedDateOfBirth(hideSensitiveDetailsEnabled)))
+        appendLine(context.getString(R.string.charts_birth_time_format, profile.maskedBirthTime(hideSensitiveDetailsEnabled)))
+        appendLine(context.getString(R.string.charts_birthplace_format, profile.maskedBirthplace(hideSensitiveDetailsEnabled)))
+        appendLine(context.getString(R.string.charts_house_system_format, chart.metadata?.houseSystem ?: profile.houseSystem))
+        appendLine(context.getString(R.string.charts_timezone_format, chart.metadata?.timezone ?: profile.timezone ?: unknown))
+        chartSource?.let {
+            appendLine(context.getString(R.string.charts_chart_source_format, chartSourceLabel(context, it, cachedChartActive)))
+        }
         appendLine()
-        appendLine("Big Three")
-        appendLine("- Sun: $sun")
-        appendLine("- Moon: $moon")
-        appendLine("- Rising: $rising")
+        appendLine(context.getString(R.string.charts_big_three_title))
+        appendLine("- ${context.getString(R.string.charts_big_three_sun_label)}: $sun")
+        appendLine("- ${context.getString(R.string.charts_big_three_moon_label)}: $moon")
+        appendLine("- ${context.getString(R.string.charts_big_three_rising_label)}: $rising")
         appendLine()
-        appendLine("Planet placements")
+        appendLine(context.getString(R.string.charts_planet_placements_title))
         chart.planets.forEach { placement ->
-            appendLine("- ${placement.name}: ${placement.sign} ${"%.1f".format(placement.degree)}°${placement.house?.let { " · House $it" } ?: ""}${if (placement.retrograde == true) " · Rx" else ""}")
+            val houseSuffix = placement.house?.let { " · ${context.getString(R.string.charts_row_house, it)}" }.orEmpty()
+            val retrogradeSuffix = if (placement.retrograde == true) {
+                " · ${context.getString(R.string.charts_row_retrograde)}"
+            } else {
+                ""
+            }
+            appendLine("- ${placement.name}: ${placement.sign} ${"%.1f".format(placement.degree)}°$houseSuffix$retrogradeSuffix")
         }
         if (chart.aspects.isNotEmpty()) {
             appendLine()
-            appendLine("Key aspects")
+            appendLine(context.getString(R.string.charts_key_aspects_title))
             chart.aspects.take(10).forEach { aspect ->
-                appendLine("- ${aspect.planetA} ${aspect.type} ${aspect.planetB}${aspect.orb?.let { " · orb ${"%.1f".format(it)}°" } ?: ""}")
+                val orbSuffix = aspect.orb?.let { " · ${context.getString(R.string.charts_row_orb, it)}" }.orEmpty()
+                appendLine("- ${aspect.planetA} ${aspect.type} ${aspect.planetB}$orbSuffix")
             }
         }
         if (chart.houses.isNotEmpty()) {
             appendLine()
-            appendLine("Houses")
+            appendLine(context.getString(R.string.charts_houses_title))
             chart.houses.forEach { house ->
-                appendLine("- House ${house.house}: ${house.sign}${house.degree?.let { " ${"%.1f".format(it)}°" } ?: ""}")
+                val houseLine = house.degree?.let { degree ->
+                    context.getString(R.string.charts_house_placement_format_degree, house.house, house.sign, degree)
+                } ?: context.getString(R.string.charts_house_placement_format, house.house, house.sign)
+                appendLine("- $houseLine")
             }
         }
         if (cachedChartActive) {
             appendLine()
-            appendLine("Offline snapshot")
-            chartSource?.let { appendLine("- Source: ${chartSourceLabel(it, cachedChartActive)}") }
-            cachedAtEpochMillis?.let { appendLine("- Cached: ${formatChartCacheTimestamp(it)}") }
+            appendLine(context.getString(R.string.charts_offline_snapshot_title))
+            chartSource?.let {
+                appendLine("- ${context.getString(R.string.charts_export_source_format, chartSourceLabel(context, it, cachedChartActive))}")
+            }
+            cachedAtEpochMillis?.let {
+                appendLine("- ${context.getString(R.string.charts_cached_at_format, formatChartCacheTimestamp(it))}")
+            }
         }
     }.trim()
 }
@@ -473,3 +528,19 @@ private fun findAscendantSign(chart: ChartData): String? =
     chart.points.firstOrNull { point ->
         point.name.equals("Ascendant", ignoreCase = true) || point.name.equals("ASC", ignoreCase = true)
     }?.sign
+
+private fun shareChartCard(
+    context: Context,
+    chart: ChartData,
+    profile: AppProfile?,
+    hideSensitiveDetailsEnabled: Boolean,
+) {
+    val profileName = profile?.displayName(hideSensitiveDetailsEnabled, PrivacyDisplayRole.SHARE) ?: "AstroNumeric"
+    val birthTimeAssumed = chart.metadata?.birthTimeAssumed == true
+    val density = context.resources.displayMetrics.density
+    val widthPx = (300 * density * 3).toInt()
+    val bitmap = renderComposableToBitmap(context, widthPx, 0) {
+        ChartShareCard(chart = chart, profileName = profileName, birthTimeAssumed = birthTimeAssumed)
+    }
+    shareBitmapCard(context, bitmap, filename = "chart_share.png", chooserTitle = "Share Birth Chart")
+}

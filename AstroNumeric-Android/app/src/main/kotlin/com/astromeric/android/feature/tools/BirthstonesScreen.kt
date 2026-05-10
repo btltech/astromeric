@@ -14,7 +14,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.astromeric.android.R
 import com.astromeric.android.core.model.AppProfile
 import com.astromeric.android.core.model.PrivacyDisplayRole
 import com.astromeric.android.core.model.displayName
@@ -41,26 +43,30 @@ fun BirthstonesScreen(
     ) {
         if (activeSign == null) {
             PremiumContentCard(
-                title = "Birthstones",
-                body = "Your profile unlocks the symbolic layer. Create a profile to match your sign with stones, meanings, and practical ways to use them.",
+                title = stringResource(R.string.birthstones_title),
+                body = stringResource(R.string.birthstones_profile_required_body),
             ) {
                     Button(onClick = onOpenProfile) {
-                        Text("Open Profile")
+                        Text(stringResource(R.string.action_open_profile))
                     }
             }
             return@Column
         }
 
         PremiumContentCard(
-            title = "Birthstones",
-            body = "Use symbolic materials as a personal ritual language. This turns birthstones from trivia into something intentional: what they mean, how they resonate with your sign, and how to work with them.",
+            title = stringResource(R.string.birthstones_title),
+            body = stringResource(R.string.birthstones_hero_body),
         ) {
                 selectedProfile?.let { profile ->
                     AssistChip(
                         onClick = {},
                         label = {
                             Text(
-                                "Active profile: ${profile.displayName(hideSensitiveDetailsEnabled, PrivacyDisplayRole.ACTIVE_USER)} · ${activeSign.displayName}",
+                                stringResource(
+                                    R.string.birthstones_active_profile,
+                                    profile.displayName(hideSensitiveDetailsEnabled, PrivacyDisplayRole.ACTIVE_USER),
+                                    activeSign.displayName,
+                                ),
                             )
                         },
                     )
@@ -68,8 +74,8 @@ fun BirthstonesScreen(
         }
 
         PremiumContentCard(
-            title = "${activeSign.displayName} Birthstones",
-            body = "Your birthstones carry energies that resonate with your sign. Use them for intention, protection, and amplifying your natural gifts.",
+            title = stringResource(R.string.birthstones_sign_title, activeSign.displayName),
+            body = stringResource(R.string.birthstones_sign_body),
         ) {
                 Text(
                     text = activeSign.emoji,
@@ -90,8 +96,8 @@ fun BirthstonesScreen(
         }
 
         PremiumContentCard(
-            title = "Working with Birthstones",
-            body = "You do not need to buy gemstones. Visualizing their colors during meditation can still activate the symbolic layer you want to work with.",
+            title = stringResource(R.string.birthstones_working_title),
+            body = stringResource(R.string.birthstones_working_body),
         )
     }
 }
@@ -103,10 +109,10 @@ private fun BirthstoneCard(
 ) {
     PremiumContentCard(
         title = "${stone.emoji} ${stone.name}",
-        body = "Stone ${index + 1} of 3",
+        body = stringResource(R.string.birthstones_stone_index, index + 1),
     ) {
             Text(
-                text = "Meaning",
+                text = stringResource(R.string.birthstones_meaning_title),
                 style = MaterialTheme.typography.titleSmall,
             )
             Text(
@@ -114,7 +120,7 @@ private fun BirthstoneCard(
                 style = MaterialTheme.typography.bodyMedium,
             )
             Text(
-                text = "How to Use",
+                text = stringResource(R.string.birthstones_how_to_use_title),
                 style = MaterialTheme.typography.titleSmall,
             )
             Text(

@@ -178,6 +178,7 @@ final class AppStore {
     private var profilesHydrated = false
     private var profilesHydrationTask: Task<Void, Never>?
     private var persistProfilesTask: Task<Void, Never>?
+    private let natalSignsResolver: NatalSignsResolving = DefaultNatalSignsResolver()
 
     private init() {
 #if DEBUG
@@ -211,6 +212,13 @@ final class AppStore {
             }
             profiles = []
             selectedProfileId = nil
+        }
+
+        if args.contains("-ui_testing_no_profiles") {
+            profiles = []
+            selectedProfileId = nil
+            profilesHydrated = true
+            return
         }
 
         hideSensitiveDetailsEnabled = args.contains("-ui_testing_hide_sensitive")
@@ -346,7 +354,7 @@ final class AppStore {
     
     // MARK: - Natal Sign Fetching
     
-    /// Fetch and cache moon/rising signs — local-first, API fallback
+    /// Fetch and cache moon/rising signs — local-first, API fallback (delegated).
     func fetchNatalSigns(for profile: Profile) async {
         // Skip if already cached
         guard natalSignsCache[profile.id] == nil else { return }
@@ -354,43 +362,16 @@ final class AppStore {
             hideSensitive: hideSensitiveDetailsEnabled,
             role: .activeUser
         )
-        
-        // LOCAL-FIRST: Try Swiss Ephemeris on-device
-        do {
-            let signs = try await EphemerisEngine.shared.getNatalSigns(for: profile)
-            await MainActor.run {
-                self.natalSignsCache[profile.id] = NatalSigns(
-                    moonSign: signs.moonSign,
-                    risingSign: signs.risingSign
-                )
-            }
-            DebugLog.trace("Natal signs (local) cached for \(profileLabel): Moon=\(signs.moonSign ?? "nil"), Rising=\(signs.risingSign ?? "nil")")
+
+        guard let signs = await natalSignsResolver.resolve(for: profile) else {
+            DebugLog.log("Failed to fetch natal signs for \(profileLabel)")
             return
-        } catch {
-            DebugLog.log("Local ephemeris failed for natal signs, falling back to API: \(error)")
         }
-        
-        // FALLBACK: API
-        do {
-            let response: V2ApiResponse<ChartData> = try await APIClient.shared.fetch(
-                .natalChart(profile: profile)
-            )
-            
-            let moonSign = response.data.planets.first(where: { $0.name == "Moon" })?.sign
-            let risingSign = response.data.planets.first(where: {
-                $0.name == "Ascendant" || $0.name == "ASC" || $0.name == "Rising"
-            })?.sign
-            
-            await MainActor.run {
-                self.natalSignsCache[profile.id] = NatalSigns(
-                    moonSign: moonSign,
-                    risingSign: risingSign
-                )
-            }
-            DebugLog.trace("Natal signs (API) cached for \(profileLabel): Moon=\(moonSign ?? "nil"), Rising=\(risingSign ?? "nil")")
-        } catch {
-            DebugLog.log("Failed to fetch natal signs for \(profileLabel): \(error)")
+
+        await MainActor.run {
+            self.natalSignsCache[profile.id] = signs
         }
+        DebugLog.trace("Natal signs cached for \(profileLabel): Moon=\(signs.moonSign ?? "nil"), Rising=\(signs.risingSign ?? "nil")")
     }
     
     func updateStreak() {
@@ -434,19 +415,24 @@ private actor LocalProfilesStore {
             .appendingPathComponent("local_profiles.v1.json", isDirectory: false)
     }
 
-    func load(migratingFromUserDefaultsKey legacyKey: String) -> [Profile] {
+    func load(migratingFromUserDefaultsKey legacyKey: String) async -> [Profile] {
         let url = fileURL()
         let fm = FileManager.default
 
+        if let sqliteProfiles = await LocalDomainDatabase.shared.loadProfiles() {
+            return sqliteProfiles
+        }
+
         if let data = try? Data(contentsOf: url),
            let decoded = try? JSONDecoder().decode([Profile].self, from: data) {
+            await LocalDomainDatabase.shared.saveProfiles(decoded)
             return decoded
         }
 
         // Legacy migration: UserDefaults blob -> disk file.
         if let legacy = UserDefaults.standard.data(forKey: legacyKey),
            let decoded = try? JSONDecoder().decode([Profile].self, from: legacy) {
-            save(decoded)
+            await LocalDomainDatabase.shared.saveProfiles(decoded)
             UserDefaults.standard.removeObject(forKey: legacyKey)
             return decoded
         }
@@ -460,7 +446,7 @@ private actor LocalProfilesStore {
         return []
     }
 
-    func save(_ profiles: [Profile]) {
+    func save(_ profiles: [Profile]) async {
         let url = fileURL()
         let fm = FileManager.default
         let dir = url.deletingLastPathComponent()
@@ -470,9 +456,12 @@ private actor LocalProfilesStore {
         }
 
         guard !profiles.isEmpty else {
+            await LocalDomainDatabase.shared.removeProfiles()
             try? fm.removeItem(at: url)
             return
         }
+
+        await LocalDomainDatabase.shared.saveProfiles(profiles)
 
         guard let data = try? JSONEncoder().encode(profiles) else { return }
         try? data.write(to: url, options: [.atomic])

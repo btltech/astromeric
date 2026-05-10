@@ -142,48 +142,48 @@ fun PrivacyScreen(
                     context.contentResolver.openInputStream(uri)?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }
                         ?: error("Could not read the selected file.")
                 }.fold(
-                    onSuccess = { raw -> decodeProfileDraftFromJson(raw) },
+                    onSuccess = { raw -> decodeProfileDraftFromJson(context, raw) },
                     onFailure = { Result.failure(it) },
                 )
             }
 
             importResult.onSuccess { draft ->
                 profileRepository.saveProfile(draft)
-                onShowMessage("Profile imported into the local Android store.")
+                onShowMessage(context.getString(R.string.privacy_screen_import_success))
             }.onFailure { error ->
-                onShowMessage(error.message ?: "Profile import failed.")
+                onShowMessage(error.message ?: context.getString(R.string.privacy_screen_import_failed))
             }
         }
     }
 
-    val privacySections = remember {
+    val privacySections = remember(context) {
         listOf(
             PrivacySection(
-                title = "What stays on device",
+                title = context.getString(R.string.privacy_screen_section_on_device_title),
                 bullets = listOf(
-                    "Profiles, preferences, local relationship history, habits, and journal entries are primarily stored on-device in this Android build.",
-                    "Privacy mode changes how details are shown in the UI, not whether the app can still calculate charts from your saved birth data.",
+                    context.getString(R.string.privacy_screen_section_on_device_bullet_1),
+                    context.getString(R.string.privacy_screen_section_on_device_bullet_2),
                 ),
             ),
             PrivacySection(
-                title = "What can go to the backend",
+                title = context.getString(R.string.privacy_screen_section_backend_title),
                 bullets = listOf(
-                    "Server-backed readings, compatibility, synced friends, and other remote features still send the profile details needed to compute results.",
-                    "Privacy mode is not a network kill switch. It is a presentation boundary and a sharing boundary.",
+                    context.getString(R.string.privacy_screen_section_backend_bullet_1),
+                    context.getString(R.string.privacy_screen_section_backend_bullet_2),
                 ),
             ),
             PrivacySection(
-                title = "Backups and sharing",
+                title = context.getString(R.string.privacy_screen_section_backups_title),
                 bullets = listOf(
-                    "Backup exports stay full-fidelity so a profile can be restored later, even while privacy mode is on.",
-                    "Plain-text sharing can be redacted when privacy mode is enabled.",
+                    context.getString(R.string.privacy_screen_section_backups_bullet_1),
+                    context.getString(R.string.privacy_screen_section_backups_bullet_2),
                 ),
             ),
             PrivacySection(
-                title = "Deletion and control",
+                title = context.getString(R.string.privacy_screen_section_deletion_title),
                 bullets = listOf(
-                    "Deleting a profile removes it from the local Android store.",
-                    "Questions about backend-held data such as synced friend records or notification tokens should go to privacy@astromeric.app.",
+                    context.getString(R.string.privacy_screen_section_deletion_bullet_1),
+                    context.getString(R.string.privacy_screen_section_deletion_bullet_2),
                 ),
             ),
         )
@@ -197,15 +197,20 @@ fun PrivacyScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         PremiumHeroCard(
-            eyebrow = "Privacy",
-            title = "Make the data boundary legible.",
-            body = "This screen explains what stays local, what still reaches the backend, and how redaction changes the visible UI.",
-            chips = listOf("Local-first", "Permissions", "Control", "${profiles.size} local profile(s)"),
+            eyebrow = stringResource(R.string.privacy_screen_hero_eyebrow),
+            title = stringResource(R.string.privacy_screen_hero_title),
+            body = stringResource(R.string.privacy_screen_hero_body),
+            chips = listOf(
+                stringResource(R.string.privacy_screen_chip_local_first),
+                stringResource(R.string.privacy_screen_chip_permissions),
+                stringResource(R.string.privacy_screen_chip_control),
+                stringResource(R.string.privacy_screen_chip_profile_count, profiles.size),
+            ),
         )
 
         PremiumContentCard(
-            title = "Hide Sensitive Details",
-            body = privacyModeSummary(hideSensitiveDetailsEnabled),
+            title = stringResource(R.string.privacy_screen_hide_sensitive_details_title),
+            body = privacyModeSummary(context, hideSensitiveDetailsEnabled),
         ) {
                 Switch(
                     checked = hideSensitiveDetailsEnabled,
@@ -304,11 +309,14 @@ fun PrivacyScreen(
         }
 
         PremiumContentCard(
-            title = "Export, import, and share",
+            title = stringResource(R.string.privacy_screen_export_import_share_title),
             body = selectedProfile?.let {
-                "Selected profile: ${it.displayName(hideSensitiveDetailsEnabled, PrivacyDisplayRole.ACTIVE_USER)}"
-            } ?: "Select a profile before exporting or sharing.",
-            footer = "Backup exports always retain full profile details so they can be restored later. Redaction affects plain-text sharing and visible labels, not the backup payload itself.",
+                stringResource(
+                    R.string.privacy_screen_selected_profile,
+                    it.displayName(hideSensitiveDetailsEnabled, PrivacyDisplayRole.ACTIVE_USER),
+                )
+            } ?: stringResource(R.string.privacy_screen_select_profile_before_export),
+            footer = stringResource(R.string.privacy_screen_export_import_share_footer),
         ) {
                 Button(
                     enabled = selectedProfile != null,
@@ -322,7 +330,7 @@ fun PrivacyScreen(
                         exportLauncher.launch(export.fileName)
                     },
                 ) {
-                    Text("Export selected profile")
+                    Text(stringResource(R.string.privacy_screen_export_selected_profile))
                 }
                 OutlinedButton(
                     enabled = selectedProfile != null,
@@ -330,20 +338,25 @@ fun PrivacyScreen(
                         val profile = selectedProfile ?: return@OutlinedButton
                         val shareIntent = Intent(Intent.ACTION_SEND).apply {
                             type = "text/plain"
-                            putExtra(Intent.EXTRA_SUBJECT, "AstroNumeric profile")
-                            putExtra(Intent.EXTRA_TEXT, profile.toShareSummaryText(hideSensitiveDetailsEnabled))
+                            putExtra(Intent.EXTRA_SUBJECT, context.getString(R.string.privacy_screen_share_profile_subject))
+                            putExtra(Intent.EXTRA_TEXT, profile.toShareSummaryText(context, hideSensitiveDetailsEnabled))
                         }
-                        context.startActivity(Intent.createChooser(shareIntent, "Share profile summary"))
+                        context.startActivity(
+                            Intent.createChooser(
+                                shareIntent,
+                                context.getString(R.string.privacy_screen_share_profile_chooser_title),
+                            ),
+                        )
                     },
                 ) {
-                    Text("Share text summary")
+                    Text(stringResource(R.string.privacy_screen_share_text_summary))
                 }
                 OutlinedButton(
                     onClick = {
                         importLauncher.launch(arrayOf("application/json", "text/plain"))
                     },
                 ) {
-                    Text("Import profile backup")
+                    Text(stringResource(R.string.privacy_screen_import_profile_backup))
                 }
         }
 
@@ -359,21 +372,21 @@ fun PrivacyScreen(
         }
 
         PremiumContentCard(
-            title = "Questions?",
-            body = "For privacy questions, deletion requests, or backend-held data concerns, email privacy@astromeric.app.",
+            title = stringResource(R.string.privacy_screen_questions_title),
+            body = stringResource(R.string.privacy_screen_questions_body),
         ) {
                 OutlinedButton(
                     onClick = {
                         val emailIntent = Intent(Intent.ACTION_SENDTO).apply {
                             data = Uri.parse("mailto:privacy@astromeric.app")
-                            putExtra(Intent.EXTRA_SUBJECT, "AstroNumeric privacy question")
-                            putExtra(Intent.EXTRA_TEXT, privacySupportEmailBody())
+                            putExtra(Intent.EXTRA_SUBJECT, context.getString(R.string.privacy_screen_privacy_question_subject))
+                            putExtra(Intent.EXTRA_TEXT, privacySupportEmailBody(context))
                         }
                         context.startActivity(emailIntent)
                     },
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Text("privacy@astromeric.app")
+                    Text(stringResource(R.string.privacy_screen_privacy_email))
                 }
         }
     }

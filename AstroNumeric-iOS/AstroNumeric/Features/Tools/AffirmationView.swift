@@ -26,31 +26,29 @@ struct AffirmationView: View {
         ZStack {
             CosmicBackgroundView(element: nil)
                 .ignoresSafeArea()
-            
-            VStack(spacing: 32) {
-                Spacer()
 
-                PremiumHeroCard(
-                            eyebrow: "hero.affirmation.eyebrow".localized,
-                            title: "hero.affirmation.title".localized,
-                            bodyText: "hero.affirmation.body".localized,
-                            accent: [Color(hex: "2a1437"), Color(hex: "8e3fa7"), Color(hex: "d86d71")],
-                            chips: ["hero.affirmation.chip.0".localized, "hero.affirmation.chip.1".localized, "hero.affirmation.chip.2".localized]
-                        )
-                
-                // Affirmation display
-                if let affirmation = affirmation {
-                    affirmationCard(affirmation)
-                } else {
-                    placeholderCard
+            ScrollView {
+                VStack(spacing: 32) {
+                    PremiumScreenHeader(
+                        eyebrow: "hero.affirmation.eyebrow".localized,
+                        title: "hero.affirmation.title".localized,
+                        subtitle: "hero.affirmation.body".localized,
+                        accent: .accentPrimary,
+                        chips: ["hero.affirmation.chip.0".localized, "hero.affirmation.chip.1".localized, "hero.affirmation.chip.2".localized]
+                    )
+
+                    // Affirmation display
+                    if let affirmation = affirmation {
+                        affirmationCard(affirmation)
+                    } else {
+                        placeholderCard
+                    }
+
+                    refreshButton
                 }
-
-                refreshButton
-                
-                Spacer()
+                .padding()
+                .readableContainer()
             }
-            .padding()
-            .readableContainer()
         }
         .navigationTitle("screen.affirmation".localized)
         .navigationBarTitleDisplayMode(.inline)

@@ -117,7 +117,7 @@ export function LearningCenter() {
     if (modules.length === 0) {
       return (
         <div className="learning-center error">
-          <p>Learning modules are not available yet. The desk shell is live, but the content feed is still catching up.</p>
+          <p>Learning modules are coming soon. Check back after the next update.</p>
         </div>
       );
     }

@@ -13,12 +13,17 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.astromeric.android.R
 import com.astromeric.android.core.model.AppProfile
 import com.astromeric.android.core.model.AstroDataSource
 import com.astromeric.android.core.model.ChartData
+import com.astromeric.android.core.model.DataQuality
 import com.astromeric.android.core.model.PrivacyDisplayRole
 import com.astromeric.android.core.model.displayName
+import com.astromeric.android.core.ui.DataQualityBanner
 import com.astromeric.android.core.ui.PremiumLoadingCard
 
 @Composable
@@ -34,34 +39,41 @@ internal fun BirthChartTab(
     onOpenBirthChart: () -> Unit,
     hideSensitiveDetailsEnabled: Boolean,
 ) {
+    val context = LocalContext.current
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        if (selectedProfile != null && selectedProfile.dataQuality != DataQuality.FULL) {
+            DataQualityBanner(quality = selectedProfile.dataQuality)
+        }
         StudioSectionCard(
-            title = "Birth chart foundation",
-            subtitle = "Android prefers the live backend for natal charts, then falls back to on-device Swiss or a saved snapshot so the chart remains readable.",
+            title = stringResource(R.string.charts_birth_foundation_title),
+            subtitle = stringResource(R.string.charts_birth_foundation_subtitle),
         ) {
             Text(
-                text = "Current profile quality: ${selectedProfile?.dataQuality?.label ?: "No profile selected"}",
+                text = stringResource(
+                    R.string.charts_current_profile_quality_format,
+                    selectedProfile?.dataQuality?.label ?: stringResource(R.string.charts_no_profile_selected),
+                ),
                 style = MaterialTheme.typography.bodyMedium,
             )
             if (natalChart != null && chartSource != null) {
                 AssistChip(
                     onClick = {},
-                    label = { Text(chartSourceLabel(chartSource, cachedChartActive)) },
+                    label = { Text(chartSourceLabel(context, chartSource, cachedChartActive)) },
                 )
                 Text(
-                    text = chartSourceDetail(chartSource, cachedChartActive),
+                    text = chartSourceDetail(context, chartSource, cachedChartActive),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
             when {
                 selectedProfile == null -> Text(
-                    text = "Select or create a profile before requesting chart data.",
+                    text = stringResource(R.string.charts_birth_tab_profile_required),
                     style = MaterialTheme.typography.bodyMedium,
                 )
 
                 !selectedProfile.canRequestNatalChart -> Text(
-                    text = "Add birthplace coordinates and timezone to unlock natal chart calculations. Birth time is optional and will fall back to noon-style estimation.",
+                    text = stringResource(R.string.charts_birth_tab_require_location_timezone),
                     style = MaterialTheme.typography.bodyMedium,
                 )
 
@@ -74,13 +86,19 @@ internal fun BirthChartTab(
                         onClick = onRefresh,
                         enabled = !isLoading,
                     ) {
-                        Text(if (isLoading) "Refreshing..." else "Refresh chart")
+                        Text(
+                            if (isLoading) {
+                                stringResource(R.string.status_refreshing)
+                            } else {
+                                stringResource(R.string.charts_action_refresh_chart)
+                            },
+                        )
                     }
                     OutlinedButton(
                         onClick = onOpenBirthChart,
                         enabled = natalChart != null,
                     ) {
-                        Text("Open full Birth Chart")
+                        Text(stringResource(R.string.charts_action_open_full_birth_chart))
                     }
                 }
             }
@@ -88,12 +106,12 @@ internal fun BirthChartTab(
 
         if (cachedChartActive && natalChart != null) {
             StudioSectionCard(
-                title = "Offline resilience",
-                subtitle = chartSourceDetail(chartSource, cachedChartActive),
+                title = stringResource(R.string.charts_offline_resilience_title),
+                subtitle = chartSourceDetail(context, chartSource, cachedChartActive),
             ) {
                 cachedAtEpochMillis?.let { cachedAt ->
                     Text(
-                        text = "Cached ${formatChartCacheTimestamp(cachedAt)}",
+                        text = stringResource(R.string.charts_cached_at_format, formatChartCacheTimestamp(cachedAt)),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -102,56 +120,69 @@ internal fun BirthChartTab(
         }
 
         when {
-            isLoading -> PremiumLoadingCard(title = "Loading natal chart")
+            isLoading -> PremiumLoadingCard(title = stringResource(R.string.charts_loading_natal_chart))
 
             errorMessage != null -> StatusCard(message = errorMessage, isError = true)
 
             natalChart != null -> {
                 StudioSectionCard(
-                    title = selectedProfile?.displayName(hideSensitiveDetailsEnabled, PrivacyDisplayRole.ACTIVE_USER) ?: "Birth Chart",
-                    subtitle = "Use the studio tab for orientation, then open the full chart flow for a dedicated detail and export surface.",
+                    title = selectedProfile?.displayName(hideSensitiveDetailsEnabled, PrivacyDisplayRole.ACTIVE_USER) ?: stringResource(R.string.charts_birth_title),
+                    subtitle = stringResource(R.string.charts_birth_tab_identity_subtitle),
                 ) {
                     Row(
                         modifier = Modifier.horizontalScroll(rememberScrollState()),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         listOfNotNull(
-                            natalChart.planets.firstOrNull { it.name.equals("Sun", ignoreCase = true) }?.let { "Sun ${it.sign}" },
-                            natalChart.planets.firstOrNull { it.name.equals("Moon", ignoreCase = true) }?.let { "Moon ${it.sign}" },
+                            natalChart.planets.firstOrNull { it.name.equals("Sun", ignoreCase = true) }?.let {
+                                stringResource(R.string.charts_chip_sun_format, it.sign)
+                            },
+                            natalChart.planets.firstOrNull { it.name.equals("Moon", ignoreCase = true) }?.let {
+                                stringResource(R.string.charts_chip_moon_format, it.sign)
+                            },
                             natalChart.points.firstOrNull {
                                 it.name.equals("Ascendant", ignoreCase = true) || it.name.equals("ASC", ignoreCase = true)
-                            }?.let { "Rising ${it.sign}" },
+                            }?.let { stringResource(R.string.charts_chip_rising_format, it.sign) },
                         ).forEach { chip ->
                             AssistChip(onClick = {}, label = { Text(chip) })
                         }
                     }
                     TextButton(onClick = onOpenBirthChart) {
-                        Text("Open dedicated chart detail")
+                        Text(stringResource(R.string.charts_action_open_dedicated_chart_detail))
                     }
                 }
 
                 natalChart.metadata?.let { metadata ->
                     StudioSectionCard(
-                        title = "Chart metadata",
-                        subtitle = "Read the calculation context before interpreting placements.",
+                        title = stringResource(R.string.charts_chart_metadata_title),
+                        subtitle = stringResource(R.string.charts_chart_metadata_subtitle),
                     ) {
                         metadata.dataQuality?.let { quality ->
                             AssistChip(onClick = {}, label = { Text(quality) })
                         }
                         chartSource?.let { source ->
-                            AssistChip(onClick = {}, label = { Text(chartSourceLabel(source, cachedChartActive)) })
+                            AssistChip(onClick = {}, label = { Text(chartSourceLabel(context, source, cachedChartActive)) })
                         }
                         Text(
-                            text = "House system: ${metadata.houseSystem ?: selectedProfile?.houseSystem ?: "Unknown"}",
+                            text = stringResource(
+                                R.string.charts_house_system_format,
+                                metadata.houseSystem ?: selectedProfile?.houseSystem ?: stringResource(R.string.charts_unknown),
+                            ),
                             style = MaterialTheme.typography.bodyMedium,
                         )
                         Text(
-                            text = "Timezone: ${metadata.timezone ?: selectedProfile?.timezone ?: "Unknown"}",
+                            text = stringResource(
+                                R.string.charts_timezone_format,
+                                metadata.timezone ?: selectedProfile?.timezone ?: stringResource(R.string.charts_unknown),
+                            ),
                             style = MaterialTheme.typography.bodyMedium,
                         )
                         if (metadata.birthTimeAssumed == true) {
                             Text(
-                                text = "Birth time was assumed at ${metadata.assumedTimeOfBirth ?: "12:00"}.",
+                                text = stringResource(
+                                    R.string.charts_birth_time_assumed_format,
+                                    metadata.assumedTimeOfBirth ?: "12:00",
+                                ),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
@@ -161,22 +192,22 @@ internal fun BirthChartTab(
 
                 if (natalChart.planets.isNotEmpty()) {
                     StudioSectionCard(
-                        title = "Planet preview",
-                        subtitle = "The dedicated detail flow carries the full placement list, export actions, and a more iOS-like reading order.",
+                        title = stringResource(R.string.charts_planet_preview_title),
+                        subtitle = stringResource(R.string.charts_planet_preview_subtitle),
                     ) {
                         natalChart.planets.take(6).forEach { placement ->
                             PlanetPlacementRow(placement = placement)
                         }
                         TextButton(onClick = onOpenBirthChart) {
-                            Text("See all placements")
+                            Text(stringResource(R.string.charts_action_see_all_placements))
                         }
                     }
                 }
 
                 if (natalChart.houses.isNotEmpty()) {
                     StudioSectionCard(
-                        title = "House preview",
-                        subtitle = "Houses tell you where each theme is landing in lived experience.",
+                        title = stringResource(R.string.charts_house_preview_title),
+                        subtitle = stringResource(R.string.charts_house_preview_subtitle),
                     ) {
                         natalChart.houses.take(6).forEach { house ->
                             HousePlacementRow(house = house)
@@ -186,8 +217,8 @@ internal fun BirthChartTab(
 
                 if (natalChart.aspects.isNotEmpty()) {
                     StudioSectionCard(
-                        title = "Aspect preview",
-                        subtitle = "These are the strongest internal tensions and harmonies in the natal pattern.",
+                        title = stringResource(R.string.charts_aspect_preview_title),
+                        subtitle = stringResource(R.string.charts_aspect_preview_subtitle),
                     ) {
                         natalChart.aspects.take(8).forEach { aspect ->
                             AspectRow(aspect = aspect)
@@ -203,23 +234,24 @@ internal fun BirthChartTab(
 internal fun CompatibilityTab(
     selectedProfile: AppProfile?,
     partnerProfiles: List<AppProfile>,
+    onOpenCompatibility: () -> Unit,
     onOpenRelationships: () -> Unit,
     onOpenSynastry: () -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         StudioSectionCard(
-            title = "Relationship chemistry",
-            subtitle = "Compatibility is more useful when it explains where connection is easy, where friction is productive, and where effort is required.",
+            title = stringResource(R.string.charts_relationship_chemistry_title),
+            subtitle = stringResource(R.string.charts_relationship_chemistry_subtitle),
         ) {
             when {
                 selectedProfile == null -> Text(
-                    text = "Select your primary profile to compare relationships.",
+                    text = stringResource(R.string.charts_select_primary_profile_relationships),
                     style = MaterialTheme.typography.bodyMedium,
                 )
 
                 else -> {
                     Text(
-                        text = "Saved comparison profiles: ${partnerProfiles.size}",
+                        text = stringResource(R.string.charts_saved_comparison_profiles_format, partnerProfiles.size),
                         style = MaterialTheme.typography.bodyMedium,
                     )
                     if (partnerProfiles.isNotEmpty()) {
@@ -240,19 +272,27 @@ internal fun CompatibilityTab(
         }
 
         StudioActionCard(
-            title = "Open Relationships",
-            subtitle = "Go to the broader compatibility workspace for romantic, friendship, and timing tools.",
-            buttonLabel = "Open Relationships",
+            title = stringResource(R.string.charts_open_compatibility_title),
+            subtitle = stringResource(R.string.charts_open_compatibility_subtitle),
+            buttonLabel = stringResource(R.string.charts_action_open_compatibility),
+            onClick = onOpenCompatibility,
+            enabled = selectedProfile != null,
+        )
+
+        StudioActionCard(
+            title = stringResource(R.string.charts_open_relationships_title),
+            subtitle = stringResource(R.string.charts_open_relationships_subtitle),
+            buttonLabel = stringResource(R.string.charts_action_open_relationships),
             onClick = onOpenRelationships,
         )
 
         StudioActionCard(
-            title = "Jump to Synastry",
-            subtitle = "When both people have chart-ready data, move straight into aspect-level comparison.",
-            buttonLabel = "Open Synastry",
+            title = stringResource(R.string.charts_jump_to_synastry_title),
+            subtitle = stringResource(R.string.charts_jump_to_synastry_subtitle),
+            buttonLabel = stringResource(R.string.charts_action_open_synastry),
             onClick = onOpenSynastry,
             enabled = selectedProfile != null && partnerProfiles.isNotEmpty(),
-            note = if (partnerProfiles.isEmpty()) "Add another saved profile first." else null,
+            note = if (partnerProfiles.isEmpty()) stringResource(R.string.charts_add_saved_profile_first) else null,
         )
     }
 }
@@ -268,57 +308,57 @@ internal fun AdvancedChartsTab(
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         StudioSectionCard(
-            title = "Advanced chart layers",
-            subtitle = "Pick the layer that matches the question instead of forcing every question through the natal chart alone.",
+            title = stringResource(R.string.charts_advanced_layers_title),
+            subtitle = stringResource(R.string.charts_advanced_layers_subtitle),
         ) {
             Text(
-                text = "Returns explain the year, progressions explain inner development, synastry explains contact, and composite explains the relationship itself.",
+                text = stringResource(R.string.charts_advanced_layers_body),
                 style = MaterialTheme.typography.bodyMedium,
             )
         }
 
         StudioActionCard(
-            title = "Solar Return + Year Ahead",
-            subtitle = "Read your personal year, solar return framing, and monthly themes in one dedicated flow.",
-            buttonLabel = "Open Year Ahead",
+            title = stringResource(R.string.charts_solar_return_title),
+            subtitle = stringResource(R.string.charts_solar_return_subtitle),
+            buttonLabel = stringResource(R.string.charts_action_open_year_ahead),
             onClick = onOpenYearAhead,
         )
 
         StudioActionCard(
-            title = "Progressions",
-            subtitle = "Open the dedicated progression flow instead of loading a compact summary inside the studio.",
-            buttonLabel = "Open Progressions",
+            title = stringResource(R.string.charts_progressions_card_title),
+            subtitle = stringResource(R.string.charts_progressions_card_subtitle),
+            buttonLabel = stringResource(R.string.charts_action_open_progressions),
             onClick = onOpenProgressions,
             enabled = selectedProfile?.canRequestNatalChart == true,
             note = if (selectedProfile?.canRequestNatalChart != true) {
-                "Add birthplace coordinates and timezone to unlock progressed chart calculations."
+                stringResource(R.string.charts_progressions_require_location_timezone)
             } else {
                 null
             },
         )
 
         StudioActionCard(
-            title = "Synastry",
-            subtitle = "Move into a dedicated aspect-level comparison between two chart-ready profiles.",
-            buttonLabel = "Open Synastry",
+            title = stringResource(R.string.charts_synastry_card_title),
+            subtitle = stringResource(R.string.charts_synastry_card_subtitle),
+            buttonLabel = stringResource(R.string.charts_action_open_synastry),
             onClick = onOpenSynastry,
             enabled = selectedProfile?.canRequestNatalChart == true && partnerProfiles.isNotEmpty(),
             note = when {
-                partnerProfiles.isEmpty() -> "Add another saved profile first."
-                selectedProfile?.canRequestNatalChart != true -> "Finish the primary profile's birth coordinates and timezone first."
+                partnerProfiles.isEmpty() -> stringResource(R.string.charts_add_saved_profile_first)
+                selectedProfile?.canRequestNatalChart != true -> stringResource(R.string.charts_finish_primary_profile_birth_details)
                 else -> null
             },
         )
 
         StudioActionCard(
-            title = "Composite Chart",
-            subtitle = "See the relationship's shared chart in its own flow instead of a compressed card.",
-            buttonLabel = "Open Composite",
+            title = stringResource(R.string.charts_composite_card_title),
+            subtitle = stringResource(R.string.charts_composite_card_subtitle),
+            buttonLabel = stringResource(R.string.charts_action_open_composite),
             onClick = onOpenComposite,
             enabled = selectedProfile?.canRequestNatalChart == true && partnerProfiles.isNotEmpty(),
             note = when {
-                partnerProfiles.isEmpty() -> "Add another saved profile first."
-                selectedProfile?.canRequestNatalChart != true -> "Finish the primary profile's birth coordinates and timezone first."
+                partnerProfiles.isEmpty() -> stringResource(R.string.charts_add_saved_profile_first)
+                selectedProfile?.canRequestNatalChart != true -> stringResource(R.string.charts_finish_primary_profile_birth_details)
                 else -> null
             },
         )

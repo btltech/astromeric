@@ -180,6 +180,22 @@ def calculate_personal_day(personal_month: int, day: int) -> int:
     return reduce_number(personal_month + day, keep_master=True)
 
 
+# Short 1-line phase themes per Pinnacle numerological value
+PINNACLE_THEMES: Dict[int, str] = {
+    1: "A phase of independence — initiate, lead, and forge your own path.",
+    2: "A phase of cooperation — develop patience, sensitivity, and partnerships.",
+    3: "A phase of expression — creative energy, communication, and social joy.",
+    4: "A phase of foundations — disciplined effort, structure, and lasting stability.",
+    5: "A phase of freedom — embrace change, adventure, and new experiences.",
+    6: "A phase of responsibility — home, family, healing, and service.",
+    7: "A phase of inner growth — seek wisdom, solitude, and spiritual truth.",
+    8: "A phase of achievement — material mastery, authority, and ambition.",
+    9: "A phase of completion — release the past and serve with compassion.",
+    11: "A phase of illumination — heightened intuition and inspired vision.",
+    22: "A phase of mastery — build something lasting and of lasting significance.",
+}
+
+
 def calculate_pinnacles(dob: str, lang: str = "en") -> List[Dict]:
     """Calculate the 4 Pinnacles with their periods and numbers."""
     parts = dob.split("-")
@@ -232,26 +248,34 @@ def calculate_pinnacles(dob: str, lang: str = "en") -> List[Dict]:
 
     return [
         {
+            "index": 1,
             "number": p1,
             "period": period1,
+            "short_meaning": PINNACLE_THEMES.get(p1, ""),
             "start_year": birth_year,
             "end_year": birth_year + first_end,
         },
         {
+            "index": 2,
             "number": p2,
             "period": period2,
+            "short_meaning": PINNACLE_THEMES.get(p2, ""),
             "start_year": birth_year + first_end + 1,
             "end_year": birth_year + first_end + 9,
         },
         {
+            "index": 3,
             "number": p3,
             "period": period3,
+            "short_meaning": PINNACLE_THEMES.get(p3, ""),
             "start_year": birth_year + first_end + 10,
             "end_year": birth_year + first_end + 18,
         },
         {
+            "index": 4,
             "number": p4,
             "period": period4,
+            "short_meaning": PINNACLE_THEMES.get(p4, ""),
             "start_year": birth_year + first_end + 19,
             "end_year": None,
         },
@@ -259,7 +283,7 @@ def calculate_pinnacles(dob: str, lang: str = "en") -> List[Dict]:
 
 
 def calculate_challenges(dob: str, lang: str = "en") -> List[Dict]:
-    """Calculate the 3 Challenges."""
+    """Calculate the 4 Challenges (Pythagorean system)."""
     parts = dob.split("-")
     year, month, day = int(parts[0]), int(parts[1]), int(parts[2])
 
@@ -267,49 +291,32 @@ def calculate_challenges(dob: str, lang: str = "en") -> List[Dict]:
     day_r = reduce_number(day, keep_master=False)
     year_r = reduce_number(year, keep_master=False)
 
-    c1 = abs(month_r - day_r)
-    c2 = abs(day_r - year_r)
-    c3 = abs(c1 - c2)
+    c1 = abs(month_r - day_r)          # First Challenge  (early life)
+    c2 = abs(day_r - year_r)           # Second Challenge (middle life)
+    c3 = abs(c1 - c2)                  # Third Challenge  (main / lifelong)
+    c4 = abs(month_r - year_r)         # Fourth Challenge (lifetime undertone)
 
     # Localize labels and descriptions
     if lang == "en":
-        l1, d1 = "First Challenge", "Early life lesson"
-        l2, d2 = "Second Challenge", "Middle life lesson"
-        l3, d3 = "Main Challenge", "Lifelong lesson"
+        l1, d1 = "First Challenge", "Early life lesson — shapes youth and young adulthood."
+        l2, d2 = "Second Challenge", "Middle life lesson — shapes the mature years."
+        l3, d3 = "Main Challenge", "Lifelong lesson — the recurring theme across all phases."
+        l4, d4 = "Fourth Challenge", "Lifetime undertone — present at every stage of life."
     else:
-        l1 = (
-            get_translation(lang, "numerology_challenges", "first_label")
-            or "First Challenge"
-        )
-        d1 = (
-            get_translation(lang, "numerology_challenges", "first_desc")
-            or "Early life lesson"
-        )
-        l2 = (
-            get_translation(lang, "numerology_challenges", "second_label")
-            or "Second Challenge"
-        )
-        d2 = (
-            get_translation(lang, "numerology_challenges", "second_desc")
-            or "Middle life lesson"
-        )
-        l3 = (
-            get_translation(lang, "numerology_challenges", "main_label")
-            or "Main Challenge"
-        )
-        d3 = (
-            get_translation(lang, "numerology_challenges", "main_desc")
-            or "Lifelong lesson"
-        )
+        l1 = get_translation(lang, "numerology_challenges", "first_label") or "First Challenge"
+        d1 = get_translation(lang, "numerology_challenges", "first_desc") or "Early life lesson"
+        l2 = get_translation(lang, "numerology_challenges", "second_label") or "Second Challenge"
+        d2 = get_translation(lang, "numerology_challenges", "second_desc") or "Middle life lesson"
+        l3 = get_translation(lang, "numerology_challenges", "main_label") or "Main Challenge"
+        d3 = get_translation(lang, "numerology_challenges", "main_desc") or "Lifelong lesson"
+        l4 = get_translation(lang, "numerology_challenges", "fourth_label") or "Fourth Challenge"
+        d4 = get_translation(lang, "numerology_challenges", "fourth_desc") or "Lifetime undertone"
 
     return [
-        {"number": c1, "label": l1, "description": d1},
-        {
-            "number": c2,
-            "label": l2,
-            "description": d2,
-        },
-        {"number": c3, "label": l3, "description": d3},
+        {"index": 1, "number": c1, "label": l1, "description": d1},
+        {"index": 2, "number": c2, "label": l2, "description": d2},
+        {"index": 3, "number": c3, "label": l3, "description": d3},
+        {"index": 4, "number": c4, "label": l4, "description": d4},
     ]
 
 
@@ -388,14 +395,17 @@ def get_full_numerology_profile(name: str, dob: str, lang: str = "en") -> Dict:
         },
         "pinnacles": [
             {
+                "index": p["index"],
                 "number": p["number"],
                 "period": p["period"],
+                "short_meaning": p["short_meaning"],
                 **get_number_meaning(p["number"], lang=lang),
             }
             for p in pinnacles
         ],
         "challenges": [
             {
+                "index": c["index"],
                 "number": c["number"],
                 "label": c["label"],
                 **get_number_meaning(c["number"], lang=lang),

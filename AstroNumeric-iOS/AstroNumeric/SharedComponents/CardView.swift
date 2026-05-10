@@ -33,10 +33,10 @@ enum FeatureProvenance: String {
 
     var accent: Color {
         switch self {
-        case .calculated: return .green
-        case .hybrid: return .blue
-        case .interpretive: return .orange
-        case .reference: return .mint
+        case .calculated: return .positiveGreen
+        case .hybrid: return .cosmicBlue
+        case .interpretive: return .warningOrange
+        case .reference: return .accentPrimary
         }
     }
 }
@@ -63,6 +63,7 @@ struct CardView<Content: View>: View {
     var padding: CGFloat = 18
     var cornerRadius: CGFloat = Radius.md
     var material: Material = .ultraThinMaterial
+    var materialOpacity: Double = 0.5
     var backgroundColor: Color = .cardBackground
     var borderColor: Color = .borderSubtle
     var withShadow: Bool = true
@@ -71,6 +72,7 @@ struct CardView<Content: View>: View {
         padding: CGFloat = 18,
         cornerRadius: CGFloat = Radius.md,
         material: Material = .ultraThinMaterial,
+        materialOpacity: Double = 0.5,
         backgroundColor: Color = .cardBackground,
         borderColor: Color = .borderSubtle,
         withShadow: Bool = true,
@@ -79,6 +81,7 @@ struct CardView<Content: View>: View {
         self.padding = padding
         self.cornerRadius = cornerRadius
         self.material = material
+        self.materialOpacity = materialOpacity
         self.backgroundColor = backgroundColor
         self.borderColor = borderColor
         self.withShadow = withShadow
@@ -94,7 +97,7 @@ struct CardView<Content: View>: View {
                         .fill(backgroundColor)
                     RoundedRectangle(cornerRadius: cornerRadius)
                         .fill(material)
-                        .opacity(0.5)
+                        .opacity(materialOpacity)
                 }
             )
             .overlay(
@@ -124,17 +127,17 @@ private struct ConditionalCardShadow: ViewModifier {
 
 struct GlowCardView<Content: View>: View {
     let content: Content
-    var glowColor: Color = .purple
+    var glowColor: Color = .accentPrimary
     var glowRadius: CGFloat = 20
     var padding: CGFloat = 16
-    var cornerRadius: CGFloat = 16
+    var cornerRadius: CGFloat = Radius.md
     var backgroundColor: Color = .cardBackground
     
     init(
-        glowColor: Color = .purple,
+        glowColor: Color = .accentPrimary,
         glowRadius: CGFloat = 20,
         padding: CGFloat = 16,
-        cornerRadius: CGFloat = 16,
+        cornerRadius: CGFloat = Radius.md,
         backgroundColor: Color = .cardBackground,
         @ViewBuilder content: () -> Content
     ) {
@@ -221,7 +224,7 @@ struct SectionCard<Content: View>: View {
             }
         }
         
-        GlowCardView(glowColor: .purple) {
+        GlowCardView(glowColor: .accentPrimary) {
             VStack(spacing: 8) {
                 Text("ui.card.2".localized)
                     .font(.label)

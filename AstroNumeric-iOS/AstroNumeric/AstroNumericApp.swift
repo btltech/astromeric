@@ -10,23 +10,24 @@ import BackgroundTasks
 struct AstroNumericApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @State private var appStore = AppStore.shared
+    @State private var services = AppServices.live
     @Environment(\.scenePhase) private var scenePhase
     
     var body: some Scene {
         WindowGroup {
             ContentView()
                 .environment(appStore)
+                .environment(services)
                 .preferredColorScheme(.dark)
                 .task {
                     await appStore.loadInitialData()
-                    await setupNotificationsIfNeeded()
-                    if let profile = appStore.activeProfile {
-                        _ = try? await WidgetDataProvider.shared.refreshMorningBrief(profile: profile)
-                    }
+                    await services.refreshCoordinator.refreshOnLaunch(
+                        profile: appStore.activeProfile,
+                        dailyReminderEnabled: appStore.dailyReminderEnabled
+                    )
                 }
                 .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
                     Task {
-                        await NotificationService.shared.clearBadge()
                         // Update streak on foreground in case user crossed midnight
                         await MainActor.run {
                             appStore.updateStreak()
@@ -36,63 +37,11 @@ struct AstroNumericApp: App {
                 .onChange(of: scenePhase) { oldPhase, newPhase in
                     if newPhase == .active {
                         let profile = AppStore.shared.activeProfile
-
-                        // All foreground work in PARALLEL, independent tasks.
-                        // No actor waits on another.
-
-                        Task.detached(priority: .background) {
-                            await BiometricLogger.shared.logToday(profile: profile)
+                        Task {
+                            await services.refreshCoordinator.refreshOnForeground(profile: profile)
                         }
-
-                        Task.detached(priority: .background) {
-                            if let lat = profile?.latitude, let lon = profile?.longitude {
-                                await WidgetDataProvider.shared.updatePlanetaryHours(
-                                    latitude: lat, longitude: lon
-                                )
-                            }
-                        }
-
-                        Task.detached(priority: .background) {
-                            await WidgetDataProvider.shared.updateMoonPhase()
-                        }
-
-                        Task.detached(priority: .background) {
-                            if let profile {
-                                _ = try? await WidgetDataProvider.shared.refreshMorningBrief(profile: profile)
-                            }
-                        }
-
-                        Task.detached(priority: .background) {
-                            WidgetCenter.shared.reloadAllTimelines()
-                        }
-
-                        Task.detached(priority: .background) {
-                            let lastScan = UserDefaults.standard.double(forKey: "transit.lastScanTimestamp")
-                            let sixHours: TimeInterval = 6 * 3600
-                            if Date().timeIntervalSince1970 - lastScan > sixHours {
-                                await TransitNotificationScheduler.shared.scanAndSchedule()
-                                TransitNotificationScheduler.shared.scheduleNextBackgroundScan()
-                                UserDefaults.standard.set(Date().timeIntervalSince1970, forKey: "transit.lastScanTimestamp")
-                            }
-                        }
-
-                        // Keep background cache prewarm scheduled.
-                        CachePrewarmScheduler.shared.scheduleNextBackgroundPrewarm()
                     }
                 }
-        }
-    }
-    
-    private func setupNotificationsIfNeeded() async {
-        // NOTE: BGTask registration is in AppDelegate.didFinishLaunchingWithOptions
-
-        // Check if daily reminder is enabled
-        if appStore.dailyReminderEnabled {
-            let status = await NotificationService.shared.checkPermissionStatus()
-            if status == .authorized {
-                // Schedule reminder for 8 AM by default
-                await NotificationService.shared.scheduleDailyReminder(at: 8, minute: 0)
-            }
         }
     }
 }
@@ -106,6 +55,7 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
     ) -> Bool {
         UNUserNotificationCenter.current().delegate = self
+        PrivacyFilteredCrashReporter.shared.start()
 
         // BGTaskScheduler MUST register during didFinishLaunchingWithOptions
         TransitNotificationScheduler.shared.registerBackgroundTask()

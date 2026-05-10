@@ -4,19 +4,18 @@ Standardized authentication endpoints with JWT tokens.
 """
 
 import json
+import logging
 import os
 import uuid
 from datetime import timedelta
 from typing import Any, Dict, List, Optional
 
 import httpx
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from jose import JWTError
 from jose import jwt as jose_jwt
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
-
-import logging
 
 from ..auth import (
     ACCESS_TOKEN_EXPIRE_MINUTES,
@@ -28,7 +27,11 @@ from ..auth import (
     get_current_user,
     get_user_by_email,
 )
-from ..middleware.rate_limit import login_limiter, password_reset_limiter, register_limiter
+from ..middleware.rate_limit import (
+    login_limiter,
+    password_reset_limiter,
+    register_limiter,
+)
 
 logger = logging.getLogger(__name__)
 from ..models import (
@@ -502,7 +505,9 @@ def migrate_local_data(
                 place_of_birth=reading.profile.place_of_birth,
                 timezone=reading.profile.timezone or "UTC",
                 house_system="Placidus",
-                data_quality=_profile_data_quality(None, None, reading.profile.time_of_birth),
+                data_quality=_profile_data_quality(
+                    None, None, reading.profile.time_of_birth
+                ),
                 user_id=current_user.id,
             )
             db.add(fallback_profile)
@@ -678,7 +683,9 @@ class ResetPasswordRequest(BaseModel):
 
 
 @router.post("/forgot-password", response_model=ApiResponse[Dict[str, Any]])
-def forgot_password(http_request: Request, request: ForgotPasswordRequest, db: Session = Depends(get_db)):
+def forgot_password(
+    http_request: Request, request: ForgotPasswordRequest, db: Session = Depends(get_db)
+):
     """
     Request a password reset email.
 

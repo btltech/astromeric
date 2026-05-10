@@ -77,6 +77,20 @@ internal suspend fun runAstroRefresh(
         moonGuidance = moonPhase?.influence,
     )
     MorningBriefWidgetProvider.refreshAllWidgets(applicationContext)
+    MoonPhaseWidgetProvider.refreshAllWidgets(applicationContext)
+    DailySummaryWidgetProvider.refreshAllWidgets(applicationContext)
+
+    // Compute and cache the planetary hour schedule for today
+    val profileLat = selectedProfile.latitude
+    val profileLon = selectedProfile.longitude
+    if (profileLat != null && profileLon != null) {
+        val planetaryHourStore = PlanetaryHourSnapshotStore(applicationContext)
+        val schedule = PlanetaryHourScheduler.buildSchedule(profileLat, profileLon)
+        if (schedule.isNotEmpty()) {
+            planetaryHourStore.write(schedule)
+        }
+    }
+    PlanetaryHourWidgetProvider.refreshAllWidgets(applicationContext)
 
     val dailyReadingEnabled = preferencesStore.notifyDailyReadingEnabled.first()
     if (

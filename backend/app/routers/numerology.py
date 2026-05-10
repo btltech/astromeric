@@ -49,6 +49,7 @@ class PersonalYearCycle(BaseModel):
 class PinnacleData(BaseModel):
     """Life pinnacle period and its meaning."""
 
+    index: int = 0
     number: int
     ages: Optional[str] = None
     meaning: Optional[str] = None
@@ -57,6 +58,7 @@ class PinnacleData(BaseModel):
 class ChallengeData(BaseModel):
     """Life challenge period and its meaning."""
 
+    index: int = 0
     number: int
     ages: Optional[str] = None
     meaning: Optional[str] = None
@@ -357,23 +359,22 @@ async def calculate_numerology_profile(
         }
         pinnacles = [
             PinnacleData(
+                index=item.get("index", i + 1),
                 number=item.get("number", 0),
                 ages=item.get("period"),
-                meaning=f"{item.get('keyword', '')}: {item.get('description', '')}".strip(
-                    ": "
-                ),
+                meaning=item.get("short_meaning")
+                or f"{item.get('keyword', '')}: {item.get('description', '')}".strip(": "),
             )
-            for item in numerology.get("pinnacles", [])
+            for i, item in enumerate(numerology.get("pinnacles", []))
         ]
         challenges = [
             ChallengeData(
+                index=item.get("index", i + 1),
                 number=item.get("number", 0),
                 ages=item.get("label"),
-                meaning=f"{item.get('keyword', '')}: {item.get('description', '')}".strip(
-                    ": "
-                ),
+                meaning=f"{item.get('keyword', '')}: {item.get('description', '')}".strip(": "),
             )
-            for item in numerology.get("challenges", [])
+            for i, item in enumerate(numerology.get("challenges", []))
         ]
         synthesis_raw = numerology.get("synthesis") or {}
         synthesis = None

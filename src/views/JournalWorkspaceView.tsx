@@ -209,8 +209,8 @@ function buildDerivedStats(entries: JournalWorkspaceEntry[], mode: JournalMode):
       ...emptyStats,
       message:
         mode === 'railway'
-          ? 'Railway has not stored any journal-ready readings for this profile yet.'
-          : 'This device has no journal-ready readings for the active profile yet.',
+          ? 'No journal entries yet for this profile.'
+          : 'This device has no journal entries for the active profile yet.',
     };
   }
 
@@ -449,15 +449,15 @@ export function JournalWorkspaceView() {
         readingsResult.status === 'fulfilled' ? buildRemoteEntries(readingsResult.value.readings) : [];
 
       if (readingsResult.status === 'rejected') {
-        nextIssues.push('Railway could not load journal readings for this profile.');
+        nextIssues.push('Could not load journal readings for this profile.');
       }
 
       if (statsResult.status === 'rejected') {
-        nextIssues.push('Railway could not load journal accountability stats.');
+        nextIssues.push('Could not load journal stats.');
       }
 
       if (patternsResult.status === 'rejected') {
-        nextIssues.push('Railway could not load reflection patterns for this profile.');
+        nextIssues.push('Could not load reflection patterns for this profile.');
       }
 
       const remoteStats = buildRemoteStats(
@@ -538,12 +538,12 @@ export function JournalWorkspaceView() {
         const readingId = Number(selectedEntry.readingId);
 
         if (!Number.isFinite(readingId)) {
-          throw new Error('The selected Railway journal entry is missing a valid reading id.');
+          throw new Error('Cannot save: the selected reading entry is missing a valid ID.');
         }
 
         await addJournalEntry({ reading_id: readingId, entry: entryDraft.trim() }, token as string);
         await recordOutcome({ reading_id: readingId, outcome: outcomeDraft }, token as string);
-        toast.success('Journal entry saved to Railway');
+        toast.success('Journal entry saved');
       } else if (profileKey) {
         const context = {
           scope: selectedEntry.scope,
@@ -567,14 +567,14 @@ export function JournalWorkspaceView() {
   }
 
   const deskModeLabel =
-    journalMode === 'railway' ? 'Railway journal' : hasActiveProfile ? 'Device journal' : 'No active profile';
+    journalMode === 'railway' ? 'Cloud journal' : hasActiveProfile ? 'Device journal' : 'No active profile';
   const modeNote = !activeProfile
-    ? 'Create or select a profile in the reading desk before this workspace can tie reflections to a real person.'
+    ? 'Create or select a profile first to link journal entries to your readings.'
     : journalMode === 'railway'
-      ? 'Readings and reflections sync across your devices.'  
+      ? 'Readings and reflections sync across your devices.'
       : 'Your readings and reflections are saved on this device.';
   const nextMoveCopy = !activeProfile
-    ? 'Start at the reading desk, then come back here once the active profile exists.'
+    ? 'Create a profile and run a reading first, then come back here to start your journal.'
     : journalMode === 'railway'
       ? 'Rate outcomes after each forecast to build your accuracy record.'
       : 'Run a reading and add a note to start your journal.';
@@ -596,7 +596,7 @@ export function JournalWorkspaceView() {
         <div className="product-desk__chips">
           <span className="product-desk__chip">Reflection prompts</span>
           <span className="product-desk__chip">Outcome tracking</span>
-          <span className="product-desk__chip">Local and Railway modes</span>
+          <span className="product-desk__chip">Local and cloud modes</span>
           <span className="product-desk__chip">Reusable reading queue</span>
         </div>
         <div className="product-desk__actions">
@@ -767,7 +767,7 @@ export function JournalWorkspaceView() {
                   <p>{entry.contentSummary}</p>
                   <div className="journal-workspace__entry-row journal-workspace__entry-row--status">
                     <span className="product-desk__badge">{entry.isDraft ? 'Draft' : formatOutcomeLabel(entry.outcome)}</span>
-                    <span>{entry.mode === 'railway' ? 'Railway-backed' : 'Device-local'}</span>
+                    <span>{entry.mode === 'railway' ? 'Cloud' : 'Device'}</span>
                   </div>
                 </button>
               ))}
@@ -777,8 +777,8 @@ export function JournalWorkspaceView() {
               {loading
                 ? 'Loading the journal queue for this profile.'
                 : hasActiveProfile
-                  ? 'Run a reading first or create a local draft so this workspace has something to revisit.'
-                  : 'Create a profile in the reading desk first, then this queue can bind to real readings.'}
+                  ? 'Run a reading first to start your journal.'
+                  : 'Create a profile and run a reading to start your journal.'}
             </div>
           )}
         </article>
@@ -793,7 +793,7 @@ export function JournalWorkspaceView() {
                   <p className="product-desk__note">{selectedEntry.formattedDate}</p>
                 </div>
                 <span className="product-desk__badge">
-                  {selectedEntry.mode === 'railway' ? 'Railway-backed' : 'Device-local'}
+                  {selectedEntry.mode === 'railway' ? 'Cloud' : 'Device'}
                 </span>
               </div>
               <p className="journal-workspace__summary">{selectedEntry.contentSummary}</p>
@@ -829,7 +829,7 @@ export function JournalWorkspaceView() {
                   {saving
                     ? 'Saving...'
                     : selectedEntry.mode === 'railway'
-                      ? 'Save to Railway'
+                      ? 'Save to account'
                       : 'Save on this device'}
                 </button>
               </div>

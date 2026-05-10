@@ -344,7 +344,7 @@ export function LearnView() {
           setModuleIssue(
             response.modules.length > 0
               ? null
-              : 'The live lesson feed returned empty for this category, so the desk is using the native fallback lesson set.'
+              : 'Showing built-in lessons for this category.'
           );
         }
       } catch {
@@ -357,7 +357,7 @@ export function LearnView() {
               : fallbackModules[0]?.id ?? null
           );
           setModuleIssue(
-            'The live lesson feed is unavailable right now, so the desk is using the native fallback lesson set.'
+            'Lesson content is temporarily unavailable. Showing built-in lessons instead.'
           );
         }
       } finally {
@@ -392,7 +392,7 @@ export function LearnView() {
           setGlossaryIssue(
             response.entries.length > 0
               ? null
-              : 'The live glossary feed returned empty, so the learn desk is using starter glossary entries.'
+              : 'Showing built-in glossary entries.'
           );
         }
       } catch {
@@ -404,7 +404,7 @@ export function LearnView() {
               : fallbackGlossaryEntries[0]?.term ?? null
           );
           setGlossaryIssue(
-            'The live glossary feed is unavailable right now, so the learn desk is using starter glossary entries.'
+            'Glossary is temporarily unavailable. Showing built-in entries instead.'
           );
         }
       } finally {

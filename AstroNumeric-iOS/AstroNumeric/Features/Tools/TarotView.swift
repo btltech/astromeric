@@ -9,44 +9,51 @@ struct TarotView: View {
     @State private var isLoading = false
     @State private var isFlipped = false
     @State private var error: String?
+    @ScaledMetric(relativeTo: .body) private var cardWidth: CGFloat = 200
+
+    private var adaptiveCardWidth: CGFloat { min(cardWidth, UIScreen.main.bounds.width * 0.58) }
+    private var adaptiveCardHeight: CGFloat { adaptiveCardWidth * 1.5 }
     
     var body: some View {
         ZStack {
             CosmicBackgroundView(element: nil)
                 .ignoresSafeArea()
-            
-            VStack(spacing: 24) {
-                PremiumHeroCard(
-                            eyebrow: "hero.tarot.eyebrow".localized,
-                            title: "hero.tarot.title".localized,
-                            bodyText: "hero.tarot.body".localized,
-                            accent: [Color(hex: "24123a"), Color(hex: "6a39b2"), Color(hex: "b35582")],
-                            chips: ["hero.tarot.chip.0".localized, "hero.tarot.chip.1".localized, "hero.tarot.chip.2".localized]
-                        )
 
-                // Card display
-                cardSection
-                
-                // Draw button - show initially or after card is revealed
-                if !isLoading {
-                    if tarotCard == nil {
-                        drawButton
-                    } else if isFlipped {
-                        drawAgainButton
+            ScrollView {
+                VStack(spacing: 24) {
+                    PremiumScreenHeader(
+                        eyebrow: "hero.tarot.eyebrow".localized,
+                        title: "hero.tarot.title".localized,
+                        subtitle: "hero.tarot.body".localized,
+                        accent: .accentPrimary,
+                        chips: ["hero.tarot.chip.0".localized, "hero.tarot.chip.1".localized, "hero.tarot.chip.2".localized]
+                    )
+
+                    // Card display
+                    cardSection
+
+                    // Draw button - show initially or after card is revealed
+                    if !isLoading {
+                        if tarotCard == nil {
+                            drawButton
+                        } else if isFlipped {
+                            drawAgainButton
+                        }
+                    }
+
+                    // Card details
+                    if let card = tarotCard, isFlipped {
+                        PremiumSectionHeader(
+                    title: "section.tarot.0.title".localized,
+                    subtitle: "section.tarot.0.subtitle".localized
+                )
+
+                        cardDetails(card)
                     }
                 }
-                
-                // Card details
-                if let card = tarotCard, isFlipped {
-                    PremiumSectionHeader(
-                title: "section.tarot.0.title".localized,
-                subtitle: "section.tarot.0.subtitle".localized
-            )
-
-                    cardDetails(card)
-                }
+                .padding()
+                .readableContainer()
             }
-            .padding()
             .alert(
                 "Daily Tarot",
                 isPresented: Binding(
@@ -58,7 +65,6 @@ struct TarotView: View {
             } message: {
                 Text(error ?? "Something went wrong.")
             }
-            .readableContainer()
         }
         .navigationTitle("screen.tarot".localized)
         .navigationBarTitleDisplayMode(.inline)
@@ -75,7 +81,7 @@ struct TarotView: View {
                         endPoint: .bottomTrailing
                     )
                 )
-                .frame(width: 200, height: 300)
+                .frame(width: adaptiveCardWidth, height: adaptiveCardHeight)
                 .overlay(
                     VStack {
                         Image(systemName: "star.fill")
@@ -114,7 +120,7 @@ struct TarotView: View {
                     endPoint: .bottom
                 )
             )
-            .frame(width: 200, height: 300)
+            .frame(width: adaptiveCardWidth, height: adaptiveCardHeight)
             .overlay(
                 VStack(spacing: 12) {
                     Text(tarotEmoji(for: card.name))

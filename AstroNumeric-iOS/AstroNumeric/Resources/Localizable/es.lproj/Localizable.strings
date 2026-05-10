@@ -727,7 +727,7 @@
 "ui.numerology.11" = "🔄 Current Cycles";
 "ui.numerology.12" = "⚠️ Karmic Debts";
 "ui.numerology.13" = "Past-life patterns calling for conscious work in this lifetime.";
-"ui.numerology.14" = "🏔️ Life Pinnacles";
+"ui.numerology.14" = "🏔️ Life Phases";
 "ui.numerology.15" = "🧩 Life Challenges";
 "ui.numerology.16" = "Create Your Profile";
 "ui.numerology.17" = "Add your birth details to discover your numerology";
@@ -1072,3 +1072,24 @@
 "tern.yearAhead.0b" = "Explain This Year";
 "tern.yearAhead.1a" = "Select a profile to generate your forecast.";
 "tern.yearAhead.1b" = "Tap the year in the top-right to refresh.";
+
+// Cabeceras de sección — pantalla de cartas
+"section.charts.birthChart.title" = "Carta Natal";
+"section.charts.birthChart.subtitle" = "Sol, Luna, Ascendente y posiciones planetarias completas";
+"section.charts.numerology.title" = "Numerología";
+"section.charts.numerology.subtitle" = "Camino de vida y números esenciales de tu fecha de nacimiento";
+"section.charts.compat.title" = "Compatibilidad";
+"section.charts.compat.subtitle" = "Aspectos cruzados de Sol, Luna y Venus";
+"section.charts.advanced.title" = "Cartas Avanzadas";
+"section.charts.advanced.subtitle" = "Retorno solar, progresiones, sinastría y carta compuesta";
+"badge.calculated" = "Calculado";
+"badge.advanced" = "Avanzado";
+
+// Tarjetas de acción — cartas
+"ui.charts.advancedCharts" = "Explorar Cartas Avanzadas";
+"ui.charts.advancedChartsSubtitle" = "Sinastría, carta compuesta, progresiones y retorno solar";
+"ui.charts.numerologyFull" = "Análisis Completo de Numerología";
+"ui.charts.numerologyFullSubtitle" = "Camino de vida, Expresión, Deseo del alma y Personalidad";
+"ui.charts.discoverNumbers" = "Descubre tus Números";
+"ui.charts.discoverNumbersSubtitle" = "Ingresa tu fecha de nacimiento para desbloquear tus números esenciales";
+"charts.numerology.noProfile" = "No profile selected.";

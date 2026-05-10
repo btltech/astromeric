@@ -1,8 +1,8 @@
 package com.astromeric.android.feature.tools
 
+import android.content.Context
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxSize
@@ -30,7 +30,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.astromeric.android.R
 import com.astromeric.android.core.data.remote.AstroRemoteDataSource
 import com.astromeric.android.core.model.AIExplainRequestData
 import com.astromeric.android.core.model.AIExplainSectionData
@@ -41,6 +44,7 @@ import com.astromeric.android.core.model.PrivacyDisplayRole
 import com.astromeric.android.core.model.YearAheadForecastData
 import com.astromeric.android.core.model.displayName
 import com.astromeric.android.core.ui.PremiumContentCard
+import com.astromeric.android.core.ui.DataQualityBanner
 import com.astromeric.android.core.ui.PremiumLoadingCard
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -60,6 +64,8 @@ fun YearAheadScreen(
     onOpenProfile: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
+    val yearAheadLoadError = stringResource(R.string.year_ahead_error_load)
     val currentYear = remember { Year.now().value }
     var selectedYear by remember(selectedProfile?.id) { mutableIntStateOf(currentYear) }
     var refreshVersion by remember(selectedProfile?.id) { mutableIntStateOf(0) }
@@ -90,7 +96,7 @@ fun YearAheadScreen(
             val lifePhaseRequest = async { remoteDataSource.fetchLifePhase(profile) }
 
             forecast = forecastRequest.await()
-                .onFailure { errorMessage = it.message ?: "Year ahead forecast could not be loaded." }
+                .onFailure { errorMessage = it.message ?: yearAheadLoadError }
                 .getOrNull()
 
             lifePhase = lifePhaseRequest.await().getOrNull()
@@ -107,15 +113,18 @@ fun YearAheadScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         YearAheadSectionCard(
-            title = "Year Ahead",
-            subtitle = "See the shape of the year before it arrives one month at a time. Start with the larger arc, then use the monthly highlights to pace what you push, protect, or reconsider.",
+            title = stringResource(R.string.year_ahead_title),
+            subtitle = stringResource(R.string.year_ahead_hero_subtitle),
         ) {
             selectedProfile?.let { profile ->
                 AssistChip(
                     onClick = {},
                     label = {
                         Text(
-                            "Active profile: ${profile.displayName(hideSensitiveDetailsEnabled, PrivacyDisplayRole.ACTIVE_USER)}",
+                            stringResource(
+                                R.string.tools_active_profile,
+                                profile.displayName(hideSensitiveDetailsEnabled, PrivacyDisplayRole.ACTIVE_USER),
+                            ),
                         )
                     },
                 )
@@ -133,31 +142,34 @@ fun YearAheadScreen(
                 }
             }
             OutlinedButton(onClick = { refreshVersion += 1 }, enabled = !isLoading) {
-                Text(if (isLoading) "Refreshing..." else "Refresh forecast")
+                Text(
+                    if (isLoading) {
+                        stringResource(R.string.tools_refreshing)
+                    } else {
+                        stringResource(R.string.year_ahead_refresh)
+                    },
+                )
             }
         }
 
         if (selectedProfile == null) {
             YearAheadSectionCard(
-                title = "Profile Needed",
-                subtitle = "Create or select a profile to generate the long-range forecast and fold your current life phase into the same annual arc.",
+                title = stringResource(R.string.year_ahead_profile_needed_title),
+                subtitle = stringResource(R.string.year_ahead_profile_needed_subtitle),
             ) {
                 Button(onClick = onOpenProfile) {
-                    Text("Open Profile")
+                    Text(stringResource(R.string.action_open_profile))
                 }
             }
             return@Column
         }
 
         if (selectedProfile.dataQuality != DataQuality.FULL) {
-            YearAheadSectionCard(
-                title = "Reduced Precision",
-                subtitle = "Year Ahead is less precise without an exact birth time. Solar return and house-level themes may be approximate until your birth details are complete.",
-            ) {}
+            DataQualityBanner(quality = selectedProfile.dataQuality)
         }
 
         if (isLoading && forecast == null) {
-            PremiumLoadingCard(title = "Loading year ahead")
+            PremiumLoadingCard(title = stringResource(R.string.year_ahead_loading_title))
         } else if (forecast != null) {
                 val loadedForecast = requireNotNull(forecast)
                 lifePhase?.let { phase ->
@@ -168,10 +180,15 @@ fun YearAheadScreen(
                     ) {
                         AssistChip(
                             onClick = {},
-                            label = { Text("Age ${currentPhase.age}") },
+                            label = { Text(stringResource(R.string.year_ahead_age_chip, currentPhase.age)) },
                         )
                         Text(
-                            text = "Ages ${currentPhase.minAge}-${currentPhase.maxAge} · ${currentPhase.duration}",
+                            text = stringResource(
+                                R.string.year_ahead_age_range_format,
+                                currentPhase.minAge,
+                                currentPhase.maxAge,
+                                currentPhase.duration,
+                            ),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -180,7 +197,7 @@ fun YearAheadScreen(
                             modifier = Modifier.fillMaxWidth(),
                         )
                         Text(
-                            text = "${currentPhase.progressPct}% through this cycle",
+                            text = stringResource(R.string.year_ahead_progress_format, currentPhase.progressPct),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -199,7 +216,11 @@ fun YearAheadScreen(
                         }
                         phase.nextPhase?.let { nextPhase ->
                             Text(
-                                text = "Next phase: ${nextPhase.name} around age ${nextPhase.beginsAtAge}",
+                                text = stringResource(
+                                    R.string.year_ahead_next_phase_format,
+                                    nextPhase.name,
+                                    nextPhase.beginsAtAge,
+                                ),
                                 style = MaterialTheme.typography.titleSmall,
                             )
                             Text(
@@ -212,23 +233,23 @@ fun YearAheadScreen(
                 }
 
                 YearAheadSectionCard(
-                    title = "Year Ahead ${loadedForecast.year}",
+                    title = stringResource(R.string.year_ahead_title_with_year, loadedForecast.year),
                     subtitle = loadedForecast.personalYear.description ?: loadedForecast.personalYear.theme,
                 ) {
                     AssistChip(
                         onClick = {},
-                        label = { Text("Personal Year ${loadedForecast.personalYear.number}") },
+                        label = { Text(stringResource(R.string.year_ahead_personal_year_chip, loadedForecast.personalYear.number)) },
                     )
                     AssistChip(
                         onClick = {},
-                        label = { Text("Universal Year ${loadedForecast.universalYear.number}") },
+                        label = { Text(stringResource(R.string.year_ahead_universal_year_chip, loadedForecast.universalYear.number)) },
                     )
                     Text(
                         text = loadedForecast.personalYear.theme,
                         style = MaterialTheme.typography.titleMedium,
                     )
                     Text(
-                        text = "Collective backdrop: ${loadedForecast.universalYear.theme}",
+                        text = stringResource(R.string.year_ahead_collective_backdrop_format, loadedForecast.universalYear.theme),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -236,12 +257,18 @@ fun YearAheadScreen(
                         onClick = { isExplaining = true },
                         enabled = !isExplaining,
                     ) {
-                        Text(if (isExplaining) "Generating..." else "Explain This Year")
+                        Text(
+                            if (isExplaining) {
+                                stringResource(R.string.year_ahead_generating)
+                            } else {
+                                stringResource(R.string.year_ahead_explain_this_year)
+                            },
+                        )
                     }
                 }
 
                 YearAheadSectionCard(
-                    title = "Solar Return",
+                    title = stringResource(R.string.year_ahead_solar_return_title),
                     subtitle = loadedForecast.solarReturn.description,
                 ) {
                     Text(
@@ -252,12 +279,12 @@ fun YearAheadScreen(
 
                 if (loadedForecast.eclipses.all.isNotEmpty()) {
                     YearAheadSectionCard(
-                        title = "Eclipses This Year",
-                        subtitle = "Watch these windows closely. They mark turning points that can reframe the pace and priority of the year.",
+                        title = stringResource(R.string.year_ahead_eclipses_title),
+                        subtitle = stringResource(R.string.year_ahead_eclipses_subtitle),
                     ) {
                         loadedForecast.eclipses.all.forEach { eclipse ->
                             Text(
-                                text = "• ${eclipse.type} in ${eclipse.sign} · ${eclipse.date}${eclipse.degree?.let { " · ${String.format("%.1f", it)}°" } ?: ""}",
+                                text = formatYearAheadEclipseLine(context, eclipse.type, eclipse.sign, eclipse.date, eclipse.degree),
                                 style = MaterialTheme.typography.bodyMedium,
                             )
                         }
@@ -266,17 +293,22 @@ fun YearAheadScreen(
 
                 if (loadedForecast.eclipses.personalImpacts.isNotEmpty()) {
                     YearAheadSectionCard(
-                        title = "Personal Activations",
-                        subtitle = "These are the chart points the eclipses touch most directly.",
+                        title = stringResource(R.string.year_ahead_personal_activations_title),
+                        subtitle = stringResource(R.string.year_ahead_personal_activations_subtitle),
                     ) {
                         loadedForecast.eclipses.personalImpacts.forEach { impact ->
                             Text(
-                                text = "${impact.eclipse.type} in ${impact.eclipse.sign} · ${impact.significance}",
+                                text = stringResource(
+                                    R.string.year_ahead_personal_activation_heading,
+                                    impact.eclipse.type,
+                                    impact.eclipse.sign,
+                                    impact.significance,
+                                ),
                                 style = MaterialTheme.typography.titleSmall,
                             )
                             impact.impacts.forEach { detail ->
                                 Text(
-                                    text = "• ${detail.name} ${detail.aspect}${detail.orb?.let { " (${String.format("%.1f", it)}° orb)" } ?: ""}",
+                                    text = formatYearAheadImpactDetail(context, detail.name, detail.aspect, detail.orb),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
@@ -287,12 +319,12 @@ fun YearAheadScreen(
 
                 if (loadedForecast.ingresses.isNotEmpty()) {
                     YearAheadSectionCard(
-                        title = "Major Ingresses",
-                        subtitle = "These sign changes show where the broader weather shifts during the year.",
+                        title = stringResource(R.string.year_ahead_major_ingresses_title),
+                        subtitle = stringResource(R.string.year_ahead_major_ingresses_subtitle),
                     ) {
                         loadedForecast.ingresses.take(6).forEach { ingress ->
                             Text(
-                                text = "• ${ingress.planet} -> ${ingress.sign} · ${ingress.date}",
+                                text = stringResource(R.string.year_ahead_ingress_line, ingress.planet, ingress.sign, ingress.date),
                                 style = MaterialTheme.typography.bodyMedium,
                             )
                             Text(
@@ -306,8 +338,8 @@ fun YearAheadScreen(
 
                 if (loadedForecast.keyThemes.isNotEmpty()) {
                     YearAheadSectionCard(
-                        title = "Key Themes",
-                        subtitle = "Use these as the annual frame before you optimize smaller decisions.",
+                        title = stringResource(R.string.year_ahead_key_themes_title),
+                        subtitle = stringResource(R.string.year_ahead_key_themes_subtitle),
                     ) {
                         loadedForecast.keyThemes.forEach { theme ->
                             Text(
@@ -320,8 +352,8 @@ fun YearAheadScreen(
 
                 if (loadedForecast.advice.isNotEmpty()) {
                     YearAheadSectionCard(
-                        title = "Year Advice",
-                        subtitle = "Treat this as pacing guidance for the entire cycle, not one good day or one bad week.",
+                        title = stringResource(R.string.year_ahead_advice_title),
+                        subtitle = stringResource(R.string.year_ahead_advice_subtitle),
                     ) {
                         loadedForecast.advice.forEach { advice ->
                             Text(
@@ -334,7 +366,7 @@ fun YearAheadScreen(
 
                 if (loadedForecast.monthlyForecasts.isNotEmpty()) {
                     Text(
-                        text = "Monthly Highlights",
+                        text = stringResource(R.string.year_ahead_monthly_highlights_title),
                         style = MaterialTheme.typography.titleLarge,
                     )
                     loadedForecast.monthlyForecasts.forEach { month ->
@@ -344,7 +376,7 @@ fun YearAheadScreen(
                         ) {
                                 AssistChip(
                                     onClick = {},
-                                    label = { Text("Personal Month ${month.personalMonth}") },
+                                    label = { Text(stringResource(R.string.year_ahead_personal_month_chip, month.personalMonth)) },
                                 )
                                 Text(
                                     text = "${month.season} · ${month.element}",
@@ -353,14 +385,20 @@ fun YearAheadScreen(
                                 )
                                 if (month.eclipses.isNotEmpty()) {
                                     Text(
-                                        text = "Eclipses: ${month.eclipses.joinToString(separator = " • ") { "${it.type} in ${it.sign}" }}",
+                                        text = stringResource(
+                                            R.string.year_ahead_month_eclipses_format,
+                                            month.eclipses.joinToString(separator = " • ") { "${it.type} in ${it.sign}" },
+                                        ),
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     )
                                 }
                                 if (month.ingresses.isNotEmpty()) {
                                     Text(
-                                        text = "Ingresses: ${month.ingresses.joinToString(separator = " • ") { "${it.planet} -> ${it.sign}" }}",
+                                        text = stringResource(
+                                            R.string.year_ahead_month_ingresses_format,
+                                            month.ingresses.joinToString(separator = " • ") { "${it.planet} -> ${it.sign}" },
+                                        ),
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     )
@@ -376,17 +414,17 @@ fun YearAheadScreen(
                 }
         } else if (errorMessage != null) {
                 YearAheadSectionCard(
-                    title = "Unable to Load Year Ahead",
+                    title = stringResource(R.string.year_ahead_error_title),
                     subtitle = errorMessage,
                 ) {
                     Button(onClick = { refreshVersion += 1 }) {
-                        Text("Try Again")
+                        Text(stringResource(R.string.action_try_again))
                     }
                 }
         } else {
                 YearAheadSectionCard(
-                    title = "Year Ahead",
-                    subtitle = "Select a year or refresh to load the annual forecast.",
+                    title = stringResource(R.string.year_ahead_title),
+                    subtitle = stringResource(R.string.year_ahead_empty_subtitle),
                 ) {}
         }
     }
@@ -413,10 +451,10 @@ fun YearAheadScreen(
             return@LaunchedEffect
         }
 
-        val fallback = buildYearAheadFallbackSummary(loadedForecast)
+        val fallback = buildYearAheadFallbackSummary(context, loadedForecast)
         val explainResult = remoteDataSource.fetchAIExplain(
             authToken = authAccessToken.takeIf { it.isNotBlank() },
-            request = buildYearAheadExplainRequest(loadedForecast),
+            request = buildYearAheadExplainRequest(context, loadedForecast),
         ).getOrNull()
 
         explanationSummary = explainResult?.summary ?: fallback
@@ -435,6 +473,7 @@ private fun YearExplanationSheet(
     isExplaining: Boolean,
     onRegenerate: () -> Unit,
 ) {
+    val context = LocalContext.current
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -443,29 +482,35 @@ private fun YearExplanationSheet(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Text(
-            text = "Year Explanation",
+            text = stringResource(R.string.year_ahead_explanation_title),
             style = MaterialTheme.typography.titleLarge,
         )
         provider?.let { rawProvider ->
             AssistChip(
                 onClick = {},
-                label = { Text(explanationProviderLabel(rawProvider)) },
+                label = { Text(explanationProviderLabel(context, rawProvider)) },
             )
         }
         generatedAt?.let { instant ->
             Text(
-                text = "Generated ${formatExplanationTimestamp(instant)}",
+                text = stringResource(R.string.year_ahead_generated_format, formatExplanationTimestamp(instant)),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
         Text(
-            text = "This matches the iOS flow more closely: you can read the annual explanation in a dedicated surface and regenerate it without leaving the forecast.",
+            text = stringResource(R.string.year_ahead_explanation_body),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         TextButton(onClick = onRegenerate, enabled = !isExplaining) {
-            Text(if (isExplaining) "Generating..." else "Regenerate")
+            Text(
+                if (isExplaining) {
+                    stringResource(R.string.year_ahead_generating)
+                } else {
+                    stringResource(R.string.year_ahead_regenerate)
+                },
+            )
         }
         YearExplanationMarkdown(markdown = markdown)
     }
@@ -507,7 +552,7 @@ private fun YearExplanationMarkdown(markdown: String) {
 private fun YearAheadSectionCard(
     title: String,
     subtitle: String?,
-    content: @Composable ColumnScope.() -> Unit,
+    content: @Composable () -> Unit,
 ) {
     PremiumContentCard(
         title = title,
@@ -517,69 +562,111 @@ private fun YearAheadSectionCard(
     }
 }
 
-private fun buildYearAheadExplainRequest(forecast: YearAheadForecastData): AIExplainRequestData {
+private fun buildYearAheadExplainRequest(context: Context, forecast: YearAheadForecastData): AIExplainRequestData {
     val sections = buildList {
         add(
             AIExplainSectionData(
-                title = "Personal Year ${forecast.personalYear.number}",
+                title = context.getString(R.string.year_ahead_explain_request_personal_year_title, forecast.personalYear.number),
                 highlights = listOfNotNull(forecast.personalYear.theme, forecast.personalYear.description),
             ),
         )
         add(
             AIExplainSectionData(
-                title = "Solar Return",
+                title = context.getString(R.string.year_ahead_solar_return_title),
                 highlights = listOf(forecast.solarReturn.date, forecast.solarReturn.description),
             ),
         )
         if (forecast.keyThemes.isNotEmpty()) {
-            add(AIExplainSectionData(title = "Key Themes", highlights = forecast.keyThemes.take(6)))
+            add(
+                AIExplainSectionData(
+                    title = context.getString(R.string.year_ahead_key_themes_title),
+                    highlights = forecast.keyThemes.take(6),
+                ),
+            )
         }
         if (forecast.advice.isNotEmpty()) {
-            add(AIExplainSectionData(title = "Advice", highlights = forecast.advice.take(6)))
+            add(
+                AIExplainSectionData(
+                    title = context.getString(R.string.year_ahead_explain_request_advice_title),
+                    highlights = forecast.advice.take(6),
+                ),
+            )
         }
     }
 
     return AIExplainRequestData(
         scope = "year_ahead",
-        headline = "Year Ahead ${forecast.year} • Personal Year ${forecast.personalYear.number}",
+        headline = context.getString(
+            R.string.year_ahead_explain_request_headline,
+            forecast.year,
+            forecast.personalYear.number,
+        ),
         theme = forecast.personalYear.theme,
         sections = sections,
         simpleLanguage = true,
     )
 }
 
-private fun buildYearAheadFallbackSummary(forecast: YearAheadForecastData): String {
+private fun buildYearAheadFallbackSummary(context: Context, forecast: YearAheadForecastData): String {
     val topThemes = forecast.keyThemes.take(4).joinToString(separator = ", ") { "**$it**" }
     val topAdvice = forecast.advice.firstOrNull().orEmpty()
     return buildString {
-        appendLine("## TL;DR")
+        appendLine("## ${context.getString(R.string.year_ahead_fallback_tldr)}")
         appendLine()
-        appendLine("Your **Personal Year ${forecast.personalYear.number}** sets the tone for ${forecast.year}. Focus on **${forecast.personalYear.theme.lowercase()}**.")
+        appendLine(
+            context.getString(
+                R.string.year_ahead_fallback_personal_year_line,
+                forecast.personalYear.number,
+                forecast.year,
+                forecast.personalYear.theme.lowercase(Locale.getDefault()),
+            ),
+        )
         appendLine()
         appendLine("---")
         appendLine()
-        appendLine("## Key points")
-        appendLine("- Solar Return: **${forecast.solarReturn.date}**")
+        appendLine("## ${context.getString(R.string.year_ahead_fallback_key_points)}")
+        appendLine(context.getString(R.string.year_ahead_fallback_solar_return_line, forecast.solarReturn.date))
         if (topThemes.isNotBlank()) {
-            appendLine("- Themes: $topThemes")
+            appendLine(context.getString(R.string.year_ahead_fallback_themes_line, topThemes))
         }
         if (topAdvice.isNotBlank()) {
-            appendLine("- Advice: $topAdvice")
+            appendLine(context.getString(R.string.year_ahead_fallback_advice_line, topAdvice))
         }
         appendLine()
         appendLine("---")
         appendLine()
-        appendLine("## Practical next step")
+        appendLine("## ${context.getString(R.string.year_ahead_fallback_next_step_title)}")
         appendLine()
-        append("Pick **one theme** and choose **one small habit** you can repeat weekly. Use the monthly highlights to plan around it.")
+        append(context.getString(R.string.year_ahead_fallback_next_step_body))
     }.trim()
 }
 
-private fun explanationProviderLabel(provider: String): String = when (provider) {
-    "local-fallback" -> "Local fallback"
-    "premium-required" -> "Premium required"
-    "fallback" -> "Fallback"
+private fun explanationProviderLabel(context: Context, provider: String): String = when (provider) {
+    "local-fallback" -> context.getString(R.string.year_ahead_provider_local_fallback)
+    "premium-required" -> context.getString(R.string.year_ahead_provider_premium_required)
+    "fallback" -> context.getString(R.string.year_ahead_provider_fallback)
     else -> provider.replace('-', ' ').replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
+}
+
+private fun formatYearAheadEclipseLine(
+    context: Context,
+    type: String,
+    sign: String,
+    date: String,
+    degree: Double?,
+): String {
+    val degreeSuffix = degree?.let { context.getString(R.string.year_ahead_degree_suffix, it) }.orEmpty()
+    return context.getString(R.string.year_ahead_eclipse_line, type, sign, date, degreeSuffix)
+}
+
+private fun formatYearAheadImpactDetail(
+    context: Context,
+    name: String,
+    aspect: String,
+    orb: Double?,
+): String {
+    val orbSuffix = orb?.let { context.getString(R.string.year_ahead_orb_suffix, it) }.orEmpty()
+    return context.getString(R.string.year_ahead_impact_detail, name, aspect, orbSuffix)
 }
 
 private fun formatExplanationTimestamp(instant: Instant): String =

@@ -15,7 +15,9 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.astromeric.android.R
 import com.astromeric.android.core.ui.theme.AstroNumericTheme
 
 class HealthOnboardingActivity : ComponentActivity() {
@@ -47,32 +49,32 @@ private fun HealthOnboardingScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Text(
-            text = "Connect AstroNumeric to Health Connect",
+            text = stringResource(R.string.health_onboarding_title),
             style = MaterialTheme.typography.headlineMedium,
         )
         Text(
-            text = "Biometric-aware guidance is optional. When enabled, AstroNumeric can read a small set of health signals to add context to Cosmic Guide.",
+            text = stringResource(R.string.health_onboarding_description_1),
             style = MaterialTheme.typography.bodyLarge,
         )
         Text(
-            text = "Current Android support is read-only and limited to heart rate, resting heart rate, steps, total calories burned, and sleep. This data stays optional and does not block normal app use.",
+            text = stringResource(R.string.health_onboarding_description_2),
             style = MaterialTheme.typography.bodyMedium,
         )
         Text(
-            text = "You control this consent from the app and from Android settings. You can disconnect it any time.",
+            text = stringResource(R.string.health_onboarding_description_3),
             style = MaterialTheme.typography.bodyMedium,
         )
         Button(
             modifier = Modifier.fillMaxWidth(),
             onClick = onOpenApp,
         ) {
-            Text("Open AstroNumeric")
+            Text(stringResource(R.string.health_onboarding_button_open))
         }
         OutlinedButton(
             modifier = Modifier.fillMaxWidth(),
             onClick = onClose,
         ) {
-            Text("Close")
+            Text(stringResource(R.string.health_onboarding_button_close))
         }
     }
 }

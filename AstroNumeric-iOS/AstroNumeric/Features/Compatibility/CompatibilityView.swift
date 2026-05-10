@@ -19,11 +19,11 @@ struct CompatibilityView: View {
                 
                 ScrollView {
                     VStack(spacing: 24) {
-                        PremiumHeroCard(
+                        PremiumScreenHeader(
                             eyebrow: "hero.compatibility.eyebrow".localized,
                             title: "hero.compatibility.title".localized,
-                            bodyText: "hero.compatibility.body".localized,
-                            accent: [Color(hex: "2d102d"), Color(hex: "a53d79"), Color(hex: "4d3ca6")],
+                            subtitle: "hero.compatibility.body".localized,
+                            accent: .accentPrimary,
                             chips: ["hero.compatibility.chip.0".localized, "hero.compatibility.chip.1".localized, "hero.compatibility.chip.2".localized, "hero.compatibility.chip.3".localized]
                         )
 
@@ -95,7 +95,7 @@ struct CompatibilityView: View {
                     if let profile = store.activeProfile {
                         HStack {
                             Image(systemName: "person.fill")
-                                .foregroundStyle(.purple)
+                                .foregroundStyle(Color.accentPrimary)
                             Text(profile.displayName(
                                 hideSensitive: store.hideSensitiveDetailsEnabled,
                                 role: .activeUser
@@ -119,7 +119,7 @@ struct CompatibilityView: View {
 
                     if !personBCandidates.isEmpty {
                         Toggle("ui.compatibility.13".localized, isOn: $viewModel.useSavedProfileForPersonB)
-                            .tint(.pink)
+                            .tint(Color.accentSecondary)
                             .onChange(of: viewModel.useSavedProfileForPersonB) { _, newValue in
                                 if newValue, viewModel.selectedPersonBProfileId == nil {
                                     viewModel.selectedPersonBProfileId = personBCandidates.first?.id
@@ -243,7 +243,7 @@ struct CompatibilityView: View {
                     VStack {
                         Image(systemName: "person.fill")
                             .font(.title2)
-                            .foregroundStyle(.purple)
+                            .foregroundStyle(Color.accentPrimary)
                         Text(
                             store.activeProfile?.displayName(
                                 hideSensitive: store.hideSensitiveDetailsEnabled,
@@ -257,14 +257,14 @@ struct CompatibilityView: View {
                     
                     Image(systemName: "heart.fill")
                         .font(.title)
-                        .foregroundStyle(.pink)
+                        .foregroundStyle(Color.accentSecondary)
                     
                     Spacer()
                     
                     VStack {
                         Image(systemName: "person.fill")
                             .font(.title2)
-                            .foregroundStyle(.pink)
+                            .foregroundStyle(Color.accentSecondary)
                         Text(viewModel.resolvedPersonBDisplayName(
                             store: store,
                             hideSensitive: store.hideSensitiveDetailsEnabled
@@ -290,7 +290,7 @@ struct CompatibilityView: View {
                             .trim(from: 0, to: viewModel.overallScore / 100)
                             .stroke(
                                 LinearGradient(
-                                    colors: [.pink, .purple],
+                                    colors: [.accentSecondary, .accentPrimary],
                                     startPoint: .leading,
                                     endPoint: .trailing
                                 ),
@@ -325,7 +325,7 @@ struct CompatibilityView: View {
                 VStack(alignment: .leading, spacing: 16) {
                     HStack {
                         Image(systemName: "chart.bar.fill")
-                            .foregroundStyle(.purple)
+                            .foregroundStyle(Color.accentPrimary)
                         Text("ui.compatibility.9".localized)
                             .font(.headline)
                     }
@@ -398,7 +398,7 @@ struct CompatibilityView: View {
                     VStack(alignment: .leading, spacing: 12) {
                         HStack {
                             Image(systemName: "exclamationmark.triangle.fill")
-                                .foregroundStyle(.orange)
+                                .foregroundStyle(Color.warningOrange)
                             Text("ui.compatibility.11".localized)
                                 .font(.headline)
                         }
@@ -406,7 +406,7 @@ struct CompatibilityView: View {
                         ForEach(viewModel.challenges, id: \.self) { challenge in
                             HStack(alignment: .top, spacing: 10) {
                                 Image(systemName: "arrow.triangle.2.circlepath")
-                                    .foregroundStyle(.orange)
+                                    .foregroundStyle(Color.warningOrange)
                                     .font(.subheadline)
                                 Text(challenge)
                                     .font(.subheadline)
@@ -430,7 +430,7 @@ struct CompatibilityView: View {
                         ForEach(viewModel.advice, id: \.self) { tip in
                             HStack(alignment: .top, spacing: 10) {
                                 Image(systemName: "heart.circle.fill")
-                                    .foregroundStyle(.pink)
+                                    .foregroundStyle(Color.accentSecondary)
                                     .font(.subheadline)
                                 Text(tip)
                                     .font(.subheadline)
@@ -455,8 +455,8 @@ struct CompatibilityView: View {
     
     private func scoreColor(_ score: Double) -> Color {
         if score >= 75 { return .green }
-        if score >= 50 { return .purple }
-        if score >= 25 { return .orange }
+        if score >= 50 { return .accentPrimary }
+        if score >= 25 { return .warningOrange }
         return .red
     }
     

@@ -32,9 +32,12 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.health.connect.client.PermissionController
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.astromeric.android.R
+import com.astromeric.android.core.data.local.ExactTransitCacheStore
 import com.astromeric.android.core.data.local.NatalChartCacheStore
 import com.astromeric.android.core.ephemeris.LocalSwissEphemerisEngine
 import com.astromeric.android.core.data.preferences.AppPreferencesStore
@@ -53,6 +56,7 @@ import com.astromeric.android.core.model.toGuideHistory
 import com.astromeric.android.core.model.zodiacSignName
 import com.astromeric.android.core.ui.PermissionRationaleDialog
 import com.astromeric.android.core.ui.PremiumHeroCard
+import com.astromeric.android.core.ui.MysticModeToggle
 import com.astromeric.android.core.ui.shouldShowPermissionRationale
 import kotlinx.coroutines.launch
 
@@ -76,6 +80,7 @@ fun CosmicGuideScreen(
     val localJournalEntries by preferencesStore.localJournalEntries.collectAsStateWithLifecycle(initialValue = emptyList())
 
     val chartCacheStore = remember(context) { NatalChartCacheStore(context.applicationContext) }
+    val transitCacheStore = remember(context) { ExactTransitCacheStore(context.applicationContext) }
     val localEphemerisEngine = remember(context) { LocalSwissEphemerisEngine.getInstance(context.applicationContext) }
     val calendarProvider = remember(context) { GuideCalendarContextProvider(context.applicationContext) }
     val healthBridge = remember(context) { GuideHealthConnectBridge(context.applicationContext) }
@@ -84,16 +89,22 @@ fun CosmicGuideScreen(
     var messages by remember(selectedProfile?.id) { mutableStateOf(emptyList<GuideChatMessage>()) }
     var isLoading by remember(selectedProfile?.id) { mutableStateOf(false) }
     var errorMessage by remember(selectedProfile?.id) { mutableStateOf<String?>(null) }
+    var isMystic by remember { mutableStateOf(true) }
     var moonSign by remember(selectedProfile?.id) { mutableStateOf<String?>(null) }
     var risingSign by remember(selectedProfile?.id) { mutableStateOf<String?>(null) }
     var showCalendarRationale by remember { mutableStateOf(false) }
+    val calendarPermissionDeniedMessage = stringResource(R.string.privacy_calendar_permission_denied)
+    val healthPermissionRequiredMessage = stringResource(R.string.guide_health_permission_required)
+    val healthUpdateRequiredMessage = stringResource(R.string.guide_health_update_required_message)
+    val healthUnavailableMessage = stringResource(R.string.guide_health_unavailable_message)
+    val guideErrorFallback = stringResource(R.string.guide_error_fallback)
 
     val calendarPermissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         scope.launch {
             preferencesStore.setGuideCalendarContextEnabled(granted)
         }
         if (!granted) {
-            onShowMessage("Calendar access was not granted. Enable it in Settings if you want calendar-aware guidance.")
+            onShowMessage(calendarPermissionDeniedMessage)
         }
     }
     val healthPermissionLauncher = rememberLauncherForActivityResult(PermissionController.createRequestPermissionResultContract()) { granted ->
@@ -102,7 +113,7 @@ fun CosmicGuideScreen(
             preferencesStore.setGuideBiometricContextEnabled(approved)
         }
         if (!approved) {
-            onShowMessage("Health Connect access is required for biometric-aware guidance.")
+            onShowMessage(healthPermissionRequiredMessage)
         }
     }
 
@@ -116,8 +127,8 @@ fun CosmicGuideScreen(
 
     if (showCalendarRationale) {
         PermissionRationaleDialog(
-            title = "Allow calendar access",
-            message = "Calendar-aware guidance uses a redacted summary of upcoming events for context. Event titles and exact times stay on-device and are not sent to the backend.",
+            title = stringResource(R.string.privacy_calendar_permission_title),
+            message = stringResource(R.string.privacy_calendar_permission_message),
             onConfirm = {
                 showCalendarRationale = false
                 calendarPermissionLauncher.launch(Manifest.permission.READ_CALENDAR)
@@ -161,12 +172,12 @@ fun CosmicGuideScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             PremiumHeroCard(
-                eyebrow = "Guide",
-                title = "Cosmic Guide",
-                body = "Create or select a profile first so the guide can anchor its responses to the same chart and privacy contract as iOS.",
+                eyebrow = stringResource(R.string.guide_eyebrow),
+                title = stringResource(R.string.guide_title),
+                body = stringResource(R.string.guide_body_no_profile),
             ) {
                 Button(onClick = onOpenProfile) {
-                    Text("Open Profile")
+                    Text(stringResource(R.string.guide_open_profile))
                 }
             }
         }
@@ -180,17 +191,24 @@ fun CosmicGuideScreen(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         PremiumHeroCard(
-            eyebrow = "Guide",
-            title = "Cosmic Guide",
-            body = "Ask for pattern recognition, timing context, and chart-based perspective without leaving the native app.",
+            eyebrow = stringResource(R.string.guide_eyebrow),
+            title = stringResource(R.string.guide_title),
+            body = stringResource(R.string.guide_body),
             chips = listOf(
-                "Active profile: ${selectedProfile.displayName(hideSensitiveDetailsEnabled, PrivacyDisplayRole.ACTIVE_USER)}",
+                stringResource(
+                    R.string.guide_active_profile_chip,
+                    selectedProfile.displayName(hideSensitiveDetailsEnabled, PrivacyDisplayRole.ACTIVE_USER),
+                ),
             ),
         ) {
             Text(
                 text = selectedProfile.dataQuality.description,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            MysticModeToggle(
+                isMystic = isMystic,
+                onToggle = { isMystic = it },
             )
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -217,13 +235,13 @@ fun CosmicGuideScreen(
             if (messages.isEmpty()) {
                 item {
                     GuideContextCard(
-                        title = "Calendar-aware guidance",
+                        title = stringResource(R.string.privacy_calendar_guidance_title),
                         body = if (calendarContextEnabled) {
-                            "The guide can use a redacted summary of upcoming events. Titles and exact times are not sent."
+                            stringResource(R.string.guide_calendar_body_enabled)
                         } else {
-                            "Optional. The guide can use a redacted summary of upcoming events. Titles and exact times are not sent."
+                            stringResource(R.string.guide_calendar_body_disabled)
                         },
-                        actionLabel = if (calendarContextEnabled) "On" else "Enable",
+                        actionLabel = if (calendarContextEnabled) stringResource(R.string.preference_state_on) else stringResource(R.string.action_enable),
                         onAction = {
                             if (calendarContextEnabled) {
                                 scope.launch {
@@ -242,14 +260,14 @@ fun CosmicGuideScreen(
                 item {
                     val availability = healthBridge.availability()
                     GuideContextCard(
-                        title = "Biometric-aware guidance",
+                        title = stringResource(R.string.privacy_biometric_guidance_title),
                         body = when {
-                            biometricContextEnabled -> "The guide may use your read-only Health Connect snapshot when you ask for context."
-                            availability == GuideHealthAvailability.UPDATE_REQUIRED -> "Health Connect needs an update before Android can read your optional biometric context."
-                            availability == GuideHealthAvailability.UNAVAILABLE -> "Health Connect is unavailable on this device, so biometric-aware guidance stays off."
-                            else -> "Optional. The guide can use read-only Health Connect context such as heart rate, steps, calories, and sleep."
+                            biometricContextEnabled -> stringResource(R.string.guide_biometric_body_enabled)
+                            availability == GuideHealthAvailability.UPDATE_REQUIRED -> stringResource(R.string.guide_biometric_body_update_required)
+                            availability == GuideHealthAvailability.UNAVAILABLE -> stringResource(R.string.guide_biometric_body_unavailable)
+                            else -> stringResource(R.string.guide_biometric_body_disabled)
                         },
-                        actionLabel = if (biometricContextEnabled) "On" else "Enable",
+                        actionLabel = if (biometricContextEnabled) stringResource(R.string.preference_state_on) else stringResource(R.string.action_enable),
                         onAction = {
                             if (biometricContextEnabled) {
                                 scope.launch {
@@ -262,10 +280,10 @@ fun CosmicGuideScreen(
                                     }
                                     GuideHealthAvailability.UPDATE_REQUIRED -> {
                                         openHealthConnectListing(context)
-                                        onShowMessage("Health Connect needs an update before biometric-aware guidance can be enabled.")
+                                        onShowMessage(healthUpdateRequiredMessage)
                                     }
                                     GuideHealthAvailability.UNAVAILABLE -> {
-                                        onShowMessage("Health Connect is unavailable on this device.")
+                                        onShowMessage(healthUnavailableMessage)
                                     }
                                 }
                             }
@@ -279,7 +297,7 @@ fun CosmicGuideScreen(
                             verticalArrangement = Arrangement.spacedBy(10.dp),
                         ) {
                             Text(
-                                text = "Suggested prompts",
+                                text = stringResource(R.string.guide_suggested_prompts_title),
                                 style = MaterialTheme.typography.titleMedium,
                             )
                             FlowRow(
@@ -318,7 +336,7 @@ fun CosmicGuideScreen(
                 item {
                     Card(modifier = Modifier.fillMaxWidth()) {
                         Text(
-                            text = "Cosmic Guide is reading the pattern...",
+                            text = stringResource(R.string.guide_loading_message),
                             modifier = Modifier.padding(16.dp),
                             style = MaterialTheme.typography.bodyMedium,
                         )
@@ -335,7 +353,7 @@ fun CosmicGuideScreen(
                 OutlinedTextField(
                     value = inputText,
                     onValueChange = { inputText = it },
-                    label = { Text("Ask the Cosmic Guide") },
+                    label = { Text(stringResource(R.string.guide_input_label)) },
                     modifier = Modifier.fillMaxWidth(),
                     minLines = 3,
                     enabled = !isLoading,
@@ -373,6 +391,15 @@ fun CosmicGuideScreen(
                                     GuideBiometricSnapshot()
                                 }
 
+                                val cachedTransits = transitCacheStore
+                                    .read(selectedProfile.id)?.transits
+                                    .orEmpty()
+                                val bioCosmicContext = BioCosmicCorrelator.contextBlock(
+                                    snapshot = biometricSnapshot.takeIf { it.hasData },
+                                    transits = cachedTransits,
+                                    query = trimmed,
+                                )
+
                                 val request = CosmicGuideChatRequestData(
                                     message = trimmed,
                                     sunSign = selectedProfile.zodiacSignName()?.replaceFirstChar { it.uppercase() },
@@ -384,6 +411,7 @@ fun CosmicGuideScreen(
                                     systemPrompt = buildGuideSystemPrompt(
                                         profile = selectedProfile,
                                         tone = guideTone,
+                                        isMystic = isMystic,
                                         hideSensitiveDetailsEnabled = hideSensitiveDetailsEnabled,
                                         moonSign = moonSign,
                                         risingSign = risingSign,
@@ -391,6 +419,7 @@ fun CosmicGuideScreen(
                                         userQuery = trimmed,
                                         calendarContext = calendarContext,
                                         biometricSnapshot = biometricSnapshot.takeIf { it.hasData },
+                                        bioCosmicContext = bioCosmicContext,
                                     ),
                                     tone = guideTone.wireValue,
                                 )
@@ -403,7 +432,7 @@ fun CosmicGuideScreen(
                                         )
                                     }
                                     .onFailure { error ->
-                                        errorMessage = error.message ?: "Cosmic Guide could not answer right now."
+                                        errorMessage = error.message ?: guideErrorFallback
                                         onShowMessage(errorMessage.orEmpty())
                                     }
 
@@ -411,10 +440,10 @@ fun CosmicGuideScreen(
                             }
                         },
                     ) {
-                        Text("Send")
+                        Text(stringResource(R.string.guide_send))
                     }
                     OutlinedButton(onClick = onOpenPrivacy) {
-                        Text("Privacy")
+                        Text(stringResource(R.string.guide_privacy))
                     }
                 }
             }
@@ -478,12 +507,13 @@ private fun GuideMessageBubble(
     }
 }
 
+@Composable
 private fun defaultGuidePrompts(): List<String> = listOf(
-    "What does my chart say about my career?",
-    "How is today looking based on transits?",
-    "What are my biggest strengths and shadows?",
-    "Tell me about my Venus placement",
-    "What should I watch out for this week?",
+    stringResource(R.string.guide_prompt_1),
+    stringResource(R.string.guide_prompt_2),
+    stringResource(R.string.guide_prompt_3),
+    stringResource(R.string.guide_prompt_4),
+    stringResource(R.string.guide_prompt_5),
 )
 
 private fun openHealthConnectListing(context: android.content.Context) {

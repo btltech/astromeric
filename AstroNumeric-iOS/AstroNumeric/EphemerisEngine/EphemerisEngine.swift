@@ -670,14 +670,27 @@ actor EphemerisEngine {
     }
 
     private func calculateAspects(planets: [PlanetPlacement]) -> [ChartAspect] {
-        // Major aspect definitions: name, angle, orb
+        // Aspect definitions aligned with backend chart_service.py.
+        // Tighter orbs reduce false positives; minor aspects use 2° max.
         let aspectDefs: [(name: String, angle: Double, orb: Double)] = [
-            ("conjunction",  0,   8),
-            ("opposition",   180, 8),
-            ("trine",        120, 8),
-            ("square",       90,  7),
-            ("sextile",      60,  6),
-            ("quincunx",     150, 3),
+            ("conjunction",     0,   7.0),
+            ("opposition",    180,   7.0),
+            ("trine",         120,   5.5),
+            ("square",         90,   5.5),
+            ("sextile",        60,   3.5),
+            ("quincunx",      150,   3.0),
+            ("sesquiquadrate", 135,  2.0),
+            ("semi_square",    45,   2.0),
+            ("semi_sextile",   30,   2.0),
+        ]
+
+        // Planet significance weights mirror backend _PLANET_WEIGHT.
+        let weights: [String: Double] = [
+            "Sun": 1.4, "Moon": 1.4,
+            "Mercury": 1.1, "Venus": 1.1, "Mars": 1.1,
+            "Jupiter": 1.0, "Saturn": 1.0,
+            "Uranus": 0.9, "Neptune": 0.9, "Pluto": 0.9,
+            "Ascendant": 1.3, "Midheaven": 1.2,
         ]
 
         var aspects: [ChartAspect] = []
@@ -693,12 +706,22 @@ actor EphemerisEngine {
                 for aspect in aspectDefs {
                     let orb = abs(diff - aspect.angle)
                     if orb <= aspect.orb {
+                        let wa = weights[planets[idx].name] ?? 1.0
+                        let wb = weights[planets[jdx].name] ?? 1.0
+                        let planetWeight = (wa * wb).squareRoot()
+                        let aspectWeight: Double
+                        switch aspect.name {
+                        case "conjunction", "opposition": aspectWeight = 1.2
+                        case "trine", "sextile": aspectWeight = 1.1
+                        default: aspectWeight = 1.0
+                        }
+                        let strength = max(0.1, 1.0 - orb / aspect.orb) * aspectWeight * planetWeight
                         aspects.append(ChartAspect(
                             planet1: planets[idx].name,
                             planet2: planets[jdx].name,
                             aspectType: aspect.name,
                             orb: orb,
-                            strength: 1.0 - (orb / aspect.orb) // tighter = stronger
+                            strength: (strength * 1000).rounded() / 1000
                         ))
                         break // only one aspect per planet pair
                     }
@@ -895,12 +918,15 @@ actor EphemerisEngine {
     /// Standard synastry: every planet in chartA checked against every planet in chartB.
     func calculateInterChartAspects(chartA: [PlanetPlacement], chartB: [PlanetPlacement]) -> [InterChartAspect] {
         let aspectDefs: [(name: String, angle: Double, orb: Double, sig: String)] = [
-            ("conjunction",  0,   8, "major"),
-            ("opposition",   180, 8, "major"),
-            ("trine",        120, 8, "major"),
-            ("square",       90,  7, "major"),
-            ("sextile",      60,  6, "minor"),
-            ("quincunx",     150, 3, "minor"),
+            ("conjunction",     0,   7.0, "major"),
+            ("opposition",    180,   7.0, "major"),
+            ("trine",         120,   5.5, "major"),
+            ("square",         90,   5.5, "major"),
+            ("sextile",        60,   3.5, "minor"),
+            ("quincunx",      150,   3.0, "minor"),
+            ("sesquiquadrate", 135,  2.0, "minor"),
+            ("semi_square",    45,   2.0, "minor"),
+            ("semi_sextile",   30,   2.0, "minor"),
         ]
 
         var results: [InterChartAspect] = []

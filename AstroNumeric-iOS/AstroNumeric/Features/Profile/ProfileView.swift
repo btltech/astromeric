@@ -28,16 +28,18 @@ struct ProfileView: View {
                 
                 ScrollView {
                     VStack(spacing: 24) {
-                        PremiumHeroCard(
+                        PremiumScreenHeader(
                             eyebrow: "hero.profile.eyebrow".localized,
                             title: "hero.profile.title".localized,
-                            bodyText: "hero.profile.body".localized,
-                            accent: [Color(hex: "201235"), Color(hex: "7b3fb6"), Color(hex: "2a7f92")],
+                            subtitle: "hero.profile.body".localized,
+                            accent: .accentPrimary,
                             chips: ["hero.profile.chip.0".localized, "hero.profile.chip.1".localized, "hero.profile.chip.2".localized, "hero.profile.chip.3".localized]
                         )
 
                         // Profile header
                         profileHeader
+
+                        systemDiagnosticsSection
 
                         // Profiles (multi-profile support)
                         if !store.profiles.isEmpty {
@@ -56,10 +58,6 @@ struct ProfileView: View {
 
                         // Trust and support
                         trustSection
-                        
-#if DEBUG
-                        systemDiagnosticsSection
-#endif
                         
                         // App info
                         appInfoSection
@@ -247,7 +245,7 @@ struct ProfileView: View {
                         }
                         .contentShape(Rectangle())
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(ScaleButtonStyle())
                     .accessibilityElement(children: .combine)
                     .accessibilityLabel(profile.displayName(
                         hideSensitive: store.hideSensitiveDetailsEnabled,
@@ -492,6 +490,8 @@ struct ProfileView: View {
                     }
                 }
                 .tint(.purple)
+                .accessibilityLabel("Hide Sensitive Details")
+                .accessibilityHint("Masks names and birth details in the app and sharing. It does not disable network-backed features or remove chart calculation data.")
                 
                 // Daily reminder toggle
                 Toggle(isOn: Binding(
@@ -512,6 +512,36 @@ struct ProfileView: View {
                 }
                 .tint(.purple)
                 
+                Divider()
+
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Diagnostics")
+                                .font(.subheadline.weight(.semibold))
+                            Text("Widget Refresh")
+                                .font(.meta)
+                                .foregroundStyle(Color.textSecondary)
+                            Text("Notifications")
+                                .font(.meta)
+                                .foregroundStyle(Color.textSecondary)
+                        }
+                        Spacer()
+                        Button {
+                            Task { await refreshSystemDiagnostics() }
+                        } label: {
+                            Image(systemName: "arrow.clockwise")
+                                .foregroundStyle(.purple)
+                                .frame(width: 44, height: 44)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(ScaleButtonStyle())
+                        .accessibilityLabel("Refresh diagnostics")
+                        .accessibilityHint("Reloads widget and notification status")
+                    }
+                }
+                .accessibilityIdentifier("DiagnosticsSection")
+
                 Divider()
                 
                 // Language selector — temporarily hidden until full UI translation lands.
@@ -617,7 +647,7 @@ struct ProfileView: View {
                 trustPoint(
                     icon: "eye.slash.fill",
                     title: "Privacy mode",
-                    detail: "Names, birth details, share cards, and cached identifiers can be masked."
+                    detail: "Masks names and birth details in the UI, support text, and sharing; it is not a network kill switch."
                 )
 
                 trustPoint(
@@ -900,7 +930,7 @@ struct ProfileView: View {
                             .frame(width: 44, height: 44)
                             .contentShape(Rectangle())
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(ScaleButtonStyle())
                     .accessibilityLabel("Refresh diagnostics")
                     .accessibilityHint("Reloads cache, widget, and notification status")
                 }
@@ -1028,6 +1058,7 @@ struct ProfileView: View {
                 }
             }
         }
+        .accessibilityIdentifier("DiagnosticsSection")
         .task {
             await refreshSystemDiagnostics()
         }

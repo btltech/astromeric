@@ -66,7 +66,7 @@ targets:
       path: AstroNumeric/Info.plist
       properties:
         API_BASE_URL: "https://astromeric-backend-production.up.railway.app"
-        WEBSITE_BASE_URL: "https://astromeric.pages.dev"
+        WEBSITE_BASE_URL: "https://astronumeric.com"
         CFBundleDisplayName: AstroNumeric
         CFBundleName: AstroNumeric
         BGTaskSchedulerPermittedIdentifiers:

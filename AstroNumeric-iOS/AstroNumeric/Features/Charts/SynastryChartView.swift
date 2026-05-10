@@ -9,18 +9,17 @@ struct SynastryChartView: View {
     @State private var selectedPartnerId: Int?
     
     var body: some View {
-        NavigationStack {
-            ZStack {
-                CosmicBackgroundView(element: nil)
-                    .ignoresSafeArea()
-                
-                ScrollView {
-                    VStack(spacing: 16) {
-                        PremiumHeroCard(
+        ZStack {
+            CosmicBackgroundView(element: nil)
+                .ignoresSafeArea()
+
+            ScrollView {
+                VStack(spacing: 16) {
+                        PremiumScreenHeader(
                             eyebrow: "hero.synastryChart.eyebrow".localized,
                             title: "hero.synastryChart.title".localized,
-                            bodyText: "hero.synastryChart.body".localized,
-                            accent: [Color(hex: "2c1530"), Color(hex: "97457c"), Color(hex: "5052ba")],
+                            subtitle: "hero.synastryChart.body".localized,
+                            accent: .accentPrimary,
                             chips: ["hero.synastryChart.chip.0".localized, "hero.synastryChart.chip.1".localized, "hero.synastryChart.chip.2".localized, "hero.synastryChart.chip.3".localized]
                         )
 
@@ -158,18 +157,18 @@ struct SynastryChartView: View {
                                 }
                             }
                         }
-                    }
-                    .padding()
-                    .readableContainer()
                 }
+                .padding()
+                .readableContainer()
             }
-            .navigationTitle("screen.synastry".localized)
-            .navigationBarTitleDisplayMode(.inline)
-            .task(id: "\(store.activeProfile?.id ?? 0)-\(store.profiles.count)") {
-                if selectedPartnerId == nil {
-                    selectedPartnerId = store.profiles.first { $0.id != store.activeProfile?.id }?.id
-                    await vm.load(store: store, partnerId: selectedPartnerId)
-                }
+        }
+        .accessibilityIdentifier("SynastryScreen")
+        .navigationTitle("screen.synastry".localized)
+        .navigationBarTitleDisplayMode(.inline)
+        .task(id: "\(store.activeProfile?.id ?? 0)-\(store.profiles.count)") {
+            if selectedPartnerId == nil {
+                selectedPartnerId = store.profiles.first { $0.id != store.activeProfile?.id }?.id
+                await vm.load(store: store, partnerId: selectedPartnerId)
             }
         }
     }
@@ -192,7 +191,11 @@ final class SynastryChartVM {
     var isLoading = false
     var error: String?
     
-    private let api = APIClient.shared
+    private let charts: ChartRepository
+    
+    init(charts: ChartRepository = DefaultChartRepository()) {
+        self.charts = charts
+    }
     
     @MainActor
     func load(store: AppStore, partnerId: Int?) async {
@@ -205,11 +208,7 @@ final class SynastryChartVM {
         
         let payload = personBProfile.privacySafePayload(hideSensitive: store.hideSensitiveDetailsEnabled)
         do {
-            let response: V2ApiResponse<SynastryChartResponse> = try await api.fetch(
-                .synastryChart(personA: personA, personB: payload),
-                cachePolicy: .networkFirst
-            )
-            result = response.data
+            result = try await charts.synastryChart(personA: personA, personB: payload)
         } catch {
             result = nil
             self.error = error.localizedDescription

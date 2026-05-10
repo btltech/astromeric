@@ -32,18 +32,18 @@ actor JournalEmbedder {
     
     // MARK: - Public API
     
-    /// Rebuild the index from all local journal entries for a profile.
-    func rebuildIndex(profileId: Int) {
-        let entries = LocalJournalStore.shared.list(profileId: profileId)
+    /// Rebuild the index from the supplied journal entries for a profile.
+    /// Callers (typically `JournalVM`) own persistence and pass the latest snapshot.
+    func rebuildIndex(profileId: Int, entries: [LocalJournalEntry]) {
         var newIndex: [IndexedEntry] = []
-        
+
         for entry in entries {
             let text = entry.entry.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !text.isEmpty else { continue }
-            
+
             let embedding = embed(text)
             guard !embedding.isEmpty else { continue }
-            
+
             newIndex.append(IndexedEntry(
                 id: entry.id,
                 profileId: profileId,
@@ -53,7 +53,7 @@ actor JournalEmbedder {
                 embedding: embedding
             ))
         }
-        
+
         index = newIndex
         persist()
         isLoaded = true

@@ -16,11 +16,11 @@ struct MoonEventsView: View {
                 
                 ScrollView {
                     VStack(spacing: 16) {
-                        PremiumHeroCard(
+                        PremiumScreenHeader(
                             eyebrow: "hero.moonEvents.eyebrow".localized,
                             title: "hero.moonEvents.title".localized,
-                            bodyText: "hero.moonEvents.body".localized,
-                            accent: [Color(hex: "13203a"), Color(hex: "4a63bb"), Color(hex: "6790b8")],
+                            subtitle: "hero.moonEvents.body".localized,
+                            accent: .accentPrimary,
                             chips: ["hero.moonEvents.chip.0".localized, "hero.moonEvents.chip.1".localized, "hero.moonEvents.chip.2".localized]
                         )
 

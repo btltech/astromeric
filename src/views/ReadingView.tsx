@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import type { ProfilePayload } from '../api/client';
 import { DocumentMeta } from '../components/DocumentMeta';
@@ -116,6 +116,19 @@ export function ReadingView() {
     }
   }, [searchParams, setResult, setShowCreateForm]);
 
+  // Auto-expand profile form for users who have no profiles yet
+  const didAutoOpenForm = useRef(false);
+  useEffect(() => {
+    if (!didAutoOpenForm.current && profiles.length === 0 && readingCount === 0) {
+      didAutoOpenForm.current = true;
+      setShowCreateForm(true);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const isFirstRun = profiles.length === 0 && readingCount === 0 && !result;
+  const isAwaitingFirstReading = !isFirstRun && profiles.length > 0 && readingCount === 0 && !result;
+
   const recentReadings = useMemo(() => [...readings].slice(-3).reverse(), [readings]);
   const latestLocalReading = recentReadings[0] ?? null;
   const activeProfileLabel = selectedProfile ? formatProfileMeta(selectedProfile) : 'No active profile yet';
@@ -128,7 +141,7 @@ export function ReadingView() {
       return 'Browser session';
     }
 
-    return selectedProfile.id < 0 ? 'Saved on this device' : 'Railway profile';
+    return selectedProfile.id < 0 ? 'Saved on this device' : 'Cloud profile';
   }, [selectedProfile, sessionProfile]);
   const selectedProfileFacts = useMemo(() => {
     if (!selectedProfile) {
@@ -180,7 +193,7 @@ export function ReadingView() {
       return 'Birth place is locked in. Add birth time later if you want sharper house placement and timing views.';
     }
 
-    return 'This profile is complete enough for the reading desk, chart views, and deeper timing surfaces.';
+    return 'This profile is complete. You can run chart views, compatibility, and timing readings.';
   }, [selectedProfile]);
   const weeklyVibeProfile = useMemo(
     () => (selectedProfile ? toProfilePayload(selectedProfile) : null),
@@ -209,10 +222,10 @@ export function ReadingView() {
   }, [hasPendingRailwaySync, localProfileCount, readingCount, sessionProfile]);
   const connectedAccountCopy = useMemo(() => {
     if (hasPendingRailwaySync) {
-      const base = `${localProfileCount} local profiles and ${readingCount} local readings are ready to move into Railway.`;
+      const base = `${localProfileCount} profiles and ${readingCount} readings on this device are ready to sync to your account.`;
 
       return sessionProfile
-        ? `${base} The active profile is still browser-session only until you save it on this device.`
+        ? `${base} The active profile is temporary — save it to include it in the sync.`
         : base;
     }
 
@@ -378,11 +391,11 @@ export function ReadingView() {
         syncResult.migratedProfileCount || syncResult.migratedReadingCount
           ? {
               tone: 'success',
-              text: `Railway sync complete: ${syncResult.migratedProfileCount} profiles and ${syncResult.migratedReadingCount} readings migrated.`,
+              text: `Sync complete: ${syncResult.migratedProfileCount} profiles and ${syncResult.migratedReadingCount} readings moved to your account.`,
             }
           : {
               tone: 'success',
-              text: 'Connected to the Railway backend. Cloud history is ready for future readings.',
+              text: 'Account connected. Your readings and profiles will now sync across devices.',
             }
       );
     } catch (authError) {
@@ -406,15 +419,15 @@ export function ReadingView() {
         syncResult.migratedProfileCount || syncResult.migratedReadingCount
           ? {
               tone: 'success',
-              text: `Railway sync complete: ${syncResult.migratedProfileCount} profiles and ${syncResult.migratedReadingCount} readings migrated.`,
+              text: `Sync complete: ${syncResult.migratedProfileCount} profiles and ${syncResult.migratedReadingCount} readings moved to your account.`,
             }
           : {
               tone: 'info',
-              text: 'Railway is already in sync with local device data.',
+              text: 'Your account is already in sync.',
             }
       );
     } catch (syncError) {
-      const message = syncError instanceof Error ? syncError.message : 'Railway sync failed.';
+      const message = syncError instanceof Error ? syncError.message : 'Sync failed.';
       setAccountMessage({ tone: 'error', text: message });
     } finally {
       setAuthAction(null);
@@ -434,10 +447,12 @@ export function ReadingView() {
             <span className="reading-eyebrow">Daily reading desk</span>
             <h1>Your daily reading</h1>
             <p>
-              Select a profile and run a daily, weekly, or monthly reading. All readings are tied
-              to live forecast data.
+              {isFirstRun
+                ? 'Enter your birth details to get your first reading — daily, weekly, or monthly.'
+                : 'Select a profile and run a daily, weekly, or monthly reading. All readings are tied to live forecast data.'}
             </p>
 
+            {!isFirstRun && (
             <div className="reading-hero__actions">
               <button
                 type="button"
@@ -457,6 +472,7 @@ export function ReadingView() {
                 Run {selectedScope} reading
               </button>
             </div>
+            )}
 
             <div className="reading-link-row">
               <Link to="/charts" className="reading-inline-link">
@@ -468,6 +484,7 @@ export function ReadingView() {
             </div>
           </div>
 
+          {!isFirstRun && (
           <div className="reading-hero__meta">
             <div className="reading-hero__stats">
               <article className="reading-hero__stat">
@@ -493,6 +510,7 @@ export function ReadingView() {
               <p>{activeProfileLabel}</p>
             </div>
           </div>
+          )}
         </section>
 
         <section className="reading-scope-row" aria-label="Reading scope selector">
@@ -511,6 +529,39 @@ export function ReadingView() {
             </button>
           ))}
         </section>
+
+        {isFirstRun && (
+          <div className="reading-first-run" role="status">
+            <div className="reading-first-run__step reading-first-run__step--active">
+              <span className="reading-first-run__num">1</span>
+              <div>
+                <strong>Enter your birth details</strong>
+                <p>Name, date, and optionally birth time and place.</p>
+              </div>
+            </div>
+            <div className="reading-first-run__step">
+              <span className="reading-first-run__num">2</span>
+              <div>
+                <strong>Run your first reading</strong>
+                <p>Choose daily, weekly, or monthly above.</p>
+              </div>
+            </div>
+            <div className="reading-first-run__step">
+              <span className="reading-first-run__num">3</span>
+              <div>
+                <strong>Sign up to save it</strong>
+                <p>Keep your profile and history across devices.</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {isAwaitingFirstReading && (
+          <div className="reading-alert" role="status">
+            <strong>Profile ready.</strong>
+            <p>Choose a scope above — daily, weekly, or monthly — and run your first reading.</p>
+          </div>
+        )}
 
         {error && (
           <div className="reading-alert" role="alert">
@@ -695,8 +746,8 @@ export function ReadingView() {
 
             <section className="reading-panel">
               <div className="reading-panel__header">
-                <span>Railway backend</span>
-                <strong>Account sync for profiles and saved readings</strong>
+                <span>Your account</span>
+                <strong>Sync profiles and readings across devices</strong>
               </div>
 
               {isAuthenticated ? (
@@ -729,10 +780,10 @@ export function ReadingView() {
                       disabled={authAction === 'sync'}
                     >
                       {authAction === 'sync'
-                        ? 'Syncing to Railway...'
+                        ? 'Syncing...'
                         : hasPendingRailwaySync
                           ? 'Sync local data now'
-                          : 'Check Railway sync'}
+                          : 'Sync account'}
                     </button>
                     <button type="button" className="btn-secondary" onClick={logout}>
                       Disconnect account
@@ -787,7 +838,7 @@ export function ReadingView() {
 
                   {!authEmailIsValid && trimmedAuthEmail.length > 0 && (
                     <p className="reading-account-validation">
-                      Enter a valid email address before connecting to Railway.
+                      Enter a valid email address.
                     </p>
                   )}
 

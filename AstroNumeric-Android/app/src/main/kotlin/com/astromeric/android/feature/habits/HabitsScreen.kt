@@ -26,8 +26,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.astromeric.android.R
 import com.astromeric.android.core.data.remote.AstroRemoteDataSource
 import com.astromeric.android.core.data.repository.HabitRepository
 import com.astromeric.android.core.model.AppProfile
@@ -55,8 +57,15 @@ fun HabitsScreen(
 ) {
     val scope = rememberCoroutineScope()
     val habits by habitRepository.localHabits.collectAsStateWithLifecycle(initialValue = emptyList())
+    val unknownCategoryLabel = stringResource(R.string.habits_unknown_category_label)
+    val unknownCategoryDescription = stringResource(R.string.habits_unknown_category_description)
+    val syncUnavailableMessage = stringResource(R.string.habits_sync_unavailable)
+    val syncFailedRestoreMessage = stringResource(R.string.habits_sync_failed_restore)
+    val savedSyncedMessage = stringResource(R.string.habits_saved_synced)
+    val savedLocalOnlyMessage = stringResource(R.string.habits_saved_local_only)
+    val removedLocalCacheMessage = stringResource(R.string.habits_removed_local_cache)
     val fallbackCategories = remember { fallbackHabitCategories() }
-    val categories = remember(habits) {
+    val categories = remember(habits, unknownCategoryLabel, unknownCategoryDescription) {
         val knownIds = fallbackCategories.map { it.id }.toSet()
         fallbackCategories + habits
             .map { it.category }
@@ -66,13 +75,14 @@ fun HabitsScreen(
                 com.astromeric.android.core.model.LocalHabitCategoryData(
                     id = category,
                     name = category.replaceFirstChar { it.titlecase() },
-                    emoji = "Habit",
-                    description = "Tracked locally or synced from backend.",
+                    emoji = unknownCategoryLabel,
+                    description = unknownCategoryDescription,
                     bestPhases = emptyList(),
                     avoidPhases = emptyList(),
                 )
             }
     }
+    val defaultLunarGuidance = remember { fallbackLunarGuidance("waxing_crescent") }
 
     var selectedCategory by remember { mutableStateOf(AllHabitCategories) }
     var draftName by remember { mutableStateOf("") }
@@ -80,8 +90,8 @@ fun HabitsScreen(
     var draftCategory by remember { mutableStateOf(fallbackCategories.first().id) }
     var isRefreshing by remember { mutableStateOf(false) }
     var isCreating by remember { mutableStateOf(false) }
-    var activeMoonPhaseLabel by remember { mutableStateOf("Waxing Crescent") }
-    var lunarGuidance by remember { mutableStateOf(fallbackLunarGuidance("waxing_crescent")) }
+    var activeMoonPhaseLabel by remember { mutableStateOf(defaultLunarGuidance.phaseName) }
+    var lunarGuidance by remember { mutableStateOf(defaultLunarGuidance) }
 
     val visibleHabits = habits.filter { habit ->
         selectedCategory == AllHabitCategories || habit.category == selectedCategory
@@ -103,7 +113,7 @@ fun HabitsScreen(
             isRefreshing = true
             val result = habitRepository.refreshHabits()
             if (result.isFailure && showFailureMessage) {
-                onShowMessage("Habit sync is unavailable, so Android is showing your cached habits.")
+                onShowMessage(syncUnavailableMessage)
             }
             isRefreshing = false
         }
@@ -140,11 +150,11 @@ fun HabitsScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Text(
-                    text = "Habits",
+                    text = stringResource(R.string.habits_title),
                     style = MaterialTheme.typography.headlineMedium,
                 )
                 Text(
-                    text = "Track repeatable practices locally first, then sync with the backend when the habits service answers.",
+                    text = stringResource(R.string.habits_hero_body),
                     style = MaterialTheme.typography.bodyMedium,
                 )
                 selectedProfile?.let { profile ->
@@ -152,19 +162,23 @@ fun HabitsScreen(
                         onClick = {},
                         label = {
                             Text(
-                                "Active profile: ${profile.displayName(hideSensitiveDetailsEnabled, PrivacyDisplayRole.ACTIVE_USER)} · ${profile.dataQuality.label}",
+                                stringResource(
+                                    R.string.habits_active_profile,
+                                    profile.displayName(hideSensitiveDetailsEnabled, PrivacyDisplayRole.ACTIVE_USER),
+                                    profile.dataQuality.label,
+                                ),
                             )
                         },
                     )
                 } ?: Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
-                        text = "Habits works without a saved profile, but profile context still matters for future parity layers.",
+                        text = stringResource(R.string.habits_profile_context_body),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.weight(1f),
                     )
                     OutlinedButton(onClick = onOpenProfile) {
-                        Text("Open Profile")
+                        Text(stringResource(R.string.action_open_profile))
                     }
                 }
             }
@@ -176,24 +190,32 @@ fun HabitsScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Text(
-                    text = "Moon guidance",
+                    text = stringResource(R.string.habits_moon_guidance_title),
                     style = MaterialTheme.typography.titleMedium,
                 )
                 AssistChip(
                     onClick = {},
-                    label = { Text("$activeMoonPhaseLabel · ${lunarGuidance.energy}") },
+                    label = {
+                        Text(
+                            stringResource(
+                                R.string.habits_moon_guidance_chip,
+                                activeMoonPhaseLabel,
+                                lunarGuidance.energy,
+                            ),
+                        )
+                    },
                 )
                 Text(
                     text = lunarGuidance.theme,
                     style = MaterialTheme.typography.bodyMedium,
                 )
                 Text(
-                    text = "Best for: ${lunarGuidance.bestFor.joinToString()}.",
+                    text = stringResource(R.string.habits_best_for_format, lunarGuidance.bestFor.joinToString()),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Text(
-                    text = "Ideal categories now: ${lunarGuidance.idealHabits.joinToString()}.",
+                    text = stringResource(R.string.habits_ideal_categories_format, lunarGuidance.idealHabits.joinToString()),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -205,18 +227,18 @@ fun HabitsScreen(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             MetricCard(
-                title = "Active",
+                title = stringResource(R.string.habits_metric_active),
                 value = visibleHabits.size.toString(),
                 modifier = Modifier.weight(1f),
             )
             MetricCard(
-                title = "Done today",
+                title = stringResource(R.string.habits_done_today),
                 value = completedTodayCount.toString(),
                 modifier = Modifier.weight(1f),
             )
             MetricCard(
-                title = "Avg rate",
-                value = "$averageCompletionRate%",
+                title = stringResource(R.string.habits_metric_avg_rate),
+                value = stringResource(R.string.habits_percent_value, averageCompletionRate),
                 modifier = Modifier.weight(1f),
             )
         }
@@ -228,11 +250,11 @@ fun HabitsScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     Text(
-                        text = "Suggested next habit",
+                        text = stringResource(R.string.habits_suggested_next_habit),
                         style = MaterialTheme.typography.titleMedium,
                     )
                     Text(
-                        text = "${habit.name} fits the current lunar rhythm better than starting from zero.",
+                        text = stringResource(R.string.habits_suggested_body, habit.name),
                         style = MaterialTheme.typography.bodyMedium,
                     )
                     Button(
@@ -240,12 +262,18 @@ fun HabitsScreen(
                             scope.launch {
                                 val result = habitRepository.toggleHabitCompletion(habit)
                                 if (result.isFailure) {
-                                    onShowMessage("Habit sync failed, so the app restored the previous state.")
+                                    onShowMessage(syncFailedRestoreMessage)
                                 }
                             }
                         },
                     ) {
-                        Text(if (habit.isCompletedToday) "Mark undone" else "Mark done")
+                        Text(
+                            if (habit.isCompletedToday) {
+                                stringResource(R.string.habits_mark_undone)
+                            } else {
+                                stringResource(R.string.habits_mark_done)
+                            },
+                        )
                     }
                 }
             }
@@ -257,20 +285,20 @@ fun HabitsScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 Text(
-                    text = "Create habit",
+                    text = stringResource(R.string.habits_create_title),
                     style = MaterialTheme.typography.titleMedium,
                 )
                 OutlinedTextField(
                     value = draftName,
                     onValueChange = { draftName = it },
-                    label = { Text("Habit name") },
+                    label = { Text(stringResource(R.string.habits_name_label)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
                 OutlinedTextField(
                     value = draftDescription,
                     onValueChange = { draftDescription = it },
-                    label = { Text("Description") },
+                    label = { Text(stringResource(R.string.habits_description_label)) },
                     modifier = Modifier.fillMaxWidth(),
                 )
                 FlowRow(
@@ -300,14 +328,20 @@ fun HabitsScreen(
                                 if (result.isSuccess) {
                                     draftName = ""
                                     draftDescription = ""
-                                    onShowMessage("Habit saved locally and synced when possible.")
+                                    onShowMessage(savedSyncedMessage)
                                 } else {
-                                    onShowMessage("Habit was saved locally because remote sync is unavailable.")
+                                    onShowMessage(savedLocalOnlyMessage)
                                 }
                             }
                         },
                     ) {
-                        Text(if (isCreating) "Saving..." else "Create habit")
+                        Text(
+                            if (isCreating) {
+                                stringResource(R.string.habits_saving)
+                            } else {
+                                stringResource(R.string.habits_create_action)
+                            },
+                        )
                     }
                     OutlinedButton(
                         onClick = {
@@ -315,7 +349,7 @@ fun HabitsScreen(
                             draftDescription = ""
                         },
                     ) {
-                        Text("Clear")
+                        Text(stringResource(R.string.habits_clear))
                     }
                 }
             }
@@ -328,7 +362,7 @@ fun HabitsScreen(
             FilterChip(
                 selected = selectedCategory == AllHabitCategories,
                 onClick = { selectedCategory = AllHabitCategories },
-                label = { Text("All") },
+                label = { Text(stringResource(R.string.habits_filter_all)) },
             )
             categories.forEach { category ->
                 FilterChip(
@@ -347,10 +381,16 @@ fun HabitsScreen(
                     refreshMoonGuidance()
                 },
             ) {
-                Text(if (isRefreshing) "Refreshing..." else "Refresh")
+                Text(
+                    if (isRefreshing) {
+                        stringResource(R.string.tools_refreshing)
+                    } else {
+                        stringResource(R.string.habits_refresh)
+                    },
+                )
             }
             Text(
-                text = "Local-first cache stays readable even when backend sync is unavailable.",
+                text = stringResource(R.string.habits_cache_note),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 12.dp),
@@ -360,7 +400,7 @@ fun HabitsScreen(
         if (visibleHabits.isEmpty()) {
             Card(modifier = Modifier.fillMaxWidth()) {
                 Text(
-                    text = "No habits yet. Start with a small ritual that matches ${lunarGuidance.phaseName.lowercase()} energy.",
+                    text = stringResource(R.string.habits_empty_state, lunarGuidance.phaseName),
                     modifier = Modifier.padding(16.dp),
                     style = MaterialTheme.typography.bodyMedium,
                 )
@@ -373,14 +413,14 @@ fun HabitsScreen(
                         scope.launch {
                             val result = habitRepository.toggleHabitCompletion(habit)
                             if (result.isFailure) {
-                                onShowMessage("Habit sync failed, so the app restored the previous state.")
+                                onShowMessage(syncFailedRestoreMessage)
                             }
                         }
                     },
                     onDelete = {
                         scope.launch {
                             habitRepository.deleteHabit(habit.id)
-                            onShowMessage("Habit removed from the local Android cache.")
+                            onShowMessage(removedLocalCacheMessage)
                         }
                     },
                 )
@@ -443,7 +483,15 @@ private fun HabitCard(
                 }
                 AssistChip(
                     onClick = {},
-                    label = { Text(if (habit.isCompletedToday) "Done today" else "Open") },
+                    label = {
+                        Text(
+                            if (habit.isCompletedToday) {
+                                stringResource(R.string.habits_done_today)
+                            } else {
+                                stringResource(R.string.habits_open)
+                            },
+                        )
+                    },
                 )
             }
 
@@ -455,17 +503,28 @@ private fun HabitCard(
             }
 
             Text(
-                text = "Streak ${habit.currentStreak} · Best ${habit.longestStreak} · Rate $completionPercent%",
+                text = stringResource(
+                    R.string.habits_streak_summary,
+                    habit.currentStreak,
+                    habit.longestStreak,
+                    completionPercent,
+                ),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
 
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Button(onClick = onToggle) {
-                    Text(if (habit.isCompletedToday) "Undo today" else "Mark done")
+                    Text(
+                        if (habit.isCompletedToday) {
+                            stringResource(R.string.habits_undo_today)
+                        } else {
+                            stringResource(R.string.habits_mark_done)
+                        },
+                    )
                 }
                 OutlinedButton(onClick = onDelete) {
-                    Text("Remove")
+                    Text(stringResource(R.string.habits_remove))
                 }
             }
         }

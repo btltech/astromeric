@@ -1,5 +1,6 @@
 package com.astromeric.android.feature.profile
 
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
@@ -29,8 +30,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.astromeric.android.R
 import com.astromeric.android.BuildConfig
 import com.astromeric.android.core.ui.PremiumContentCard
 import com.astromeric.android.core.ui.PremiumEmptyStateCard
@@ -43,8 +46,8 @@ fun HelpFaqScreen(
     val context = LocalContext.current
     var searchQuery by rememberSaveable { mutableStateOf("") }
     var expandedQuestion by rememberSaveable { mutableStateOf<String?>(null) }
-    val filteredSections = remember(searchQuery) {
-        filterFaqSections(searchQuery)
+    val filteredSections = remember(context, searchQuery) {
+        filterFaqSections(context, searchQuery)
     }
 
     Column(
@@ -55,24 +58,28 @@ fun HelpFaqScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         PremiumHeroCard(
-            eyebrow = "Help",
-            title = "Find the answer fast enough that friction does not build.",
-            body = "Search when you know the issue. Browse by section when you need orientation or context.",
-            chips = listOf("FAQ", "Search", "Support"),
+            eyebrow = stringResource(R.string.support_help_hero_eyebrow),
+            title = stringResource(R.string.support_help_hero_title),
+            body = stringResource(R.string.support_help_hero_body),
+            chips = listOf(
+                stringResource(R.string.support_help_chip_faq),
+                stringResource(R.string.support_help_chip_search),
+                stringResource(R.string.support_help_chip_support),
+            ),
         )
 
         OutlinedTextField(
             value = searchQuery,
             onValueChange = { searchQuery = it },
             modifier = Modifier.fillMaxWidth(),
-            label = { Text("Search help topics") },
+            label = { Text(stringResource(R.string.support_help_search_label)) },
             singleLine = true,
         )
 
         if (filteredSections.isEmpty()) {
             PremiumEmptyStateCard(
-                title = "No results for \"$searchQuery\"",
-                message = "Try a feature name, notification, widget, chart, or privacy keyword.",
+                title = stringResource(R.string.support_help_no_results_title, searchQuery),
+                message = stringResource(R.string.support_help_no_results_message),
             )
         } else {
             filteredSections.forEach { section ->
@@ -87,19 +94,19 @@ fun HelpFaqScreen(
         }
 
         PremiumContentCard(
-            title = "Still need help?",
-            body = "Email support and include the screen, feature, and steps you were taking. No birth date, birth time, birthplace, journal text, or chart data is added automatically.",
+            title = stringResource(R.string.support_help_contact_title),
+            body = stringResource(R.string.support_help_contact_body),
         ) {
                 Button(
                     onClick = {
                         launchSupportEmail(
                             context = context,
-                            subject = "AstroNumeric Android Support",
+                            subject = context.getString(R.string.support_help_email_subject),
                         )
                     },
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Text("Email support")
+                    Text(stringResource(R.string.support_help_email_button))
                 }
         }
     }
@@ -109,7 +116,9 @@ fun HelpFaqScreen(
 fun UserGuideScreen(
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
     var expandedSection by rememberSaveable { mutableStateOf<String?>(null) }
+    val sections = remember(context) { userGuideSections(context) }
 
     Column(
         modifier = modifier
@@ -119,13 +128,17 @@ fun UserGuideScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         PremiumHeroCard(
-            eyebrow = "Guide",
-            title = "Understand AstroNumeric with confidence.",
-            body = "Open the section that matches the question you have now instead of reading front to back.",
-            chips = listOf("Getting started", "Tools", "Privacy"),
+            eyebrow = stringResource(R.string.support_guide_hero_eyebrow),
+            title = stringResource(R.string.support_guide_hero_title),
+            body = stringResource(R.string.support_guide_hero_body),
+            chips = listOf(
+                stringResource(R.string.support_guide_chip_getting_started),
+                stringResource(R.string.support_guide_chip_tools),
+                stringResource(R.string.support_guide_chip_privacy),
+            ),
         )
 
-        userGuideSections.forEach { section ->
+        sections.forEach { section ->
             UserGuideSectionCard(
                 section = section,
                 expanded = expandedSection == section.title,
@@ -159,7 +172,11 @@ private fun HelpSectionCard(
                         IconButton(onClick = { onToggle(item.question) }) {
                             Icon(
                                 imageVector = if (expandedQuestion == item.question) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
-                                contentDescription = if (expandedQuestion == item.question) "Collapse answer" else "Expand answer",
+                                contentDescription = if (expandedQuestion == item.question) {
+                                    stringResource(R.string.support_help_collapse_answer)
+                                } else {
+                                    stringResource(R.string.support_help_expand_answer)
+                                },
                             )
                         }
                     }
@@ -193,7 +210,11 @@ private fun UserGuideSectionCard(
                 IconButton(onClick = onToggle) {
                     Icon(
                         imageVector = if (expanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
-                        contentDescription = if (expanded) "Collapse section" else "Expand section",
+                        contentDescription = if (expanded) {
+                            stringResource(R.string.support_guide_collapse_section)
+                        } else {
+                            stringResource(R.string.support_guide_expand_section)
+                        },
                     )
                 }
             }
@@ -223,28 +244,28 @@ private fun launchSupportEmail(
     val emailIntent = Intent(Intent.ACTION_SENDTO).apply {
         data = Uri.parse("mailto:support@astromeric.app")
         putExtra(Intent.EXTRA_SUBJECT, subject)
-        putExtra(Intent.EXTRA_TEXT, supportEmailBody())
+        putExtra(Intent.EXTRA_TEXT, supportEmailBody(context))
     }
     if (emailIntent.resolveActivity(context.packageManager) != null) {
         context.startActivity(emailIntent)
     }
 }
 
-private fun supportEmailBody(): String = buildString {
-    appendLine("Please describe what happened:")
+private fun supportEmailBody(context: android.content.Context): String = buildString {
+    appendLine(context.getString(R.string.support_email_body_prompt))
     appendLine()
-    appendLine("Screen or feature:")
-    appendLine("Expected result:")
-    appendLine("Actual result:")
-    appendLine("Steps to reproduce:")
+    appendLine(context.getString(R.string.support_email_body_screen_or_feature))
+    appendLine(context.getString(R.string.support_email_body_expected_result))
+    appendLine(context.getString(R.string.support_email_body_actual_result))
+    appendLine(context.getString(R.string.support_email_body_steps_to_reproduce))
     appendLine()
     appendLine("---")
-    appendLine("Diagnostics")
-    appendLine("Version ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})")
-    appendLine("Android ${Build.VERSION.RELEASE}")
-    appendLine("Device: ${Build.MANUFACTURER} ${Build.MODEL}")
+    appendLine(context.getString(R.string.support_email_body_diagnostics))
+    appendLine(context.getString(R.string.support_email_body_version, BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE))
+    appendLine(context.getString(R.string.support_email_body_android, Build.VERSION.RELEASE))
+    appendLine(context.getString(R.string.support_email_body_device, Build.MANUFACTURER, Build.MODEL))
     appendLine()
-    append("No birth date, birth time, birthplace, journal text, or chart data is included automatically.")
+    append(context.getString(R.string.support_email_body_privacy_note))
 }
 
 private data class HelpSectionData(
@@ -267,141 +288,141 @@ private data class UserGuideItemData(
     val body: String,
 )
 
-private val helpSections = listOf(
+private fun helpSections(context: Context) = listOf(
     HelpSectionData(
-        title = "Account & Profile",
+        title = context.getString(R.string.support_help_section_account_profile_title),
         items = listOf(
             HelpItemData(
-                question = "How do I create a profile?",
-                answer = "Go to the Profile tab and tap Create Profile. Enter your name, birth date, birth time if known, and birthplace. The more accurate your data, the more precise your readings.",
+                question = context.getString(R.string.support_help_question_create_profile),
+                answer = context.getString(R.string.support_help_answer_create_profile),
             ),
             HelpItemData(
-                question = "Can I have multiple profiles?",
-                answer = "Yes. Use the New profile action in Profile to add another person. Switch between profiles with a single tap from the profile list.",
+                question = context.getString(R.string.support_help_question_multiple_profiles),
+                answer = context.getString(R.string.support_help_answer_multiple_profiles),
             ),
             HelpItemData(
-                question = "I don't know my birth time. What should I do?",
-                answer = "Use the profile form to mark the time as unknown or approximate. Sun sign and numerology remain accurate, while Rising sign and house placements become estimated when the time is not exact.",
+                question = context.getString(R.string.support_help_question_unknown_birth_time),
+                answer = context.getString(R.string.support_help_answer_unknown_birth_time),
             ),
             HelpItemData(
-                question = "How do I edit my birth details?",
-                answer = "Open Profile, pick the profile you want, then tap Edit. Saving recalculates the profile-backed readings automatically.",
+                question = context.getString(R.string.support_help_question_edit_birth_details),
+                answer = context.getString(R.string.support_help_answer_edit_birth_details),
             ),
             HelpItemData(
-                question = "How do I delete my data?",
-                answer = "Delete a profile from the profile list to remove it from the local Android store. For backend-held data such as push tokens or synced friend records, email privacy@astromeric.app.",
+                question = context.getString(R.string.support_help_question_delete_data),
+                answer = context.getString(R.string.support_help_answer_delete_data),
             ),
             HelpItemData(
-                question = "What does Hide Sensitive Details do?",
-                answer = "It masks names, birth details, share cards, and some cached labels across the UI. It does not remove the underlying data needed for chart calculations, and backup files still retain full details for restore.",
+                question = context.getString(R.string.support_help_question_hide_sensitive_details),
+                answer = context.getString(R.string.support_help_answer_hide_sensitive_details),
             ),
         ),
     ),
     HelpSectionData(
-        title = "Readings & Accuracy",
+        title = context.getString(R.string.support_help_section_readings_accuracy_title),
         items = listOf(
             HelpItemData(
-                question = "Why does my reading look the same as yesterday?",
-                answer = "If you are seeing cached data, pull down on the screen to force a refresh. Readings update each day, so the content will stay the same until the date or refreshed data changes.",
+                question = context.getString(R.string.support_help_question_same_reading),
+                answer = context.getString(R.string.support_help_answer_same_reading),
             ),
             HelpItemData(
-                question = "How accurate are the astrological calculations?",
-                answer = "AstroNumeric uses Swiss Ephemeris calculations. Planetary positions are precise, but Rising sign and house accuracy still depend on how exact the birth time is.",
+                question = context.getString(R.string.support_help_question_accuracy),
+                answer = context.getString(R.string.support_help_answer_accuracy),
             ),
             HelpItemData(
-                question = "What is Chaldean numerology?",
-                answer = "Pythagorean is the modern 1 to 9 system. Chaldean uses a different 1 to 8 mapping and treats 9 as sacred. Switching systems changes some name-based calculations.",
+                question = context.getString(R.string.support_help_question_chaldean),
+                answer = context.getString(R.string.support_help_answer_chaldean),
             ),
             HelpItemData(
-                question = "My life path number seems wrong.",
-                answer = "Check that the birth date is correct and that you have not switched numerology systems. Pythagorean and Chaldean calculations can produce different values.",
+                question = context.getString(R.string.support_help_question_life_path_wrong),
+                answer = context.getString(R.string.support_help_answer_life_path_wrong),
             ),
         ),
     ),
     HelpSectionData(
-        title = "Charts & Astrology",
+        title = context.getString(R.string.support_help_section_charts_astrology_title),
         items = listOf(
             HelpItemData(
-                question = "Why do two people born on the same day have different astrological profiles?",
-                answer = "Birth time and birthplace change the Ascendant and the house layout. The Sun sign may match, but the chart structure can still differ a lot.",
+                question = context.getString(R.string.support_help_question_same_day_different_profiles),
+                answer = context.getString(R.string.support_help_answer_same_day_different_profiles),
             ),
             HelpItemData(
-                question = "The chart wheel isn't showing house lines.",
-                answer = "House cusps require a birth time. Add one in Profile to unlock full house-based chart features.",
+                question = context.getString(R.string.support_help_question_missing_house_lines),
+                answer = context.getString(R.string.support_help_answer_missing_house_lines),
             ),
             HelpItemData(
-                question = "What house system does AstroNumeric use?",
-                answer = "The default is Placidus. You can switch to Whole Sign in the profile editor if you prefer that system.",
+                question = context.getString(R.string.support_help_question_house_system),
+                answer = context.getString(R.string.support_help_answer_house_system),
             ),
             HelpItemData(
-                question = "Why is my Sun sign different from what I expected?",
-                answer = "If you were born near a cusp, exact birth time and birthplace can shift the Sun's actual sign placement compared with broad pop-astrology tables.",
+                question = context.getString(R.string.support_help_question_sun_sign_different),
+                answer = context.getString(R.string.support_help_answer_sun_sign_different),
             ),
         ),
     ),
     HelpSectionData(
-        title = "Notifications & Widgets",
+        title = context.getString(R.string.support_help_section_notifications_widgets_title),
         items = listOf(
             HelpItemData(
-                question = "How do I enable the daily reminder?",
-                answer = "Use the quick toggle in Profile or open Notification settings to manage daily, moon, habit, transit, and timing alerts more precisely. Android system permission still controls delivery.",
+                question = context.getString(R.string.support_help_question_enable_daily_reminder),
+                answer = context.getString(R.string.support_help_answer_enable_daily_reminder),
             ),
             HelpItemData(
-                question = "The morning brief widget shows old data.",
-                answer = "Bring the app to the foreground with an active profile so it can refresh the latest brief and pass updated data to the widget. A short delay is still normal.",
+                question = context.getString(R.string.support_help_question_widget_old_data),
+                answer = context.getString(R.string.support_help_answer_widget_old_data),
             ),
             HelpItemData(
-                question = "How do I add the widget?",
-                answer = "Long press the launcher home screen, open widgets, search for AstroNumeric, and place the brief or personal day widget.",
+                question = context.getString(R.string.support_help_question_add_widget),
+                answer = context.getString(R.string.support_help_answer_add_widget),
             ),
         ),
     ),
     HelpSectionData(
-        title = "Compatibility & Friends",
+        title = context.getString(R.string.support_help_section_compatibility_friends_title),
         items = listOf(
             HelpItemData(
-                question = "How do I add a friend for compatibility?",
-                answer = "Go to Relationships and add a comparison profile or friend record there. The app can then calculate compatibility using synastry, numerology, and timing data.",
+                question = context.getString(R.string.support_help_question_add_friend_compatibility),
+                answer = context.getString(R.string.support_help_answer_add_friend_compatibility),
             ),
             HelpItemData(
-                question = "What does the compatibility percentage mean?",
-                answer = "The score blends synastry aspects, life path resonance, and element balance. It points to alignment and friction, not a guaranteed outcome.",
+                question = context.getString(R.string.support_help_question_compatibility_percentage),
+                answer = context.getString(R.string.support_help_answer_compatibility_percentage),
             ),
             HelpItemData(
-                question = "My friend data disappeared after an update.",
-                answer = "Friend records and local relationship history are handled separately. Refresh the relationships view first. If the data does not return, contact support.",
+                question = context.getString(R.string.support_help_question_friend_data_disappeared),
+                answer = context.getString(R.string.support_help_answer_friend_data_disappeared),
             ),
         ),
     ),
     HelpSectionData(
-        title = "Troubleshooting",
+        title = context.getString(R.string.support_help_section_troubleshooting_title),
         items = listOf(
             HelpItemData(
-                question = "The app shows unable to load errors.",
-                answer = "Check your internet connection and retry. If the backend is temporarily unavailable, try again in a minute. If it persists, email support.",
+                question = context.getString(R.string.support_help_question_unable_to_load),
+                answer = context.getString(R.string.support_help_answer_unable_to_load),
             ),
             HelpItemData(
-                question = "How do I clear the cache?",
-                answer = "Most caches expire automatically. There is no one-tap full cache wipe in the current Android build, so reinstalling is the cleanest local reset.",
+                question = context.getString(R.string.support_help_question_clear_cache),
+                answer = context.getString(R.string.support_help_answer_clear_cache),
             ),
             HelpItemData(
-                question = "The app crashed. How do I report it?",
-                answer = "Relaunch the app and email support with Crash Report in the subject, your device model, Android version, and the steps that led to the crash.",
+                question = context.getString(R.string.support_help_question_report_crash),
+                answer = context.getString(R.string.support_help_answer_report_crash),
             ),
             HelpItemData(
-                question = "Readings aren't updating.",
-                answer = "Pull down to refresh. If the content is still stale, confirm connectivity and try again after the cache window expires.",
+                question = context.getString(R.string.support_help_question_readings_not_updating),
+                answer = context.getString(R.string.support_help_answer_readings_not_updating),
             ),
         ),
     ),
 )
 
-private fun filterFaqSections(query: String): List<HelpSectionData> {
+private fun filterFaqSections(context: Context, query: String): List<HelpSectionData> {
     if (query.isBlank()) {
-        return helpSections
+        return helpSections(context)
     }
     val lowered = query.trim().lowercase()
-    return helpSections.mapNotNull { section ->
+    return helpSections(context).mapNotNull { section ->
         val filteredItems = section.items.filter { item ->
             item.question.lowercase().contains(lowered) || item.answer.lowercase().contains(lowered)
         }
@@ -409,165 +430,165 @@ private fun filterFaqSections(query: String): List<HelpSectionData> {
     }
 }
 
-private val userGuideSections = listOf(
+private fun userGuideSections(context: Context) = listOf(
     UserGuideSectionData(
-        title = "Getting Started",
+        title = context.getString(R.string.support_guide_section_getting_started_title),
         items = listOf(
             UserGuideItemData(
-                heading = "Create your profile",
-                body = "Go to Profile and create a profile with full name, birth date, birth time if known, and birthplace. Better source data gives you better chart precision.",
+                heading = context.getString(R.string.support_guide_heading_create_profile),
+                body = context.getString(R.string.support_guide_body_create_profile),
             ),
             UserGuideItemData(
-                heading = "Why birth time matters",
-                body = "Birth time determines the Ascendant and house cusps. Without it, the app falls back to an estimated chart and hides some house-dependent features.",
+                heading = context.getString(R.string.support_guide_heading_birth_time_matters),
+                body = context.getString(R.string.support_guide_body_birth_time_matters),
             ),
             UserGuideItemData(
-                heading = "Multi-profile support",
-                body = "You can add more than one profile for yourself, a partner, family members, or comparison subjects and switch between them from the Profile tab.",
+                heading = context.getString(R.string.support_guide_heading_multi_profile_support),
+                body = context.getString(R.string.support_guide_body_multi_profile_support),
             ),
         ),
     ),
     UserGuideSectionData(
-        title = "Home & Daily Reading",
+        title = context.getString(R.string.support_guide_section_home_daily_reading_title),
         items = listOf(
             UserGuideItemData(
-                heading = "What is a daily reading?",
-                body = "The daily reading combines forecast scoring, your personal day number, and lunar context into a single daily interpretation. Pull to refresh on Home when you need a fresh fetch.",
+                heading = context.getString(R.string.support_guide_heading_daily_reading),
+                body = context.getString(R.string.support_guide_body_daily_reading),
             ),
             UserGuideItemData(
-                heading = "Morning Brief",
-                body = "Morning Brief is the short summary reused across the home surface, widgets, and notifications. Opening the app helps keep it current.",
+                heading = context.getString(R.string.support_guide_heading_morning_brief),
+                body = context.getString(R.string.support_guide_body_morning_brief),
             ),
             UserGuideItemData(
-                heading = "Personal Day Number",
-                body = "This numerology value is derived from your birth date plus today's date and helps frame the tone of the day.",
+                heading = context.getString(R.string.support_guide_heading_personal_day_number),
+                body = context.getString(R.string.support_guide_body_personal_day_number),
             ),
         ),
     ),
     UserGuideSectionData(
-        title = "Numerology",
+        title = context.getString(R.string.support_guide_section_numerology_title),
         items = listOf(
             UserGuideItemData(
-                heading = "Life Path Number",
-                body = "Derived from the full birth date. It represents the broad themes and core direction that repeat through life.",
+                heading = context.getString(R.string.support_guide_heading_life_path_number),
+                body = context.getString(R.string.support_guide_body_life_path_number),
             ),
             UserGuideItemData(
-                heading = "Expression, Soul Urge, and Personality",
-                body = "These name-based numbers describe how you express yourself, what drives you internally, and how you are perceived externally.",
+                heading = context.getString(R.string.support_guide_heading_expression_soul_urge_personality),
+                body = context.getString(R.string.support_guide_body_expression_soul_urge_personality),
             ),
             UserGuideItemData(
-                heading = "Pythagorean vs Chaldean",
-                body = "Pythagorean is the modern default. Chaldean uses a different mapping and can produce different name-based results.",
+                heading = context.getString(R.string.support_guide_heading_pythagorean_vs_chaldean),
+                body = context.getString(R.string.support_guide_body_pythagorean_vs_chaldean),
             ),
             UserGuideItemData(
-                heading = "Personal Year & Month",
-                body = "These cycles are built from your birth date and the current calendar period to explain the longer and shorter timing arcs you are in.",
+                heading = context.getString(R.string.support_guide_heading_personal_year_month),
+                body = context.getString(R.string.support_guide_body_personal_year_month),
             ),
         ),
     ),
     UserGuideSectionData(
-        title = "Birth Chart",
+        title = context.getString(R.string.support_guide_section_birth_chart_title),
         items = listOf(
             UserGuideItemData(
-                heading = "Reading your chart",
-                body = "The chart view places planets, signs, and houses into one wheel so you can inspect the structure of the natal chart and supporting interpretations.",
+                heading = context.getString(R.string.support_guide_heading_reading_your_chart),
+                body = context.getString(R.string.support_guide_body_reading_your_chart),
             ),
             UserGuideItemData(
-                heading = "Planets, signs, houses, aspects",
-                body = "Planets show what is acting, signs show how that energy expresses itself, houses show where it lands, and aspects show how those energies interact.",
+                heading = context.getString(R.string.support_guide_heading_planets_signs_houses_aspects),
+                body = context.getString(R.string.support_guide_body_planets_signs_houses_aspects),
             ),
         ),
     ),
     UserGuideSectionData(
-        title = "Compatibility",
+        title = context.getString(R.string.support_guide_section_compatibility_title),
         items = listOf(
             UserGuideItemData(
-                heading = "Synastry",
-                body = "Synastry compares two charts to show resonance, friction, and recurring interaction patterns.",
+                heading = context.getString(R.string.support_guide_heading_synastry),
+                body = context.getString(R.string.support_guide_body_synastry),
             ),
             UserGuideItemData(
-                heading = "Cosmic Circle",
-                body = "Relationships lets you save and compare people. Some relationship data syncs through the backend, while local history stays on-device.",
+                heading = context.getString(R.string.support_guide_heading_cosmic_circle),
+                body = context.getString(R.string.support_guide_body_cosmic_circle),
             ),
             UserGuideItemData(
-                heading = "What the score means",
-                body = "Higher scores signal stronger alignment, but they do not predict the success of a relationship. They describe pattern intensity, not destiny.",
+                heading = context.getString(R.string.support_guide_heading_score_means),
+                body = context.getString(R.string.support_guide_body_score_means),
             ),
         ),
     ),
     UserGuideSectionData(
-        title = "Year Ahead",
+        title = context.getString(R.string.support_guide_section_year_ahead_title),
         items = listOf(
             UserGuideItemData(
-                heading = "Solar Return",
-                body = "The year-ahead flow uses the Sun returning to its natal position to frame your next year of themes and pressure points.",
+                heading = context.getString(R.string.support_guide_heading_solar_return),
+                body = context.getString(R.string.support_guide_body_solar_return),
             ),
             UserGuideItemData(
-                heading = "Life Phase",
-                body = "Long-cycle astrological milestones such as Saturn and Chiron periods help define your current life chapter.",
+                heading = context.getString(R.string.support_guide_heading_life_phase),
+                body = context.getString(R.string.support_guide_body_life_phase),
             ),
             UserGuideItemData(
-                heading = "Eclipses and monthly forecast",
-                body = "The app highlights major activation periods and lays out month-by-month themes to make the longer forecast easier to use.",
+                heading = context.getString(R.string.support_guide_heading_eclipses_monthly_forecast),
+                body = context.getString(R.string.support_guide_body_eclipses_monthly_forecast),
             ),
         ),
     ),
     UserGuideSectionData(
-        title = "Tools & Features",
+        title = context.getString(R.string.support_guide_section_tools_features_title),
         items = listOf(
             UserGuideItemData(
-                heading = "Calculated vs interpretive",
-                body = "Some tools are direct calculations from astrology or numerology, while others are reflective or hybrid guidance layers.",
+                heading = context.getString(R.string.support_guide_heading_calculated_vs_interpretive),
+                body = context.getString(R.string.support_guide_body_calculated_vs_interpretive),
             ),
             UserGuideItemData(
-                heading = "Tarot, Oracle, Birthstone",
-                body = "These support reflection and reference use cases rather than strict natal chart computation.",
+                heading = context.getString(R.string.support_guide_heading_tarot_oracle_birthstone),
+                body = context.getString(R.string.support_guide_body_tarot_oracle_birthstone),
             ),
             UserGuideItemData(
-                heading = "Cosmic Habits, Journal, Widgets",
-                body = "Habits and Journal help you turn the readings into trackable behavior and reflection, while widgets reuse app-prepared daily context.",
+                heading = context.getString(R.string.support_guide_heading_cosmic_habits_journal_widgets),
+                body = context.getString(R.string.support_guide_body_cosmic_habits_journal_widgets),
             ),
         ),
     ),
     UserGuideSectionData(
-        title = "Notifications",
+        title = context.getString(R.string.support_guide_section_notifications_title),
         items = listOf(
             UserGuideItemData(
-                heading = "Daily Reading Reminder",
-                body = "Manage the quick reminder from Profile or use Notification settings for more granular alert control.",
+                heading = context.getString(R.string.support_guide_heading_daily_reading_reminder),
+                body = context.getString(R.string.support_guide_body_daily_reading_reminder),
             ),
             UserGuideItemData(
-                heading = "Morning Brief",
-                body = "The brief notification depends on successful brief refresh plus Android notification permission and delivery rules.",
+                heading = context.getString(R.string.support_guide_heading_notifications_morning_brief),
+                body = context.getString(R.string.support_guide_body_notifications_morning_brief),
             ),
             UserGuideItemData(
-                heading = "Disabling notifications",
-                body = "Use the in-app notification screen to disable categories and Android system settings to revoke permission entirely.",
+                heading = context.getString(R.string.support_guide_heading_disabling_notifications),
+                body = context.getString(R.string.support_guide_body_disabling_notifications),
             ),
         ),
     ),
     UserGuideSectionData(
-        title = "Tips & Tricks",
+        title = context.getString(R.string.support_guide_section_tips_tricks_title),
         items = listOf(
             UserGuideItemData(
-                heading = "Pull to refresh",
-                body = "Main surfaces support pull-to-refresh when you want a fresh network-backed result instead of cached content.",
+                heading = context.getString(R.string.support_guide_heading_pull_to_refresh),
+                body = context.getString(R.string.support_guide_body_pull_to_refresh),
             ),
             UserGuideItemData(
-                heading = "Long press profiles",
-                body = "Use the profile list actions to edit or delete saved profiles quickly.",
+                heading = context.getString(R.string.support_guide_heading_long_press_profiles),
+                body = context.getString(R.string.support_guide_body_long_press_profiles),
             ),
             UserGuideItemData(
-                heading = "Context-aware AI",
-                body = "Cosmic Guide uses your active profile plus optional local context such as calendar and biometric consent when those features are enabled.",
+                heading = context.getString(R.string.support_guide_heading_context_aware_ai),
+                body = context.getString(R.string.support_guide_body_context_aware_ai),
             ),
             UserGuideItemData(
-                heading = "Hide Sensitive Details",
-                body = "This is a presentation privacy layer. It masks visible details and sharing surfaces without turning server-backed features off.",
+                heading = context.getString(R.string.support_guide_heading_hide_sensitive_details),
+                body = context.getString(R.string.support_guide_body_hide_sensitive_details),
             ),
             UserGuideItemData(
-                heading = "Chaldean toggle",
-                body = "Numerology can switch systems so you can compare Pythagorean and Chaldean results side by side.",
+                heading = context.getString(R.string.support_guide_heading_chaldean_toggle),
+                body = context.getString(R.string.support_guide_body_chaldean_toggle),
             ),
         ),
     ),

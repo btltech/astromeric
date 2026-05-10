@@ -29,8 +29,10 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.astromeric.android.R
 import com.astromeric.android.core.model.LearningModuleData
 import com.astromeric.android.core.ui.PremiumContentCard
 
@@ -49,7 +51,7 @@ fun LessonDetailScreen(
                 title = { Text(module.title, maxLines = 1) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
                     }
                 },
             )
@@ -76,7 +78,7 @@ fun LessonDetailScreen(
                     }
                     if (module.keywords.isNotEmpty()) {
                         Text(
-                            "Keywords: ${module.keywords.joinToString()}",
+                            stringResource(R.string.learning_keywords_format, module.keywords.joinToString()),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -85,7 +87,7 @@ fun LessonDetailScreen(
 
             // Full content
             if (module.content.isNotBlank()) {
-                PremiumContentCard(title = "Lesson Content") {
+                PremiumContentCard(title = stringResource(R.string.lesson_detail_content_title)) {
                         HorizontalDivider()
                         // Render content as paragraphs split by double newline
                         module.content.split("\n\n").filter { it.isNotBlank() }.forEach { paragraph ->
@@ -117,7 +119,7 @@ fun LessonDetailScreen(
 
             // Related modules
             if (module.relatedModules.isNotEmpty()) {
-                PremiumContentCard(title = "Related Topics") {
+                PremiumContentCard(title = stringResource(R.string.lesson_detail_related_topics_title)) {
                         module.relatedModules.forEach { related ->
                             Text("• $related", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
@@ -131,14 +133,14 @@ fun LessonDetailScreen(
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                    Text(" Completed — Mark Incomplete")
+                    Text(stringResource(R.string.lesson_detail_completed_mark_incomplete))
                 }
             } else {
                 Button(
                     onClick = onToggleCompleted,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Text("Mark as Complete")
+                    Text(stringResource(R.string.lesson_detail_mark_complete))
                 }
             }
 

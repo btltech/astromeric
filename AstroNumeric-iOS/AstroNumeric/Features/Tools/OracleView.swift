@@ -14,7 +14,7 @@ struct OracleView: View {
     @State private var pendulumAngle: Double = 0
     @State private var errorMessage: String?
     
-    private let api = APIClient.shared
+    private let cosmicGuide: CosmicGuideRepository = DefaultCosmicGuideRepository()
     
     var body: some View {
         ZStack {
@@ -23,13 +23,13 @@ struct OracleView: View {
             
             ScrollView {
                 VStack(spacing: 24) {
-                    PremiumHeroCard(
-                            eyebrow: "hero.oracle.eyebrow".localized,
-                            title: "hero.oracle.title".localized,
-                            bodyText: "hero.oracle.body".localized,
-                            accent: [Color(hex: "101d3a"), Color(hex: "324fb9"), Color(hex: "7c45aa")],
-                            chips: ["hero.oracle.chip.0".localized, "hero.oracle.chip.1".localized, "hero.oracle.chip.2".localized]
-                        )
+                    PremiumScreenHeader(
+                        eyebrow: "hero.oracle.eyebrow".localized,
+                        title: "hero.oracle.title".localized,
+                        subtitle: "hero.oracle.body".localized,
+                        accent: .accentPrimary,
+                        chips: ["hero.oracle.chip.0".localized, "hero.oracle.chip.1".localized, "hero.oracle.chip.2".localized]
+                    )
 
                     PremiumSectionHeader(
                 title: "section.oracle.0.title".localized,
@@ -314,20 +314,23 @@ struct OracleView: View {
         
         // 3. Send through Cosmic Guide chat pipeline
         do {
-            let response: V2ApiResponse<ChatResponse> = try await api.fetch(
-                .cosmicGuideChat(
-                    message: "HORARY QUESTION: \(trimmedQuestion)",
-                    sunSign: profile.sign,
-                    moonSign: nil,
-                    risingSign: nil,
-                    history: nil,
-                    systemPrompt: systemPrompt,
-                    tone: "direct"
-                )
+            let context = ChatContext(
+                sunSign: profile.sign,
+                moonSign: nil,
+                risingSign: nil,
+                birthTimeAssumed: nil,
+                timeConfidence: nil,
+                history: nil
+            )
+            let response = try await cosmicGuide.chat(
+                message: "HORARY QUESTION: \(trimmedQuestion)",
+                context: context,
+                systemPrompt: systemPrompt,
+                tone: "direct"
             )
             
             // 4. Parse the JSON response from the LLM
-            let rawResponse = response.data.response
+            let rawResponse = response.response
             if let parsed = parseOracleJSON(rawResponse, question: trimmedQuestion) {
                 withAnimation(.spring()) {
                     answer = parsed

@@ -28,90 +28,115 @@ final class JournalVMTests: XCTestCase {
         XCTAssertEqual(JournalOutcome.from(""), .neutral)
     }
     
-    // MARK: - LocalJournalStore Tests
-    
-    func testLocalJournalStoreListEmptyByDefault() {
-        let store = LocalJournalStore.shared
-        // Use a profile ID unlikely to exist in real data
-        let entries = store.list(profileId: -9999)
+    // MARK: - JournalRepository (local persistence) Tests
+
+    func testJournalRepositoryListEmptyByDefault() async {
+        let repository = DefaultJournalRepository()
+        let profileId = -9999
+        await repository.removeAllLocalEntries(profileId: profileId)
+        let entries = await repository.loadLocalEntries(profileId: profileId)
         XCTAssertTrue(entries.isEmpty)
     }
-    
-    func testLocalJournalStoreUpsertAndList() {
-        let store = LocalJournalStore.shared
+
+    func testJournalRepositoryUpsertAndList() async {
+        let repository = DefaultJournalRepository()
         let profileId = -8888
-        
-        // Clean up
-        UserDefaults.standard.removeObject(forKey: "astromeric.local_journal.v1.profile.\(profileId)")
-        
-        store.upsert(profileId: profileId, id: 1, entry: "Test entry", outcome: "yes")
-        let entries = store.list(profileId: profileId)
-        
+        await repository.removeAllLocalEntries(profileId: profileId)
+        defer { Task { await repository.removeAllLocalEntries(profileId: profileId) } }
+
+        _ = await repository.saveLocalEntryText(profileId: profileId, id: 1, entry: "Test entry")
+        _ = await repository.saveLocalEntryOutcome(profileId: profileId, id: 1, outcome: "yes")
+
+        let entries = await repository.loadLocalEntries(profileId: profileId)
         XCTAssertEqual(entries.count, 1)
         XCTAssertEqual(entries.first?.entry, "Test entry")
         XCTAssertEqual(entries.first?.outcome, "yes")
-        
-        // Clean up
-        UserDefaults.standard.removeObject(forKey: "astromeric.local_journal.v1.profile.\(profileId)")
     }
-    
-    func testLocalJournalStoreUpsertUpdatesExisting() {
-        let store = LocalJournalStore.shared
+
+    func testJournalRepositoryUpsertUpdatesExisting() async {
+        let repository = DefaultJournalRepository()
         let profileId = -7777
-        
-        // Clean up
-        UserDefaults.standard.removeObject(forKey: "astromeric.local_journal.v1.profile.\(profileId)")
-        
-        store.upsert(profileId: profileId, id: 1, entry: "Version 1", outcome: nil)
-        store.upsert(profileId: profileId, id: 1, entry: "Version 2", outcome: "partial")
-        
-        let entries = store.list(profileId: profileId)
+        await repository.removeAllLocalEntries(profileId: profileId)
+        defer { Task { await repository.removeAllLocalEntries(profileId: profileId) } }
+
+        _ = await repository.saveLocalEntryText(profileId: profileId, id: 1, entry: "Version 1")
+        _ = await repository.saveLocalEntryText(profileId: profileId, id: 1, entry: "Version 2")
+        _ = await repository.saveLocalEntryOutcome(profileId: profileId, id: 1, outcome: "partial")
+
+        let entries = await repository.loadLocalEntries(profileId: profileId)
         XCTAssertEqual(entries.count, 1)
         XCTAssertEqual(entries.first?.entry, "Version 2")
         XCTAssertEqual(entries.first?.outcome, "partial")
-        
-        // Clean up
-        UserDefaults.standard.removeObject(forKey: "astromeric.local_journal.v1.profile.\(profileId)")
     }
-    
-    func testLocalJournalStoreNextId() {
-        let store = LocalJournalStore.shared
+
+    func testJournalRepositoryNextLocalId() async {
+        let repository = DefaultJournalRepository()
         let profileId = -6666
-        
-        // Clean up
-        UserDefaults.standard.removeObject(forKey: "astromeric.local_journal.v1.profile.\(profileId)")
-        
-        XCTAssertEqual(store.nextId(profileId: profileId), 1)
-        
-        store.upsert(profileId: profileId, id: 1, entry: "Entry", outcome: nil)
-        XCTAssertEqual(store.nextId(profileId: profileId), 2)
-        
-        store.upsert(profileId: profileId, id: 2, entry: "Entry 2", outcome: nil)
-        XCTAssertEqual(store.nextId(profileId: profileId), 3)
-        
-        // Clean up
-        UserDefaults.standard.removeObject(forKey: "astromeric.local_journal.v1.profile.\(profileId)")
+        await repository.removeAllLocalEntries(profileId: profileId)
+        defer { Task { await repository.removeAllLocalEntries(profileId: profileId) } }
+
+        var next = await repository.nextLocalId(profileId: profileId)
+        XCTAssertEqual(next, 1)
+
+        _ = await repository.saveLocalEntryText(profileId: profileId, id: 1, entry: "Entry")
+        next = await repository.nextLocalId(profileId: profileId)
+        XCTAssertEqual(next, 2)
+
+        _ = await repository.saveLocalEntryText(profileId: profileId, id: 2, entry: "Entry 2")
+        next = await repository.nextLocalId(profileId: profileId)
+        XCTAssertEqual(next, 3)
     }
-    
+
+    func testJournalRepositoryMigratesLegacyUserDefaults() async throws {
+        let repository = DefaultJournalRepository()
+        let profileId = -5050
+        let legacyKey = "astromeric.local_journal.v1.profile.\(profileId)"
+
+        // Clean state
+        await repository.removeAllLocalEntries(profileId: profileId)
+        defer {
+            UserDefaults.standard.removeObject(forKey: legacyKey)
+            Task { await repository.removeAllLocalEntries(profileId: profileId) }
+        }
+
+        // Seed legacy UserDefaults blob (encoded with .iso8601, matching old store).
+        let legacyEntry = LocalJournalEntry(
+            id: 7,
+            profileId: profileId,
+            createdAt: Date(timeIntervalSince1970: 1_700_000_000),
+            updatedAt: Date(timeIntervalSince1970: 1_700_000_000),
+            entry: "Legacy entry",
+            outcome: "yes"
+        )
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        let data = try encoder.encode([legacyEntry])
+        UserDefaults.standard.set(data, forKey: legacyKey)
+
+        // First load should migrate, return content, and clear the legacy key.
+        let migrated = await repository.loadLocalEntries(profileId: profileId)
+        XCTAssertEqual(migrated.count, 1)
+        XCTAssertEqual(migrated.first?.entry, "Legacy entry")
+        XCTAssertEqual(migrated.first?.outcome, "yes")
+        XCTAssertNil(UserDefaults.standard.data(forKey: legacyKey))
+    }
+
     // MARK: - JournalVM Local Draft Tests
-    
+
     @MainActor
-    func testMakeLocalDraftCreatesReading() {
-        let vm = JournalVM()
+    func testMakeLocalDraftCreatesReading() async {
+        let repository = DefaultJournalRepository()
         let profileId = -5555
-        
-        // Clean up
-        UserDefaults.standard.removeObject(forKey: "astromeric.local_journal.v1.profile.\(profileId)")
-        
-        let draft = vm.makeLocalDraft(profileId: profileId)
-        
+        await repository.removeAllLocalEntries(profileId: profileId)
+        defer { Task { await repository.removeAllLocalEntries(profileId: profileId) } }
+
+        let vm = JournalVM(repository: repository)
+        let draft = await vm.makeLocalDraft(profileId: profileId)
+
         XCTAssertEqual(draft.scope, "local")
         XCTAssertEqual(draft.scopeLabel, "Journal Entry")
         XCTAssertNil(draft.journalFull)
         XCTAssertNotNil(draft.formattedDate)
-        
-        // Clean up
-        UserDefaults.standard.removeObject(forKey: "astromeric.local_journal.v1.profile.\(profileId)")
     }
     
     // MARK: - JournalReading Model Tests

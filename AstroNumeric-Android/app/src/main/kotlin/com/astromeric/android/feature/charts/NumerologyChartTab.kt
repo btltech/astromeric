@@ -18,7 +18,10 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.astromeric.android.R
 import com.astromeric.android.core.model.AppProfile
 import com.astromeric.android.core.model.NumerologyData
 import com.astromeric.android.core.ui.PremiumLoadingCard
@@ -38,6 +41,7 @@ internal fun NumerologyTab(
     numerology: NumerologyData?,
     isExplaining: Boolean,
     onExplain: () -> Unit,
+    onOpenFullScreen: (() -> Unit)? = null,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         NumerologyContextCard(
@@ -47,11 +51,12 @@ internal fun NumerologyTab(
             numerology = numerology,
             isExplaining = isExplaining,
             onExplain = onExplain,
+            onOpenFullScreen = onOpenFullScreen,
         )
 
         when {
             selectedProfile == null -> Unit
-            isLoading -> PremiumLoadingCard(title = "Calculating numerology")
+            isLoading -> PremiumLoadingCard(title = stringResource(R.string.charts_numerology_loading_title))
             errorMessage != null -> StatusCard(message = errorMessage, isError = true)
             numerology != null -> NumerologyLoadedContent(numerology = numerology)
         }
@@ -66,19 +71,20 @@ private fun NumerologyContextCard(
     numerology: NumerologyData?,
     isExplaining: Boolean,
     onExplain: () -> Unit,
+    onOpenFullScreen: (() -> Unit)? = null,
 ) {
     StudioSectionCard(
-        title = "Numerology in context",
-        subtitle = "Switch methods when you want a different lens on name-based emphasis, but keep the result connected to the profile's chart story.",
+        title = stringResource(R.string.charts_numerology_context_title),
+        subtitle = stringResource(R.string.charts_numerology_context_subtitle),
     ) {
         if (selectedProfile == null) {
             Text(
-                text = "Select or create a profile before calculating numerology.",
+                text = stringResource(R.string.charts_numerology_select_profile),
                 style = MaterialTheme.typography.bodyMedium,
             )
         } else {
             Text(
-                text = "Reading for ${selectedProfile.name} · ${selectedProfile.dateOfBirth}",
+                text = stringResource(R.string.charts_numerology_reading_for, selectedProfile.name, selectedProfile.dateOfBirth),
                 style = MaterialTheme.typography.bodyMedium,
             )
             Row(
@@ -89,12 +95,12 @@ private fun NumerologyContextCard(
                     FilterChip(
                         selected = selectedMethod == method,
                         onClick = { onSelectMethod(method) },
-                        label = { Text(method.label) },
+                        label = { Text(stringResource(method.labelRes)) },
                     )
                 }
             }
             Text(
-                text = selectedMethod.description,
+                text = stringResource(selectedMethod.descriptionRes),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -102,7 +108,18 @@ private fun NumerologyContextCard(
                 onClick = onExplain,
                 enabled = numerology != null && !isExplaining,
             ) {
-                Text(if (isExplaining) "Generating..." else "Explain My Numbers")
+                Text(
+                    if (isExplaining) {
+                        stringResource(R.string.charts_numerology_generating)
+                    } else {
+                        stringResource(R.string.charts_numerology_explain)
+                    },
+                )
+            }
+            onOpenFullScreen?.let { openFull ->
+                TextButton(onClick = openFull) {
+                    Text(stringResource(R.string.charts_numerology_open_full_view))
+                }
             }
         }
     }
@@ -123,29 +140,32 @@ private fun NumerologyLoadedContent(numerology: NumerologyData) {
 private fun NumerologySynthesisCard(numerology: NumerologyData) {
     val synthesis = numerology.synthesis ?: return
     StudioSectionCard(
-        title = "Current synthesis",
-        subtitle = "Use the summary as the glue between your core numbers and the current cycle.",
+        title = stringResource(R.string.charts_numerology_synthesis_title),
+        subtitle = stringResource(R.string.charts_numerology_synthesis_subtitle),
     ) {
         Text(text = synthesis.summary, style = MaterialTheme.typography.bodyMedium)
         if (synthesis.currentFocus.isNotBlank()) {
-            Text(text = "Current focus: ${synthesis.currentFocus}", style = MaterialTheme.typography.bodyMedium)
+            Text(
+                text = stringResource(R.string.charts_numerology_current_focus_format, synthesis.currentFocus),
+                style = MaterialTheme.typography.bodyMedium,
+            )
         }
         if (synthesis.affirmation.isNotBlank()) {
             Text(
-                text = "Affirmation: ${synthesis.affirmation}",
+                text = stringResource(R.string.charts_numerology_affirmation_format, synthesis.affirmation),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
         formatGeneratedAt(numerology.generatedAt)?.let { generatedAt ->
             Text(
-                text = "Updated $generatedAt",
+                text = stringResource(R.string.charts_numerology_updated, generatedAt),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
         Text(
-            text = "The explanation flow matches iOS more closely: try the backend explanation, then keep a structured local synthesis if the request is unavailable.",
+            text = stringResource(R.string.charts_numerology_synthesis_note),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -155,17 +175,17 @@ private fun NumerologySynthesisCard(numerology: NumerologyData) {
 @Composable
 private fun NumerologyCoreNumbersCard(numerology: NumerologyData) {
     StudioSectionCard(
-        title = "Core numbers",
-        subtitle = "Life Path sets the main arc; Destiny and current cycles tell you how it is being expressed now.",
+        title = stringResource(R.string.charts_numerology_core_numbers_title),
+        subtitle = stringResource(R.string.charts_numerology_core_numbers_subtitle),
     ) {
-        NumerologyMetricLine("Life Path", numerology.lifePath.number, numerology.lifePath.meaning)
-        NumerologyMetricLine("Destiny", numerology.destinyNumber, numerology.destinyInterpretation)
-        NumerologyMetricLine("Personal Year", numerology.personalYear.cycleNumber, numerology.personalYear.interpretation)
+        NumerologyMetricLine(stringResource(R.string.charts_numerology_life_path_label), numerology.lifePath.number, numerology.lifePath.meaning)
+        NumerologyMetricLine(stringResource(R.string.charts_numerology_destiny_label), numerology.destinyNumber, numerology.destinyInterpretation)
+        NumerologyMetricLine(stringResource(R.string.charts_numerology_personal_year_label), numerology.personalYear.cycleNumber, numerology.personalYear.interpretation)
         numerology.personalMonthNumber?.let { personalMonth ->
-            NumerologyMetricLine("Personal Month", personalMonth, numerology.numerologyInsights["personal_month"].orEmpty())
+            NumerologyMetricLine(stringResource(R.string.charts_numerology_personal_month_label), personalMonth, numerology.numerologyInsights["personal_month"].orEmpty())
         }
         numerology.personalDayNumber?.let { personalDay ->
-            NumerologyMetricLine("Personal Day", personalDay, numerology.numerologyInsights["personal_day"].orEmpty())
+            NumerologyMetricLine(stringResource(R.string.charts_numerology_personal_day_label), personalDay, numerology.numerologyInsights["personal_day"].orEmpty())
         }
     }
 }
@@ -173,8 +193,8 @@ private fun NumerologyCoreNumbersCard(numerology: NumerologyData) {
 @Composable
 private fun NumerologyLifePathCard(numerology: NumerologyData) {
     StudioSectionCard(
-        title = "Life Path context",
-        subtitle = "This is the stable through-line behind the changing cycle numbers.",
+        title = stringResource(R.string.charts_numerology_life_path_context_title),
+        subtitle = stringResource(R.string.charts_numerology_life_path_context_subtitle),
     ) {
         Text(text = numerology.lifePath.lifePurpose, style = MaterialTheme.typography.bodyMedium)
         if (numerology.lifePath.traits.isNotEmpty()) {
@@ -193,17 +213,17 @@ private fun NumerologyLifePathCard(numerology: NumerologyData) {
 @Composable
 private fun NumerologyCurrentCycleCard(numerology: NumerologyData) {
     StudioSectionCard(
-        title = "Current cycle",
-        subtitle = "This section turns the present year into practical focus areas instead of vague themes.",
+        title = stringResource(R.string.charts_numerology_current_cycle_title),
+        subtitle = stringResource(R.string.charts_numerology_current_cycle_subtitle),
     ) {
         numerology.personalYear.focusAreas.forEach { focusArea ->
-            Text(text = "Focus: $focusArea", style = MaterialTheme.typography.bodyMedium)
+            Text(text = stringResource(R.string.charts_numerology_focus_format, focusArea), style = MaterialTheme.typography.bodyMedium)
         }
         numerology.numerologyInsights["soul_urge"]?.takeIf { it.isNotBlank() }?.let { soulUrge ->
-            Text(text = "Soul urge: $soulUrge", style = MaterialTheme.typography.bodyMedium)
+            Text(text = stringResource(R.string.charts_numerology_soul_urge_format, soulUrge), style = MaterialTheme.typography.bodyMedium)
         }
         numerology.numerologyInsights["personality"]?.takeIf { it.isNotBlank() }?.let { personality ->
-            Text(text = "Personality: $personality", style = MaterialTheme.typography.bodyMedium)
+            Text(text = stringResource(R.string.charts_numerology_personality_format, personality), style = MaterialTheme.typography.bodyMedium)
         }
     }
 }
@@ -211,11 +231,11 @@ private fun NumerologyCurrentCycleCard(numerology: NumerologyData) {
 @Composable
 private fun NumerologyLuckyTimingCard(numerology: NumerologyData) {
     StudioSectionCard(
-        title = "Lucky numbers and days",
-        subtitle = "Treat these as timing accents, not substitutes for the rest of the reading.",
+        title = stringResource(R.string.charts_numerology_lucky_timing_title),
+        subtitle = stringResource(R.string.charts_numerology_lucky_timing_subtitle),
     ) {
         if (numerology.luckyNumbers.isNotEmpty()) {
-            Text(text = "Lucky numbers", style = MaterialTheme.typography.titleSmall)
+            Text(text = stringResource(R.string.charts_numerology_lucky_numbers_label), style = MaterialTheme.typography.titleSmall)
             Row(
                 modifier = Modifier.horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -226,7 +246,7 @@ private fun NumerologyLuckyTimingCard(numerology: NumerologyData) {
             }
         }
         if (numerology.auspiciousDays.isNotEmpty()) {
-            Text(text = "Auspicious days", style = MaterialTheme.typography.titleSmall)
+            Text(text = stringResource(R.string.charts_numerology_auspicious_days_label), style = MaterialTheme.typography.titleSmall)
             Row(
                 modifier = Modifier.horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -243,20 +263,20 @@ private fun NumerologyLuckyTimingCard(numerology: NumerologyData) {
 private fun NumerologyDominantThemesCard(numerology: NumerologyData) {
     val synthesis = numerology.synthesis ?: return
     StudioSectionCard(
-        title = "Dominant themes",
-        subtitle = "This is where the reading becomes actionable instead of just descriptive.",
+        title = stringResource(R.string.charts_numerology_dominant_themes_title),
+        subtitle = stringResource(R.string.charts_numerology_dominant_themes_subtitle),
     ) {
         synthesis.dominantNumbers.take(4).forEach { highlight ->
             Text(
-                text = "${highlight.label} ${highlight.number}: ${highlight.meaning}",
+                text = stringResource(R.string.charts_numerology_dominant_highlight_format, highlight.label, highlight.number, highlight.meaning),
                 style = MaterialTheme.typography.bodyMedium,
             )
         }
         synthesis.strengths.take(4).forEach { strength ->
-            Text(text = "Strength: $strength", style = MaterialTheme.typography.bodyMedium)
+            Text(text = stringResource(R.string.charts_numerology_strength_format, strength), style = MaterialTheme.typography.bodyMedium)
         }
         synthesis.growthEdges.take(4).forEach { edge ->
-            Text(text = "Growth edge: $edge", style = MaterialTheme.typography.bodyMedium)
+            Text(text = stringResource(R.string.charts_numerology_growth_edge_format, edge), style = MaterialTheme.typography.bodyMedium)
         }
     }
 }
@@ -265,18 +285,28 @@ private fun NumerologyDominantThemesCard(numerology: NumerologyData) {
 private fun NumerologyLongRangeCard(numerology: NumerologyData) {
     if (numerology.pinnacles.isEmpty() && numerology.challenges.isEmpty()) return
     StudioSectionCard(
-        title = "Long-range development",
-        subtitle = "Pinnacles show major phases; challenges show the lessons likely to repeat inside them.",
+        title = stringResource(R.string.charts_numerology_long_range_title),
+        subtitle = stringResource(R.string.charts_numerology_long_range_subtitle),
     ) {
-        numerology.pinnacles.take(3).forEach { pinnacle ->
+        numerology.pinnacles.forEach { pinnacle ->
             Text(
-                text = "Pinnacle ${pinnacle.number}${pinnacle.ages?.let { " · $it" } ?: ""}: ${pinnacle.meaning.orEmpty()}",
+                text = stringResource(
+                    R.string.charts_numerology_pinnacle_format,
+                    pinnacle.number,
+                    pinnacle.ages?.let { " · $it" } ?: "",
+                    pinnacle.meaning.orEmpty(),
+                ),
                 style = MaterialTheme.typography.bodyMedium,
             )
         }
-        numerology.challenges.take(3).forEach { challenge ->
+        numerology.challenges.forEach { challenge ->
             Text(
-                text = "Challenge ${challenge.number}${challenge.ages?.let { " · $it" } ?: ""}: ${challenge.meaning.orEmpty()}",
+                text = stringResource(
+                    R.string.charts_numerology_challenge_format,
+                    challenge.number,
+                    challenge.ages?.let { " · $it" } ?: "",
+                    challenge.meaning.orEmpty(),
+                ),
                 style = MaterialTheme.typography.bodyMedium,
             )
         }
@@ -315,24 +345,31 @@ internal fun NumerologyExplanationSheet(
             .padding(horizontal = 20.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Text(text = "Numerology Explanation", style = MaterialTheme.typography.titleLarge)
+        val context = LocalContext.current
+        Text(text = stringResource(R.string.charts_numerology_explanation_title), style = MaterialTheme.typography.titleLarge)
         provider?.let { rawProvider ->
-            AssistChip(onClick = {}, label = { Text(chartExplanationProviderLabel(rawProvider)) })
+            AssistChip(onClick = {}, label = { Text(chartExplanationProviderLabel(rawProvider, context)) })
         }
         generatedAt?.let { instant ->
             Text(
-                text = "Generated ${formatChartExplanationTimestamp(instant)}",
+                text = stringResource(R.string.charts_numerology_generated_at, formatChartExplanationTimestamp(instant)),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
         Text(
-            text = "This mirrors the iOS flow more closely: try the backend explanation first, then keep a deterministic local fallback if the request cannot complete.",
+            text = stringResource(R.string.charts_numerology_sheet_note),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         TextButton(onClick = onRegenerate, enabled = !isExplaining) {
-            Text(if (isExplaining) "Generating..." else "Regenerate")
+            Text(
+                if (isExplaining) {
+                    stringResource(R.string.charts_numerology_generating)
+                } else {
+                    stringResource(R.string.charts_numerology_regenerate)
+                },
+            )
         }
         ChartExplanationMarkdown(markdown = markdown)
     }
@@ -374,10 +411,10 @@ private fun ChartExplanationMarkdown(markdown: String) {
     }
 }
 
-private fun chartExplanationProviderLabel(provider: String): String = when (provider) {
-    "local-fallback" -> "Local fallback"
-    "premium-required" -> "Premium required"
-    "fallback" -> "Fallback"
+private fun chartExplanationProviderLabel(provider: String, context: android.content.Context): String = when (provider) {
+    "local-fallback" -> context.getString(R.string.charts_provider_local_fallback)
+    "premium-required" -> context.getString(R.string.charts_provider_premium_required)
+    "fallback" -> context.getString(R.string.charts_provider_fallback)
     else -> provider.replace('-', ' ').replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
 }
 

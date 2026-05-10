@@ -151,10 +151,9 @@ export function HomeTimingRail() {
       <div className="timing-rail__header">
         <div>
           <span className="timing-rail__eyebrow">Live decision windows</span>
-          <h2 id="timing-rail-title">The homepage can also surface real timing advice for the next move, not just forecast mood.</h2>
+          <h2 id="timing-rail-title">The best time to act — for whatever you're planning next.</h2>
           <p>
-            This module uses the live timing advisor feed so the homepage can show activity-specific scores,
-            best hours, and next windows in the same sharper product language.
+            Activity-specific timing scores, best hours, and upcoming windows — updated daily.
           </p>
         </div>
 
@@ -212,7 +211,7 @@ export function HomeTimingRail() {
               <p>
                 {timingResult.today_is_best
                   ? 'Today already holds the strongest window for this activity.'
-                  : timingResult.best_upcoming.recommendations[0] ?? 'The next strongest timing window will be surfaced here.'}
+                  : timingResult.best_upcoming.recommendations[0] ?? 'No standout window found for this activity yet.'}
               </p>
             </article>
 

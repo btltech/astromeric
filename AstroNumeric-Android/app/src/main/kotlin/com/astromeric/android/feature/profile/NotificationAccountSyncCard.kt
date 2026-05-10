@@ -1,5 +1,6 @@
 package com.astromeric.android.feature.profile
 
+import android.content.Context
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -16,7 +17,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.astromeric.android.R
 import com.astromeric.android.app.PushRegistrationManager
 import com.astromeric.android.app.PushRegistrationResult
 import com.astromeric.android.core.data.preferences.AppPreferencesStore
@@ -27,16 +31,25 @@ import com.astromeric.android.core.model.AppProfile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
-internal fun PushRegistrationResult.notificationMessage(defaultConfiguredMessage: String): String = when (this) {
+internal fun PushRegistrationResult.notificationMessage(
+    context: Context,
+    defaultConfiguredMessage: String,
+): String = when (this) {
     is PushRegistrationResult.Registered -> {
         if (linkedToAccount) {
-            "${defaultConfiguredMessage.removeSuffix(".")} and linked this device to your signed-in account."
+            context.getString(
+                R.string.notification_account_sync_push_linked_account,
+                defaultConfiguredMessage.removeSuffix("."),
+            )
         } else {
-            "${defaultConfiguredMessage.removeSuffix(".")} for this device."
+            context.getString(
+                R.string.notification_account_sync_push_for_device,
+                defaultConfiguredMessage.removeSuffix("."),
+            )
         }
     }
-    is PushRegistrationResult.Unregistered -> "Push delivery was detached from this device."
-    PushRegistrationResult.NotConfigured -> "Firebase is not configured in this Android app yet. Add google-services.json to enable FCM push delivery."
+    is PushRegistrationResult.Unregistered -> context.getString(R.string.notification_account_sync_push_detached)
+    PushRegistrationResult.NotConfigured -> context.getString(R.string.notification_account_sync_push_not_configured)
     is PushRegistrationResult.Failed -> message
 }
 
@@ -67,18 +80,19 @@ internal fun NotificationAccountSyncCard(
     onShowMessage: (String) -> Unit,
     onSyncAlertPreferencesIfAuthenticated: suspend (Boolean, AlertFrequency) -> Unit,
 ) {
+    val context = LocalContext.current
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Text(
-                text = "Account sync",
+                text = stringResource(R.string.notification_account_sync_title),
                 style = MaterialTheme.typography.titleMedium,
             )
             if (personalModeEnabled) {
                 Text(
-                    text = "Personal mode is enabled for this build, matching the iOS local-first behavior. Notification preferences stay on-device, profile sync is dormant, and any stored account session is ignored until personal mode is turned off.",
+                    text = stringResource(R.string.notification_account_sync_personal_mode_body),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -87,16 +101,16 @@ internal fun NotificationAccountSyncCard(
                         onClick = {
                             scope.launch {
                                 preferencesStore.clearAuthSession()
-                                onShowMessage("Stored account session cleared. Personal mode remains active.")
+                                onShowMessage(context.getString(R.string.notification_account_sync_clear_stored_session_message))
                             }
                         },
                     ) {
-                        Text("Clear stored session")
+                        Text(stringResource(R.string.notification_account_sync_clear_stored_session))
                     }
                 }
             } else if (authAccessToken.isBlank()) {
                 Text(
-                    text = "Sign in to sync Mercury retrograde preferences with your backend account. Transit email subscriptions can still use the current local-first profile payload even before you sign in.",
+                    text = stringResource(R.string.notification_account_sync_sign_in_body),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -104,16 +118,16 @@ internal fun NotificationAccountSyncCard(
                     value = authEmailDraft,
                     onValueChange = onAuthEmailDraftChange,
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Email") },
+                    label = { Text(stringResource(R.string.notification_account_sync_email_label)) },
                     singleLine = true,
                 )
                 OutlinedTextField(
                     value = authPasswordDraft,
                     onValueChange = onAuthPasswordDraftChange,
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Password") },
+                    label = { Text(stringResource(R.string.notification_account_sync_password_label)) },
                     supportingText = {
-                        Text("Backend accounts require at least 8 characters, one letter, and one number.")
+                        Text(stringResource(R.string.notification_account_sync_password_supporting))
                     },
                     singleLine = true,
                 )
@@ -128,24 +142,25 @@ internal fun NotificationAccountSyncCard(
                                         preferencesStore.setAuthSession(session)
                                         profileRepository.syncProfilesToAccount()
                                             .onFailure { syncError ->
-                                                onShowMessage(syncError.message ?: "Signed in, but profile sync failed.")
+                                                onShowMessage(syncError.message ?: context.getString(R.string.notification_account_sync_sign_in_profile_sync_failed))
                                             }
                                         onShowMessage(
                                             pushRegistrationManager.syncCurrentToken().notificationMessage(
-                                                defaultConfiguredMessage = "Signed in. Mercury retrograde preferences will now sync to your account",
+                                                context = context,
+                                                defaultConfiguredMessage = context.getString(R.string.notification_account_sync_signed_in_default),
                                             ),
                                         )
                                         onAuthPasswordDraftChange("")
                                     }
                                     .onFailure { error ->
-                                        onShowMessage(error.message ?: "Sign-in failed.")
+                                        onShowMessage(error.message ?: context.getString(R.string.notification_account_sync_sign_in_failed))
                                     }
                                 onAuthInFlightChange(false)
                             }
                         },
                         enabled = !authInFlight && authEmailDraft.isNotBlank() && authPasswordDraft.isNotBlank(),
                     ) {
-                        Text("Sign in")
+                        Text(stringResource(R.string.notification_account_sync_sign_in_button))
                     }
                     TextButton(
                         onClick = {
@@ -157,29 +172,30 @@ internal fun NotificationAccountSyncCard(
                                         preferencesStore.setAuthSession(session)
                                         profileRepository.syncProfilesToAccount()
                                             .onFailure { syncError ->
-                                                onShowMessage(syncError.message ?: "Account created, but profile sync failed.")
+                                                onShowMessage(syncError.message ?: context.getString(R.string.notification_account_sync_account_created_profile_sync_failed))
                                             }
                                         onShowMessage(
                                             pushRegistrationManager.syncCurrentToken().notificationMessage(
-                                                defaultConfiguredMessage = "Account created. Android alert settings are now linked to your account",
+                                                context = context,
+                                                defaultConfiguredMessage = context.getString(R.string.notification_account_sync_account_created_default),
                                             ),
                                         )
                                         onAuthPasswordDraftChange("")
                                     }
                                     .onFailure { error ->
-                                        onShowMessage(error.message ?: "Account creation failed.")
+                                        onShowMessage(error.message ?: context.getString(R.string.notification_account_sync_account_creation_failed))
                                     }
                                 onAuthInFlightChange(false)
                             }
                         },
                         enabled = !authInFlight && authEmailDraft.isNotBlank() && authPasswordDraft.isNotBlank(),
                     ) {
-                        Text("Create account")
+                        Text(stringResource(R.string.notification_account_sync_create_account_button))
                     }
                 }
             } else {
                 Text(
-                    text = "Signed in as $authUserEmail. Mercury retrograde preference changes now sync with the backend, while transit email subscriptions still work for local-first profiles.",
+                    text = stringResource(R.string.notification_account_sync_signed_in_as, authUserEmail),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -189,15 +205,15 @@ internal fun NotificationAccountSyncCard(
                             scope.launch {
                                 profileRepository.syncProfilesToAccount()
                                     .onSuccess { synced ->
-                                        onShowMessage("Synced ${synced.size} profile(s) with your account.")
+                                        onShowMessage(context.getString(R.string.notification_account_sync_profiles_synced, synced.size))
                                     }
                                     .onFailure { error ->
-                                        onShowMessage(error.message ?: "Profile sync failed.")
+                                        onShowMessage(error.message ?: context.getString(R.string.notification_account_sync_profile_sync_failed))
                                     }
                             }
                         },
                     ) {
-                        Text("Sync profiles")
+                        Text(stringResource(R.string.notification_account_sync_sync_profiles))
                     }
                     OutlinedButton(
                         onClick = {
@@ -206,30 +222,31 @@ internal fun NotificationAccountSyncCard(
                                     .onSuccess { remotePrefs ->
                                         preferencesStore.setMercuryRetrogradeAlertsEnabled(remotePrefs.alertMercuryRetrograde)
                                         preferencesStore.setAlertFrequency(AlertFrequency.fromWireValue(remotePrefs.alertFrequency))
-                                        onShowMessage("Backend alert settings refreshed.")
+                                        onShowMessage(context.getString(R.string.notification_account_sync_backend_refreshed))
                                     }
                                     .onFailure { error ->
-                                        onShowMessage(error.message ?: "Could not refresh backend alert settings.")
+                                        onShowMessage(error.message ?: context.getString(R.string.notification_account_sync_backend_refresh_failed))
                                     }
                             }
                         },
                     ) {
-                        Text("Refresh sync")
+                        Text(stringResource(R.string.notification_account_sync_refresh_sync))
                     }
                     TextButton(
                         onClick = {
                             scope.launch {
                                 onShowMessage(
                                     pushRegistrationManager.unregisterCurrentToken().notificationMessage(
-                                        defaultConfiguredMessage = "Signed out",
+                                        context = context,
+                                        defaultConfiguredMessage = context.getString(R.string.notification_account_sync_signed_out_default),
                                     ),
                                 )
                                 preferencesStore.clearAuthSession()
-                                onShowMessage("Signed out. Alert settings remain available locally.")
+                                onShowMessage(context.getString(R.string.notification_account_sync_signed_out_local_message))
                             }
                         },
                     ) {
-                        Text("Sign out")
+                        Text(stringResource(R.string.notification_account_sync_sign_out))
                     }
                 }
             }
@@ -240,20 +257,20 @@ internal fun NotificationAccountSyncCard(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     Text(
-                        text = "Push delivery",
+                        text = stringResource(R.string.notification_account_sync_push_delivery_title),
                         style = MaterialTheme.typography.titleSmall,
                     )
                     Text(
                         text = if (firebaseConfigured) {
                             if (personalModeEnabled) {
-                                "FCM is available on this build. Sync the device token to register this installation only; personal mode keeps it detached from any account session."
+                                stringResource(R.string.notification_account_sync_push_available_personal)
                             } else if (authAccessToken.isBlank()) {
-                                "FCM is available on this build. Sync the device token now to register this installation, or sign in first to link it to your account."
+                                stringResource(R.string.notification_account_sync_push_available_signed_out)
                             } else {
-                                "FCM is available on this build. Sync the device token to link this installation to $authUserEmail for backend push delivery."
+                                stringResource(R.string.notification_account_sync_push_available_signed_in, authUserEmail)
                             }
                         } else {
-                            "This Android repo still has no Firebase app config file. Token acquisition is wired, but FCM delivery will stay inactive until google-services.json is added."
+                            stringResource(R.string.notification_account_sync_push_missing_config)
                         },
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -264,13 +281,14 @@ internal fun NotificationAccountSyncCard(
                                 scope.launch {
                                     onShowMessage(
                                         pushRegistrationManager.syncCurrentToken().notificationMessage(
-                                            defaultConfiguredMessage = "Push token synced",
+                                            context = context,
+                                            defaultConfiguredMessage = context.getString(R.string.notification_account_sync_push_token_synced_default),
                                         ),
                                     )
                                 }
                             },
                         ) {
-                            Text("Sync device token")
+                            Text(stringResource(R.string.notification_account_sync_sync_device_token))
                         }
                         if (firebaseConfigured) {
                             TextButton(
@@ -278,13 +296,14 @@ internal fun NotificationAccountSyncCard(
                                     scope.launch {
                                         onShowMessage(
                                             pushRegistrationManager.unregisterCurrentToken().notificationMessage(
-                                                defaultConfiguredMessage = "Push token removed",
+                                                context = context,
+                                                defaultConfiguredMessage = context.getString(R.string.notification_account_sync_push_token_removed_default),
                                             ),
                                         )
                                     }
                                 },
                             ) {
-                                Text("Remove token")
+                                Text(stringResource(R.string.notification_account_sync_remove_token))
                             }
                         }
                     }
@@ -292,13 +311,13 @@ internal fun NotificationAccountSyncCard(
             }
 
             NotificationToggleCard(
-                title = "Mercury retrograde alerts",
+                title = stringResource(R.string.notification_account_sync_mercury_title),
                 description = if (personalModeEnabled) {
-                    "Stored locally. Personal mode keeps the backend account copy dormant in this build."
+                    stringResource(R.string.notification_account_sync_mercury_description_personal)
                 } else if (authAccessToken.isBlank()) {
-                    "Stored locally now. Sign in above if you want the backend copy to stay in sync too."
+                    stringResource(R.string.notification_account_sync_mercury_description_signed_out)
                 } else {
-                    "Stored locally and synced to your backend account."
+                    stringResource(R.string.notification_account_sync_mercury_description_signed_in)
                 },
                 checked = mercuryRetrogradeAlertsEnabled,
                 onCheckedChange = { enabled ->
@@ -310,7 +329,7 @@ internal fun NotificationAccountSyncCard(
             )
 
             Text(
-                text = "Alert frequency",
+                text = stringResource(R.string.notification_account_sync_alert_frequency_title),
                 style = MaterialTheme.typography.titleSmall,
             )
             FlowRow(
@@ -335,17 +354,17 @@ internal fun NotificationAccountSyncCard(
                 value = transitEmailDraft,
                 onValueChange = onTransitEmailDraftChange,
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text("Transit alert email") },
+                label = { Text(stringResource(R.string.notification_account_sync_transit_email_label)) },
                 supportingText = {
                     Text(
                         if (selectedProfile == null) {
-                            "Choose a profile first. The address is still saved locally."
+                            stringResource(R.string.notification_account_sync_transit_email_support_none)
                         } else if (personalModeEnabled) {
-                            "Personal mode stays local-first. Android will send the inline profile payload when syncing this email to the backend."
+                            stringResource(R.string.notification_account_sync_transit_email_support_personal)
                         } else if (authAccessToken.isBlank()) {
-                            "The backend can now subscribe this local-first profile payload directly, even before Android sign-in."
+                            stringResource(R.string.notification_account_sync_transit_email_support_signed_out)
                         } else {
-                            "This will subscribe the current profile against the backend using your signed-in session when available."
+                            stringResource(R.string.notification_account_sync_transit_email_support_signed_in)
                         },
                     )
                 },
@@ -356,7 +375,7 @@ internal fun NotificationAccountSyncCard(
                         preferencesStore.setTransitSubscriptionEmail(transitEmailDraft)
                         val profile = selectedProfile
                         if (profile == null || transitEmailDraft.isBlank()) {
-                            onShowMessage("Transit subscription email saved locally.")
+                            onShowMessage(context.getString(R.string.notification_account_sync_transit_email_saved_local))
                             return@launch
                         }
 
@@ -365,14 +384,19 @@ internal fun NotificationAccountSyncCard(
                             profile = profile,
                             email = transitEmailDraft,
                         ).onSuccess {
-                            onShowMessage("Transit subscription synced with the backend for ${profile.name}.")
+                            onShowMessage(
+                                context.getString(
+                                    R.string.notification_account_sync_transit_email_synced_backend,
+                                    profile.name,
+                                ),
+                            )
                         }.onFailure { error ->
-                            onShowMessage(error.message ?: "Transit email was saved locally, but backend subscription failed.")
+                            onShowMessage(error.message ?: context.getString(R.string.notification_account_sync_transit_email_sync_failed))
                         }
                     }
                 },
             ) {
-                Text("Save email")
+                Text(stringResource(R.string.notification_account_sync_save_email))
             }
         }
     }

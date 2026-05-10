@@ -5,100 +5,49 @@ import SwiftUI
 
 struct FloatingAIButton: View {
     @State private var isShowingChat = false
-    @State private var isPulsing = false
-    @State private var isExpanded = false
+    @State private var isPressed = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.horizontalSizeClass) private var hSizeClass
     @ScaledMetric(relativeTo: .body) private var bottomPadding: CGFloat = 96
 
     var body: some View {
-        ZStack {
-            // Outer aura ring – always visible, slow pulse
-            if !reduceMotion {
-                Circle()
-                    .stroke(Color.cosmicPurple.opacity(0.35), lineWidth: 1.2)
-                    .frame(width: isPulsing ? 70 : 54, height: isPulsing ? 70 : 54)
-                    .opacity(isPulsing ? 0 : 0.9)
-                    .animation(
-                        .easeOut(duration: 2.4).repeatForever(autoreverses: false),
-                        value: isPulsing
-                    )
+        // Single clearly-labelled pill button — no pulsing aura, no expand/collapse.
+        // "AI Insight" label is always visible so users know exactly what it does.
+        Button {
+            HapticManager.impact(.medium)
+            isShowingChat = true
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: "sparkles")
+                    .font(.footnote.weight(.bold))
+                    .symbolRenderingMode(.hierarchical)
+                Text("AI Insight")
+                    .font(.footnote.weight(.semibold))
             }
-
-            // Inner soft glow
-            Circle()
-                .fill(
-                    RadialGradient(
-                        colors: [Color.cosmicPurple.opacity(0.35), .clear],
-                        center: .center,
-                        startRadius: 4,
-                        endRadius: 28
-                    )
-                )
-                .frame(width: 44, height: 44)
-
-            // Capsule pill that expands with sparkle + label
-            Button {
-                if isExpanded {
-                    HapticManager.impact(.medium)
-                    isShowingChat = true
-                    isExpanded = false
-                } else {
-                    HapticManager.impact(.light)
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-                        isExpanded = true
-                    }
-                    Task {
-                        try? await Task.sleep(for: .seconds(3))
-                        withAnimation(.spring(response: 0.25, dampingFraction: 0.85)) {
-                            isExpanded = false
-                        }
-                    }
-                }
-            } label: {
-                HStack(spacing: 6) {
-                    Image(systemName: "sparkles")
-                        .font(.callout.weight(.semibold))
-                        .symbolRenderingMode(.hierarchical)
-                    if isExpanded {
-                        Text("ui.floatingAIButton.0".localized)
-                            .font(.footnote.weight(.semibold))
-                            .transition(.opacity.combined(with: .scale(scale: 0.85)))
-                    }
-                }
-                .foregroundStyle(.white)
-                .padding(.horizontal, isExpanded ? 14 : 12)
-                .padding(.vertical, 10)
-                .background(
-                    Capsule()
-                        .fill(
-                            LinearGradient(
-                                colors: [
-                                    Color.cosmicPurple,
-                                    Color.cosmicPurple.opacity(0.75)
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .overlay(
-                            Capsule().stroke(.white.opacity(0.25), lineWidth: Stroke.hairline)
-                        )
-                )
-                .shadow(color: Color.cosmicPurple.opacity(0.45), radius: 14, y: 6)
-                .contentShape(Capsule())
-            }
-            .buttonStyle(AccessibleButtonStyle())
-            .accessibilityLabel(isExpanded ? "tern.floatingAIButton.0a".localized : "tern.floatingAIButton.0b".localized)
-            .accessibilityHint("Tap to ask the Cosmic Guide")
+            .foregroundStyle(.white)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+            .background(
+                Capsule()
+                    .fill(Color.cosmicPurple)
+                    .overlay(Capsule().stroke(.white.opacity(0.20), lineWidth: Stroke.hairline))
+            )
+            .shadow(color: Color.cosmicPurple.opacity(0.40), radius: 10, y: 4)
+            .scaleEffect(isPressed ? 0.95 : 1.0)
+            .animation(Motion.press, value: isPressed)
+            .contentShape(Capsule())
         }
+        .buttonStyle(AccessibleButtonStyle())
+        .accessibilityLabel("AI Insight")
+        .accessibilityHint("Opens the Cosmic Guide AI chat")
+        .simultaneousGesture(
+            DragGesture(minimumDistance: 0)
+                .onChanged { _ in isPressed = true }
+                .onEnded   { _ in isPressed = false }
+        )
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
         .padding(.trailing, hSizeClass == .regular ? 28 : 16)
-        // On iPad with `.sidebarAdaptable`, the bottom tab bar is gone — the FAB
-        // only needs to clear the home indicator. On iPhone we add room for the
-        // tab bar (~83pt) plus a comfortable visual gap, scaled with Dynamic Type.
         .padding(.bottom, hSizeClass == .regular ? 24 : bottomPadding)
-        .onAppear { isPulsing = true }
         .fullScreenCover(isPresented: $isShowingChat) {
             CosmicGuideChatSheet(isPresented: $isShowingChat)
         }
@@ -114,6 +63,7 @@ struct CosmicGuideChatSheet: View {
     @State private var messages: [FloatingChatMessage] = []
     @State private var inputText = ""
     @State private var isLoading = false
+    private let cosmicGuide: CosmicGuideRepository = DefaultCosmicGuideRepository()
     
     var body: some View {
         ZStack {
@@ -291,20 +241,25 @@ struct CosmicGuideChatSheet: View {
         
         do {
             // Build request with optional profile context
-            let response: V2ApiResponse<ChatResponse> = try await APIClient.shared.fetch(
-                .cosmicGuideChat(
-                    message: query,
-                    sunSign: store.selectedProfile?.sign,
-                    moonSign: store.activeMoonSign,
-                    risingSign: store.activeRisingSign,
-                    history: nil
-                )
+            let context = ChatContext(
+                sunSign: store.selectedProfile?.sign,
+                moonSign: store.activeMoonSign,
+                risingSign: store.activeRisingSign,
+                birthTimeAssumed: nil,
+                timeConfidence: nil,
+                history: nil
+            )
+            let response = try await cosmicGuide.chat(
+                message: query,
+                context: context,
+                systemPrompt: nil,
+                tone: nil
             )
             
             let assistantMessage = FloatingChatMessage(
                 id: UUID(),
                 role: .assistant,
-                content: response.data.response,
+                content: response.response,
                 timestamp: Date()
             )
             messages.append(assistantMessage)

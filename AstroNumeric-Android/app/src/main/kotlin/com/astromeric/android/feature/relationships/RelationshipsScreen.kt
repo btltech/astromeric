@@ -24,8 +24,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.astromeric.android.R
 import com.astromeric.android.core.data.preferences.AppPreferencesStore
 import com.astromeric.android.core.data.remote.AstroRemoteDataSource
 import com.astromeric.android.core.model.AppProfile
@@ -49,7 +51,6 @@ import com.astromeric.android.core.model.RelationshipTimingData
 import com.astromeric.android.core.model.RelationshipVenusStatusData
 import com.astromeric.android.core.model.SavedRelationshipData
 import com.astromeric.android.core.model.displayName
-import com.astromeric.android.core.model.friendRelationshipLabel
 import com.astromeric.android.core.model.manualComparisonProfileId
 import com.astromeric.android.core.model.toSavedRelationship
 import com.astromeric.android.core.ui.PremiumContentCard
@@ -72,6 +73,17 @@ fun RelationshipsScreen(
     val scope = rememberCoroutineScope()
     val relationshipTypes = listOf("friendship", "romantic", "professional")
     val friendEmojis = listOf("👤", "👩", "👨", "🧑", "👫", "💃", "🕺", "🦋", "🌟", "🔥")
+    val compatibilityLoadError = stringResource(R.string.relationships_error_compatibility_load)
+    val timingLoadError = stringResource(R.string.relationships_error_timing_load)
+    val bestDaysLoadError = stringResource(R.string.relationships_error_best_days_load)
+    val eventsLoadError = stringResource(R.string.relationships_error_events_load)
+    val transitStatusLoadError = stringResource(R.string.relationships_error_transit_status_load)
+    val phasesLoadError = stringResource(R.string.relationships_error_phases_load)
+    val timelineLoadError = stringResource(R.string.relationships_error_timeline_load)
+    val syncedFriendsLoadError = stringResource(R.string.relationships_error_synced_friends_load)
+    val friendCompatibilityLoadError = stringResource(R.string.relationships_error_friend_compatibility_load)
+    val friendSaveError = stringResource(R.string.relationships_error_friend_save)
+    val friendRemoveError = stringResource(R.string.relationships_error_friend_remove)
     val savedRelationships by preferencesStore.savedRelationships.collectAsStateWithLifecycle(initialValue = emptyList())
     val comparisonProfiles = profiles.filter { it.id != selectedProfile?.id }
     var friendsRefreshVersion by remember(selectedProfile?.id) { mutableStateOf(0) }
@@ -118,7 +130,7 @@ fun RelationshipsScreen(
             it.mode == compatibilityMode
     }
     val filteredRelationships = savedRelationships.filter { relationshipFilterMode == null || it.mode == relationshipFilterMode }
-    val averageCompatibilityScore = if (savedRelationships.isEmpty()) 0 else (savedRelationships.sumOf { it.overallScore.toDouble() } / savedRelationships.size).toInt()
+    val averageCompatibilityScore = if (savedRelationships.isEmpty()) 0 else ((savedRelationships.sumOf { it.overallScore.toDouble() } / savedRelationships.size) * 100).toInt()
 
     LaunchedEffect(selectedProfile?.id, profiles.size) {
         if (comparisonProfiles.none { it.id == selectedComparisonProfileId }) {
@@ -139,7 +151,7 @@ fun RelationshipsScreen(
         if (useSavedProfileForCompatibility) {
             compatibility = if (selectedProfile != null && comparisonProfile != null) {
                 remoteDataSource.fetchCompatibility(compatibilityMode, selectedProfile, comparisonProfile)
-                    .onFailure { compatibilityError = it.message ?: "Compatibility could not be loaded." }
+                    .onFailure { compatibilityError = it.message ?: compatibilityLoadError }
                     .getOrNull()
             } else {
                 null
@@ -163,7 +175,7 @@ fun RelationshipsScreen(
                     timeOfBirth = manualComparisonTimeOfBirth,
                 ),
             )
-                .onFailure { compatibilityError = it.message ?: "Compatibility could not be loaded." }
+                .onFailure { compatibilityError = it.message ?: compatibilityLoadError }
                 .getOrNull()
         } else {
             null
@@ -174,7 +186,7 @@ fun RelationshipsScreen(
         relationshipTimingError = null
         relationshipTiming = if (selectedProfile != null) {
             remoteDataSource.fetchRelationshipTiming(selectedProfile, comparisonProfile)
-                .onFailure { relationshipTimingError = it.message ?: "Relationship timing could not be loaded." }
+                .onFailure { relationshipTimingError = it.message ?: timingLoadError }
                 .getOrNull()
         } else {
             null
@@ -183,7 +195,7 @@ fun RelationshipsScreen(
         relationshipBestDays = if (selectedProfile != null) {
             remoteDataSource.fetchRelationshipBestDays(selectedProfile)
                 .onFailure {
-                    relationshipTimingError = relationshipTimingError ?: it.message ?: "Best relationship days could not be loaded."
+                    relationshipTimingError = relationshipTimingError ?: it.message ?: bestDaysLoadError
                 }
                 .getOrNull()
         } else {
@@ -194,20 +206,20 @@ fun RelationshipsScreen(
     LaunchedEffect(selectedProfile?.id) {
         relationshipGuideError = null
         relationshipEvents = remoteDataSource.fetchRelationshipEvents(selectedProfile)
-            .onFailure { relationshipGuideError = it.message ?: "Relationship events could not be loaded." }
+            .onFailure { relationshipGuideError = it.message ?: eventsLoadError }
             .getOrNull()
         relationshipVenusStatus = remoteDataSource.fetchRelationshipVenusStatus()
-            .onFailure { relationshipGuideError = relationshipGuideError ?: it.message ?: "Relationship transit status could not be loaded." }
+            .onFailure { relationshipGuideError = relationshipGuideError ?: it.message ?: transitStatusLoadError }
             .getOrNull()
         relationshipPhases = remoteDataSource.fetchRelationshipPhases()
-            .onFailure { relationshipGuideError = relationshipGuideError ?: it.message ?: "Relationship phases could not be loaded." }
+            .onFailure { relationshipGuideError = relationshipGuideError ?: it.message ?: phasesLoadError }
             .getOrNull()
     }
 
     LaunchedEffect(selectedProfile?.id, selectedComparisonProfileId) {
         relationshipTimeline = if (selectedProfile != null) {
             remoteDataSource.fetchRelationshipTimeline(selectedProfile, comparisonProfile)
-                .onFailure { relationshipGuideError = relationshipGuideError ?: it.message ?: "Relationship timeline could not be loaded." }
+                .onFailure { relationshipGuideError = relationshipGuideError ?: it.message ?: timelineLoadError }
                 .getOrNull()
         } else {
             null
@@ -221,11 +233,11 @@ fun RelationshipsScreen(
             friendCompatibilities = emptyList()
         } else {
             syncedFriends = remoteDataSource.listFriends(ownerId)
-                .onFailure { friendsError = it.message ?: "Synced friends could not be loaded." }
+                .onFailure { friendsError = it.message ?: syncedFriendsLoadError }
                 .getOrDefault(emptyList())
 
             friendCompatibilities = remoteDataSource.compareAllFriends(ownerId, selectedProfile)
-                .onFailure { friendsError = friendsError ?: it.message ?: "Friend compatibility could not be loaded." }
+                .onFailure { friendsError = friendsError ?: it.message ?: friendCompatibilityLoadError }
                 .getOrDefault(emptyList())
         }
     }
@@ -238,24 +250,28 @@ fun RelationshipsScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         PremiumHeroCard(
-            eyebrow = "Relationships",
-            title = "Relationship Studio",
-            body = "Keep synced friends, saved compatibility history, and live relationship timing in one place instead of routing that depth through Tools.",
+            eyebrow = stringResource(R.string.relationships_hero_eyebrow),
+            title = stringResource(R.string.relationships_hero_title),
+            body = stringResource(R.string.relationships_hero_body),
             chips = selectedProfile?.let { profile ->
                 listOf(
-                    "Active profile: ${profile.displayName(hideSensitiveDetailsEnabled, PrivacyDisplayRole.ACTIVE_USER)} · ${profile.dataQuality.label}",
+                    stringResource(
+                        R.string.relationships_active_profile_chip,
+                        profile.displayName(hideSensitiveDetailsEnabled, PrivacyDisplayRole.ACTIVE_USER),
+                        profile.dataQuality.label,
+                    ),
                 )
             }.orEmpty(),
         ) {
             if (selectedProfile == null) {
                 Text(
-                    text = "Create or select a profile first so compatibility, Cosmic Circle, and relationship timing can personalize correctly.",
+                    text = stringResource(R.string.relationships_no_profile_body),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             } else {
                 androidx.compose.material3.TextButton(onClick = onOpenFriends) {
-                    Text("Open Cosmic Circle")
+                    Text(stringResource(R.string.relationships_open_cosmic_circle))
                 }
             }
         }
@@ -321,12 +337,12 @@ fun RelationshipsScreen(
         )
 
         RelationshipSectionCard(
-            title = "Saved relationships",
+            title = stringResource(R.string.relationships_saved_title),
             error = null,
         ) {
             if (savedRelationships.isNotEmpty()) {
                 Text(
-                    text = "${savedRelationships.size} saved · ${averageCompatibilityScore}% average score",
+                    text = stringResource(R.string.relationships_saved_summary, savedRelationships.size, averageCompatibilityScore),
                     style = MaterialTheme.typography.bodyMedium,
                 )
                 FlowRow(
@@ -336,13 +352,13 @@ fun RelationshipsScreen(
                     FilterChip(
                         selected = relationshipFilterMode == null,
                         onClick = { relationshipFilterMode = null },
-                        label = { Text("All") },
+                        label = { Text(stringResource(R.string.relationships_filter_all)) },
                     )
                     CompatibilityMode.entries.forEach { mode ->
                         FilterChip(
                             selected = relationshipFilterMode == mode,
                             onClick = { relationshipFilterMode = mode },
-                            label = { Text(mode.label) },
+                            label = { Text(compatibilityModeLabel(mode)) },
                         )
                     }
                 }
@@ -359,7 +375,7 @@ fun RelationshipsScreen(
                 }
             } else {
                 Text(
-                    text = "Save a compatibility result to build a reusable relationship history.",
+                    text = stringResource(R.string.relationships_saved_empty),
                     style = MaterialTheme.typography.bodyMedium,
                 )
             }
@@ -403,7 +419,7 @@ fun RelationshipsScreen(
                             friendAvatar = "👤"
                             friendsRefreshVersion += 1
                         }
-                        .onFailure { friendsError = it.message ?: "Friend could not be saved." }
+                        .onFailure { friendsError = it.message ?: friendSaveError }
                     isSavingFriend = false
                 }
             },
@@ -411,7 +427,7 @@ fun RelationshipsScreen(
                 scope.launch {
                     val currentOwnerId = ownerId ?: return@launch
                     remoteDataSource.removeFriend(currentOwnerId, friendId)
-                        .onFailure { friendsError = it.message ?: "Friend could not be removed." }
+                        .onFailure { friendsError = it.message ?: friendRemoveError }
                     friendsRefreshVersion += 1
                 }
             },
@@ -445,10 +461,10 @@ private fun CompatibilitySection(
     existingSavedRelationship: SavedRelationshipData?,
     onSaveCompatibility: (CompatibilityReportData) -> Unit,
 ) {
-    RelationshipSectionCard(title = "Compatibility", error = error) {
+    RelationshipSectionCard(title = stringResource(R.string.relationships_section_compatibility), error = error) {
         if (selectedProfile == null) {
             Text(
-                text = "Select a primary profile before calculating compatibility.",
+                text = stringResource(R.string.relationships_select_primary_profile),
                 style = MaterialTheme.typography.bodyMedium,
             )
             return@RelationshipSectionCard
@@ -462,7 +478,7 @@ private fun CompatibilitySection(
                 FilterChip(
                     selected = compatibilityMode == mode,
                     onClick = { onCompatibilityModeChange(mode) },
-                    label = { Text(mode.label) },
+                    label = { Text(compatibilityModeLabel(mode)) },
                 )
             }
         }
@@ -475,12 +491,12 @@ private fun CompatibilitySection(
                 FilterChip(
                     selected = useSavedProfileForCompatibility,
                     onClick = { onUseSavedProfileForCompatibilityChange(true) },
-                    label = { Text("Saved profile") },
+                    label = { Text(stringResource(R.string.relationships_saved_profile)) },
                 )
                 FilterChip(
                     selected = !useSavedProfileForCompatibility,
                     onClick = { onUseSavedProfileForCompatibilityChange(false) },
-                    label = { Text("Manual entry") },
+                    label = { Text(stringResource(R.string.relationships_manual_entry)) },
                 )
             }
         }
@@ -517,9 +533,9 @@ private fun CompatibilitySection(
         } else {
             Text(
                 text = if (useSavedProfileForCompatibility) {
-                    "Choose a second profile to load compatibility."
+                    stringResource(R.string.relationships_choose_second_profile)
                 } else {
-                    "Enter the second person and run the comparison."
+                    stringResource(R.string.relationships_enter_second_person)
                 },
                 style = MaterialTheme.typography.bodyMedium,
             )
@@ -529,7 +545,7 @@ private fun CompatibilitySection(
 
 @Composable
 @OptIn(ExperimentalLayoutApi::class)
-private fun SavedProfileComparisonPicker(
+internal fun SavedProfileComparisonPicker(
     comparisonProfiles: List<AppProfile>,
     selectedComparisonProfileId: Int?,
     onSelectedComparisonProfileIdChange: (Int) -> Unit,
@@ -537,7 +553,7 @@ private fun SavedProfileComparisonPicker(
 ) {
     if (comparisonProfiles.isEmpty()) {
         Text(
-            text = "No secondary saved profiles yet. Use manual entry to compare someone new.",
+            text = stringResource(R.string.relationships_no_secondary_profiles),
             style = MaterialTheme.typography.bodyMedium,
         )
         return
@@ -566,7 +582,7 @@ private fun SavedProfileComparisonPicker(
 }
 
 @Composable
-private fun ManualComparisonForm(
+internal fun ManualComparisonForm(
     manualComparisonName: String,
     onManualComparisonNameChange: (String) -> Unit,
     manualComparisonDateOfBirth: String,
@@ -579,28 +595,28 @@ private fun ManualComparisonForm(
     OutlinedTextField(
         value = manualComparisonName,
         onValueChange = onManualComparisonNameChange,
-        label = { Text("Name") },
+        label = { Text(stringResource(R.string.relationships_name_label)) },
         modifier = Modifier.fillMaxWidth(),
         singleLine = true,
     )
     OutlinedTextField(
         value = manualComparisonDateOfBirth,
         onValueChange = onManualComparisonDateOfBirthChange,
-        label = { Text("Birth date") },
+        label = { Text(stringResource(R.string.relationships_birth_date_label)) },
         modifier = Modifier.fillMaxWidth(),
         singleLine = true,
-        supportingText = { Text("Use YYYY-MM-DD") },
+        supportingText = { Text(stringResource(R.string.relationships_birth_date_hint)) },
     )
     OutlinedTextField(
         value = manualComparisonTimeOfBirth,
         onValueChange = onManualComparisonTimeOfBirthChange,
-        label = { Text("Birth time") },
+        label = { Text(stringResource(R.string.relationships_birth_time_label)) },
         modifier = Modifier.fillMaxWidth(),
         singleLine = true,
-        supportingText = { Text("Optional, use HH:MM") },
+        supportingText = { Text(stringResource(R.string.relationships_birth_time_hint)) },
     )
     Button(onClick = onCalculateManual, enabled = canCalculate) {
-        Text("Calculate compatibility")
+        Text(stringResource(R.string.relationships_calculate_compatibility))
     }
 }
 
@@ -612,9 +628,18 @@ private fun CompatibilityResultSummary(
     existingSavedRelationship: SavedRelationshipData?,
     onSaveCompatibility: (CompatibilityReportData) -> Unit,
 ) {
+    val modeLabel = compatibilityModeLabel(compatibilityMode)
     AssistChip(
         onClick = {},
-        label = { Text("${(compatibility.overallScore * 100).toInt()}% ${compatibilityMode.label}") },
+        label = {
+            Text(
+                stringResource(
+                    R.string.relationships_score_mode_chip,
+                    (compatibility.overallScore * 100).toInt(),
+                    modeLabel,
+                ),
+            )
+        },
     )
     Text(text = compatibility.summary, style = MaterialTheme.typography.bodyMedium)
     compatibility.dataQualityNote?.takeIf { it.isNotBlank() }?.let { note ->
@@ -625,24 +650,43 @@ private fun CompatibilityResultSummary(
         )
     }
     compatibility.dimensions.take(3).forEach { dimension ->
+        val dimensionText = buildString {
+            append(stringResource(R.string.relationships_dimension_score, dimension.name, (dimension.score * 100).toInt()))
+            dimension.interpretation?.let {
+                append(" · ")
+                append(it)
+            }
+        }
         Text(
-            text = "${dimension.name}: ${(dimension.score * 100).toInt()}%${dimension.interpretation?.let { " · $it" } ?: ""}",
+            text = dimensionText,
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
     if (compatibility.strengths.isNotEmpty()) {
-        Text(text = "Strengths: ${compatibility.strengths.joinToString()}", style = MaterialTheme.typography.bodyMedium)
+        Text(
+            text = stringResource(R.string.relationships_strengths, compatibility.strengths.joinToString()),
+            style = MaterialTheme.typography.bodyMedium,
+        )
     }
     if (compatibility.recommendations.isNotEmpty()) {
-        Text(text = "Recommendations: ${compatibility.recommendations.joinToString()}", style = MaterialTheme.typography.bodyMedium)
+        Text(
+            text = stringResource(R.string.relationships_recommendations, compatibility.recommendations.joinToString()),
+            style = MaterialTheme.typography.bodyMedium,
+        )
     }
     Button(onClick = { onSaveCompatibility(compatibility) }) {
-        Text(if (existingSavedRelationship != null) "Update saved match" else "Save to relationships")
+        Text(
+            if (existingSavedRelationship != null) {
+                stringResource(R.string.relationships_update_saved_match)
+            } else {
+                stringResource(R.string.relationships_save_to_relationships)
+            },
+        )
     }
     if (!useSavedProfileForCompatibility) {
         Text(
-            text = "Manual comparisons save into local relationship history using a private synthetic id derived from the entered name and date.",
+            text = stringResource(R.string.relationships_manual_save_note),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -671,36 +715,39 @@ private fun CosmicCircleSection(
     onAddFriend: () -> Unit,
     onRemoveFriend: (String) -> Unit,
 ) {
-    RelationshipSectionCard(title = "Cosmic Circle", error = error) {
+    RelationshipSectionCard(title = stringResource(R.string.relationships_section_cosmic_circle), error = error) {
         if (selectedProfile == null) {
             Text(
-                text = "Select a profile before managing synced friends.",
+                text = stringResource(R.string.relationships_select_profile_for_friends),
                 style = MaterialTheme.typography.bodyMedium,
             )
             return@RelationshipSectionCard
         }
 
-        AssistChip(onClick = {}, label = { Text("${syncedFriends.size} synced friends") })
+        AssistChip(
+            onClick = {},
+            label = { Text(stringResource(R.string.relationships_synced_friends_count, syncedFriends.size)) },
+        )
         Text(
-            text = "Friends added here are stored through the backend and ranked separately from your on-device relationship history.",
+            text = stringResource(R.string.relationships_backend_friends_note),
             style = MaterialTheme.typography.bodyMedium,
         )
         OutlinedTextField(
             value = friendName,
             onValueChange = onFriendNameChange,
-            label = { Text("Friend name") },
+            label = { Text(stringResource(R.string.relationships_friend_name_label)) },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
         )
         OutlinedTextField(
             value = friendDateOfBirth,
             onValueChange = onFriendDateOfBirthChange,
-            label = { Text("Date of birth") },
+            label = { Text(stringResource(R.string.relationships_birth_date_label)) },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
-            supportingText = { Text("Use YYYY-MM-DD") },
+            supportingText = { Text(stringResource(R.string.relationships_birth_date_hint)) },
         )
-        Text(text = "Relationship type", style = MaterialTheme.typography.titleSmall)
+        Text(text = stringResource(R.string.relationships_relationship_type_title), style = MaterialTheme.typography.titleSmall)
         FlowRow(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -709,11 +756,11 @@ private fun CosmicCircleSection(
                 FilterChip(
                     selected = friendRelationshipType == type,
                     onClick = { onFriendRelationshipTypeChange(type) },
-                    label = { Text(friendRelationshipLabel(type)) },
+                    label = { Text(relationshipTypeLabel(type)) },
                 )
             }
         }
-        Text(text = "Avatar", style = MaterialTheme.typography.titleSmall)
+        Text(text = stringResource(R.string.relationships_avatar_title), style = MaterialTheme.typography.titleSmall)
         FlowRow(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -730,12 +777,18 @@ private fun CosmicCircleSection(
             onClick = onAddFriend,
             enabled = !isSavingFriend && friendName.isNotBlank() && isIsoDate(friendDateOfBirth),
         ) {
-            Text(if (isSavingFriend) "Adding..." else "Add friend")
+            Text(
+                if (isSavingFriend) {
+                    stringResource(R.string.relationships_adding_friend)
+                } else {
+                    stringResource(R.string.relationships_add_friend)
+                },
+            )
         }
 
         when {
             friendCompatibilities.isNotEmpty() -> {
-                Text(text = "Compatibility ranking", style = MaterialTheme.typography.titleSmall)
+                Text(text = stringResource(R.string.relationships_compatibility_ranking_title), style = MaterialTheme.typography.titleSmall)
                 friendCompatibilities.take(6).forEach { compatibilitySummary ->
                     CosmicCircleRow(
                         compatibility = compatibilitySummary,
@@ -747,12 +800,12 @@ private fun CosmicCircleSection(
             }
 
             syncedFriends.isEmpty() -> Text(
-                text = "No synced friends yet.",
+                text = stringResource(R.string.relationships_no_synced_friends),
                 style = MaterialTheme.typography.bodyMedium,
             )
 
             else -> Text(
-                text = "Compatibility rankings are not available yet.",
+                text = stringResource(R.string.relationships_no_compatibility_rankings),
                 style = MaterialTheme.typography.bodyMedium,
             )
         }
@@ -779,6 +832,7 @@ private fun SavedRelationshipRow(
     hideSensitiveDetailsEnabled: Boolean,
     onDelete: () -> Unit,
 ) {
+    val modeLabel = compatibilityModeLabel(relationship.mode)
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier.padding(12.dp),
@@ -793,7 +847,12 @@ private fun SavedRelationshipRow(
                 style = MaterialTheme.typography.titleSmall,
             )
             Text(
-                text = "${relationship.mode.label} · ${(relationship.overallScore * 100).toInt()}% · Updated ${relationship.updatedAt.substringBefore('T')}",
+                text = stringResource(
+                    R.string.relationships_saved_meta,
+                    modeLabel,
+                    (relationship.overallScore * 100).toInt(),
+                    relationship.updatedAt.substringBefore('T'),
+                ),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -810,13 +869,13 @@ private fun SavedRelationshipRow(
             }
             if (relationship.strengths.isNotEmpty()) {
                 Text(
-                    text = "Strengths: ${relationship.strengths.joinToString()}",
+                    text = stringResource(R.string.relationships_strengths, relationship.strengths.joinToString()),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
             Button(onClick = onDelete) {
-                Text("Delete")
+                Text(stringResource(R.string.action_delete))
             }
         }
     }
@@ -829,6 +888,7 @@ private fun CosmicCircleRow(
     hideSensitiveDetailsEnabled: Boolean,
     onRemove: () -> Unit,
 ) {
+    val relationshipLabel = relationshipTypeLabel(compatibility.relationshipType)
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier.padding(12.dp),
@@ -843,7 +903,11 @@ private fun CosmicCircleRow(
                 style = MaterialTheme.typography.titleSmall,
             )
             Text(
-                text = "${friendRelationshipLabel(compatibility.relationshipType)} · ${(compatibility.overallScore).toInt()}%",
+                text = stringResource(
+                    R.string.relationships_score_type_line,
+                    (compatibility.overallScore * 100).toInt(),
+                    relationshipLabel,
+                ),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -853,23 +917,36 @@ private fun CosmicCircleRow(
             )
             if (compatibility.strengths.isNotEmpty()) {
                 Text(
-                    text = "Strengths: ${compatibility.strengths.joinToString()}",
+                    text = stringResource(R.string.relationships_strengths, compatibility.strengths.joinToString()),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
             if (compatibility.recommendations.isNotEmpty()) {
                 Text(
-                    text = "Nurture: ${compatibility.recommendations.joinToString()}",
+                    text = stringResource(R.string.relationships_nurture, compatibility.recommendations.joinToString()),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
             Button(onClick = onRemove) {
-                Text("Remove friend")
+                Text(stringResource(R.string.relationships_remove_friend))
             }
         }
     }
+}
+
+@Composable
+private fun compatibilityModeLabel(mode: CompatibilityMode): String = when (mode) {
+    CompatibilityMode.ROMANTIC -> stringResource(R.string.relationship_type_romantic)
+    CompatibilityMode.FRIENDSHIP -> stringResource(R.string.relationship_type_friendship)
+}
+
+@Composable
+private fun relationshipTypeLabel(type: String): String = when (type) {
+    "romantic" -> stringResource(R.string.relationship_type_romantic)
+    "professional" -> stringResource(R.string.relationship_type_professional)
+    else -> stringResource(R.string.relationship_type_friendship)
 }
 
 private fun isIsoDate(value: String): Boolean =

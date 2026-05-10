@@ -1,5 +1,7 @@
 package com.astromeric.android.feature.profile
 
+import android.content.Context
+import com.astromeric.android.R
 import com.astromeric.android.core.data.local.CachedExactTransitSnapshot
 import com.astromeric.android.core.data.local.SavedExactTransitLoadStatus
 import com.astromeric.android.core.model.AstroDataSource
@@ -9,62 +11,85 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-internal fun exactTransitCacheStatusLabel(snapshot: CachedExactTransitSnapshot?): String {
-    snapshot ?: return "No cached exact scan"
-    val countLabel = when (snapshot.transits.size) {
-        0 -> "0 upcoming"
-        1 -> "1 upcoming"
-        else -> "${snapshot.transits.size} upcoming"
-    }
-    return "${exactTransitCachedSourceLabel(snapshot.source)}, $countLabel, ${cacheAgeLabel(snapshot.cachedAtEpochMillis)}"
+internal fun exactTransitCacheStatusLabel(context: Context, snapshot: CachedExactTransitSnapshot?): String {
+    snapshot ?: return context.getString(R.string.profile_exact_transit_cache_none)
+    val countLabel = context.getString(R.string.profile_exact_transit_upcoming_count, snapshot.transits.size)
+    return context.getString(
+        R.string.profile_exact_transit_cache_status_format,
+        context.exactTransitCachedSourceLabel(snapshot.source).asSentenceCase(),
+        countLabel,
+        context.cacheAgeLabel(snapshot.cachedAtEpochMillis),
+    )
 }
 
-internal fun exactTransitCacheDetailLabel(snapshot: CachedExactTransitSnapshot?): String {
-    snapshot ?: return "No saved exact transit snapshot yet. AstroNumeric will cache the next successful exact scan for offline alarm recovery."
+internal fun exactTransitCacheDetailLabel(context: Context, snapshot: CachedExactTransitSnapshot?): String {
+    snapshot ?: return context.getString(R.string.profile_exact_transit_cache_detail_empty)
     val formatted = CacheTimestampFormatter.format(
         Instant.ofEpochMilli(snapshot.cachedAtEpochMillis).atZone(ZoneId.systemDefault()),
     )
-    return "Saved ${exactTransitCachedSourceLabel(snapshot.source).lowercase(Locale.getDefault())} from $formatted with ${snapshot.transits.size} upcoming aspect${if (snapshot.transits.size == 1) "" else "s"}."
+    val aspectCountLabel = context.resources.getQuantityString(
+        R.plurals.profile_exact_transit_upcoming_aspects,
+        snapshot.transits.size,
+        snapshot.transits.size,
+    )
+    return context.getString(
+        R.string.profile_exact_transit_cache_detail_format,
+        context.exactTransitCachedSourceLabel(snapshot.source),
+        formatted,
+        aspectCountLabel,
+    )
 }
 
-internal fun exactTransitLoadStatusLabel(status: SavedExactTransitLoadStatus?): String {
-    status ?: return "No recent exact scan"
-    return "${exactTransitLoadSourceLabel(status.source, status.isCached)}, ${cacheAgeLabel(status.recordedAtEpochMillis)}"
+internal fun exactTransitLoadStatusLabel(context: Context, status: SavedExactTransitLoadStatus?): String {
+    status ?: return context.getString(R.string.profile_exact_transit_load_none)
+    return context.getString(
+        R.string.profile_exact_transit_load_status_format,
+        context.exactTransitLoadSourceLabel(status.source, status.isCached).asSentenceCase(),
+        context.cacheAgeLabel(status.recordedAtEpochMillis),
+    )
 }
 
-internal fun exactTransitLoadStatusDetailLabel(status: SavedExactTransitLoadStatus?): String {
-    status ?: return "No recent exact transit load has been recorded yet. After the next refresh, AstroNumeric will show whether transits came from backend, on-device Swiss, cache, or the local estimator."
+internal fun exactTransitLoadStatusDetailLabel(context: Context, status: SavedExactTransitLoadStatus?): String {
+    status ?: return context.getString(R.string.profile_exact_transit_load_detail_empty)
     val formatted = CacheTimestampFormatter.format(
         Instant.ofEpochMilli(status.recordedAtEpochMillis).atZone(ZoneId.systemDefault()),
     )
-    return "Last exact transit refresh used ${exactTransitLoadSourceLabel(status.source, status.isCached).lowercase(Locale.getDefault())} at $formatted."
+    return context.getString(
+        R.string.profile_exact_transit_load_detail_format,
+        context.exactTransitLoadSourceLabel(status.source, status.isCached),
+        formatted,
+    )
 }
 
-private fun exactTransitCachedSourceLabel(source: AstroDataSource): String = when (source) {
-    AstroDataSource.BACKEND -> "Cached backend scan"
-    AstroDataSource.LOCAL_SWISS -> "Cached Swiss scan"
-    AstroDataSource.LOCAL_ESTIMATE -> "Cached local estimate"
+private fun Context.exactTransitCachedSourceLabel(source: AstroDataSource): String = when (source) {
+    AstroDataSource.BACKEND -> getString(R.string.profile_exact_transit_source_cached_backend)
+    AstroDataSource.LOCAL_SWISS -> getString(R.string.profile_exact_transit_source_cached_swiss)
+    AstroDataSource.LOCAL_ESTIMATE -> getString(R.string.profile_exact_transit_source_cached_local_estimate)
 }
 
-private fun exactTransitLoadSourceLabel(
+private fun Context.exactTransitLoadSourceLabel(
     source: AstroDataSource,
     isCached: Boolean,
 ): String = when {
-    isCached && source == AstroDataSource.LOCAL_SWISS -> "Cached Swiss scan"
-    isCached -> "Cached backend scan"
-    source == AstroDataSource.LOCAL_SWISS -> "On-device Swiss scan"
-    source == AstroDataSource.LOCAL_ESTIMATE -> "Local estimate"
-    else -> "Backend scan"
+    isCached && source == AstroDataSource.LOCAL_SWISS -> getString(R.string.profile_exact_transit_source_cached_swiss)
+    isCached -> getString(R.string.profile_exact_transit_source_cached_backend)
+    source == AstroDataSource.LOCAL_SWISS -> getString(R.string.profile_exact_transit_source_on_device_swiss)
+    source == AstroDataSource.LOCAL_ESTIMATE -> getString(R.string.profile_exact_transit_source_local_estimate)
+    else -> getString(R.string.profile_exact_transit_source_backend)
 }
 
-private fun cacheAgeLabel(epochMillis: Long): String {
+private fun Context.cacheAgeLabel(epochMillis: Long): String {
     val elapsed = Duration.ofMillis((System.currentTimeMillis() - epochMillis).coerceAtLeast(0L))
     return when {
-        elapsed.toMinutes() < 1 -> "just now"
-        elapsed.toHours() < 1 -> "${elapsed.toMinutes()}m ago"
-        elapsed.toHours() < 24 -> "${elapsed.toHours()}h ago"
-        else -> "${elapsed.toDays()}d ago"
+        elapsed.toMinutes() < 1 -> getString(R.string.profile_exact_transit_age_just_now)
+        elapsed.toHours() < 1 -> getString(R.string.profile_exact_transit_age_minutes, elapsed.toMinutes())
+        elapsed.toHours() < 24 -> getString(R.string.profile_exact_transit_age_hours, elapsed.toHours())
+        else -> getString(R.string.profile_exact_transit_age_days, elapsed.toDays())
     }
+}
+
+private fun String.asSentenceCase(): String = replaceFirstChar { firstChar ->
+    if (firstChar.isLowerCase()) firstChar.titlecase() else firstChar.toString()
 }
 
 private val CacheTimestampFormatter: DateTimeFormatter =

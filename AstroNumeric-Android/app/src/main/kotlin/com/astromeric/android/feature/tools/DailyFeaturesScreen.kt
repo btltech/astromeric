@@ -38,8 +38,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.astromeric.android.R
 import com.astromeric.android.core.data.remote.AstroRemoteDataSource
 import com.astromeric.android.core.model.AffirmationData
 import com.astromeric.android.core.model.AppProfile
@@ -60,6 +62,7 @@ fun DailyFeaturesScreen(
     onOpenProfile: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val briefErrorFallback = stringResource(R.string.daily_features_error_brief_load)
     var refreshVersion by remember(selectedProfile?.id) { mutableIntStateOf(0) }
     var isLoading by remember(selectedProfile?.id) { mutableStateOf(false) }
     var morningBrief by remember(selectedProfile?.id) { mutableStateOf<MorningBriefData?>(null) }
@@ -83,7 +86,7 @@ fun DailyFeaturesScreen(
             val affirmationRequest = async { remoteDataSource.fetchAffirmation(profile) }
 
             morningBrief = briefRequest.await()
-                .onFailure { errorMessage = it.message ?: "Morning brief could not be loaded." }
+                .onFailure { errorMessage = it.message ?: briefErrorFallback }
                 .getOrNull()
 
             doDont = doDontRequest.await().getOrNull()
@@ -95,10 +98,10 @@ fun DailyFeaturesScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Daily Features") },
+                title = { Text(stringResource(R.string.daily_features_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
                     }
                 },
                 actions = {
@@ -106,7 +109,7 @@ fun DailyFeaturesScreen(
                         onClick = { refreshVersion += 1 },
                         enabled = !isLoading,
                     ) {
-                        Icon(Icons.Filled.Refresh, contentDescription = "Refresh")
+                        Icon(Icons.Filled.Refresh, contentDescription = stringResource(R.string.action_refresh))
                     }
                 },
             )
@@ -124,12 +127,12 @@ fun DailyFeaturesScreen(
             if (selectedProfile == null) {
                 Card(modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text(text = "Profile Required", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                        Text(text = stringResource(R.string.status_profile_required), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
                         Text(
-                            text = "Create or select a profile to load your personalized daily features.",
+                            text = stringResource(R.string.daily_features_profile_required_body),
                             style = MaterialTheme.typography.bodyMedium,
                         )
-                        Button(onClick = onOpenProfile) { Text("Open Profile") }
+                        Button(onClick = onOpenProfile) { Text(stringResource(R.string.action_open_profile)) }
                     }
                 }
                 return@Column
@@ -152,7 +155,7 @@ fun DailyFeaturesScreen(
                 Card(modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         Text(
-                            text = "Morning Brief",
+                            text = stringResource(R.string.daily_features_morning_brief_title),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold,
                         )
@@ -178,10 +181,10 @@ fun DailyFeaturesScreen(
                             verticalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
                             brief.personalDay?.let { day ->
-                                AssistChip(onClick = {}, label = { Text("Personal Day $day") })
+                                AssistChip(onClick = {}, label = { Text(stringResource(R.string.home_personal_day_chip, day)) })
                             }
                             brief.moonPhase?.takeIf { it.isNotBlank() }?.let { phase ->
-                                AssistChip(onClick = {}, label = { Text("🌙 $phase") })
+                                AssistChip(onClick = {}, label = { Text(stringResource(R.string.daily_features_moon_phase_chip, phase)) })
                             }
                             brief.vibe?.takeIf { it.isNotBlank() }?.let { vibe ->
                                 AssistChip(onClick = {}, label = { Text(vibe) })
@@ -196,21 +199,21 @@ fun DailyFeaturesScreen(
                 Card(modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         Text(
-                            text = "Do & Don't",
+                            text = stringResource(R.string.daily_features_do_dont_title),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold,
                         )
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             if (dd.mercuryRetrograde) {
-                                AssistChip(onClick = {}, label = { Text("☿ Mercury Rx") })
+                                AssistChip(onClick = {}, label = { Text(stringResource(R.string.daily_features_mercury_rx_chip)) })
                             }
                             if (dd.venusRetrograde) {
-                                AssistChip(onClick = {}, label = { Text("♀ Venus Rx") })
+                                AssistChip(onClick = {}, label = { Text(stringResource(R.string.daily_features_venus_rx_chip)) })
                             }
                         }
                         if (dd.dos.isNotEmpty()) {
                             Text(
-                                text = "Do",
+                                text = stringResource(R.string.daily_features_do_title),
                                 style = MaterialTheme.typography.labelLarge,
                                 color = MaterialTheme.colorScheme.primary,
                             )
@@ -237,7 +240,7 @@ fun DailyFeaturesScreen(
                 Card(modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text(
-                            text = "Today's Affirmation",
+                            text = stringResource(R.string.daily_features_affirmation_title),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold,
                         )
@@ -252,9 +255,9 @@ fun DailyFeaturesScreen(
             errorMessage?.let { error ->
                 Card(modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text(text = "Partial Load", style = MaterialTheme.typography.titleSmall)
+                        Text(text = stringResource(R.string.daily_features_partial_load_title), style = MaterialTheme.typography.titleSmall)
                         Text(text = error, style = MaterialTheme.typography.bodySmall)
-                        OutlinedButton(onClick = { refreshVersion += 1 }) { Text("Retry") }
+                        OutlinedButton(onClick = { refreshVersion += 1 }) { Text(stringResource(R.string.action_retry)) }
                     }
                 }
             }
@@ -263,10 +266,10 @@ fun DailyFeaturesScreen(
                 Card(modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
-                            text = "Nothing loaded yet. Tap refresh to try again.",
+                            text = stringResource(R.string.daily_features_nothing_loaded),
                             style = MaterialTheme.typography.bodyMedium,
                         )
-                        OutlinedButton(onClick = { refreshVersion += 1 }) { Text("Refresh") }
+                        OutlinedButton(onClick = { refreshVersion += 1 }) { Text(stringResource(R.string.action_refresh)) }
                     }
                 }
             }

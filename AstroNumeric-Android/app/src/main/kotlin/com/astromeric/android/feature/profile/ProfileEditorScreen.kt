@@ -39,9 +39,13 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.unit.dp
 import com.astromeric.android.R
 import com.astromeric.android.core.data.repository.ProfileRepository
 import com.astromeric.android.core.model.AppProfile
@@ -71,6 +75,7 @@ fun ProfileEditorScreen(
 ) {
     val context = LocalContext.current
     val keyboardController = LocalSoftwareKeyboardController.current
+    val haptic = LocalHapticFeedback.current
     val scope = rememberCoroutineScope()
 
     var name by rememberSaveable(existingProfile?.id) { mutableStateOf(existingProfile?.name.orEmpty()) }
@@ -94,7 +99,7 @@ fun ProfileEditorScreen(
         scope.launch {
             errorMessage = null
             if (!canSave) {
-                errorMessage = "Name, birth date, birth place, and a valid time are required."
+                errorMessage = context.getString(R.string.profile_editor_error_required_fields)
                 return@launch
             }
 
@@ -123,7 +128,7 @@ fun ProfileEditorScreen(
                     )
 
                 if (resolvedBirthplace == null) {
-                    errorMessage = "Could not confirm that birth place. Enter a city and country, then try again."
+                    errorMessage = context.getString(R.string.profile_editor_error_birth_place_confirmation)
                     return@launch
                 }
 
@@ -154,11 +159,15 @@ fun ProfileEditorScreen(
     ) {
         PremiumContentCard(
             title = if (existingProfile == null) {
-                if (isOnboarding) "Create your first profile" else "Create profile"
+                if (isOnboarding) {
+                    stringResource(R.string.profile_editor_title_create_first)
+                } else {
+                    stringResource(R.string.profile_editor_title_create)
+                }
             } else {
-                "Edit profile"
+                stringResource(R.string.profile_editor_title_edit)
             },
-            body = "Phase 1 already matches the iOS time-confidence rules and local persistence strategy.",
+            body = stringResource(R.string.profile_editor_body),
         )
 
         errorMessage?.let { message ->
@@ -172,7 +181,7 @@ fun ProfileEditorScreen(
         OutlinedTextField(
             value = name,
             onValueChange = { name = it },
-            label = { Text("Name") },
+            label = { Text(stringResource(R.string.profile_editor_label_name)) },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
         )
@@ -190,7 +199,7 @@ fun ProfileEditorScreen(
         OutlinedTextField(
             value = placeOfBirth,
             onValueChange = { placeOfBirth = it },
-            label = { Text("Birth place") },
+            label = { Text(stringResource(R.string.profile_editor_label_birth_place)) },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
@@ -198,7 +207,7 @@ fun ProfileEditorScreen(
         )
 
         Text(
-            text = "Enter a city and country. Coordinates and timezone are confirmed automatically when you save, matching iOS.",
+            text = stringResource(R.string.profile_editor_birth_place_helper),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -206,15 +215,26 @@ fun ProfileEditorScreen(
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             if (!isOnboarding) {
                 TextButton(onClick = onCancel, modifier = Modifier.weight(1f)) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.profile_editor_button_cancel))
                 }
             }
             Button(
-                onClick = ::submitProfile,
+                onClick = {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    submitProfile()
+                },
                 modifier = Modifier.weight(1f),
                 enabled = !isSaving,
             ) {
-                Text(if (isSaving) "Saving..." else if (existingProfile == null) "Create profile" else "Save changes")
+                Text(
+                    stringResource(
+                        when {
+                            isSaving -> R.string.profile_editor_button_saving
+                            existingProfile == null -> R.string.profile_editor_button_create
+                            else -> R.string.profile_editor_button_save_changes
+                        },
+                    ),
+                )
             }
         }
     }
@@ -242,7 +262,7 @@ private fun DateInputRow(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Text(text = "Birth details", style = MaterialTheme.typography.titleMedium)
+        Text(text = stringResource(R.string.profile_editor_birth_details_title), style = MaterialTheme.typography.titleMedium)
 
         Button(
             onClick = {
@@ -269,7 +289,7 @@ private fun DateInputRow(
                 dateDialog.show()
             },
         ) {
-            Text("Birth date: $birthDate")
+            Text(stringResource(R.string.profile_editor_birth_date_value, birthDate))
         }
 
         FlowRow(
@@ -302,18 +322,23 @@ private fun DateInputRow(
                     ).show()
                 },
             ) {
-                Text("Birth time: ${birthTime.ifBlank { "Tap to choose" }}")
+                Text(
+                    stringResource(
+                        R.string.profile_editor_birth_time_value,
+                        birthTime.ifBlank { stringResource(R.string.profile_editor_birth_time_tap_to_choose) },
+                    ),
+                )
             }
             if (timeConfidence == TimeConfidence.APPROXIMATE) {
                 Text(
-                    text = "Approximate times are saved and treated as estimated for rising sign and house logic.",
+                    text = stringResource(R.string.profile_editor_birth_time_approximate_helper),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         } else {
             Text(
-                text = "Unknown birth time falls back to noon-style estimation, matching the iOS data-quality rules.",
+                text = stringResource(R.string.profile_editor_birth_time_unknown_helper),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

@@ -11,6 +11,8 @@ struct PremiumHeroBlock: View {
     let isMystic: Bool
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @ScaledMetric(relativeTo: .title3) private var minHeight: CGFloat = 220
     @State private var gradientPhase: CGFloat = 0
 
     var body: some View {
@@ -55,14 +57,16 @@ struct PremiumHeroBlock: View {
 
                 Text(headline)
                     .font(.system(.title3, design: .serif)).fontWeight(.semibold)
-                    .lineLimit(3)
+                    .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 3)
                     .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
                     .animation(.easeInOut(duration: 0.25), value: isMystic)
 
                 Text(support)
                     .font(.footnote)
                     .foregroundStyle(.white.opacity(0.78))
-                    .lineLimit(2)
+                    .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 2)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             .padding(20)
             .foregroundStyle(.white)
@@ -77,7 +81,7 @@ struct PremiumHeroBlock: View {
             }
             .padding(16)
         }
-        .frame(height: 220)
+        .frame(minHeight: minHeight, alignment: .bottomLeading)
         .clipShape(RoundedRectangle(cornerRadius: Radius.lg))
         .overlay(
             RoundedRectangle(cornerRadius: Radius.lg)

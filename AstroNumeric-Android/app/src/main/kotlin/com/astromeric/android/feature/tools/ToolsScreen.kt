@@ -1,5 +1,6 @@
 package com.astromeric.android.feature.tools
 
+import android.content.Context
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -28,7 +29,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.astromeric.android.R
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.astromeric.android.core.data.local.TimingAdviceCacheStore
 import com.astromeric.android.core.data.preferences.AppPreferencesStore
@@ -79,6 +82,12 @@ fun ToolsScreen(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
+    val affirmationLoadError = stringResource(R.string.affirmation_error_load)
+    val tarotLoadError = stringResource(R.string.tarot_error_load)
+    val dailyGuideLoadError = stringResource(R.string.tools_daily_guide_error_load)
+    val timingLoadError = stringResource(R.string.timing_advisor_error_load)
+    val oracleProfileRequiredError = stringResource(R.string.tools_oracle_profile_required)
+    val oracleLoadError = stringResource(R.string.tools_oracle_error_load)
     val timingAdviceCacheStore = remember(context) { TimingAdviceCacheStore(context.applicationContext) }
     val scope = rememberCoroutineScope()
     val savedRelationships by preferencesStore.savedRelationships.collectAsStateWithLifecycle(initialValue = emptyList())
@@ -118,15 +127,15 @@ fun ToolsScreen(
             }
 
             affirmation = affirmationRequest.await()
-                ?.onFailure { affirmationError = it.message ?: "Affirmation could not be loaded." }
+                ?.onFailure { affirmationError = it.message ?: affirmationLoadError }
                 ?.getOrNull()
 
             tarotCard = tarotRequest.await()
-                .onFailure { tarotError = it.message ?: "Tarot card could not be loaded." }
+                .onFailure { tarotError = it.message ?: tarotLoadError }
                 .getOrNull()
 
             doDont = doDontRequest.await()
-                ?.onFailure { doDontError = it.message ?: "Daily guide could not be loaded." }
+                ?.onFailure { doDontError = it.message ?: dailyGuideLoadError }
                 ?.getOrNull()
         }
 
@@ -149,7 +158,7 @@ fun ToolsScreen(
             timingResultCachedAtEpochMillis = result.cachedAtEpochMillis
             result.payload?.toToolResult(selectedActivity).also {
                 if (it == null) {
-                    timingError = result.errorMessage ?: "Timing advice could not be loaded."
+                    timingError = result.errorMessage ?: timingLoadError
                 }
             }
         } else {
@@ -165,14 +174,17 @@ fun ToolsScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         PremiumHeroCard(
-            eyebrow = "Tools",
-            title = "Cosmic Tools",
-            body = "Calculated tools help you decide. Interpretive tools help you feel, frame, or process what the day is bringing.",
+            eyebrow = stringResource(R.string.tools_eyebrow),
+            title = stringResource(R.string.tools_title),
+            body = stringResource(R.string.tools_hero_body),
             chips = ToolProvenance.entries.map { it.label },
         ) {
             selectedProfile?.let { profile ->
                 Text(
-                    text = "Active profile: ${profile.displayName(hideSensitiveDetailsEnabled, PrivacyDisplayRole.ACTIVE_USER)}",
+                    text = stringResource(
+                        R.string.tools_active_profile,
+                        profile.displayName(hideSensitiveDetailsEnabled, PrivacyDisplayRole.ACTIVE_USER),
+                    ),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -199,7 +211,13 @@ fun ToolsScreen(
             onClick = { refreshVersion += 1 },
             enabled = !isRefreshing,
         ) {
-            Text(if (isRefreshing) "Refreshing..." else "Refresh tools")
+            Text(
+                if (isRefreshing) {
+                    stringResource(R.string.tools_refreshing)
+                } else {
+                    stringResource(R.string.tools_refresh)
+                },
+            )
         }
 
         ProfileContextCard(
@@ -236,7 +254,7 @@ fun ToolsScreen(
             error = yesNoError,
             onConsult = {
                 if (selectedProfile == null) {
-                    yesNoError = "A saved profile is required for Oracle guidance."
+                    yesNoError = oracleProfileRequiredError
                 } else {
                     scope.launch {
                         isConsultingOracle = true
@@ -245,7 +263,7 @@ fun ToolsScreen(
                             question = oracleQuestion.trim(),
                             profile = selectedProfile,
                         )
-                            .onFailure { yesNoError = it.message ?: "Oracle guidance could not be loaded." }
+                            .onFailure { yesNoError = it.message ?: oracleLoadError }
                             .getOrNull()
                         isConsultingOracle = false
                     }
@@ -281,20 +299,20 @@ private fun ProfileContextCard(
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Text(
-                text = "Profile context",
+                text = stringResource(R.string.tools_profile_context_title),
                 style = MaterialTheme.typography.titleMedium,
             )
             Text(
                 text = if (selectedProfile != null) {
                     "${selectedProfile.displayName(hideSensitiveDetailsEnabled, PrivacyDisplayRole.ACTIVE_USER)} · ${selectedProfile.dataQuality.label}"
                 } else {
-                    "No profile selected"
+                    stringResource(R.string.tools_no_profile_selected)
                 },
                 style = MaterialTheme.typography.bodyMedium,
             )
             Text(
                 text = selectedProfile?.dataQuality?.description
-                    ?: "Create a profile to personalize timing, daily guidance, and reflections.",
+                    ?: stringResource(R.string.tools_profile_context_empty_body),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -308,30 +326,44 @@ private fun DailyGuideDataCard(
     error: String?,
     selectedProfile: AppProfile?,
 ) {
-    ToolDataCard(title = "Daily Guide", error = error) {
+    val retrogradeLabels = buildList {
+        if (doDont?.mercuryRetrograde == true) add(stringResource(R.string.tools_mercury_retrograde))
+        if (doDont?.venusRetrograde == true) add(stringResource(R.string.tools_venus_retrograde))
+    }
+
+    ToolDataCard(title = stringResource(R.string.tools_daily_guide_title), error = error) {
         val guide = doDont
         if (guide != null) {
-            AssistChip(onClick = {}, label = { Text("Personal Day ${guide.personalDay}") })
-            Text(text = "Moon phase: ${guide.moonPhase}", style = MaterialTheme.typography.bodyMedium)
-            if (guide.mercuryRetrograde || guide.venusRetrograde) {
+            AssistChip(
+                onClick = {},
+                label = { Text(stringResource(R.string.home_personal_day_chip, guide.personalDay)) },
+            )
+            Text(
+                text = stringResource(R.string.tools_moon_phase_format, guide.moonPhase),
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            if (retrogradeLabels.isNotEmpty()) {
                 Text(
-                    text = buildString {
-                        if (guide.mercuryRetrograde) append("Mercury retrograde ")
-                        if (guide.venusRetrograde) append("Venus retrograde")
-                    }.trim(),
+                    text = retrogradeLabels.joinToString(" · "),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            Text(text = "Do: ${guide.dos.joinToString()}", style = MaterialTheme.typography.bodyMedium)
-            Text(text = "Avoid: ${guide.donts.joinToString()}", style = MaterialTheme.typography.bodyMedium)
+            Text(
+                text = stringResource(R.string.tools_do_format, guide.dos.joinToString()),
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            Text(
+                text = stringResource(R.string.tools_avoid_format, guide.donts.joinToString()),
+                style = MaterialTheme.typography.bodyMedium,
+            )
         } else if (selectedProfile == null) {
             Text(
-                text = "A saved profile is required for personalized daily guidance.",
+                text = stringResource(R.string.tools_daily_guide_profile_required),
                 style = MaterialTheme.typography.bodyMedium,
             )
         } else {
-            Text(text = "Daily guidance has not loaded yet.", style = MaterialTheme.typography.bodyMedium)
+            Text(text = stringResource(R.string.tools_daily_guide_not_loaded), style = MaterialTheme.typography.bodyMedium)
         }
     }
 }
@@ -347,7 +379,9 @@ private fun TimingDataCard(
     timingResultCachedAtEpochMillis: Long?,
     error: String?,
 ) {
-    ToolDataCard(title = "Timing", error = error) {
+    val context = LocalContext.current
+
+    ToolDataCard(title = stringResource(R.string.tools_timing_title), error = error) {
         FlowRow(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -369,13 +403,13 @@ private fun TimingDataCard(
             ) {
                 AssistChip(onClick = {}, label = { Text("${(result.score * 100).toInt()}% ${result.rating}") })
                 if (timingResultIsCached) {
-                    AssistChip(onClick = {}, label = { Text("Cached snapshot") })
+                    AssistChip(onClick = {}, label = { Text(stringResource(R.string.timing_advisor_cached_snapshot)) })
                 }
             }
             if (timingResultIsCached) {
                 Text(
-                    text = timingResultCachedAtEpochMillis?.let(::formatTimingCacheTimestamp)
-                        ?: "Saved timing snapshot in use.",
+                    text = timingResultCachedAtEpochMillis?.let { formatTimingCacheTimestamp(context, it) }
+                        ?: stringResource(R.string.timing_advisor_saved_snapshot_in_use),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -384,10 +418,16 @@ private fun TimingDataCard(
                 Text(text = advice, style = MaterialTheme.typography.bodyMedium)
             }
             if (result.bestTimes.isNotEmpty()) {
-                Text(text = "Best windows: ${result.bestTimes.joinToString()}", style = MaterialTheme.typography.bodyMedium)
+                Text(
+                    text = stringResource(R.string.tools_timing_best_windows_format, result.bestTimes.joinToString()),
+                    style = MaterialTheme.typography.bodyMedium,
+                )
             }
             if (result.avoidTimes.isNotEmpty()) {
-                Text(text = "Avoid windows: ${result.avoidTimes.joinToString()}", style = MaterialTheme.typography.bodyMedium)
+                Text(
+                    text = stringResource(R.string.tools_timing_avoid_windows_format, result.avoidTimes.joinToString()),
+                    style = MaterialTheme.typography.bodyMedium,
+                )
             }
             result.tips.take(3).forEach { tip ->
                 Text(
@@ -398,11 +438,11 @@ private fun TimingDataCard(
             }
         } else if (selectedProfile == null) {
             Text(
-                text = "A saved profile is required for personalized timing advice.",
+                text = stringResource(R.string.tools_timing_profile_required),
                 style = MaterialTheme.typography.bodyMedium,
             )
         } else {
-            Text(text = "Timing advice has not loaded yet.", style = MaterialTheme.typography.bodyMedium)
+            Text(text = stringResource(R.string.tools_timing_not_loaded), style = MaterialTheme.typography.bodyMedium)
         }
     }
 }
@@ -417,16 +457,22 @@ private fun OracleDataCard(
     error: String?,
     onConsult: () -> Unit,
 ) {
-    ToolDataCard(title = "Oracle", error = error) {
+    ToolDataCard(title = stringResource(R.string.tools_oracle_title), error = error) {
         OutlinedTextField(
             value = question,
             onValueChange = onQuestionChange,
-            label = { Text("Ask a yes or no question") },
+            label = { Text(stringResource(R.string.tools_oracle_question_label)) },
             modifier = Modifier.fillMaxWidth(),
             maxLines = 3,
         )
         Button(onClick = onConsult, enabled = question.isNotBlank() && !isConsulting) {
-            Text(if (isConsulting) "Consulting..." else "Consult the Oracle")
+            Text(
+                if (isConsulting) {
+                    stringResource(R.string.tools_oracle_consulting)
+                } else {
+                    stringResource(R.string.tools_oracle_consult)
+                },
+            )
         }
 
         if (guidance != null) {
@@ -440,10 +486,10 @@ private fun OracleDataCard(
                 )
             }
         } else if (selectedProfile == null) {
-            Text(text = "A saved profile is required for Oracle guidance.", style = MaterialTheme.typography.bodyMedium)
+            Text(text = stringResource(R.string.tools_oracle_profile_required), style = MaterialTheme.typography.bodyMedium)
         } else {
             Text(
-                text = "Ask a clear question about timing, readiness, or whether to proceed.",
+                text = stringResource(R.string.tools_oracle_prompt),
                 style = MaterialTheme.typography.bodyMedium,
             )
         }
@@ -452,18 +498,26 @@ private fun OracleDataCard(
 
 @Composable
 private fun TarotDataCard(tarotCard: TarotCardData?, error: String?) {
-    ToolDataCard(title = "Tarot", error = error) {
+    ToolDataCard(title = stringResource(R.string.tools_tarot_title), error = error) {
         if (tarotCard != null) {
             Text(text = tarotCard.name, style = MaterialTheme.typography.titleMedium)
             Text(
-                text = "${tarotCard.suit} · ${if (tarotCard.upright) "Upright" else "Reversed"}",
+                text = stringResource(
+                    R.string.tools_tarot_orientation_format,
+                    tarotCard.suit,
+                    if (tarotCard.upright) {
+                        stringResource(R.string.tools_tarot_upright)
+                    } else {
+                        stringResource(R.string.tools_tarot_reversed)
+                    },
+                ),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Text(text = tarotCard.meaning, style = MaterialTheme.typography.bodyMedium)
             Text(text = tarotCard.interpretation, style = MaterialTheme.typography.bodyMedium)
         } else {
-            Text(text = "No tarot card has been drawn yet.", style = MaterialTheme.typography.bodyMedium)
+            Text(text = stringResource(R.string.tools_tarot_empty), style = MaterialTheme.typography.bodyMedium)
         }
     }
 }
@@ -474,16 +528,16 @@ private fun AffirmationDataCard(
     error: String?,
     selectedProfile: AppProfile?,
 ) {
-    ToolDataCard(title = "Affirmation", error = error) {
+    ToolDataCard(title = stringResource(R.string.tools_affirmation_title), error = error) {
         if (affirmation != null) {
             Text(text = affirmation.affirmation, style = MaterialTheme.typography.bodyLarge)
         } else if (selectedProfile == null) {
             Text(
-                text = "A saved profile is required for personalized affirmation text.",
+                text = stringResource(R.string.tools_affirmation_profile_required),
                 style = MaterialTheme.typography.bodyMedium,
             )
         } else {
-            Text(text = "Affirmation text has not loaded yet.", style = MaterialTheme.typography.bodyMedium)
+            Text(text = stringResource(R.string.tools_affirmation_not_loaded), style = MaterialTheme.typography.bodyMedium)
         }
     }
 }
@@ -495,34 +549,38 @@ private fun CompatibilitySummaryCard(
     selectedProfile: AppProfile?,
     onOpenRelationships: () -> Unit,
 ) {
-    ToolDataCard(title = "Compatibility", error = null) {
+    ToolDataCard(title = stringResource(R.string.tools_compatibility_title), error = null) {
         AssistChip(
             onClick = {},
             label = {
                 Text(
                     if (savedRelationshipCount == 0) {
-                        "No saved relationship history yet"
+                        stringResource(R.string.tools_compatibility_empty_summary)
                     } else {
-                        "$savedRelationshipCount saved · $averageCompatibilityScore% average"
+                        stringResource(
+                            R.string.tools_compatibility_summary_format,
+                            savedRelationshipCount,
+                            averageCompatibilityScore,
+                        )
                     },
                 )
             },
         )
         Text(
-            text = "Compatibility, saved matches, live relationship timing, timeline context, and Cosmic Circle now live in a dedicated destination instead of duplicating that depth inside Tools.",
+            text = stringResource(R.string.tools_compatibility_body),
             style = MaterialTheme.typography.bodyMedium,
         )
         Text(
             text = if (selectedProfile == null) {
-                "Create or select a profile first so the relationship workspace can personalize comparisons and timing."
+                stringResource(R.string.tools_compatibility_profile_required)
             } else {
-                "Open the relationship workspace when you want to compare profiles, revisit saved matches, or manage synced people."
+                stringResource(R.string.tools_compatibility_ready)
             },
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Button(onClick = onOpenRelationships) {
-            Text("Open Relationships")
+            Text(stringResource(R.string.action_open_relationships))
         }
     }
 }
@@ -545,12 +603,12 @@ private fun ToolsBentoGrid(
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(
-            text = "Choose your next tool",
+            text = stringResource(R.string.tools_choose_next_tool),
             style = MaterialTheme.typography.titleMedium,
         )
         PremiumBentoCard(
-            title = "Explore Workspace",
-            body = "Learn, habits, relationships, and themed browsing without making Explore a root tab.",
+            title = stringResource(R.string.tools_launcher_explore_title),
+            body = stringResource(R.string.tools_launcher_explore_body),
             icon = "✦",
             badge = ToolProvenance.REFERENCE.label,
             minHeight = 132,
@@ -558,16 +616,16 @@ private fun ToolsBentoGrid(
         )
         BentoRow {
             PremiumBentoCard(
-                title = "Daily Guide",
-                body = "Personal day, moon phase, retrogrades, and cues.",
+                title = stringResource(R.string.tools_launcher_daily_guide_title),
+                body = stringResource(R.string.tools_launcher_daily_guide_body),
                 icon = "☀",
                 badge = ToolProvenance.CALCULATED.label,
                 modifier = Modifier.weight(1f),
                 onClick = onOpenDailyFeatures,
             )
             PremiumBentoCard(
-                title = "Timing",
-                body = "Activity windows scored from the live sky.",
+                title = stringResource(R.string.tools_launcher_timing_title),
+                body = stringResource(R.string.tools_launcher_timing_body),
                 icon = "◷",
                 badge = ToolProvenance.CALCULATED.label,
                 modifier = Modifier.weight(1f),
@@ -575,8 +633,8 @@ private fun ToolsBentoGrid(
             )
         }
         PremiumBentoCard(
-            title = "Temporal Matrix",
-            body = "Overlay the next 48 hours with calendar context and timing weather.",
+            title = stringResource(R.string.tools_launcher_temporal_matrix_title),
+            body = stringResource(R.string.tools_launcher_temporal_matrix_body),
             icon = "◫",
             badge = ToolProvenance.HYBRID.label,
             minHeight = 132,
@@ -584,16 +642,16 @@ private fun ToolsBentoGrid(
         )
         BentoRow {
             PremiumBentoCard(
-                title = "Tarot",
-                body = "Card pull for symbolic reflection.",
+                title = stringResource(R.string.tools_launcher_tarot_title),
+                body = stringResource(R.string.tools_launcher_tarot_body),
                 icon = "♠",
                 badge = ToolProvenance.INTERPRETIVE.label,
                 modifier = Modifier.weight(1f),
                 onClick = onOpenTarot,
             )
             PremiumBentoCard(
-                title = "Oracle",
-                body = "Ask a clear yes/no question and read the guidance.",
+                title = stringResource(R.string.tools_launcher_oracle_title),
+                body = stringResource(R.string.tools_launcher_oracle_body),
                 icon = "?",
                 badge = ToolProvenance.HYBRID.label,
                 modifier = Modifier.weight(1f),
@@ -602,16 +660,16 @@ private fun ToolsBentoGrid(
         }
         BentoRow {
             PremiumBentoCard(
-                title = "Affirmation",
-                body = "Supportive language tuned to today's mood.",
+                title = stringResource(R.string.tools_launcher_affirmation_title),
+                body = stringResource(R.string.tools_launcher_affirmation_body),
                 icon = "★",
                 badge = ToolProvenance.INTERPRETIVE.label,
                 modifier = Modifier.weight(1f),
                 onClick = onOpenAffirmation,
             )
             PremiumBentoCard(
-                title = "Moon Phase",
-                body = "Current lunar phase and ritual weather.",
+                title = stringResource(R.string.tools_launcher_moon_phase_title),
+                body = stringResource(R.string.tools_launcher_moon_phase_body),
                 icon = "☾",
                 badge = ToolProvenance.CALCULATED.label,
                 modifier = Modifier.weight(1f),
@@ -620,16 +678,16 @@ private fun ToolsBentoGrid(
         }
         BentoRow {
             PremiumBentoCard(
-                title = "Moon Events",
-                body = "Upcoming new moons, full moons, and milestones.",
+                title = stringResource(R.string.tools_launcher_moon_events_title),
+                body = stringResource(R.string.tools_launcher_moon_events_body),
                 icon = "◐",
                 badge = ToolProvenance.CALCULATED.label,
                 modifier = Modifier.weight(1f),
                 onClick = onOpenMoonEvents,
             )
             PremiumBentoCard(
-                title = "Year Ahead",
-                body = "Current life phase and the next 12 months.",
+                title = stringResource(R.string.tools_launcher_year_ahead_title),
+                body = stringResource(R.string.tools_launcher_year_ahead_body),
                 icon = "↻",
                 badge = ToolProvenance.HYBRID.label,
                 modifier = Modifier.weight(1f),
@@ -638,16 +696,16 @@ private fun ToolsBentoGrid(
         }
         BentoRow {
             PremiumBentoCard(
-                title = "Compatibility",
-                body = "Relationship timing, saved history, and Cosmic Circle.",
+                title = stringResource(R.string.tools_launcher_compatibility_title),
+                body = stringResource(R.string.tools_launcher_compatibility_body),
                 icon = "♡",
                 badge = ToolProvenance.HYBRID.label,
                 modifier = Modifier.weight(1f),
                 onClick = onOpenRelationships,
             )
             PremiumBentoCard(
-                title = "Birthstones",
-                body = "Gemstone guide matched to sign traditions.",
+                title = stringResource(R.string.tools_launcher_birthstones_title),
+                body = stringResource(R.string.tools_launcher_birthstones_body),
                 icon = "◇",
                 badge = ToolProvenance.REFERENCE.label,
                 modifier = Modifier.weight(1f),
@@ -655,8 +713,8 @@ private fun ToolsBentoGrid(
             )
         }
         PremiumBentoCard(
-            title = "Learning",
-            body = "Lessons, glossary terms, and sign guidance in one reference path.",
+            title = stringResource(R.string.tools_launcher_learning_title),
+            body = stringResource(R.string.tools_launcher_learning_body),
             icon = "◇",
             badge = ToolProvenance.REFERENCE.label,
             minHeight = 132,
@@ -712,11 +770,11 @@ private fun ToolDataCard(
     }
 }
 
-private fun formatTimingCacheTimestamp(epochMillis: Long): String {
+private fun formatTimingCacheTimestamp(context: Context, epochMillis: Long): String {
     val formatted = TimingCacheFormatter.format(
         Instant.ofEpochMilli(epochMillis).atZone(ZoneId.systemDefault()),
     )
-    return "Offline timing snapshot from $formatted"
+    return context.getString(R.string.tools_timing_snapshot_from, formatted)
 }
 
 private val TimingCacheFormatter: DateTimeFormatter =

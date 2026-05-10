@@ -1,5 +1,6 @@
 package com.astromeric.android.feature.profile
 
+import android.content.Context
 import android.os.Build
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -13,13 +14,16 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.astromeric.android.R
 import com.astromeric.android.BuildConfig
 import com.astromeric.android.app.MorningBriefWidgetSnapshot
 import com.astromeric.android.app.MorningBriefWidgetSnapshotStore
-import com.astromeric.android.core.data.local.ExactTransitCacheSnapshot
-import com.astromeric.android.core.data.local.ExactTransitLoadStatus
+import com.astromeric.android.core.data.local.CachedExactTransitSnapshot
+import com.astromeric.android.core.data.local.SavedExactTransitLoadStatus
 import com.astromeric.android.core.model.AppProfile
 import com.astromeric.android.core.model.AstroDataSource
 import com.astromeric.android.core.model.PrivacyDisplayRole
@@ -57,8 +61,8 @@ internal fun SystemDiagnosticsCard(
     widgetInstanceCount: Int,
     widgetSnapshot: MorningBriefWidgetSnapshot,
     widgetSnapshotStore: MorningBriefWidgetSnapshotStore,
-    exactTransitCacheSnapshot: ExactTransitCacheSnapshot?,
-    exactTransitLoadStatus: ExactTransitLoadStatus?,
+    exactTransitCacheSnapshot: CachedExactTransitSnapshot?,
+    exactTransitLoadStatus: SavedExactTransitLoadStatus?,
     exactTransitAlarmAccess: Boolean,
     scheduledTransitHashCount: Int,
     isRunningDebugRefresh: Boolean,
@@ -69,6 +73,7 @@ internal fun SystemDiagnosticsCard(
     onPreviewExactTransitNotification: (AppProfile, AstroDataSource, Boolean) -> Unit,
     onRunDebugRefresh: (AppProfile) -> Unit,
 ) {
+    val context = LocalContext.current
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier.padding(16.dp),
@@ -78,13 +83,16 @@ internal fun SystemDiagnosticsCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                Text(text = "System diagnostics", style = MaterialTheme.typography.titleMedium)
+                Text(
+                    text = stringResource(R.string.profile_diagnostics_title),
+                    style = MaterialTheme.typography.titleMedium,
+                )
                 TextButton(onClick = onRefresh) {
-                    Text("Refresh")
+                    Text(stringResource(R.string.action_refresh))
                 }
             }
             Text(
-                text = "Use this to sanity-check the local Android surface: permissions, Health Connect availability, and whether widget cache data has actually been seeded.",
+                text = stringResource(R.string.profile_diagnostics_body),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -102,42 +110,114 @@ internal fun SystemDiagnosticsCard(
                 )
             }
             ProfileDiagnosticsStatusRow(
-                label = "Notification delivery",
-                value = notificationDiagnosticsLabel(notificationsEnabledInSystem, notificationPermissionGranted),
+                label = stringResource(R.string.profile_diagnostics_notification_delivery_label),
+                value = notificationDiagnosticsLabel(context, notificationsEnabledInSystem, notificationPermissionGranted),
             )
-            ProfileDiagnosticsStatusRow(label = "Daily reminder window", value = notificationWindowLabel(dailyReminderEnabled, dailyReadingHour, dailyReadingMinute))
-            ProfileDiagnosticsStatusRow(label = "Habit reminder window", value = notificationWindowLabel(habitReminderEnabled, habitReminderHour, habitReminderMinute))
-            ProfileDiagnosticsStatusRow(label = "Timing alert window", value = notificationWindowLabel(timingAlertEnabled, timingAlertHour, timingAlertMinute))
-            ProfileDiagnosticsStatusRow(label = "Transit alert window", value = notificationWindowLabel(transitAlertsEnabled, transitAlertHour, transitAlertMinute))
-            ProfileDiagnosticsStatusRow(label = "Calendar permission", value = if (calendarPermissionGranted) "Granted" else "Not granted")
-            ProfileDiagnosticsStatusRow(label = "Health Connect", value = healthAvailability.label)
-            ProfileDiagnosticsStatusRow(label = "Morning Brief widgets", value = if (widgetInstanceCount == 0) "None placed" else "$widgetInstanceCount active")
-            ProfileDiagnosticsStatusRow(label = "Widget cache", value = widgetSnapshot.cacheStatusLabel())
-            ProfileDiagnosticsStatusRow(label = "Last daily reminder", value = notificationMarkerLabel(widgetSnapshotStore.lastDailyReadingNotificationDate()))
-            ProfileDiagnosticsStatusRow(label = "Last habit reminder", value = notificationMarkerLabel(widgetSnapshotStore.lastHabitReminderNotificationDate()))
-            ProfileDiagnosticsStatusRow(label = "Last timing alert", value = notificationMarkerLabel(widgetSnapshotStore.lastTimingAlertNotificationDate()))
-            ProfileDiagnosticsStatusRow(label = "Last transit alert", value = notificationMarkerLabel(widgetSnapshotStore.lastTransitAlertNotificationDate()))
             ProfileDiagnosticsStatusRow(
-                label = "Exact transit alarms",
+                label = stringResource(R.string.profile_diagnostics_daily_reminder_window_label),
+                value = notificationWindowLabel(context, dailyReminderEnabled, dailyReadingHour, dailyReadingMinute),
+            )
+            ProfileDiagnosticsStatusRow(
+                label = stringResource(R.string.profile_diagnostics_habit_reminder_window_label),
+                value = notificationWindowLabel(context, habitReminderEnabled, habitReminderHour, habitReminderMinute),
+            )
+            ProfileDiagnosticsStatusRow(
+                label = stringResource(R.string.profile_diagnostics_timing_alert_window_label),
+                value = notificationWindowLabel(context, timingAlertEnabled, timingAlertHour, timingAlertMinute),
+            )
+            ProfileDiagnosticsStatusRow(
+                label = stringResource(R.string.profile_diagnostics_transit_alert_window_label),
+                value = notificationWindowLabel(context, transitAlertsEnabled, transitAlertHour, transitAlertMinute),
+            )
+            ProfileDiagnosticsStatusRow(
+                label = stringResource(R.string.profile_diagnostics_calendar_permission_label),
+                value = if (calendarPermissionGranted) {
+                    stringResource(R.string.profile_diagnostics_calendar_permission_granted)
+                } else {
+                    stringResource(R.string.profile_diagnostics_calendar_permission_not_granted)
+                },
+            )
+            ProfileDiagnosticsStatusRow(
+                label = stringResource(R.string.profile_diagnostics_health_connect_label),
+                value = healthAvailability.label(context),
+            )
+            ProfileDiagnosticsStatusRow(
+                label = stringResource(R.string.profile_diagnostics_morning_brief_widgets_label),
+                value = if (widgetInstanceCount == 0) {
+                    stringResource(R.string.profile_diagnostics_widgets_none_placed)
+                } else {
+                    stringResource(R.string.profile_diagnostics_widgets_active_count, widgetInstanceCount)
+                },
+            )
+            ProfileDiagnosticsStatusRow(
+                label = stringResource(R.string.profile_diagnostics_widget_cache_label),
+                value = widgetSnapshot.cacheStatusLabel(context),
+            )
+            ProfileDiagnosticsStatusRow(
+                label = stringResource(R.string.profile_diagnostics_last_daily_reminder_label),
+                value = notificationMarkerLabel(context, widgetSnapshotStore.lastDailyReadingNotificationDate()),
+            )
+            ProfileDiagnosticsStatusRow(
+                label = stringResource(R.string.profile_diagnostics_last_habit_reminder_label),
+                value = notificationMarkerLabel(context, widgetSnapshotStore.lastHabitReminderNotificationDate()),
+            )
+            ProfileDiagnosticsStatusRow(
+                label = stringResource(R.string.profile_diagnostics_last_timing_alert_label),
+                value = notificationMarkerLabel(context, widgetSnapshotStore.lastTimingAlertNotificationDate()),
+            )
+            ProfileDiagnosticsStatusRow(
+                label = stringResource(R.string.profile_diagnostics_last_transit_alert_label),
+                value = notificationMarkerLabel(context, widgetSnapshotStore.lastTransitAlertNotificationDate()),
+            )
+            ProfileDiagnosticsStatusRow(
+                label = stringResource(R.string.profile_diagnostics_exact_transit_alarms_label),
                 value = exactTransitAlarmLabel(
+                    context,
                     enabled = transitAlertsEnabled,
                     accessGranted = exactTransitAlarmAccess,
                     scheduledCount = scheduledTransitHashCount,
                 ),
             )
-            ProfileDiagnosticsStatusRow(label = "Exact transit cache", value = exactTransitCacheStatusLabel(exactTransitCacheSnapshot))
-            ProfileDiagnosticsStatusRow(label = "Last exact transit source", value = exactTransitLoadStatusLabel(exactTransitLoadStatus))
-            ProfileDiagnosticsStatusRow(label = "Selected profile", value = selectedProfile?.displayName(hideSensitiveDetailsEnabled, PrivacyDisplayRole.ACTIVE_USER) ?: "None")
-            ProfileDiagnosticsStatusRow(label = "Profile quality", value = selectedProfile?.dataQuality?.label ?: "No active profile")
-            ProfileDiagnosticsStatusRow(label = "Exact-data profiles", value = "$fullDataCount of $profilesCount")
-            ProfileDiagnosticsStatusRow(label = "Device-only profiles", value = localOnlyCount.toString())
-            ProfileDiagnosticsStatusRow(label = "Synced profiles", value = syncedCount.toString())
             ProfileDiagnosticsStatusRow(
-                label = "Account state",
+                label = stringResource(R.string.profile_diagnostics_exact_transit_cache_label),
+                value = exactTransitCacheStatusLabel(context, exactTransitCacheSnapshot),
+            )
+            ProfileDiagnosticsStatusRow(
+                label = stringResource(R.string.profile_diagnostics_exact_transit_source_label),
+                value = exactTransitLoadStatusLabel(context, exactTransitLoadStatus),
+            )
+            ProfileDiagnosticsStatusRow(
+                label = stringResource(R.string.profile_diagnostics_selected_profile_label),
+                value = selectedProfile?.displayName(hideSensitiveDetailsEnabled, PrivacyDisplayRole.ACTIVE_USER)
+                    ?: stringResource(R.string.profile_diagnostics_selected_profile_none),
+            )
+            ProfileDiagnosticsStatusRow(
+                label = stringResource(R.string.profile_diagnostics_profile_quality_label),
+                value = selectedProfile?.dataQuality?.label
+                    ?: stringResource(R.string.profile_diagnostics_profile_quality_none),
+            )
+            ProfileDiagnosticsStatusRow(
+                label = stringResource(R.string.profile_diagnostics_exact_data_profiles_label),
+                value = stringResource(
+                    R.string.profile_diagnostics_exact_data_profiles_count,
+                    fullDataCount,
+                    profilesCount,
+                ),
+            )
+            ProfileDiagnosticsStatusRow(
+                label = stringResource(R.string.profile_diagnostics_device_only_profiles_label),
+                value = localOnlyCount.toString(),
+            )
+            ProfileDiagnosticsStatusRow(
+                label = stringResource(R.string.profile_diagnostics_synced_profiles_label),
+                value = syncedCount.toString(),
+            )
+            ProfileDiagnosticsStatusRow(
+                label = stringResource(R.string.profile_diagnostics_account_state_label),
                 value = when {
-                    personalModeEnabled -> "Dormant in personal mode"
-                    isAuthenticated -> "Signed in"
-                    else -> "Signed out"
+                    personalModeEnabled -> stringResource(R.string.profile_diagnostics_account_state_personal_mode)
+                    isAuthenticated -> stringResource(R.string.profile_diagnostics_account_state_signed_in)
+                    else -> stringResource(R.string.profile_diagnostics_account_state_signed_out)
                 },
             )
         }
@@ -148,7 +228,7 @@ internal fun SystemDiagnosticsCard(
 private fun DebugDiagnosticsActions(
     selectedProfile: AppProfile?,
     hideSensitiveDetailsEnabled: Boolean,
-    exactTransitLoadStatus: ExactTransitLoadStatus?,
+    exactTransitLoadStatus: SavedExactTransitLoadStatus?,
     isRunningDebugRefresh: Boolean,
     debugDiagnosticsNote: String?,
     onSeedDebugProfile: () -> Unit,
@@ -156,11 +236,12 @@ private fun DebugDiagnosticsActions(
     onPreviewExactTransitNotification: (AppProfile, AstroDataSource, Boolean) -> Unit,
     onRunDebugRefresh: (AppProfile) -> Unit,
 ) {
+    val context = LocalContext.current
     OutlinedButton(onClick = onSeedDebugProfile, modifier = Modifier.fillMaxWidth()) {
-        Text("Seed Swiss test profile")
+        Text(stringResource(R.string.profile_diagnostics_debug_seed_profile))
     }
     Text(
-        text = "Debug-only: creates and selects a local exact-time profile with coordinates and timezone so offline Swiss fallback can be exercised on the emulator.",
+        text = stringResource(R.string.profile_diagnostics_debug_body),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
@@ -168,23 +249,28 @@ private fun DebugDiagnosticsActions(
         onClick = {
             val profile = selectedProfile
             if (profile == null) {
-                onDebugDiagnosticsNoteChange("Select or seed a profile first.")
+                onDebugDiagnosticsNoteChange(context.getString(R.string.profile_diagnostics_debug_select_profile_first))
                 return@OutlinedButton
             }
             val source = exactTransitLoadStatus?.source ?: AstroDataSource.LOCAL_SWISS
             val isCached = exactTransitLoadStatus?.isCached ?: false
             onPreviewExactTransitNotification(profile, source, isCached)
-            onDebugDiagnosticsNoteChange("Triggered a sample exact-transit notification using ${debugTransitSourceLabel(source, isCached)}.")
+            onDebugDiagnosticsNoteChange(
+                context.getString(
+                    R.string.profile_diagnostics_debug_preview_triggered,
+                    debugTransitSourceLabel(context, source, isCached),
+                ),
+            )
         },
         modifier = Modifier.fillMaxWidth(),
     ) {
-        Text("Preview exact-transit notification")
+        Text(stringResource(R.string.profile_diagnostics_debug_preview_notification))
     }
     OutlinedButton(
         onClick = {
             val profile = selectedProfile
             if (profile == null || isRunningDebugRefresh) {
-                onDebugDiagnosticsNoteChange("Select or seed a profile first.")
+                onDebugDiagnosticsNoteChange(context.getString(R.string.profile_diagnostics_debug_select_profile_first))
                 return@OutlinedButton
             }
             onRunDebugRefresh(profile)
@@ -192,7 +278,13 @@ private fun DebugDiagnosticsActions(
         enabled = !isRunningDebugRefresh,
         modifier = Modifier.fillMaxWidth(),
     ) {
-        Text(if (isRunningDebugRefresh) "Running refresh path..." else "Run refresh path now")
+        Text(
+            if (isRunningDebugRefresh) {
+                stringResource(R.string.profile_diagnostics_debug_running_refresh)
+            } else {
+                stringResource(R.string.profile_diagnostics_debug_run_refresh)
+            },
+        )
     }
     debugDiagnosticsNote?.let { note ->
         Text(
@@ -222,64 +314,68 @@ private fun ProfileDiagnosticsStatusRow(
 }
 
 private fun notificationDiagnosticsLabel(
+    context: Context,
     notificationsEnabledInSystem: Boolean,
     notificationPermissionGranted: Boolean,
 ): String = when {
-    !notificationsEnabledInSystem -> "Disabled in system settings"
-    !notificationPermissionGranted -> "Permission missing"
-    else -> "Ready"
+    !notificationsEnabledInSystem -> context.getString(R.string.profile_diagnostics_notifications_disabled_system)
+    !notificationPermissionGranted -> context.getString(R.string.profile_diagnostics_notifications_permission_missing)
+    else -> context.getString(R.string.profile_diagnostics_notifications_ready)
 }
 
 private fun notificationWindowLabel(
+    context: Context,
     enabled: Boolean,
     hour: Int,
     minute: Int,
-): String = if (enabled) LocalTime.of(hour, minute).format(TimeFormatter) else "Off"
+): String = if (enabled) LocalTime.of(hour, minute).format(java.time.format.DateTimeFormatter.ofPattern("h:mm a")) else context.getString(R.string.preference_state_off)
 
-private fun notificationMarkerLabel(date: String?): String = date ?: "Not delivered yet"
+private fun notificationMarkerLabel(context: Context, date: String?): String =
+    date ?: context.getString(R.string.profile_diagnostics_not_delivered_yet)
 
 private fun exactTransitAlarmLabel(
+    context: Context,
     enabled: Boolean,
     accessGranted: Boolean,
     scheduledCount: Int,
 ): String = when {
-    !enabled -> "Off"
-    !accessGranted -> "Exact alarm access required"
-    scheduledCount == 0 -> "No upcoming exact alarms"
-    else -> "$scheduledCount scheduled"
+    !enabled -> context.getString(R.string.preference_state_off)
+    !accessGranted -> context.getString(R.string.profile_diagnostics_exact_alarm_access_required)
+    scheduledCount == 0 -> context.getString(R.string.profile_diagnostics_exact_alarm_none)
+    else -> context.getString(R.string.profile_diagnostics_exact_alarm_scheduled_count, scheduledCount)
 }
 
-private val GuideHealthAvailability.label: String
-    get() = when (this) {
-        GuideHealthAvailability.AVAILABLE -> "Available"
-        GuideHealthAvailability.UPDATE_REQUIRED -> "Update required"
-        GuideHealthAvailability.UNAVAILABLE -> "Unavailable"
-    }
+private fun GuideHealthAvailability.label(context: Context): String = when (this) {
+    GuideHealthAvailability.AVAILABLE -> context.getString(R.string.profile_diagnostics_health_available)
+    GuideHealthAvailability.UPDATE_REQUIRED -> context.getString(R.string.profile_diagnostics_health_update_required)
+    GuideHealthAvailability.UNAVAILABLE -> context.getString(R.string.profile_diagnostics_health_unavailable)
+}
 
-private fun MorningBriefWidgetSnapshot.cacheStatusLabel(): String {
-    val updatedAt = lastUpdatedEpochMillis ?: return "No snapshot yet"
+private fun MorningBriefWidgetSnapshot.cacheStatusLabel(context: Context): String {
+    val updatedAt = lastUpdatedEpochMillis ?: return context.getString(R.string.profile_diagnostics_widget_cache_none)
     val elapsed = Duration.ofMillis((System.currentTimeMillis() - updatedAt).coerceAtLeast(0L))
     val ageLabel = when {
-        elapsed.toMinutes() < 1 -> "updated just now"
-        elapsed.toHours() < 1 -> "updated ${elapsed.toMinutes()}m ago"
-        elapsed.toHours() < 24 -> "updated ${elapsed.toHours()}h ago"
-        else -> "updated ${elapsed.toDays()}d ago"
+        elapsed.toMinutes() < 1 -> context.getString(R.string.profile_diagnostics_widget_cache_updated_just_now)
+        elapsed.toHours() < 1 -> context.getString(R.string.profile_diagnostics_widget_cache_updated_minutes, elapsed.toMinutes())
+        elapsed.toHours() < 24 -> context.getString(R.string.profile_diagnostics_widget_cache_updated_hours, elapsed.toHours())
+        else -> context.getString(R.string.profile_diagnostics_widget_cache_updated_days, elapsed.toDays())
     }
     return if (greeting.isNotBlank() || vibe.isNotBlank() || personalDay != null) {
-        "Ready, $ageLabel"
+        context.getString(R.string.profile_diagnostics_widget_cache_ready, ageLabel)
     } else {
-        "Seeded fallback, $ageLabel"
+        context.getString(R.string.profile_diagnostics_widget_cache_seeded_fallback, ageLabel)
     }
 }
 
 private fun debugTransitSourceLabel(
+    context: Context,
     source: AstroDataSource,
     isCached: Boolean,
 ): String = when {
-    isCached && source == AstroDataSource.LOCAL_SWISS -> "cached Swiss scan"
-    isCached && source == AstroDataSource.LOCAL_ESTIMATE -> "cached local estimate"
-    isCached -> "cached backend scan"
-    source == AstroDataSource.LOCAL_SWISS -> "on-device Swiss scan"
-    source == AstroDataSource.LOCAL_ESTIMATE -> "local estimate"
-    else -> "backend scan"
+    isCached && source == AstroDataSource.LOCAL_SWISS -> context.getString(R.string.profile_exact_transit_source_cached_swiss)
+    isCached && source == AstroDataSource.LOCAL_ESTIMATE -> context.getString(R.string.profile_exact_transit_source_cached_local_estimate)
+    isCached -> context.getString(R.string.profile_exact_transit_source_cached_backend)
+    source == AstroDataSource.LOCAL_SWISS -> context.getString(R.string.profile_exact_transit_source_on_device_swiss)
+    source == AstroDataSource.LOCAL_ESTIMATE -> context.getString(R.string.profile_exact_transit_source_local_estimate)
+    else -> context.getString(R.string.profile_exact_transit_source_backend)
 }

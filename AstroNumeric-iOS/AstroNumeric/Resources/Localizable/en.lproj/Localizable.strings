@@ -728,7 +728,7 @@
 "ui.numerology.11" = "🔄 Current Cycles";
 "ui.numerology.12" = "⚠️ Karmic Debts";
 "ui.numerology.13" = "Past-life patterns calling for conscious work in this lifetime.";
-"ui.numerology.14" = "🏔️ Life Pinnacles";
+"ui.numerology.14" = "🏔️ Life Phases";
 "ui.numerology.15" = "🧩 Life Challenges";
 "ui.numerology.16" = "Create Your Profile";
 "ui.numerology.17" = "Add your birth details to discover your numerology";
@@ -1073,3 +1073,24 @@
 "tern.yearAhead.0b" = "Explain This Year";
 "tern.yearAhead.1a" = "Select a profile to generate your forecast.";
 "tern.yearAhead.1b" = "Tap the year in the top-right to refresh.";
+
+// Charts screen section headers
+"section.charts.birthChart.title" = "Birth Chart";
+"section.charts.birthChart.subtitle" = "Sun, Moon, Rising and full planetary positions";
+"section.charts.numerology.title" = "Numerology";
+"section.charts.numerology.subtitle" = "Life Path and core numbers from your birth date";
+"section.charts.compat.title" = "Compatibility";
+"section.charts.compat.subtitle" = "Sun, Moon and Venus sign cross-aspects";
+"section.charts.advanced.title" = "Advanced Charts";
+"section.charts.advanced.subtitle" = "Solar return, progressions, synastry and composite";
+"badge.calculated" = "Calculated";
+"badge.advanced" = "Advanced";
+
+// Charts action cards
+"ui.charts.advancedCharts" = "Explore Advanced Charts";
+"ui.charts.advancedChartsSubtitle" = "Synastry, composite, progressions and solar return";
+"ui.charts.numerologyFull" = "Full Numerology Analysis";
+"ui.charts.numerologyFullSubtitle" = "Life Path, Expression, Soul Urge and Personality numbers";
+"ui.charts.discoverNumbers" = "Discover Your Numbers";
+"ui.charts.discoverNumbersSubtitle" = "Enter your birth date to unlock your core numbers";
+"charts.numerology.noProfile" = "No profile selected.";

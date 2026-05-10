@@ -59,13 +59,13 @@ struct FriendsView: View {
 
             ScrollView {
                 VStack(spacing: 20) {
-                    PremiumHeroCard(
-                            eyebrow: "hero.friends.eyebrow".localized,
-                            title: "hero.friends.title".localized,
-                            bodyText: "hero.friends.body".localized,
-                            accent: [Color(hex: "2c1331"), Color(hex: "9a427a"), Color(hex: "4f56ba")],
-                            chips: ["hero.friends.chip.0".localized, "hero.friends.chip.1".localized, "hero.friends.chip.2".localized]
-                        )
+                    PremiumScreenHeader(
+                        eyebrow: "hero.friends.eyebrow".localized,
+                        title: "hero.friends.title".localized,
+                        subtitle: "hero.friends.body".localized,
+                        accent: .accentPrimary,
+                        chips: ["hero.friends.chip.0".localized, "hero.friends.chip.1".localized, "hero.friends.chip.2".localized]
+                    )
 
                     CardView {
                         VStack(alignment: .leading, spacing: 10) {
@@ -141,7 +141,7 @@ struct FriendsView: View {
                             } label: {
                                 compatibilityRow(compat)
                             }
-                            .buttonStyle(.plain)
+                            .buttonStyle(ScaleButtonStyle())
                             .accessibilityLabel("\(compat.displayName(hideSensitive: store.hideSensitiveDetailsEnabled)), \(Int(compat.overallScore))% compatible. \(compat.headline)")
                             .accessibilityHint("Tap to view full compatibility report")
                         }

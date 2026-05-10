@@ -5,7 +5,7 @@ import Foundation
 
 enum LegalConfig {
     static var websiteBaseURL: URL {
-        let fallback = URL(string: "https://astromeric.pages.dev")!
+        let fallback = URL(string: "https://astronumeric.com")!
         let raw = Bundle.main.object(forInfoDictionaryKey: "WEBSITE_BASE_URL") as? String
         guard let raw, let url = URL(string: raw), let scheme = url.scheme, scheme == "https" || scheme == "http" else {
             return fallback

@@ -9,13 +9,13 @@ struct PrivacyView: View {
             CosmicBackgroundView(element: nil).ignoresSafeArea()
             ScrollView {
                 VStack(spacing: 16) {
-                    PremiumHeroCard(
-                            eyebrow: "hero.privacy.eyebrow".localized,
-                            title: "hero.privacy.title".localized,
-                            bodyText: "hero.privacy.body".localized,
-                            accent: [Color(hex: "191d38"), Color(hex: "5d49b6"), Color(hex: "2f7ea0")],
-                            chips: ["hero.privacy.chip.0".localized, "hero.privacy.chip.1".localized, "hero.privacy.chip.2".localized]
-                        )
+                    PremiumScreenHeader(
+                        eyebrow: "hero.privacy.eyebrow".localized,
+                        title: "hero.privacy.title".localized,
+                        subtitle: "hero.privacy.body".localized,
+                        accent: .accentPrimary,
+                        chips: ["hero.privacy.chip.0".localized, "hero.privacy.chip.1".localized, "hero.privacy.chip.2".localized]
+                    )
 
                     PremiumSectionHeader(
                 title: "section.privacy.0.title".localized,
@@ -121,8 +121,8 @@ struct PrivacyView: View {
             title: "Privacy Mode And Sharing",
             bullets: [
                 "Hide Sensitive Details masks names, birth details, share cards, and some cached labels in the UI.",
-                "Hide Sensitive Details is a presentation layer, not a separate local-only mode or a network kill switch.",
-                "Privacy mode does not remove the underlying birth data needed to calculate charts or required server-backed results.",
+                "Hide Sensitive Details is a display and sharing redaction layer. It does not pause network-backed features, disable widgets, or create a separate local-only mode.",
+                "Chart, forecast, compatibility, widget brief, and AI features can still use the birth date, birth time, coordinates, and timezone needed to calculate accurate results.",
                 "Backup exports can still contain full birth details so the profile can be restored later, even when privacy mode is enabled.",
                 "Plain-text copy and some share surfaces are redacted when privacy mode is on.",
             ]

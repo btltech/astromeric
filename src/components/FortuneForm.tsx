@@ -17,7 +17,7 @@ const wizardSteps = [
     eyebrow: 'Step 1 of 4',
     title: 'Welcome. What is your name?',
     description: 'Start the profile with the name you want tied to readings and saved history.',
-    hint: 'You can rename this later if you want a cleaner label for shared or synced profiles.',
+    hint: 'You can rename this at any time.',
   },
   {
     id: 2,
@@ -40,7 +40,7 @@ const wizardSteps = [
     label: 'Confirm',
     eyebrow: 'Step 4 of 4',
     title: 'Ready for your destiny?',
-    description: 'Review the profile before the reading desk turns this setup into live guidance.',
+    description: 'Review your details before getting your first reading.',
     hint: 'You can save the profile for reuse across the reading, chart, and compatibility flows.',
   },
 ] as const;

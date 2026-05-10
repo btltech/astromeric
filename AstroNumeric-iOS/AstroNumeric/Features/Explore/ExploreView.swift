@@ -5,9 +5,17 @@ import SwiftUI
 
 struct ExploreView: View {
     @Environment(AppStore.self) private var store
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var selectedCategory: ExploreCategory = .tools
     @State private var searchText = ""
     private var progressManager = LearningProgressManager.shared
+
+    private var exploreToolColumns: [GridItem] {
+        if dynamicTypeSize.isAccessibilitySize { return [GridItem(.flexible())] }
+        if horizontalSizeClass == .regular { return Array(repeating: GridItem(.flexible(), spacing: 16), count: 3) }
+        return [GridItem(.flexible()), GridItem(.flexible())]
+    }
     
     enum ExploreCategory: String, CaseIterable {
         case tools = "Tools"
@@ -52,13 +60,13 @@ struct ExploreView: View {
                     .ignoresSafeArea()
                 
                 VStack(spacing: 0) {
-                    PremiumHeroCard(
-                            eyebrow: "hero.explore.eyebrow".localized,
-                            title: "hero.explore.title".localized,
-                            bodyText: "hero.explore.body".localized,
-                            accent: [Color(hex: "1f1038"), Color(hex: "5f35b5"), Color(hex: "0f7c8a")],
-                            chips: ["hero.explore.chip.0".localized, "hero.explore.chip.1".localized, "hero.explore.chip.2".localized, "hero.explore.chip.3".localized]
-                        )
+                    PremiumScreenHeader(
+                        eyebrow: "hero.explore.eyebrow".localized,
+                        title: "hero.explore.title".localized,
+                        subtitle: "hero.explore.body".localized,
+                        accent: .accentPrimary,
+                        chips: ["hero.explore.chip.0".localized, "hero.explore.chip.1".localized, "hero.explore.chip.2".localized, "hero.explore.chip.3".localized]
+                    )
                     .padding(.horizontal)
                     .padding(.top, 8)
 
@@ -167,7 +175,7 @@ struct ExploreView: View {
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 40)
             } else {
-                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
+                LazyVGrid(columns: exploreToolColumns, spacing: 16) {
                     ForEach(filteredToolItems, id: \.title) { item in
                         ExploreToolCard(
                             title: item.title,
@@ -257,7 +265,7 @@ struct ExploreView: View {
                     }
                 }
             }
-            .buttonStyle(.plain)
+            .buttonStyle(ScaleButtonStyle())
             .padding(.horizontal)
         }
         .padding(.vertical)
@@ -296,7 +304,7 @@ struct ExploreView: View {
                     }
                 }
             }
-            .buttonStyle(.plain)
+            .buttonStyle(ScaleButtonStyle())
             .padding(.horizontal)
             
             // Quick habit suggestions
@@ -369,7 +377,7 @@ struct ExploreView: View {
                     }
                 }
             }
-            .buttonStyle(.plain)
+            .buttonStyle(ScaleButtonStyle())
             .padding(.horizontal)
             
             // Saved relationships
@@ -393,7 +401,7 @@ struct ExploreView: View {
                     }
                 }
             }
-            .buttonStyle(.plain)
+            .buttonStyle(ScaleButtonStyle())
             .padding(.horizontal)
             
             // Relationship tips
@@ -454,7 +462,7 @@ struct CategoryChip: View {
             )
             .foregroundStyle(isSelected ? .white : .primary)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(ScaleButtonStyle())
     }
 }
 
@@ -527,7 +535,7 @@ struct FeaturedToolCard<Destination: View>: View {
                     )
             )
         }
-        .buttonStyle(.plain)
+        .buttonStyle(ScaleButtonStyle())
     }
 }
 
@@ -591,7 +599,7 @@ struct ExploreToolCard<Destination: View>: View {
                     .fill(.ultraThinMaterial)
             )
         }
-        .buttonStyle(.plain)
+        .buttonStyle(ScaleButtonStyle())
     }
 }
 

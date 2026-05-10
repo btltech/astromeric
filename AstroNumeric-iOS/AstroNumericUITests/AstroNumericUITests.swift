@@ -17,6 +17,23 @@ final class AstroNumericUITests: XCTestCase {
         return app
     }
 
+    private func launchAppWithoutProfiles() -> XCUIApplication {
+        let app = XCUIApplication()
+        app.launchArguments = ["-ui_testing", "-ui_testing_reset", "-ui_testing_no_profiles"]
+        app.launch()
+        return app
+    }
+
+    private func reveal(_ element: XCUIElement, in app: XCUIApplication, swipes: Int = 5) -> Bool {
+        if element.waitForExistence(timeout: 1) { return true }
+        for _ in 0..<swipes {
+            let scrollTarget = app.scrollViews.firstMatch.exists ? app.scrollViews.firstMatch : app
+            scrollTarget.swipeUp()
+            if element.waitForExistence(timeout: 1) { return true }
+        }
+        return element.exists
+    }
+
     private func waitForTabBar(in app: XCUIApplication, timeout: TimeInterval = 10) {
         XCTAssertTrue(app.tabBars.firstMatch.waitForExistence(timeout: timeout))
     }
@@ -44,6 +61,50 @@ final class AstroNumericUITests: XCTestCase {
             let nameTextField = app.textFields["Enter your name"]
             XCTAssertTrue(nameTextField.waitForExistence(timeout: 3))
         }
+    }
+
+    func testFirstRunProfileCreation() throws {
+        let app = launchAppWithoutProfiles()
+
+        let promptButton = app.buttons["Create Profile"]
+        XCTAssertTrue(promptButton.waitForExistence(timeout: 5))
+        promptButton.tap()
+
+        let nameField = app.textFields["Profile name"]
+        XCTAssertTrue(nameField.waitForExistence(timeout: 5))
+        nameField.tap()
+        nameField.typeText("New Native Profile")
+
+        let placeField = app.textFields["Birth place"]
+        XCTAssertTrue(placeField.waitForExistence(timeout: 2))
+        placeField.tap()
+        placeField.typeText("Lagos, Nigeria")
+
+        let createButton = app.buttons["Create profile"]
+        XCTAssertTrue(createButton.waitForExistence(timeout: 2))
+        XCTAssertTrue(createButton.isEnabled)
+    }
+
+    func testDailyGuideNavigation() throws {
+        let app = launchApp(twoProfiles: false)
+        waitForTabBar(in: app)
+
+        app.tabBars.buttons["Tools"].tap()
+        XCTAssertTrue(app.navigationBars["Cosmic Tools"].waitForExistence(timeout: 2))
+
+        let dailyGuideButton = app.staticTexts["Daily Guide"].firstMatch
+        XCTAssertTrue(reveal(dailyGuideButton, in: app))
+        dailyGuideButton.tap()
+        XCTAssertTrue(app.otherElements["DailyGuideScreen"].waitForExistence(timeout: 3))
+    }
+
+    func testChartRenderingShowsBirthChartSurface() throws {
+        let app = launchApp(twoProfiles: false)
+        waitForTabBar(in: app)
+
+        app.tabBars.buttons["Charts"].tap()
+        XCTAssertTrue(app.navigationBars["Charts"].waitForExistence(timeout: 2))
+        XCTAssertTrue(app.staticTexts["Birth Chart"].waitForExistence(timeout: 3))
     }
 
     func testSmokeExploreToolsNavigation() throws {
@@ -84,15 +145,15 @@ final class AstroNumericUITests: XCTestCase {
             app.staticTexts["Advanced"].firstMatch.tap()
         }
 
-        app.staticTexts["Synastry"].firstMatch.tap()
-        XCTAssertTrue(app.navigationBars["Synastry"].waitForExistence(timeout: 3))
+        app.buttons["Synastry"].firstMatch.tap()
+        XCTAssertTrue(app.otherElements["SynastryScreen"].waitForExistence(timeout: 3))
         app.navigationBars.buttons.element(boundBy: 0).tap()
 
-        app.staticTexts["Composite Chart"].firstMatch.tap()
+        app.buttons["Composite Chart"].firstMatch.tap()
         XCTAssertTrue(app.navigationBars["Composite Chart"].waitForExistence(timeout: 3))
         app.navigationBars.buttons.element(boundBy: 0).tap()
 
-        app.staticTexts["Progressions"].firstMatch.tap()
+        app.buttons["Progressions"].firstMatch.tap()
         XCTAssertTrue(app.navigationBars["Progressions"].waitForExistence(timeout: 3))
         app.navigationBars.buttons.element(boundBy: 0).tap()
     }
@@ -122,5 +183,30 @@ final class AstroNumericUITests: XCTestCase {
         XCTAssertFalse(app.staticTexts["ABIOLA BOLAJI"].exists)
         XCTAssertFalse(app.buttons["Test Partner"].exists)
         XCTAssertTrue(app.buttons["Profile 2"].waitForExistence(timeout: 2))
+    }
+
+    func testProfileDiagnosticsNotificationSettingsAndPrivacyExport() throws {
+        let app = launchApp(twoProfiles: true, hideSensitive: true)
+        waitForTabBar(in: app)
+
+        app.tabBars.buttons["Profile"].tap()
+        XCTAssertTrue(app.navigationBars["Profile"].waitForExistence(timeout: 2))
+
+        XCTAssertTrue(app.switches["Hide Sensitive Details"].waitForExistence(timeout: 3))
+
+        let refreshDiagnostics = app.buttons["Refresh diagnostics"].firstMatch
+        XCTAssertTrue(reveal(refreshDiagnostics, in: app, swipes: 2))
+        XCTAssertTrue(app.staticTexts["Notifications"].waitForExistence(timeout: 2))
+        XCTAssertTrue(app.staticTexts["Widget Refresh"].waitForExistence(timeout: 2))
+
+        let privacyPolicy = app.buttons["Privacy Policy"].firstMatch
+        XCTAssertTrue(reveal(privacyPolicy, in: app))
+        privacyPolicy.tap()
+        XCTAssertTrue(app.navigationBars["Privacy"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "network-backed features")).firstMatch.waitForExistence(timeout: 2))
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+
+        let exportButton = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "Export")).firstMatch
+        XCTAssertTrue(reveal(exportButton, in: app))
     }
 }

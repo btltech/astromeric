@@ -19,13 +19,13 @@ struct MoonPhaseView: View {
             
             ScrollView {
                 VStack(spacing: 32) {
-                    PremiumHeroCard(
-                            eyebrow: "hero.moonPhase.eyebrow".localized,
-                            title: "hero.moonPhase.title".localized,
-                            bodyText: "hero.moonPhase.body".localized,
-                            accent: [Color(hex: "111d35"), Color(hex: "4156b9"), Color(hex: "5a7fb3")],
-                            chips: ["hero.moonPhase.chip.0".localized, "hero.moonPhase.chip.1".localized, "hero.moonPhase.chip.2".localized, "hero.moonPhase.chip.3".localized]
-                        )
+                    PremiumScreenHeader(
+                        eyebrow: "hero.moonPhase.eyebrow".localized,
+                        title: "hero.moonPhase.title".localized,
+                        subtitle: "hero.moonPhase.body".localized,
+                        accent: .accentPrimary,
+                        chips: ["hero.moonPhase.chip.0".localized, "hero.moonPhase.chip.1".localized, "hero.moonPhase.chip.2".localized, "hero.moonPhase.chip.3".localized]
+                    )
 
                     // Moon visual
                     moonVisual

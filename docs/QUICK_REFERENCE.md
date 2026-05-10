@@ -118,14 +118,17 @@ function App() {
 ### E2E Tests
 
 ```bash
-# Run all tests in headless mode
-npm run test:e2e
+# Run the current route smoke for the live web surfaces
+npm run test:e2e:critical-paths
 
-# Open interactive Cypress UI
-npm run test:e2e:open
+# Run the current-route spec directly if the local dev server is already up
+npm run cypress:run:critical-paths
 
-# Run specific test file
-npx cypress run --spec "cypress/e2e/critical-paths.cy.ts"
+# Run the Railway auth + local migration browser regression
+npm run test:e2e:railway-auth
+
+# Run the targeted spec directly if the local dev server is already up
+npm run cypress:run:railway-auth
 ```
 
 ### Unit Tests (existing)
