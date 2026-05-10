@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { DocumentMeta } from '../components/DocumentMeta';
+import { NotificationSettings } from '../components/NotificationSettings';
 import { useProfiles } from '../hooks';
 import { useStore } from '../store/useStore';
 import type { SavedProfile } from '../types';
@@ -159,6 +160,12 @@ export function ProfileView() {
               </li>
             ))}
           </ul>
+        </article>
+      </section>
+
+      <section className="product-desk__section">
+        <article className="product-desk__panel">
+          <NotificationSettings token={token} />
         </article>
       </section>
     </div>

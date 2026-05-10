@@ -8,6 +8,7 @@ const primaryLinks = [
   { label: 'Birth Chart', to: '/charts' },
   { label: 'Numerology', to: '/numerology' },
   { label: 'Compatibility', to: '/relationships' },
+  { label: 'Year Ahead', to: '/year-ahead' },
   { label: 'Timing', to: '/tools' },
 ] as const;
 

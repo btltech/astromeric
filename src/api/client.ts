@@ -749,8 +749,35 @@ import type { YearAheadForecast, MoonPhaseSummary, MoonPhaseInfo, MoonEvent } fr
 export function fetchYearAhead(profile: ProfilePayload, year?: number) {
   return apiFetch<YearAheadForecast>('/v2/year-ahead/forecast', {
     method: 'POST',
-    body: JSON.stringify({ ...profile, year }), // Flatten profile data
+    body: JSON.stringify({ profile: toFlatProfilePayload(profile), year }),
   });
+}
+
+export function fetchVapidKey(): Promise<string> {
+  return apiFetch<{ public_key: string }>('/v2/alerts/vapid-key', { method: 'GET' })
+    .then((r) => (r as unknown as { public_key: string }).public_key);
+}
+
+export function subscribePush(sub: PushSubscriptionJSON): Promise<void> {
+  return apiFetch('/v2/alerts/subscribe', {
+    method: 'POST',
+    body: JSON.stringify({ endpoint: sub.endpoint, keys: sub.keys }),
+  }).then(() => undefined);
+}
+
+export function testPushNotification(): Promise<void> {
+  return apiFetch('/v2/alerts/test-notify', { method: 'POST' }).then(() => undefined);
+}
+
+export function getAlertPreferences(): Promise<{ alert_mercury_retrograde: boolean; alert_frequency: string }> {
+  return apiFetch('/v2/alerts/preferences', { method: 'GET' }) as Promise<{ alert_mercury_retrograde: boolean; alert_frequency: string }>;
+}
+
+export function updateAlertPreferences(prefs: { alert_mercury_retrograde: boolean; alert_frequency: string }): Promise<void> {
+  return apiFetch('/v2/alerts/preferences', {
+    method: 'POST',
+    body: JSON.stringify(prefs),
+  }).then(() => undefined);
 }
 
 // ========== MOON PHASES API ==========

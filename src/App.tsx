@@ -13,6 +13,7 @@ const JournalWorkspaceView = React.lazy(() => import('./views/JournalWorkspaceVi
 const ChartViewPage = React.lazy(() => import('./views/ChartViewPage'));
 const NumerologyDeskView = React.lazy(() => import('./views/NumerologyDeskView'));
 const CosmicToolsView = React.lazy(() => import('./views/CosmicToolsView'));
+const YearAheadView = React.lazy(() => import('./views/YearAheadView'));
 const RelationshipsView = React.lazy(() => import('./views/RelationshipsView'));
 const LearnView = React.lazy(() => import('./views/LearnView'));
 const ProfileView = React.lazy(() => import('./views/ProfileView'));
@@ -42,6 +43,7 @@ function AnimatedRoutes() {
           <Route path="/charts" element={<ChartViewPage />} />
           <Route path="/numerology" element={<NumerologyDeskView />} />
           <Route path="/tools" element={<CosmicToolsView />} />
+          <Route path="/year-ahead" element={<YearAheadView />} />
           <Route path="/relationships" element={<RelationshipsView />} />
           <Route path="/learn" element={<LearnView />} />
           <Route path="/profile" element={<ProfileView />} />
