@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, Body, HTTPException, Request
 from pydantic import BaseModel
 
-from ..ai_service import explain_with_gemini, fallback_summary
+from ..ai_service import explain_with_gemini, fallback_summary, is_native_ios
 from ..engine.cosmic_guide import ask_cosmic_guide
 from ..exceptions import StructuredLogger
 from ..schemas import ApiResponse, ProfilePayload, ResponseStatus
@@ -128,6 +128,7 @@ async def chat_with_cosmic_guide(
             time_confidence=req.time_confidence,
             system_prompt=req.system_prompt,
             tone=req.tone,
+            use_ai=is_native_ios(request),
         )
 
         response_text = result.get(
@@ -221,14 +222,17 @@ async def get_cosmic_guidance(
                 }
             )
 
-        guidance_text = explain_with_gemini(
-            scope="guidance",
-            headline=effective_question,
-            theme=None,
-            sections=sections,
-            numerology=None,
-            simple_language=True,
-        )
+        if is_native_ios(request):
+            guidance_text = explain_with_gemini(
+                scope="guidance",
+                headline=effective_question,
+                theme=None,
+                sections=sections,
+                numerology=None,
+                simple_language=True,
+            )
+        else:
+            guidance_text = None
         if not guidance_text:
             guidance_text = fallback_summary(
                 effective_question,
@@ -324,14 +328,17 @@ async def get_detailed_interpretation(
         sections = []
         if effective_context:
             sections.append({"title": "Context", "highlights": [effective_context]})
-        interpretation_text = explain_with_gemini(
-            scope="interpretation",
-            headline=effective_topic,
-            theme=None,
-            sections=sections,
-            numerology=None,
-            simple_language=False,
-        )
+        if is_native_ios(request):
+            interpretation_text = explain_with_gemini(
+                scope="interpretation",
+                headline=effective_topic,
+                theme=None,
+                sections=sections,
+                numerology=None,
+                simple_language=False,
+            )
+        else:
+            interpretation_text = None
         if not interpretation_text:
             interpretation_text = fallback_summary(
                 effective_topic,

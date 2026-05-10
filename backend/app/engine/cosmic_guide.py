@@ -228,6 +228,7 @@ async def ask_cosmic_guide(
     lang: str = "en",
     system_prompt: Optional[str] = None,
     tone: Optional[str] = None,
+    use_ai: bool = True,
 ) -> Dict:
     """
     Ask the Cosmic Guide a question.
@@ -253,6 +254,29 @@ async def ask_cosmic_guide(
     )
 
     api_key = _get_api_key()
+
+    # Short-circuit to fallback when the caller explicitly disables AI
+    # (e.g. requests from the web frontend — Gemini is reserved for the native iOS app)
+    if not use_ai:
+        topic = _detect_topic(question)
+        fallback_key = f"guide_fallback_{topic}"
+        fallback_trans = get_translation(lang, fallback_key)
+        if fallback_trans:
+            response = fallback_trans[0]
+        else:
+            default_trans = get_translation(lang, "guide_fallback_default")
+            response = (
+                default_trans[0]
+                if default_trans
+                else FALLBACK_RESPONSES.get(topic, FALLBACK_RESPONSES["default"])
+            )
+        return {
+            "response": response,
+            "provider": "fallback",
+            "reason": "web_client",
+            "topic_detected": topic,
+        }
+
     client = create_gemini_client()
 
     # If no API key, use intelligent fallback

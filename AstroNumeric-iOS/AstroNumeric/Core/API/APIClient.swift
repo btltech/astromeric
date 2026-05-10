@@ -110,6 +110,7 @@ actor APIClient {
         request.httpMethod = endpoint.method.rawValue
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.setValue("ios", forHTTPHeaderField: "X-Client-Platform")
         
         // Local-first mode does not inject an auth token.
         

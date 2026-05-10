@@ -8,7 +8,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, Field
 
-from ..ai_service import explain_with_gemini, fallback_summary
+from ..ai_service import explain_with_gemini, fallback_summary, is_native_ios
 from ..auth import get_current_user
 from ..models import User
 from ..schemas import ApiResponse, ResponseStatus
@@ -73,6 +73,11 @@ async def explain_reading(
     sections = [section.model_dump() for section in payload.sections]
     if payload.scope in DETERMINISTIC_SCOPES:
         provider = "deterministic"
+        summary = fallback_summary(
+            payload.headline, sections, payload.numerology_summary
+        )
+    elif not is_native_ios(request):
+        provider = "fallback"
         summary = fallback_summary(
             payload.headline, sections, payload.numerology_summary
         )

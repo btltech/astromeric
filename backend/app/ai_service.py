@@ -5,7 +5,22 @@ from __future__ import annotations
 import os
 from typing import Any, List, Optional
 
+from fastapi import Request
+
 from .interpretation import rank_interpretation_signals, select_practical_tip
+
+
+def is_native_ios(request: Request) -> bool:
+    """Return True only for requests originating from the native iOS app.
+
+    Two signals are checked (either is sufficient):
+    - ``X-Client-Platform: ios`` header set by APIClient.swift
+    - ``CFNetwork`` in the User-Agent (URLSession fingerprint, browsers cannot spoof this)
+    """
+    if request.headers.get("x-client-platform", "").lower() == "ios":
+        return True
+    ua = request.headers.get("user-agent", "")
+    return "CFNetwork" in ua
 
 try:
     from google import genai
