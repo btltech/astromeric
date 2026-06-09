@@ -327,7 +327,7 @@ async def list_learning_modules(
 
         # Pagination
         page = params.page if params else 1
-        page_size = params.page_size if params else 10
+        page_size = params.page_size if params else 50
         start_idx = (page - 1) * page_size
         paginated = modules[start_idx : start_idx + page_size]
 
