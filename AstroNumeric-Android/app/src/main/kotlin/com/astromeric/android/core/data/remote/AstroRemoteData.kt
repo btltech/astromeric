@@ -932,10 +932,18 @@ class AstroRemoteDataSource(
                 }
             }
 
+            val platformInterceptor = okhttp3.Interceptor { chain ->
+                val request = chain.request().newBuilder()
+                    .header("X-Client-Platform", "android")
+                    .build()
+                chain.proceed(request)
+            }
+
             val client = OkHttpClient.Builder()
                 .connectTimeout(15, TimeUnit.SECONDS)
                 .readTimeout(30, TimeUnit.SECONDS)
                 .writeTimeout(30, TimeUnit.SECONDS)
+                .addInterceptor(platformInterceptor)
                 .addInterceptor(logging)
                 .build()
 

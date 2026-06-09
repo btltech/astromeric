@@ -1397,7 +1397,10 @@ def get_lucky_color_guidance(ctx: Dict, lang: str = "en") -> Dict:
 
 
 def get_affirmation_guidance(ctx: Dict) -> Dict:
-    theme = _PD_THEME_V2.get(ctx["personal_day"], "balance")
+    personal_day = ctx["personal_day"]
+    while personal_day > 9:
+        personal_day = sum(int(d) for d in str(personal_day))
+    theme = _PD_THEME_V2.get(personal_day, "stability")
     anchors = {
         "initiative": "I begin clearly and act without second-guessing.",
         "connection": "I listen well and choose responses that build trust.",

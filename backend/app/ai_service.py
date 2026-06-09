@@ -22,6 +22,21 @@ def is_native_ios(request: Request) -> bool:
     ua = request.headers.get("user-agent", "")
     return "CFNetwork" in ua
 
+
+def is_native_android(request: Request) -> bool:
+    """Return True only for requests originating from the native Android app.
+
+    Checks for the ``X-Client-Platform: android`` header injected by the
+    OkHttpClient platform interceptor in AstroRemoteData.
+    """
+    return request.headers.get("x-client-platform", "").lower() == "android"
+
+
+def is_native_app(request: Request) -> bool:
+    """Return True for any native mobile app (iOS or Android)."""
+    return is_native_ios(request) or is_native_android(request)
+
+
 try:
     from google import genai
 except ImportError:  # pragma: no cover - handled gracefully at runtime

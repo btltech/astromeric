@@ -111,6 +111,46 @@ def _require_birth_time(profile: ProfilePayload) -> None:
         )
 
 
+def _raise_forecast_validation_error(error, request_id: str) -> None:
+    if isinstance(error, HTTPException):
+        raise error
+
+    if isinstance(error, InvalidDateError):
+        logger.error(
+            error.message, request_id=request_id, code=error.code, value=error.value
+        )
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "code": error.code,
+                "message": error.message,
+                "field": "date_of_birth",
+                "value": error.value,
+            },
+        )
+
+    if isinstance(error, InvalidCoordinatesError):
+        logger.error(error.message, request_id=request_id, code=error.code)
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "code": error.code,
+                "message": error.message,
+            },
+        )
+
+
+def _guidance_activities(guidance: dict, key: str) -> List[str]:
+    raw_value = guidance.get(key)
+    if isinstance(raw_value, list):
+        return [item for item in raw_value if isinstance(item, str)]
+    if isinstance(raw_value, dict):
+        activities = raw_value.get("activities")
+        if isinstance(activities, list):
+            return [item for item in activities if isinstance(item, str)]
+    return []
+
+
 @router.post("/daily", response_model=ApiResponse[ForecastData])
 async def calculate_daily_forecast(
     request: Request,
@@ -175,8 +215,8 @@ async def calculate_daily_forecast(
 
         # Extract guidance avoid/embrace from forecast result
         guidance = forecast.get("guidance") or {}
-        guidance_avoid: List[str] = guidance.get("avoid") or []
-        guidance_embrace: List[str] = guidance.get("embrace") or []
+        guidance_avoid = _guidance_activities(guidance, "avoid")
+        guidance_embrace = _guidance_activities(guidance, "embrace")
 
         # Parse sections
         sections = []
@@ -230,8 +270,13 @@ async def calculate_daily_forecast(
                     )
                     for t in raw_transits
                 ]
-        except Exception:
-            pass  # Never let fusion failure break the main forecast
+        except Exception as e:
+            logger.warning(
+                "Fusion prediction failed (using fallback daily forecast)",
+                request_id=request_id,
+                error=str(e),
+                exc_info=True,
+            )
 
         # Replace section summaries with richer fusion track text
         _TRACK_SECTION_MAP: Dict[str, object] = {
@@ -292,27 +337,8 @@ async def calculate_daily_forecast(
             message="Daily forecast calculated successfully",
             request_id=request_id,
         )
-    except InvalidDateError as e:
-        logger.error(e.message, request_id=request_id, code=e.code, value=e.value)
-        raise HTTPException(
-            status_code=400,
-            detail={
-                "code": e.code,
-                "message": e.message,
-                "field": "date_of_birth",
-                "value": e.value,
-            },
-        )
-    except InvalidCoordinatesError as e:
-        logger.error(e.message, request_id=request_id, code=e.code)
-        raise HTTPException(
-            status_code=400,
-            detail={
-                "code": e.code,
-                "message": e.message,
-            },
-        )
     except Exception as e:
+        _raise_forecast_validation_error(e, request_id)
         logger.error(
             f"Forecast calculation error: {str(e)}",
             request_id=request_id,
@@ -376,8 +402,8 @@ async def calculate_weekly_forecast(
         )
 
         guidance_w = forecast.get("guidance") or {}
-        guidance_avoid_w: List[str] = guidance_w.get("avoid") or []
-        guidance_embrace_w: List[str] = guidance_w.get("embrace") or []
+        guidance_avoid_w = _guidance_activities(guidance_w, "avoid")
+        guidance_embrace_w = _guidance_activities(guidance_w, "embrace")
 
         # Parse sections
         sections = []
@@ -416,6 +442,7 @@ async def calculate_weekly_forecast(
             request_id=request_id,
         )
     except Exception as e:
+        _raise_forecast_validation_error(e, request_id)
         logger.error(
             f"Forecast calculation error: {str(e)}",
             request_id=request_id,
@@ -479,8 +506,8 @@ async def calculate_monthly_forecast(
         )
 
         guidance_m = forecast.get("guidance") or {}
-        guidance_avoid_m: List[str] = guidance_m.get("avoid") or []
-        guidance_embrace_m: List[str] = guidance_m.get("embrace") or []
+        guidance_avoid_m = _guidance_activities(guidance_m, "avoid")
+        guidance_embrace_m = _guidance_activities(guidance_m, "embrace")
 
         # Parse sections
         sections = []
@@ -519,6 +546,7 @@ async def calculate_monthly_forecast(
             request_id=request_id,
         )
     except Exception as e:
+        _raise_forecast_validation_error(e, request_id)
         logger.error(
             f"Forecast calculation error: {str(e)}",
             request_id=request_id,
