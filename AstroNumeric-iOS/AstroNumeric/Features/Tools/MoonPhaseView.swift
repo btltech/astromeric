@@ -144,10 +144,10 @@ struct MoonPhaseView: View {
     private var phaseInfo: some View {
         VStack(spacing: 12) {
             Text(currentPhase.emoji)
-                .font(.system(.largeTitle))
+                .font(.system(.title2))
             
             Text(currentPhase.name)
-                .font(.title2.bold())
+                .font(.title3.bold())
             
             Text(String(format: "fmt.moonPhase.0".localized, "\(Int(illumination * 100))"))
                 .font(.subheadline)

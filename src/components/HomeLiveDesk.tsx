@@ -142,11 +142,10 @@ export function HomeLiveDesk() {
           <div className="live-desk__board">
             <article className="live-desk__lead-card">
               <span className="live-desk__card-label">Today</span>
-              <strong>
-                {today ? `${today.icon} ${today.vibe}` : 'Waiting for forecast'}
-              </strong>
+              <strong>{today ? `${today.icon} ${today.vibe}` : 'Waiting for forecast'}</strong>
               <p>
-                {today?.recommendation ?? 'Live daily timing guidance will appear here when available.'}
+                {today?.recommendation ??
+                  'Live daily timing guidance will appear here when available.'}
               </p>
 
               {moonPhase && (
@@ -166,7 +165,8 @@ export function HomeLiveDesk() {
                   : 'No standout day yet'}
               </strong>
               <p>
-                {strongestDay?.recommendation ?? 'Check back tomorrow for the strongest window of the week.'}
+                {strongestDay?.recommendation ??
+                  'Check back tomorrow for the strongest window of the week.'}
               </p>
             </article>
 

@@ -12,7 +12,7 @@ struct TimingAdvisorView: View {
     @State private var cachedResult: TimingResult?
     @State private var isLoading = false
     @State private var error: String?
-    @State private var resultsRevealing = true
+    @State private var resultsRevealing = false
 
     private var activityColumns: [GridItem] {
         if dynamicTypeSize.isAccessibilitySize { return [GridItem(.flexible())] }
@@ -101,7 +101,7 @@ struct TimingAdvisorView: View {
         .navigationBarTitleDisplayMode(.inline)
         .onChange(of: timingResult) { oldValue, newValue in
             // Trigger reveal when new results arrive
-            if newValue != nil && oldValue == nil {
+            if newValue != nil {
                 resultsRevealing = true
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
                     resultsRevealing = false

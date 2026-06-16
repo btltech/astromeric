@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build --mode production",
+    "build": "vite build --mode production && node scripts/prerender.mjs",
+    "prerender": "node scripts/prerender.mjs",
     "build:dev": "vite build --mode development",
     "cypress:run:critical-paths": "cypress run --browser electron --spec cypress/e2e/critical-paths.cy.ts",
     "cypress:run:railway-auth": "cypress run --browser electron --spec cypress/e2e/railway-auth-sync.cy.ts",

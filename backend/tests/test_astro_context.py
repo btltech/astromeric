@@ -316,7 +316,7 @@ class TestAffirmationGuidance:
 
         # Find two dates that produce different personal days for the same profile
         d1 = date(2024, 4, 5)
-        d2 = date(2024, 4, 14)
+        d2 = date(2024, 4, 15)
         ctx1 = build_astro_context(PROFILE_NO_TIME, d1)
         ctx2 = build_astro_context(PROFILE_NO_TIME, d2)
         if ctx1["personal_day"] != ctx2["personal_day"]:

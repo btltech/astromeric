@@ -32,9 +32,9 @@ struct OracleView: View {
                     )
 
                     PremiumSectionHeader(
-                title: "section.oracle.0.title".localized,
-                subtitle: "section.oracle.0.subtitle".localized
-            )
+                        title: "section.oracle.0.title".localized,
+                        subtitle: "section.oracle.0.subtitle".localized
+                    )
 
                     // Pendulum
                     pendulumSection
@@ -53,9 +53,9 @@ struct OracleView: View {
                     // Answer
                     if let answer {
                         PremiumSectionHeader(
-                title: "section.oracle.1.title".localized,
-                subtitle: "section.oracle.1.subtitle".localized
-            )
+                            title: "section.oracle.1.title".localized,
+                            subtitle: "section.oracle.1.subtitle".localized
+                        )
 
                         answerSection(answer)
                     }
@@ -121,8 +121,12 @@ struct OracleView: View {
                 .textFieldStyle(.plain)
                 .padding()
                 .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(.ultraThinMaterial)
+                    RoundedRectangle(cornerRadius: Radius.sm)
+                        .fill(Color.surfaceBase)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: Radius.sm)
+                                .stroke(Color.borderSubtle, lineWidth: Stroke.hairline)
+                        )
                 )
                 .lineLimit(2...4)
         }
@@ -131,34 +135,10 @@ struct OracleView: View {
     // MARK: - Ask Button
     
     private var askButton: some View {
-        Button {
+        GradientButton("ui.oracle.1".localized, icon: "sparkle", isLoading: isLoading) {
             Task {
                 await askOracle()
             }
-        } label: {
-            HStack {
-                if isLoading {
-                    ProgressView()
-                        .tint(.white)
-                } else {
-                    Image(systemName: "sparkle")
-                    Text("ui.oracle.1".localized)
-                }
-            }
-            .font(.headline)
-            .foregroundStyle(.white)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 14)
-            .background(
-                Capsule()
-                    .fill(
-                        LinearGradient(
-                            colors: [.blue, .purple],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                    )
-            )
         }
         .disabled(question.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isLoading)
     }
@@ -166,74 +146,53 @@ struct OracleView: View {
     // MARK: - Error Card
     
     private func errorCard(_ message: String) -> some View {
-        VStack(spacing: 8) {
-            Image(systemName: "exclamationmark.triangle.fill")
-                .font(.title2)
-                .foregroundStyle(.red)
-            Text(message)
-                .font(.caption.monospaced())
-                .foregroundStyle(.red.opacity(0.8))
-                .multilineTextAlignment(.center)
-        }
-        .padding()
-        .frame(maxWidth: .infinity)
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(.red.opacity(0.1))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(.red.opacity(0.3), lineWidth: 1)
-                )
+        PremiumStatusBanner(
+            title: "common.error".localized,
+            message: message,
+            tone: .warning
         )
     }
     
     // MARK: - Answer
     
     private func answerSection(_ answer: YesNoAnswer) -> some View {
-        VStack(spacing: 16) {
-            // Main answer
-            Text(answer.answer.uppercased())
-                .font(.largeTitle.bold())
-                .foregroundStyle(answer.answer.lowercased() == "yes" ? .green : .orange)
-            
-            // Confidence
-            HStack {
-                Text("ui.oracle.2".localized)
-                ProgressView(value: answer.confidence)
-                    .tint(answer.answer.lowercased() == "yes" ? .green : .orange)
-                Text("\(Int(answer.confidence * 100))%")
-            }
-            .font(.caption)
-            
-            // Reasoning
-            Text(answer.reasoning)
-                .font(.body)
-                .foregroundStyle(Color.textSecondary)
-                .multilineTextAlignment(.center)
-            
-            // Guidance
-            if !answer.guidance.isEmpty {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("ui.oracle.3".localized)
-                        .font(.headline)
-                    
-                    ForEach(answer.guidance, id: \.self) { tip in
-                        HStack(alignment: .top) {
-                            Text("•")
-                            Text(tip)
-                        }
-                        .font(.subheadline)
-                        .foregroundStyle(Color.textSecondary)
-                    }
+        CardView {
+            VStack(spacing: 16) {
+                Text(answer.answer.uppercased())
+                    .font(.largeTitle.bold())
+                    .foregroundStyle(answer.answer.lowercased() == "yes" ? Color.positiveGreen : Color.warningOrange)
+
+                HStack {
+                    Text("ui.oracle.2".localized)
+                    ProgressView(value: answer.confidence)
+                        .tint(answer.answer.lowercased() == "yes" ? Color.positiveGreen : Color.warningOrange)
+                    Text("\(Int(answer.confidence * 100))%")
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .font(.caption)
+
+                Text(answer.reasoning)
+                    .font(.body)
+                    .foregroundStyle(Color.textSecondary)
+                    .multilineTextAlignment(.center)
+
+                if !answer.guidance.isEmpty {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("ui.oracle.3".localized)
+                            .font(.headline)
+
+                        ForEach(answer.guidance, id: \.self) { tip in
+                            HStack(alignment: .top) {
+                                Text("•")
+                                Text(tip)
+                            }
+                            .font(.subheadline)
+                            .foregroundStyle(Color.textSecondary)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
             }
         }
-        .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(.ultraThinMaterial)
-        )
         .transition(.scale.combined(with: .opacity))
     }
     
@@ -252,11 +211,11 @@ struct OracleView: View {
         .padding(10)
         .frame(maxWidth: .infinity)
         .background(
-            RoundedRectangle(cornerRadius: 10)
-                .fill(.black.opacity(0.4))
+            RoundedRectangle(cornerRadius: Radius.sm)
+                .fill(Color.surfaceBase)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 10)
-                        .stroke(.cyan.opacity(0.2), lineWidth: 1)
+                    RoundedRectangle(cornerRadius: Radius.sm)
+                        .stroke(.cyan.opacity(0.2), lineWidth: Stroke.hairline)
                 )
         )
     }

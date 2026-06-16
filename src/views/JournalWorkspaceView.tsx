@@ -203,7 +203,10 @@ function getProfileKeyFromReading(reading: AnonReading) {
   });
 }
 
-function buildDerivedStats(entries: JournalWorkspaceEntry[], mode: JournalMode): JournalWorkspaceStats {
+function buildDerivedStats(
+  entries: JournalWorkspaceEntry[],
+  mode: JournalMode
+): JournalWorkspaceStats {
   if (entries.length === 0) {
     return {
       ...emptyStats,
@@ -222,13 +225,14 @@ function buildDerivedStats(entries: JournalWorkspaceEntry[], mode: JournalMode):
   const noCount = ratedEntries.filter((entry) => entry.outcome === 'no').length;
   const neutralCount = ratedEntries.filter((entry) => entry.outcome === 'neutral').length;
   const accuracyRate =
-    ratedCount > 0 ? Math.round((((yesCount + partialCount * 0.5) / ratedCount) * 100)) : null;
+    ratedCount > 0 ? Math.round(((yesCount + partialCount * 0.5) / ratedCount) * 100) : null;
 
   const scopeTallies = entries.reduce<Record<string, number>>((totals, entry) => {
     totals[entry.scope] = (totals[entry.scope] ?? 0) + 1;
     return totals;
   }, {});
-  const leadingScope = Object.entries(scopeTallies).sort((left, right) => right[1] - left[1])[0]?.[0] ?? null;
+  const leadingScope =
+    Object.entries(scopeTallies).sort((left, right) => right[1] - left[1])[0]?.[0] ?? null;
 
   const journalDays = Array.from(
     new Set(
@@ -239,7 +243,7 @@ function buildDerivedStats(entries: JournalWorkspaceEntry[], mode: JournalMode):
     )
   );
   let journalingStreak = 0;
-  let cursor = new Date();
+  const cursor = new Date();
 
   while (journalDays.includes(cursor.toISOString().slice(0, 10))) {
     journalingStreak += 1;
@@ -251,18 +255,25 @@ function buildDerivedStats(entries: JournalWorkspaceEntry[], mode: JournalMode):
     totals[weekday] = (totals[weekday] ?? 0) + 1;
     return totals;
   }, {});
-  const topWeekday = Object.entries(weekdayTallies).sort((left, right) => right[1] - left[1])[0]?.[0] ?? null;
+  const topWeekday =
+    Object.entries(weekdayTallies).sort((left, right) => right[1] - left[1])[0]?.[0] ?? null;
   const draftCount = entries.filter((entry) => entry.isDraft).length;
 
   const insights = [
-    leadingScope ? `${formatScopeLabel(leadingScope)} is currently the heaviest reflection lane.` : null,
-    journaledCount > 0 ? `${journaledCount} entries already have written reflection attached.` : 'Write one reflection to begin a visible journal habit.',
+    leadingScope
+      ? `${formatScopeLabel(leadingScope)} is currently the heaviest reflection lane.`
+      : null,
+    journaledCount > 0
+      ? `${journaledCount} entries already have written reflection attached.`
+      : 'Write one reflection to begin a visible journal habit.',
     draftCount > 0 ? `${draftCount} open drafts still need a finished note.` : null,
   ].filter((entry): entry is string => Boolean(entry));
 
   const patternHighlights = [
     topWeekday ? `${topWeekday} is currently the most active reflection day on this device.` : null,
-    accuracyRate !== null ? `Outcome tracking is running at ${accuracyRate}% across ${ratedCount} rated entries.` : 'Record outcomes to turn this into an accountability desk.',
+    accuracyRate !== null
+      ? `Outcome tracking is running at ${accuracyRate}% across ${ratedCount} rated entries.`
+      : 'Record outcomes to turn this into an accountability desk.',
   ].filter((entry): entry is string => Boolean(entry));
 
   return {
@@ -298,10 +309,12 @@ function buildRemoteStats(
     message: statsResult.stats.message,
     insights: statsResult.insights.insights.slice(0, 3),
     patternHighlights: patternsResult?.patterns.patterns_found
-      ? patternsResult.patterns.patterns.slice(0, 3).map((pattern) => trimCopy(pattern.insight, 140))
+      ? patternsResult.patterns.patterns
+          .slice(0, 3)
+          .map((pattern) => trimCopy(pattern.insight, 140))
       : patternsResult?.patterns.message
-        ? [patternsResult.patterns.message]
-        : [],
+      ? [patternsResult.patterns.message]
+      : [],
   } satisfies JournalWorkspaceStats;
 }
 
@@ -313,19 +326,23 @@ function buildRemoteEntries(readings: JournalReading[]): JournalWorkspaceEntry[]
       scope: reading.scope,
       scopeLabel: reading.scope_label || formatScopeLabel(reading.scope),
       formattedDate: reading.formatted_date || formatDateLabel(reading.date),
-      contentSummary: trimCopy(reading.content_summary || 'Open this reading to add the first journal note.'),
+      contentSummary: trimCopy(
+        reading.content_summary || 'Open this reading to add the first journal note.'
+      ),
       journal: reading.journal_full || '',
       outcome: normalizeOutcome(reading.feedback),
       updatedAt: reading.date,
       isDraft: false,
-      mode: 'railway',
+      mode: 'railway' as const,
     }))
     .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt));
 }
 
 function buildLocalEntries(readings: AnonReading[], profileKey: string): JournalWorkspaceEntry[] {
   const records = getLocalJournalRecords(profileKey);
-  const readingsForProfile = readings.filter((reading) => getProfileKeyFromReading(reading) === profileKey);
+  const readingsForProfile = readings.filter(
+    (reading) => getProfileKeyFromReading(reading) === profileKey
+  );
   const readingIds = new Set(readingsForProfile.map((reading) => reading.id));
   const recordByReadingId = new Map(records.map((record) => [record.readingId, record]));
 
@@ -384,7 +401,8 @@ export function JournalWorkspaceView() {
   const [dataIssues, setDataIssues] = useState<string[]>([]);
   const [promptIssue, setPromptIssue] = useState<string | null>(null);
 
-  const journalMode: JournalMode = token && activeProfile && activeProfile.id > 0 ? 'railway' : 'local';
+  const journalMode: JournalMode =
+    token && activeProfile && activeProfile.id > 0 ? 'railway' : 'local';
   const profileKey = useMemo(
     () => (activeProfile ? getLocalJournalProfileKey(activeProfile) : null),
     [activeProfile]
@@ -412,7 +430,10 @@ export function JournalWorkspaceView() {
         const nextSelected =
           nextEntries.find(
             (entry) => entry.id === preferredSelection || entry.readingId === preferredSelection
-          ) ?? nextEntries.find((entry) => entry.id === current) ?? nextEntries[0] ?? null;
+          ) ??
+          nextEntries.find((entry) => entry.id === current) ??
+          nextEntries[0] ??
+          null;
 
         return nextSelected?.id ?? null;
       });
@@ -446,7 +467,9 @@ export function JournalWorkspaceView() {
       ]);
 
       const remoteEntries =
-        readingsResult.status === 'fulfilled' ? buildRemoteEntries(readingsResult.value.readings) : [];
+        readingsResult.status === 'fulfilled'
+          ? buildRemoteEntries(readingsResult.value.readings)
+          : [];
 
       if (readingsResult.status === 'rejected') {
         nextIssues.push('Could not load journal readings for this profile.');
@@ -567,17 +590,21 @@ export function JournalWorkspaceView() {
   }
 
   const deskModeLabel =
-    journalMode === 'railway' ? 'Cloud journal' : hasActiveProfile ? 'Device journal' : 'No active profile';
+    journalMode === 'railway'
+      ? 'Cloud journal'
+      : hasActiveProfile
+      ? 'Device journal'
+      : 'No active profile';
   const modeNote = !activeProfile
     ? 'Create or select a profile first to link journal entries to your readings.'
     : journalMode === 'railway'
-      ? 'Readings and reflections sync across your devices.'
-      : 'Your readings and reflections are saved on this device.';
+    ? 'Readings and reflections sync across your devices.'
+    : 'Your readings and reflections are saved on this device.';
   const nextMoveCopy = !activeProfile
     ? 'Create a profile and run a reading first, then come back here to start your journal.'
     : journalMode === 'railway'
-      ? 'Rate outcomes after each forecast to build your accuracy record.'
-      : 'Run a reading and add a note to start your journal.';
+    ? 'Rate outcomes after each forecast to build your accuracy record.'
+    : 'Run a reading and add a note to start your journal.';
 
   return (
     <div className="product-desk journal-workspace">
@@ -590,8 +617,8 @@ export function JournalWorkspaceView() {
         <span className="product-desk__eyebrow">Journal workspace</span>
         <h1>Readings, reflections, and outcome tracking.</h1>
         <p>
-          Log what happened after each reading, track accuracy over time, and carry
-          follow-through forward.
+          Log what happened after each reading, track accuracy over time, and carry follow-through
+          forward.
         </p>
         <div className="product-desk__chips">
           <span className="product-desk__chip">Reflection prompts</span>
@@ -604,7 +631,11 @@ export function JournalWorkspaceView() {
             Open reading desk
           </Link>
           {journalMode === 'local' && hasActiveProfile ? (
-            <button type="button" className="btn-secondary product-desk__action" onClick={handleCreateDraft}>
+            <button
+              type="button"
+              className="btn-secondary product-desk__action"
+              onClick={handleCreateDraft}
+            >
               Create local draft
             </button>
           ) : null}
@@ -633,7 +664,9 @@ export function JournalWorkspaceView() {
             </div>
             <div className="product-desk__stat">
               <span className="product-desk__label">Profile source</span>
-              <span className="product-desk__value">{hasActiveProfile ? activeProfileSourceLabel : 'No active profile'}</span>
+              <span className="product-desk__value">
+                {hasActiveProfile ? activeProfileSourceLabel : 'No active profile'}
+              </span>
             </div>
             <div className="product-desk__stat">
               <span className="product-desk__label">Journal mode</span>
@@ -641,7 +674,9 @@ export function JournalWorkspaceView() {
             </div>
             <div className="product-desk__stat">
               <span className="product-desk__label">Linked readings</span>
-              <span className="product-desk__value">{loading ? 'Loading...' : stats.linkedReadings}</span>
+              <span className="product-desk__value">
+                {loading ? 'Loading...' : stats.linkedReadings}
+              </span>
             </div>
           </div>
           <p className="product-desk__note">{modeNote}</p>
@@ -683,21 +718,31 @@ export function JournalWorkspaceView() {
           <div className="product-desk__stats">
             <div className="product-desk__stat">
               <span className="product-desk__label">Journaled</span>
-              <span className="product-desk__value">{loading ? 'Loading...' : stats.journaledCount}</span>
+              <span className="product-desk__value">
+                {loading ? 'Loading...' : stats.journaledCount}
+              </span>
             </div>
             <div className="product-desk__stat">
               <span className="product-desk__label">Rated outcomes</span>
-              <span className="product-desk__value">{loading ? 'Loading...' : stats.ratedCount}</span>
+              <span className="product-desk__value">
+                {loading ? 'Loading...' : stats.ratedCount}
+              </span>
             </div>
             <div className="product-desk__stat">
               <span className="product-desk__label">Accuracy signal</span>
               <span className="product-desk__value">
-                {loading ? 'Loading...' : stats.accuracyRate !== null ? `${stats.accuracyRate}%` : 'Pending'}
+                {loading
+                  ? 'Loading...'
+                  : stats.accuracyRate !== null
+                  ? `${stats.accuracyRate}%`
+                  : 'Pending'}
               </span>
             </div>
             <div className="product-desk__stat">
               <span className="product-desk__label">Journal streak</span>
-              <span className="product-desk__value">{loading ? 'Loading...' : stats.journalingStreak}</span>
+              <span className="product-desk__value">
+                {loading ? 'Loading...' : stats.journalingStreak}
+              </span>
             </div>
           </div>
           <p className="product-desk__note">{stats.message}</p>
@@ -716,7 +761,9 @@ export function JournalWorkspaceView() {
                 ) : (
                   <li className="product-desk__list-item">
                     <div>
-                      <strong>Insights will appear once the workspace has more material to compare.</strong>
+                      <strong>
+                        Insights will appear once the workspace has more material to compare.
+                      </strong>
                     </div>
                   </li>
                 )}
@@ -736,7 +783,9 @@ export function JournalWorkspaceView() {
                 ) : (
                   <li className="product-desk__list-item">
                     <div>
-                      <strong>Patterns need a few saved outcomes before they can say anything reliable.</strong>
+                      <strong>
+                        Patterns need a few saved outcomes before they can say anything reliable.
+                      </strong>
                     </div>
                   </li>
                 )}
@@ -766,7 +815,9 @@ export function JournalWorkspaceView() {
                   </div>
                   <p>{entry.contentSummary}</p>
                   <div className="journal-workspace__entry-row journal-workspace__entry-row--status">
-                    <span className="product-desk__badge">{entry.isDraft ? 'Draft' : formatOutcomeLabel(entry.outcome)}</span>
+                    <span className="product-desk__badge">
+                      {entry.isDraft ? 'Draft' : formatOutcomeLabel(entry.outcome)}
+                    </span>
                     <span>{entry.mode === 'railway' ? 'Cloud' : 'Device'}</span>
                   </div>
                 </button>
@@ -777,8 +828,8 @@ export function JournalWorkspaceView() {
               {loading
                 ? 'Loading the journal queue for this profile.'
                 : hasActiveProfile
-                  ? 'Run a reading first to start your journal.'
-                  : 'Create a profile and run a reading to start your journal.'}
+                ? 'Run a reading first to start your journal.'
+                : 'Create a profile and run a reading to start your journal.'}
             </div>
           )}
         </article>
@@ -825,18 +876,24 @@ export function JournalWorkspaceView() {
               />
               <div className="journal-workspace__editor-footer">
                 <span>{wordCount} words</span>
-                <button type="button" className="btn-primary" disabled={saving} onClick={handleSave}>
+                <button
+                  type="button"
+                  className="btn-primary"
+                  disabled={saving}
+                  onClick={handleSave}
+                >
                   {saving
                     ? 'Saving...'
                     : selectedEntry.mode === 'railway'
-                      ? 'Save to account'
-                      : 'Save on this device'}
+                    ? 'Save to account'
+                    : 'Save on this device'}
                 </button>
               </div>
             </div>
           ) : (
             <p className="product-desk__note">
-              Pick an entry from the queue to start writing, or create a local draft if the workspace is running in device mode.
+              Pick an entry from the queue to start writing, or create a local draft if the
+              workspace is running in device mode.
             </p>
           )}
         </article>

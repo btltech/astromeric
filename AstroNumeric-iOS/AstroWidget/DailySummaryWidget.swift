@@ -95,7 +95,7 @@ struct DailySummaryWidgetView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .containerBackground(for: .widget) {
-            Color.black
+            WidgetCosmicBackground(accent: WidgetCosmicStyle.accentSecondary)
         }
     }
 }

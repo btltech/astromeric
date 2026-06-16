@@ -138,8 +138,10 @@ describe('useProfiles auth sync hardening', () => {
     const { useProfiles } = await import('../hooks/useProfiles');
     const { useStore } = await import('../store/useStore');
 
-    let resolveInitialFetch: ((value: { status: string; data: SavedProfile[] }) => void) | null = null;
-    let resolveForcedFetch: ((value: { status: string; data: SavedProfile[] }) => void) | null = null;
+    let resolveInitialFetch: ((value: { status: string; data: SavedProfile[] }) => void) | null =
+      null;
+    let resolveForcedFetch: ((value: { status: string; data: SavedProfile[] }) => void) | null =
+      null;
 
     apiFetchMock
       .mockImplementationOnce(

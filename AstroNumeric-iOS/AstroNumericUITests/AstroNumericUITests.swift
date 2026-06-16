@@ -37,6 +37,16 @@ final class AstroNumericUITests: XCTestCase {
     private func waitForTabBar(in app: XCUIApplication, timeout: TimeInterval = 10) {
         XCTAssertTrue(app.tabBars.firstMatch.waitForExistence(timeout: timeout))
     }
+
+    private func openExploreTools(in app: XCUIApplication) {
+        app.tabBars.buttons["Explore"].tap()
+        XCTAssertTrue(app.navigationBars["Explore"].waitForExistence(timeout: 2))
+
+        let toolsCategory = app.buttons["Tools"].firstMatch
+        if toolsCategory.waitForExistence(timeout: 1) {
+            toolsCategory.tap()
+        }
+    }
     
     func testLaunchPerformance() throws {
         if #available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 7.0, *) {
@@ -89,13 +99,12 @@ final class AstroNumericUITests: XCTestCase {
         let app = launchApp(twoProfiles: false)
         waitForTabBar(in: app)
 
-        app.tabBars.buttons["Tools"].tap()
-        XCTAssertTrue(app.navigationBars["Cosmic Tools"].waitForExistence(timeout: 2))
+        openExploreTools(in: app)
 
         let dailyGuideButton = app.staticTexts["Daily Guide"].firstMatch
         XCTAssertTrue(reveal(dailyGuideButton, in: app))
         dailyGuideButton.tap()
-        XCTAssertTrue(app.otherElements["DailyGuideScreen"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.navigationBars["Daily Cosmic Guide"].waitForExistence(timeout: 3))
     }
 
     func testChartRenderingShowsBirthChartSurface() throws {
@@ -111,22 +120,24 @@ final class AstroNumericUITests: XCTestCase {
         let app = launchApp(twoProfiles: false)
         waitForTabBar(in: app)
 
-        app.tabBars.buttons["Tools"].tap()
-        XCTAssertTrue(app.navigationBars["Cosmic Tools"].waitForExistence(timeout: 2))
+        openExploreTools(in: app)
 
         // Tarot
-        app.staticTexts["Tarot"].tap()
+        app.staticTexts["Daily Tarot"].tap()
         XCTAssertTrue(app.navigationBars["Daily Tarot"].waitForExistence(timeout: 3))
         app.navigationBars.buttons.element(boundBy: 0).tap()
 
         // Moon Phase
-        app.staticTexts["Moon Phase"].tap()
+        let moonPhaseButton = app.staticTexts["Moon Phase"].firstMatch
+        XCTAssertTrue(reveal(moonPhaseButton, in: app))
+        moonPhaseButton.tap()
         XCTAssertTrue(app.navigationBars["Moon Phase"].waitForExistence(timeout: 3))
         app.navigationBars.buttons.element(boundBy: 0).tap()
 
         // Timing Advisor
-        app.swipeUp()
-        app.staticTexts["Timing"].tap()
+        let timingButton = app.staticTexts["Timing"].firstMatch
+        XCTAssertTrue(reveal(timingButton, in: app))
+        timingButton.tap()
         XCTAssertTrue(app.navigationBars["Timing Advisor"].waitForExistence(timeout: 3))
         app.navigationBars.buttons.element(boundBy: 0).tap()
     }
@@ -138,23 +149,25 @@ final class AstroNumericUITests: XCTestCase {
         app.tabBars.buttons["Charts"].tap()
         XCTAssertTrue(app.navigationBars["Charts"].waitForExistence(timeout: 2))
 
-        let advancedButton = app.buttons["Advanced"].firstMatch
-        if advancedButton.waitForExistence(timeout: 2) {
-            advancedButton.tap()
-        } else {
-            app.staticTexts["Advanced"].firstMatch.tap()
-        }
-
-        app.buttons["Synastry"].firstMatch.tap()
-        XCTAssertTrue(app.otherElements["SynastryScreen"].waitForExistence(timeout: 3))
-        app.navigationBars.buttons.element(boundBy: 0).tap()
-
-        app.buttons["Composite Chart"].firstMatch.tap()
-        XCTAssertTrue(app.navigationBars["Composite Chart"].waitForExistence(timeout: 3))
-        app.navigationBars.buttons.element(boundBy: 0).tap()
+        let advancedButton = app.buttons["Advanced Charts"].firstMatch
+        XCTAssertTrue(reveal(advancedButton, in: app))
+        advancedButton.tap()
+        XCTAssertTrue(app.staticTexts["Past the natal snapshot"].waitForExistence(timeout: 3))
 
         app.buttons["Progressions"].firstMatch.tap()
         XCTAssertTrue(app.navigationBars["Progressions"].waitForExistence(timeout: 3))
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+
+        let synastryButton = app.buttons["Synastry"].firstMatch
+        XCTAssertTrue(reveal(synastryButton, in: app))
+        synastryButton.tap()
+        XCTAssertTrue(app.otherElements["SynastryScreen"].waitForExistence(timeout: 3))
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+
+        let compositeButton = app.buttons["Composite Chart"].firstMatch
+        XCTAssertTrue(reveal(compositeButton, in: app))
+        compositeButton.tap()
+        XCTAssertTrue(app.navigationBars["Composite Chart"].waitForExistence(timeout: 3))
         app.navigationBars.buttons.element(boundBy: 0).tap()
     }
 
@@ -192,13 +205,30 @@ final class AstroNumericUITests: XCTestCase {
         app.tabBars.buttons["Profile"].tap()
         XCTAssertTrue(app.navigationBars["Profile"].waitForExistence(timeout: 2))
 
-        XCTAssertTrue(app.switches["Hide Sensitive Details"].waitForExistence(timeout: 3))
+        let exportButton = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "Export")).firstMatch
+        XCTAssertTrue(reveal(exportButton, in: app, swipes: 2))
 
+        let settingsButton = app.buttons["Settings & Preferences"].firstMatch
+        XCTAssertTrue(reveal(settingsButton, in: app))
+        settingsButton.tap()
+        XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 3))
+        let hideSensitiveSwitch = app.switches["Hide Sensitive Details"].firstMatch
+        XCTAssertTrue(reveal(hideSensitiveSwitch, in: app, swipes: 2))
+
+        let diagnosticsButton = app.buttons["Advanced Diagnostics"].firstMatch
+        XCTAssertTrue(reveal(diagnosticsButton, in: app))
+        diagnosticsButton.tap()
+        XCTAssertTrue(app.navigationBars["Diagnostics"].waitForExistence(timeout: 3))
         let refreshDiagnostics = app.buttons["Refresh diagnostics"].firstMatch
-        XCTAssertTrue(reveal(refreshDiagnostics, in: app, swipes: 2))
+        XCTAssertTrue(refreshDiagnostics.waitForExistence(timeout: 3))
         XCTAssertTrue(app.staticTexts["Notifications"].waitForExistence(timeout: 2))
-        XCTAssertTrue(app.staticTexts["Widget Refresh"].waitForExistence(timeout: 2))
+        XCTAssertTrue(app.staticTexts["Widget Sync"].waitForExistence(timeout: 2))
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+        app.navigationBars.buttons.element(boundBy: 0).tap()
 
+        let supportButton = app.buttons["Help & Privacy"].firstMatch
+        XCTAssertTrue(reveal(supportButton, in: app))
+        supportButton.tap()
         let privacyPolicy = app.buttons["Privacy Policy"].firstMatch
         XCTAssertTrue(reveal(privacyPolicy, in: app))
         privacyPolicy.tap()
@@ -206,7 +236,6 @@ final class AstroNumericUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "network-backed features")).firstMatch.waitForExistence(timeout: 2))
         app.navigationBars.buttons.element(boundBy: 0).tap()
 
-        let exportButton = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "Export")).firstMatch
-        XCTAssertTrue(reveal(exportButton, in: app))
+        app.navigationBars.buttons.element(boundBy: 0).tap()
     }
 }

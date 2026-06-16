@@ -10,6 +10,18 @@ protocol CrashReporting: AnyObject {
     func recordNonFatal(_ error: Error, context: [String: String])
 }
 
+/// Plug-in seam for a production crash/diagnostics SDK (e.g. Sentry, Firebase
+/// Crashlytics). Adopt this in a thin wrapper around the SDK and register it via
+/// `PrivacyFilteredCrashReporter.shared.setExternalForwarder(_:)` at launch.
+///
+/// IMPORTANT: only already-redacted data reaches a forwarder. No birth details,
+/// chart data, journal text, or profile names are ever passed through. See
+/// docs/CrashReporting.md for integration + CI symbol-upload steps.
+protocol CrashReportForwarding: AnyObject {
+    func forwardNonFatal(_ error: Error, redactedContext: [String: String])
+    func forwardDiagnostic(_ summary: String)
+}
+
 final class PrivacyFilteredCrashReporter: NSObject, CrashReporting {
     static let shared = PrivacyFilteredCrashReporter()
 
@@ -20,7 +32,16 @@ final class PrivacyFilteredCrashReporter: NSObject, CrashReporting {
     ]
     private var isStarted = false
 
+    /// Optional production SDK forwarder. Receives only redacted payloads.
+    private var externalForwarder: CrashReportForwarding?
+
     private override init() {}
+
+    /// Register a production crash/diagnostics SDK wrapper. Safe to call once at
+    /// app launch. Only redacted data is ever forwarded.
+    func setExternalForwarder(_ forwarder: CrashReportForwarding) {
+        externalForwarder = forwarder
+    }
 
     func start() {
         guard !isStarted else { return }
@@ -38,6 +59,7 @@ final class PrivacyFilteredCrashReporter: NSObject, CrashReporting {
     func recordNonFatal(_ error: Error, context: [String: String] = [:]) {
         let redacted = redactedContext(context)
         logger.error("Non-fatal error: \(error.localizedDescription, privacy: .public) context=\(String(describing: redacted), privacy: .public)")
+        externalForwarder?.forwardNonFatal(error, redactedContext: redacted)
     }
 
     private func redactedContext(_ context: [String: String]) -> [String: String] {
@@ -54,7 +76,9 @@ final class PrivacyFilteredCrashReporter: NSObject, CrashReporting {
 extension PrivacyFilteredCrashReporter: MXMetricManagerSubscriber {
     func didReceive(_ payloads: [MXDiagnosticPayload]) {
         for payload in payloads {
-            logger.error("MetricKit diagnostic payload received: \(String(describing: payload.timeStampBegin), privacy: .public)")
+            let summary = "MetricKit diagnostic payload received: \(String(describing: payload.timeStampBegin))"
+            logger.error("\(summary, privacy: .public)")
+            externalForwarder?.forwardDiagnostic(summary)
         }
     }
 }

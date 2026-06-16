@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { DocumentMeta } from '../components/DocumentMeta';
+import { getRouteMeta } from '../seo/routeMeta';
 import './PrivacyPolicy.css';
 
 const supportEmail = 'support@astromeric.app';
@@ -12,8 +13,8 @@ export function SupportCenter() {
   return (
     <>
       <DocumentMeta
-        title="Support - AstroNumeric"
-        description="Support information for AstroNumeric on iOS, Android, and web."
+        title={getRouteMeta('/support').title}
+        description={getRouteMeta('/support').description}
         robots="index, follow"
       />
 
@@ -42,8 +43,8 @@ export function SupportCenter() {
           <section id="contact-support">
             <h2>1. Contact support</h2>
             <p>
-              AstroNumeric support is available for iOS, Android, and web app questions. If you
-              need help with a bug, billing issue, account problem, or feature question, email{' '}
+              AstroNumeric support is available for iOS, Android, and web app questions. If you need
+              help with a bug, billing issue, account problem, or feature question, email{' '}
               <a href={`mailto:${supportEmail}`}>{supportEmail}</a>.
             </p>
             <p>
@@ -59,8 +60,9 @@ export function SupportCenter() {
               <a href={`mailto:${privacyEmail}`}>{privacyEmail}</a>.
             </p>
             <p>
-              The full privacy policy is available at <Link to="/privacy-policy">/privacy-policy</Link>,
-              and the service terms are available at <Link to="/terms">/terms</Link>.
+              The full privacy policy is available at{' '}
+              <Link to="/privacy-policy">/privacy-policy</Link>, and the service terms are available
+              at <Link to="/terms">/terms</Link>.
             </p>
           </section>
 
@@ -68,16 +70,16 @@ export function SupportCenter() {
             <h2>3. Self-serve help</h2>
             <ul>
               <li>
-                Visit <Link to="/privacy-policy">Privacy Policy</Link> for data handling,
-                retention, and deletion details.
+                Visit <Link to="/privacy-policy">Privacy Policy</Link> for data handling, retention,
+                and deletion details.
               </li>
               <li>
                 Visit <Link to="/terms">Terms of Service</Link> for service usage and account
                 expectations.
               </li>
               <li>
-                Visit <Link to="/cookie-policy">Cookie Policy</Link> for browser storage and
-                consent details on the web app.
+                Visit <Link to="/cookie-policy">Cookie Policy</Link> for browser storage and consent
+                details on the web app.
               </li>
             </ul>
           </section>

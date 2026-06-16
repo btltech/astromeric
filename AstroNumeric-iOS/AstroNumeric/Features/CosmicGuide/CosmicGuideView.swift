@@ -105,7 +105,11 @@ struct CosmicGuideView: View {
                 }
                 .padding(.horizontal, 12)
                 .frame(minHeight: 44)
-                .background(Capsule().fill(.ultraThinMaterial))
+                .background(
+                    Capsule()
+                        .fill(Color.surfaceBase)
+                        .overlay(Capsule().stroke(Color.borderSubtle, lineWidth: Stroke.hairline))
+                )
             }
             .buttonStyle(ScaleButtonStyle())
             
@@ -147,12 +151,12 @@ struct CosmicGuideView: View {
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 10)
                     .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(vm.tone == tone ? Color.purple.opacity(0.3) : Color.clear)
+                        RoundedRectangle(cornerRadius: Radius.sm)
+                            .fill(vm.tone == tone ? Color.accentPrimary.opacity(0.20) : Color.clear)
                     )
                     .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .strokeBorder(vm.tone == tone ? Color.purple : Color.white.opacity(0.2), lineWidth: 1)
+                        RoundedRectangle(cornerRadius: Radius.sm)
+                            .strokeBorder(vm.tone == tone ? Color.accentPrimary : Color.borderSubtle, lineWidth: Stroke.hairline)
                     )
                 }
                 .buttonStyle(ScaleButtonStyle())
@@ -160,7 +164,7 @@ struct CosmicGuideView: View {
         }
         .padding(.horizontal)
         .padding(.vertical, 8)
-        .background(.ultraThinMaterial)
+        .background(Color.surfaceBase)
     }
     
     // MARK: - Chat Input
@@ -216,8 +220,12 @@ struct CosmicGuideView: View {
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)
                 .background(
-                    RoundedRectangle(cornerRadius: 24)
-                        .fill(.ultraThinMaterial)
+                    RoundedRectangle(cornerRadius: Radius.md)
+                        .fill(Color.surfaceBase)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: Radius.md)
+                                .stroke(Color.borderSubtle, lineWidth: Stroke.hairline)
+                        )
                 )
                 .lineLimit(1...4)
             
@@ -235,13 +243,14 @@ struct CosmicGuideView: View {
         }
         .padding(.horizontal)
         .padding(.vertical, 12)
-        .background(.ultraThinMaterial)
+        .background(Color.surfaceBase)
     }
     
     // MARK: - Actions
 
     private var calendarConsentCard: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        CardView {
+            VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .top, spacing: 12) {
                 Image(systemName: vm.isCalendarContextEnabled ? "tern.cosmicGuide.4a".localized : "tern.cosmicGuide.4b".localized)
                     .foregroundStyle(vm.isCalendarContextEnabled ? .green : .cyan)
@@ -262,7 +271,6 @@ struct CosmicGuideView: View {
                         await vm.setCalendarContextEnabled(!vm.isCalendarContextEnabled)
                     }
                 }
-                .buttonStyle(.borderedProminent)
                 .tint(vm.isCalendarContextEnabled ? .green : .cyan)
                 .disabled(vm.isUpdatingCalendarContext)
             }
@@ -273,15 +281,12 @@ struct CosmicGuideView: View {
                     .foregroundStyle(.green.opacity(0.9))
             }
         }
-        .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(.ultraThinMaterial)
-        )
+        }
     }
 
     private var biometricConsentCard: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        CardView {
+            VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .top, spacing: 12) {
                 Image(systemName: vm.isBiometricContextEnabled ? "tern.cosmicGuide.6a".localized : "tern.cosmicGuide.6b".localized)
                     .foregroundStyle(vm.isBiometricContextEnabled ? .pink : .red)
@@ -302,7 +307,6 @@ struct CosmicGuideView: View {
                         await vm.setBiometricContextEnabled(!vm.isBiometricContextEnabled)
                     }
                 }
-                .buttonStyle(.borderedProminent)
                 .tint(vm.isBiometricContextEnabled ? .pink : .red)
                 .disabled(vm.isUpdatingBiometricContext)
             }
@@ -313,24 +317,11 @@ struct CosmicGuideView: View {
                     .foregroundStyle(.pink.opacity(0.9))
             }
         }
-        .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(.ultraThinMaterial)
-        )
+        }
     }
 
     private func errorBanner(_ text: String) -> some View {
-        Text(text)
-            .font(.caption)
-            .foregroundStyle(.orange)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color.orange.opacity(0.12))
-            )
+        PremiumStatusBanner(title: "common.error".localized, message: text, tone: .warning)
     }
 
     private func send(_ text: String) {

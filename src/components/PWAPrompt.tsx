@@ -50,7 +50,13 @@ export function PWAPrompt() {
   }, [isUpdateAvailable]);
 
   React.useEffect(() => {
-    if (!hasConsentChoice || !isInstallable || dismissed || isUpdateAvailable || typeof window === 'undefined') {
+    if (
+      !hasConsentChoice ||
+      !isInstallable ||
+      dismissed ||
+      isUpdateAvailable ||
+      typeof window === 'undefined'
+    ) {
       setCanShowInstallPrompt(false);
       return undefined;
     }
@@ -98,44 +104,54 @@ export function PWAPrompt() {
     <>
       {/* Install Prompt */}
       <AnimatePresence>
-        {hasConsentChoice && isInstallable && !isUpdateAvailable && !dismissed && canShowInstallPrompt && (
-          <motion.div
-            className="pwa-install-prompt"
-            initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 16 }}
-            transition={prefersReducedMotion ? { duration: 0.12 } : { type: 'spring', stiffness: 300, damping: 30 }}
-          >
-            <div className="pwa-install-content">
-              <span className="pwa-install-icon" aria-hidden="true">+</span>
-              <div className="pwa-install-text">
-                <strong>Install AstroNumeric</strong>
-                <p>Save it to your home screen for faster access and daily check-ins.</p>
+        {hasConsentChoice &&
+          isInstallable &&
+          !isUpdateAvailable &&
+          !dismissed &&
+          canShowInstallPrompt && (
+            <motion.div
+              className="pwa-install-prompt"
+              initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 16 }}
+              transition={
+                prefersReducedMotion
+                  ? { duration: 0.12 }
+                  : { type: 'spring', stiffness: 300, damping: 30 }
+              }
+            >
+              <div className="pwa-install-content">
+                <span className="pwa-install-icon" aria-hidden="true">
+                  +
+                </span>
+                <div className="pwa-install-text">
+                  <strong>Install AstroNumeric</strong>
+                  <p>Save it to your home screen for faster access and daily check-ins.</p>
+                </div>
               </div>
-            </div>
-            <div className="pwa-install-actions">
-              <button
-                className="pwa-dismiss-btn"
-                onClick={dismissInstallPrompt}
-                aria-label="Dismiss install prompt"
-              >
-                Later
-              </button>
-              <button
-                className="pwa-install-btn"
-                aria-label="Install AstroNumeric"
-                onClick={async () => {
-                  const installed = await installApp();
-                  if (!installed) {
-                    dismissInstallPrompt();
-                  }
-                }}
-              >
-                Install
-              </button>
-            </div>
-          </motion.div>
-        )}
+              <div className="pwa-install-actions">
+                <button
+                  className="pwa-dismiss-btn"
+                  onClick={dismissInstallPrompt}
+                  aria-label="Dismiss install prompt"
+                >
+                  Later
+                </button>
+                <button
+                  className="pwa-install-btn"
+                  aria-label="Install AstroNumeric"
+                  onClick={async () => {
+                    const installed = await installApp();
+                    if (!installed) {
+                      dismissInstallPrompt();
+                    }
+                  }}
+                >
+                  Install
+                </button>
+              </div>
+            </motion.div>
+          )}
       </AnimatePresence>
 
       {/* Update Available Banner */}
@@ -153,7 +169,11 @@ export function PWAPrompt() {
               <button className="pwa-update-dismiss" onClick={dismissUpdateBanner}>
                 Later
               </button>
-              <button className="pwa-update-btn" aria-label="Update AstroNumeric now" onClick={updateApp}>
+              <button
+                className="pwa-update-btn"
+                aria-label="Update AstroNumeric now"
+                onClick={updateApp}
+              >
                 Update Now
               </button>
             </div>

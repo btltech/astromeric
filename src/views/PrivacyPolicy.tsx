@@ -1,5 +1,6 @@
 import React from 'react';
 import { DocumentMeta } from '../components/DocumentMeta';
+import { getRouteMeta } from '../seo/routeMeta';
 import './PrivacyPolicy.css';
 
 export function PrivacyPolicy() {
@@ -9,8 +10,8 @@ export function PrivacyPolicy() {
   return (
     <>
       <DocumentMeta
-        title="Privacy Policy — AstroNumeric"
-        description="Learn how Astromeric collects, uses, and protects your personal data."
+        title={getRouteMeta('/privacy-policy').title}
+        description={getRouteMeta('/privacy-policy').description}
         robots="index, follow"
       />
 

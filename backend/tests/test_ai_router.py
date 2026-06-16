@@ -81,6 +81,7 @@ def test_ai_explain_passes_simple_language_to_gemini_for_non_deterministic_scope
         ) as mocked_explain:
             response = client.post(
                 "/v2/ai/explain",
+                headers={"X-Client-Platform": "ios"},
                 json={
                     "scope": "compatibility",
                     "headline": "Overall Energy 7.8/10",

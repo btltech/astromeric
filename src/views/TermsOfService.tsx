@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { DocumentMeta } from '../components/DocumentMeta';
+import { getRouteMeta } from '../seo/routeMeta';
 
 import './PrivacyPolicy.css';
 
@@ -10,8 +11,8 @@ export function TermsOfService() {
   return (
     <>
       <DocumentMeta
-        title="Terms of Service — AstroNumeric"
-        description="Terms of service governing your use of AstroNumeric on web, iOS, and Android."
+        title={getRouteMeta('/terms').title}
+        description={getRouteMeta('/terms').description}
         robots="index, follow"
       />
 

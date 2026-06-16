@@ -63,13 +63,13 @@ struct BirthstoneGuidanceView: View {
 
     private func headerCard(_ sign: ZodiacSign) -> some View {
         CardView {
-            VStack(spacing: 14) {
+            VStack(spacing: 12) {
                 Text(sign.emoji)
-                    .font(.system(.largeTitle))
+                    .font(.system(.title2))
 
                 VStack(spacing: 4) {
                     Text(String(format: "fmt.birthstoneGuidance.1".localized, "\(sign.displayName)"))
-                        .font(.title2.bold())
+                        .font(.title3.bold())
                         .multilineTextAlignment(.center)
 
                     HStack(spacing: 16) {

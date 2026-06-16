@@ -86,7 +86,7 @@ describe('ErrorBoundary', () => {
     );
 
     expect(screen.getByText(/Something went wrong/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Try Again/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Refresh Page/i })).toBeInTheDocument();
   });
 
   it('recovers when try again is clicked', async () => {
@@ -104,7 +104,7 @@ describe('ErrorBoundary', () => {
 
     // Click try again - this resets the error boundary
     shouldThrow = false;
-    const tryAgainButton = screen.getByRole('button', { name: /Try Again/i });
+    const tryAgainButton = screen.getByRole('button', { name: /Refresh Page/i });
     await user.click(tryAgainButton);
 
     // Re-render with no error
@@ -145,7 +145,7 @@ describe('CollapsibleSection', () => {
 
   it('starts expanded when defaultOpen is true', () => {
     render(
-      <CollapsibleSection title="Open Section" defaultOpen={true}>
+      <CollapsibleSection title="Open Section" defaultExpanded={true}>
         <p>Visible content</p>
       </CollapsibleSection>
     );
@@ -165,6 +165,7 @@ vi.mock('../store/useStore', () => ({
   useStore: () => ({
     streakCount: 7,
     lastVisitDate: new Date().toISOString().split('T')[0],
+    updateStreak: vi.fn(),
   }),
 }));
 
@@ -172,7 +173,7 @@ describe('DailyStreak', () => {
   it('renders streak count', () => {
     render(<DailyStreak />);
 
-    expect(screen.getByText('7')).toBeInTheDocument();
+    expect(screen.getByText(/7\s*Day\s*Streak/i)).toBeInTheDocument();
     expect(screen.getByText(/streak/i)).toBeInTheDocument();
   });
 });
@@ -180,28 +181,23 @@ describe('DailyStreak', () => {
 // ============================================
 // Skeleton Tests
 // ============================================
-import { ReadingSkeleton, NumerologySkeleton, CompatibilitySkeleton } from '../components/Skeleton';
+import { ReadingSkeleton, ChartSkeleton, GlossarySkeleton } from '../components/Skeleton';
 
 describe('Skeleton Components', () => {
-  it('renders ReadingSkeleton with loading animation', () => {
+  it('renders ReadingSkeleton', () => {
     render(<ReadingSkeleton />);
-
-    // Should have aria attributes for accessibility
-    const skeletons = document.querySelectorAll('[aria-label]');
-    expect(skeletons.length).toBeGreaterThan(0);
+    const skeleton = document.querySelector('.skeleton-card');
+    expect(skeleton).toBeInTheDocument();
   });
 
-  it('renders NumerologySkeleton', () => {
-    render(<NumerologySkeleton />);
-
-    // Should render multiple skeleton elements
+  it('renders ChartSkeleton', () => {
+    render(<ChartSkeleton />);
     const skeletonElements = document.querySelectorAll('.skeleton');
     expect(skeletonElements.length).toBeGreaterThan(0);
   });
 
-  it('renders CompatibilitySkeleton', () => {
-    render(<CompatibilitySkeleton />);
-
+  it('renders GlossarySkeleton', () => {
+    render(<GlossarySkeleton />);
     const skeletonElements = document.querySelectorAll('.skeleton');
     expect(skeletonElements.length).toBeGreaterThan(0);
   });
@@ -222,8 +218,8 @@ describe('LanguageSwitcher', () => {
       </I18nextProvider>
     );
 
-    // Should have a language selector
-    const selector = screen.getByRole('combobox');
+    // Should have a select language button
+    const selector = screen.getByRole('button', { name: /Select language/i });
     expect(selector).toBeInTheDocument();
   });
 
@@ -236,8 +232,13 @@ describe('LanguageSwitcher', () => {
       </I18nextProvider>
     );
 
-    const selector = screen.getByRole('combobox');
-    await user.selectOptions(selector, 'es');
+    // Open dropdown
+    const selector = screen.getByRole('button', { name: /Select language/i });
+    await user.click(selector);
+
+    // Select Spanish option
+    const option = screen.getByRole('option', { name: /Español/i });
+    await user.click(option);
 
     expect(i18n.language).toBe('es');
   });

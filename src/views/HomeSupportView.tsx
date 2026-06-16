@@ -1,5 +1,6 @@
 import React from 'react';
 import { DocumentMeta } from '../components/DocumentMeta';
+import { getRouteMeta } from '../seo/routeMeta';
 import { CTASection } from '../components/home/CTASection';
 import { FeatureCard } from '../components/home/FeatureCard';
 import { HeroSection } from '../components/home/HeroSection';
@@ -22,28 +23,32 @@ const productFeatures = [
   {
     eyebrow: 'Daily insight',
     title: 'A clear signal every morning',
-    description: 'See your score, mood, best window, and next move — all in one view before the day starts.',
+    description:
+      'See your score, mood, best window, and next move — all in one view before the day starts.',
     href: '/reading',
     linkLabel: 'See a preview',
   },
   {
     eyebrow: 'Birth chart',
     title: 'Read your chart without the noise',
-    description: 'Placements, aspects, and patterns in a structured view that is easy to scan and navigate.',
+    description:
+      'Placements, aspects, and patterns in a structured view that is easy to scan and navigate.',
     href: '/charts',
     linkLabel: 'See a preview',
   },
   {
     eyebrow: 'Numerology',
     title: 'Year, month, and day cycles in one place',
-    description: 'Your Life Path, personal year, and daily number — visible and connected, not scattered.',
+    description:
+      'Your Life Path, personal year, and daily number — visible and connected, not scattered.',
     href: '/numerology',
     linkLabel: 'See a preview',
   },
   {
     eyebrow: 'Timing',
     title: 'Know the best windows before you decide',
-    description: 'Check timing before a call, a launch, or a difficult conversation. Plain language, no jargon.',
+    description:
+      'Check timing before a call, a launch, or a difficult conversation. Plain language, no jargon.',
     href: '/tools',
     linkLabel: 'See a preview',
   },
@@ -70,10 +75,7 @@ const howItWorksSteps = [
 export function HomeSupportView() {
   return (
     <>
-      <DocumentMeta
-        title="AstroNumeric | Daily Insight, Birth Chart & Numerology"
-        description="AstroNumeric combines astrology, numerology, compatibility, and timing guidance in one calm personal insight experience."
-      />
+      <DocumentMeta title={getRouteMeta('/').title} description={getRouteMeta('/').description} />
 
       <div className="home-premium">
         <HeroSection
@@ -88,7 +90,9 @@ export function HomeSupportView() {
 
         <section id="how-it-works" className="home-premium__section">
           <div className="home-premium__section-intro">
-            <h2 className="home-premium__section-title">From profile to insight in under a minute.</h2>
+            <h2 className="home-premium__section-title">
+              From profile to insight in under a minute.
+            </h2>
             <p className="home-premium__section-desc">Three steps. No complicated setup.</p>
           </div>
           <div className="how-it-works__steps">
@@ -104,8 +108,12 @@ export function HomeSupportView() {
 
         <section id="what-you-get" className="home-premium__section">
           <div className="home-premium__section-intro">
-            <h2 className="home-premium__section-title">Everything you need, nothing you don't.</h2>
-            <p className="home-premium__section-desc">Start with a daily signal, go deeper when you want more context.</p>
+            <h2 className="home-premium__section-title">
+              Everything you need, nothing you don&apos;t.
+            </h2>
+            <p className="home-premium__section-desc">
+              Start with a daily signal, go deeper when you want more context.
+            </p>
           </div>
 
           <div className="home-premium__feature-grid home-premium__feature-grid--four">

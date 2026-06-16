@@ -60,52 +60,36 @@ struct AffirmationView: View {
     }
     
     private func affirmationCard(_ text: String) -> some View {
-        VStack(spacing: 24) {
-            // Star decoration
-            HStack(spacing: 8) {
-                ForEach(0..<5, id: \.self) { i in
-                    Image(systemName: "star.fill")
-                        .font(.caption)
-                        .foregroundStyle(.yellow)
-                        .scaleEffect(showAnimation ? 1 : 0.5)
-                        .animation(
-                            .spring(duration: 0.5).delay(Double(i) * 0.1),
-                            value: showAnimation
-                        )
+        CardView {
+            VStack(spacing: 24) {
+                HStack(spacing: 8) {
+                    ForEach(0..<5, id: \.self) { i in
+                        Image(systemName: "star.fill")
+                            .font(.caption)
+                            .foregroundStyle(.yellow)
+                            .scaleEffect(showAnimation ? 1 : 0.5)
+                            .animation(
+                                .spring(duration: 0.5).delay(Double(i) * 0.1),
+                                value: showAnimation
+                            )
+                    }
                 }
+
+                Text(text)
+                    .font(.title2)
+                    .fontWeight(.medium)
+                    .multilineTextAlignment(.center)
+                    .foregroundStyle(.white)
+                    .opacity(showAnimation ? 1 : 0)
+                    .animation(.easeIn(duration: 0.5).delay(0.3), value: showAnimation)
+
+                Image(systemName: "sparkles")
+                    .font(.title)
+                    .foregroundStyle(Color.accentPrimary)
+                    .scaleEffect(showAnimation ? 1 : 0)
+                    .animation(.spring(duration: 0.6).delay(0.5), value: showAnimation)
             }
-            
-            Text(text)
-                .font(.title2)
-                .fontWeight(.medium)
-                .multilineTextAlignment(.center)
-                .foregroundStyle(.white)
-                .opacity(showAnimation ? 1 : 0)
-                .animation(.easeIn(duration: 0.5).delay(0.3), value: showAnimation)
-            
-            // Sparkle decoration
-            Image(systemName: "sparkles")
-                .font(.title)
-                .foregroundStyle(.purple)
-                .scaleEffect(showAnimation ? 1 : 0)
-                .animation(.spring(duration: 0.6).delay(0.5), value: showAnimation)
         }
-        .padding(32)
-        .frame(maxWidth: .infinity)
-        .background(
-            RoundedRectangle(cornerRadius: 24)
-                .fill(
-                    LinearGradient(
-                        colors: [.purple.opacity(0.3), .indigo.opacity(0.2)],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 24)
-                        .strokeBorder(.white.opacity(0.1), lineWidth: 1)
-                )
-        )
     }
     
     private var placeholderCard: some View {
@@ -128,35 +112,20 @@ struct AffirmationView: View {
         .padding(32)
         .frame(maxWidth: .infinity)
         .background(
-            RoundedRectangle(cornerRadius: 24)
-                .fill(.ultraThinMaterial)
+            RoundedRectangle(cornerRadius: Radius.md)
+                .fill(Color.surfaceBase)
+                .overlay(
+                    RoundedRectangle(cornerRadius: Radius.md)
+                        .stroke(Color.borderSubtle, lineWidth: Stroke.hairline)
+                )
         )
     }
     
     private var refreshButton: some View {
-        Button {
+        GradientButton(store.activeProfile == nil ? "tern.affirmation.0a".localized : "tern.affirmation.0b".localized, icon: "arrow.clockwise", isLoading: isLoading) {
             Task {
                 await loadAffirmation(forceRefresh: true)
             }
-        } label: {
-            HStack {
-                Image(systemName: "arrow.clockwise")
-                Text(store.activeProfile == nil ? "tern.affirmation.0a".localized : "tern.affirmation.0b".localized)
-            }
-            .font(.headline)
-            .foregroundStyle(.white)
-            .padding(.horizontal, 24)
-            .padding(.vertical, 14)
-            .background(
-                Capsule()
-                    .fill(
-                        LinearGradient(
-                            colors: [.orange, .pink],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                    )
-            )
         }
         .disabled(isLoading)
     }

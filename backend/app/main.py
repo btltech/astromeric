@@ -45,7 +45,17 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     """Run startup tasks using FastAPI's lifespan API."""
+    from .chart_service import STRICT_EPHEMERIS, log_ephemeris_status
     from .transit_alerts import check_global_events
+
+    # Report the chart-calculation backend up front so a degraded (stub) engine
+    # is never silently shipped to production.
+    ephe = log_ephemeris_status()
+    if ephe["degraded"] and STRICT_EPHEMERIS:
+        raise RuntimeError(
+            "STRICT_EPHEMERIS is enabled but flatlib/Swiss Ephemeris is "
+            "unavailable; aborting startup to avoid serving stub charts."
+        )
 
     try:
         check_global_events()
@@ -115,24 +125,71 @@ api.middleware("http")(rate_limit_middleware)
 api.middleware("http")(security_headers_middleware)
 
 # CORS configuration
+#
+# Safety rules enforced here:
+# - We send credentials (cookies / Authorization), so the CORS spec forbids a
+#   wildcard ("*") origin. A wildcard + credentials combination is silently
+#   rejected by browsers and is a security footgun, so we refuse it outright.
+# - Production must define an explicit allow-list (ALLOW_ORIGINS) or rely on the
+#   domain-scoped regex below. We never fall back to "*".
+APP_ENV = os.getenv("APP_ENV", os.getenv("ENVIRONMENT", "production")).strip().lower()
+IS_PRODUCTION = APP_ENV in {"prod", "production"}
+
 allow_origins_env = os.getenv("ALLOW_ORIGINS", "")
+if allow_origins_env.strip() == "*":
+    # Explicit wildcard requested. With credentials this is invalid and unsafe;
+    # ignore it and log loudly so misconfiguration is visible in deploy logs.
+    logger.error(
+        "ALLOW_ORIGINS='*' is not permitted with credentialed CORS. "
+        "Falling back to the domain-scoped allow-list/regex. "
+        "Set ALLOW_ORIGINS to a comma-separated list of exact origins."
+    )
+    allow_origins_env = ""
+
 if allow_origins_env:
     allow_origins = [o.strip() for o in allow_origins_env.split(",") if o.strip()]
 else:
+    # Known production web origins, always permitted.
     allow_origins = [
-        "http://localhost:3000",
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
+        "https://astronumeric.com",
+        "https://www.astronumeric.com",
+        "https://astromeric.com",
+        "https://www.astromeric.com",
     ]
+    # Local dev origins are only added outside production.
+    if not IS_PRODUCTION:
+        allow_origins += [
+            "http://localhost:3000",
+            "http://localhost:5173",
+            "http://127.0.0.1:3000",
+            "http://127.0.0.1:5173",
+        ]
 
+# Domain-scoped regex (Cloudflare preview deploys + apex/www domains).
+# In production we intentionally drop the private-network / localhost matchers.
+_default_regex_prod = (
+    r"https://([a-z0-9-]+\.)?(astronumeric|astromeric)\.(com|pages\.dev)"
+)
+_default_regex_dev = (
+    r"https?://(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|"
+    r"172\.(1[6-9]|2\d|3[0-1])\.\d+\.\d+|"
+    r"([a-z0-9-]+\.)?(astronumeric|astromeric)\.(com|pages\.dev))(:\d+)?"
+)
 allow_origin_regex = os.getenv(
     "ALLOW_ORIGIN_REGEX",
-    r"https?://(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.(1[6-9]|2\d|3[0-1])\.\d+\.\d+|.*\.astronumeric\.pages\.dev|.*\.astromeric\.pages\.dev|astronumeric\.pages\.dev|astromeric\.pages\.dev|.*\.astronumeric\.com|.*\.astromeric\.com|astronumeric\.com|www\.astronumeric\.com|www\.astromeric\.com)(:\d+)?",
+    _default_regex_prod if IS_PRODUCTION else _default_regex_dev,
+)
+
+logger.info(
+    "CORS configured (env=%s): origins=%s, regex=%s",
+    APP_ENV,
+    allow_origins,
+    allow_origin_regex,
 )
 
 api.add_middleware(
     CORSMiddleware,
-    allow_origins=allow_origins if allow_origins else ["*"],
+    allow_origins=allow_origins,
     allow_origin_regex=allow_origin_regex,
     allow_credentials=True,
     allow_methods=["*"],

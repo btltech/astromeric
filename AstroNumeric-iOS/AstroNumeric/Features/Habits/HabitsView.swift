@@ -751,50 +751,64 @@ struct CreateHabitSheet: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.black.opacity(0.95).ignoresSafeArea()
-                
-                Form {
-                    Section("ui.habits.11".localized) {
-                        TextField("ui.habits.8".localized, text: $name)
-                        
-                        Picker("ui.habits.10".localized, selection: $selectedCategory) {
-                            ForEach(LocalHabitCategory.fallbackCategories) { cat in
-                                HStack {
-                                    Text(cat.emoji)
-                                    Text(cat.name)
+                CosmicBackgroundView(element: nil)
+                    .ignoresSafeArea()
+
+                ScrollView {
+                    VStack(spacing: Space.md) {
+                        PremiumSettingsGroup(
+                            title: "ui.habits.11".localized,
+                            subtitle: "habits.create.subtitle".localized,
+                            icon: "plus.circle.fill",
+                            accent: .positiveGreen
+                        ) {
+                            habitTextField("ui.habits.8".localized, text: $name)
+
+                            Picker("ui.habits.10".localized, selection: $selectedCategory) {
+                                ForEach(LocalHabitCategory.fallbackCategories) { category in
+                                    Text("\(category.emoji) \(category.name)").tag(category.id)
                                 }
-                                .tag(cat.id)
                             }
+                            .pickerStyle(.menu)
+                            .tint(.positiveGreen)
+
+                            habitTextField("ui.habits.9".localized, text: $description, axis: .vertical)
+                                .lineLimit(2...4)
                         }
-                        
-                        TextField("ui.habits.9".localized, text: $description, axis: .vertical)
-                            .lineLimit(2...4)
-                    }
-                    
-                    Section {
+
                         if let guidance = viewModel.lunarGuidance {
-                            HStack {
-                                Text(guidance.emoji)
-                                VStack(alignment: .leading) {
+                            PremiumSettingsGroup(
+                                title: "ui.habits.6".localized,
+                                subtitle: guidance.theme,
+                                icon: "moon.stars.fill",
+                                accent: .accentPrimary
+                            ) {
+                                HStack(spacing: Space.sm) {
+                                    Text(guidance.emoji)
+                                        .font(.title2)
                                     Text(String(format: "fmt.habits.0".localized, "\(guidance.phaseName)"))
-                                        .font(.subheadline)
-                                    Text(guidance.theme)
-                                        .font(.label)
-                                        .foregroundStyle(Color.textSecondary)
+                                        .font(.subheadline.weight(.semibold))
+                                    Spacer()
+                                }
+
+                                if guidance.idealHabits.contains(selectedCategory) {
+                                    PremiumStatusBanner(
+                                        title: "ui.habits.7".localized,
+                                        message: "habits.create.phaseMatch".localized,
+                                        tone: .success
+                                    )
                                 }
                             }
-                            
-                            if guidance.idealHabits.contains(selectedCategory) {
-                                Label("ui.habits.7".localized, systemImage: "checkmark.circle.fill")
-                                    .foregroundStyle(.green)
-                                    .font(.label)
-                            }
                         }
-                    } header: {
-                        Text("ui.habits.6".localized)
+
+                        GradientButton("action.create".localized, icon: "checkmark.circle.fill", isLoading: isCreating) {
+                            Task { await createHabit() }
+                        }
+                        .disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isCreating)
                     }
+                    .padding()
+                    .readableContainer()
                 }
-                .scrollContentBackground(.hidden)
             }
             .navigationTitle("screen.newHabit".localized)
             .navigationBarTitleDisplayMode(.inline)
@@ -804,27 +818,37 @@ struct CreateHabitSheet: View {
                         isPresented = false
                     }
                 }
-                
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("action.create".localized) {
-                        Task {
-                            isCreating = true
-                            let success = await viewModel.createHabit(
-                                name: name,
-                                category: selectedCategory,
-                                description: description
-                            )
-                            isCreating = false
-                            if success {
-                                isPresented = false
-                            }
-                        }
-                    }
-                    .disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isCreating)
-                }
             }
         }
         .presentationDetents([.medium, .large])
+    }
+
+    private func habitTextField(_ placeholder: String, text: Binding<String>, axis: Axis = .horizontal) -> some View {
+        TextField(placeholder, text: text, axis: axis)
+            .textFieldStyle(.plain)
+            .padding(Space.sm)
+            .background(
+                RoundedRectangle(cornerRadius: Radius.sm)
+                    .fill(Color.surfaceBase)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: Radius.sm)
+                            .stroke(Color.borderSubtle, lineWidth: Stroke.hairline)
+                    )
+            )
+    }
+
+    @MainActor
+    private func createHabit() async {
+        isCreating = true
+        let success = await viewModel.createHabit(
+            name: name,
+            category: selectedCategory,
+            description: description
+        )
+        isCreating = false
+        if success {
+            isPresented = false
+        }
     }
 }
 

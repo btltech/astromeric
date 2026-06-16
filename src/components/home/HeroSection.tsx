@@ -42,8 +42,12 @@ export function HeroSection({
       </div>
 
       <nav className="hero-section__jump-links" aria-label="Homepage sections">
-        <a className="hero-section__jump-link" href="#how-it-works">How it works</a>
-        <a className="hero-section__jump-link" href="#what-you-get">What you get</a>
+        <a className="hero-section__jump-link" href="#how-it-works">
+          How it works
+        </a>
+        <a className="hero-section__jump-link" href="#what-you-get">
+          What you get
+        </a>
       </nav>
     </section>
   );

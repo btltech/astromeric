@@ -44,9 +44,9 @@ struct TarotView: View {
                     // Card details
                     if let card = tarotCard, isFlipped {
                         PremiumSectionHeader(
-                    title: "section.tarot.0.title".localized,
-                    subtitle: "section.tarot.0.subtitle".localized
-                )
+                            title: "section.tarot.0.title".localized,
+                            subtitle: "section.tarot.0.subtitle".localized
+                        )
 
                         cardDetails(card)
                     }
@@ -73,7 +73,7 @@ struct TarotView: View {
     private var cardSection: some View {
         ZStack {
             // Card back
-            RoundedRectangle(cornerRadius: 16)
+            RoundedRectangle(cornerRadius: Radius.md)
                 .fill(
                     LinearGradient(
                         colors: [.purple.opacity(0.8), .indigo.opacity(0.8)],
@@ -112,7 +112,7 @@ struct TarotView: View {
     }
     
     private func cardFront(_ card: TarotCard) -> some View {
-        RoundedRectangle(cornerRadius: 16)
+        RoundedRectangle(cornerRadius: Radius.md)
             .fill(
                 LinearGradient(
                     colors: [.white.opacity(0.1), .purple.opacity(0.2)],
@@ -147,61 +147,39 @@ struct TarotView: View {
     }
     
     private func cardDetails(_ card: TarotCard) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("ui.tarot.0".localized)
-                .font(.headline)
-            
-            Text(card.meaning)
-                .font(.body)
-                .foregroundStyle(Color.textSecondary)
-            
-            Text("ui.tarot.1".localized)
-                .font(.headline)
-                .padding(.top, 8)
-            
-            Text(card.interpretation)
-                .font(.body)
-                .foregroundStyle(Color.textSecondary)
+        CardView {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("ui.tarot.0".localized)
+                    .font(.headline)
+
+                Text(card.meaning)
+                    .font(.body)
+                    .foregroundStyle(Color.textSecondary)
+
+                PremiumDivider()
+
+                Text("ui.tarot.1".localized)
+                    .font(.headline)
+
+                Text(card.interpretation)
+                    .font(.body)
+                    .foregroundStyle(Color.textSecondary)
+            }
         }
-        .padding()
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(.ultraThinMaterial)
-        )
         .transition(.move(edge: .bottom).combined(with: .opacity))
     }
     
     private var drawButton: some View {
-        Button {
+        GradientButton("ui.tarot.2".localized, icon: "sparkles", isLoading: isLoading) {
             Task {
                 await drawCard()
             }
-        } label: {
-            HStack {
-                Image(systemName: "sparkles")
-                Text("ui.tarot.2".localized)
-            }
-            .font(.headline)
-            .foregroundStyle(.white)
-            .padding(.horizontal, 24)
-            .padding(.vertical, 14)
-            .background(
-                Capsule()
-                    .fill(
-                        LinearGradient(
-                            colors: [.purple, .indigo],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                    )
-            )
         }
         .disabled(isLoading)
     }
     
     private var drawAgainButton: some View {
-        Button {
+        SecondaryButton("ui.tarot.3".localized, icon: "arrow.trianglehead.2.counterclockwise.rotate.90") {
             // Reset and draw new card
             withAnimation(.spring(duration: 0.3)) {
                 isFlipped = false
@@ -212,19 +190,6 @@ struct TarotView: View {
                 try? await Task.sleep(for: .milliseconds(400))
                 await drawCard()
             }
-        } label: {
-            HStack {
-                Image(systemName: "arrow.trianglehead.2.counterclockwise.rotate.90")
-                Text("ui.tarot.3".localized)
-            }
-            .font(.subheadline.weight(.medium))
-            .foregroundStyle(.purple)
-            .padding(.horizontal, 20)
-            .padding(.vertical, 12)
-            .background(
-                Capsule()
-                    .strokeBorder(Color.purple.opacity(0.5), lineWidth: 1)
-            )
         }
         .disabled(isLoading)
     }

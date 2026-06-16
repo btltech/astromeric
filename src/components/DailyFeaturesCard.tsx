@@ -32,7 +32,7 @@ export function DailyFeaturesCard({ birthDate, sunSign }: Props) {
           name: 'Guest',
           date_of_birth: birthDate,
           sun_sign: sunSign,
-        } as any);
+        } as Parameters<typeof fetchDailyFeatures>[0]);
         setFeatures(data);
       } catch (err) {
         console.error('Failed to fetch daily features:', err);
@@ -118,7 +118,8 @@ export function DailyFeaturesCard({ birthDate, sunSign }: Props) {
             <span className="daily-action-label">Wear or use today</span>
             <span className="daily-action-value">{luckyColors?.primary ?? 'Cosmic blue'}</span>
             <span className="daily-action-note">
-              {luckyColors?.description ?? 'Use a calming color cue while the daily palette finishes loading.'}
+              {luckyColors?.description ??
+                'Use a calming color cue while the daily palette finishes loading.'}
             </span>
           </div>
         </div>
@@ -173,7 +174,8 @@ export function DailyFeaturesCard({ birthDate, sunSign }: Props) {
                 <span className="feature-label">Focus Planet</span>
                 <span className="feature-value">{focusPlanet}</span>
                 <span className="feature-meaning">
-                  {luckyPlanet?.message ?? 'The focus planet is still resolving from the daily feature feed.'}
+                  {luckyPlanet?.message ??
+                    'The focus planet is still resolving from the daily feature feed.'}
                 </span>
               </div>
             </div>

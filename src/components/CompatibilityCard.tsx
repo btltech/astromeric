@@ -44,7 +44,9 @@ const getRedFlags = (data: CompatibilityResult): string[] => {
     redFlags.push('Core values may not align - have honest conversations about life goals');
   }
   if (overallScore < 50) {
-    redFlags.push('Overall compatibility is low — focus on one shared goal first and see if you can move forward on that before everything else.');
+    redFlags.push(
+      'Overall compatibility is low — focus on one shared goal first and see if you can move forward on that before everything else.'
+    );
   }
 
   // Add specific element-based red flags
@@ -53,7 +55,9 @@ const getRedFlags = (data: CompatibilityResult): string[] => {
       (c) => c.toLowerCase().includes('control') || c.toLowerCase().includes('power')
     )
   ) {
-    redFlags.push('Power dynamics may come up — decide early on who handles what so it does not become a daily source of friction.');
+    redFlags.push(
+      'Power dynamics may come up — decide early on who handles what so it does not become a daily source of friction.'
+    );
   }
   if (
     data.challenges.some(
@@ -79,13 +83,19 @@ const getActionTips = (data: CompatibilityResult, score: number): string[] => {
   const tips: string[] = [];
 
   if (data.topic_scores.communication < 6) {
-    tips.push('Set a weekly 15-minute check-in where each person shares one concern without interruption');
+    tips.push(
+      'Set a weekly 15-minute check-in where each person shares one concern without interruption'
+    );
   } else {
-    tips.push('Use your communication strength — be the one who raises issues before they become problems');
+    tips.push(
+      'Use your communication strength — be the one who raises issues before they become problems'
+    );
   }
 
   if (data.topic_scores.emotional < 6) {
-    tips.push('Ask each other “what do you need right now?” — your emotional styles differ more than you think');
+    tips.push(
+      'Ask each other “what do you need right now?” — your emotional styles differ more than you think'
+    );
   } else if (data.topic_scores.values < 6) {
     tips.push('Write down your three relationship non-negotiables and share them openly');
   } else {
@@ -112,8 +122,6 @@ const CATEGORIES = [
   { key: 'spiritual', label: 'Spiritual Alignment', icon: '✨' },
 ];
 
-type TabType = 'overview' | 'details' | 'advice';
-
 export function CompatibilityCard({ data }: Props) {
   const [detailsOpen, setDetailsOpen] = useState(false);
 
@@ -137,7 +145,9 @@ export function CompatibilityCard({ data }: Props) {
         </div>
 
         <div className="compat-outcome-banner" style={{ borderColor: scoreColor }}>
-          <span className="compat-outcome-label" style={{ color: scoreColor }}>{scoreLabel}</span>
+          <span className="compat-outcome-label" style={{ color: scoreColor }}>
+            {scoreLabel}
+          </span>
           <p className="compat-outcome-summary">{getCompatSummary(overallScore)}</p>
         </div>
       </div>
@@ -187,7 +197,7 @@ export function CompatibilityCard({ data }: Props) {
 
       {/* STRENGTHS */}
       <div className="compat-list strengths" style={{ marginTop: '1rem' }}>
-        <h4>💪 Where you're strong together</h4>
+        <h4>💪 Where you&apos;re strong together</h4>
         <ul>
           {data.strengths.map((s, i) => (
             <li key={i}>
@@ -212,20 +222,36 @@ export function CompatibilityCard({ data }: Props) {
         {detailsOpen && (
           <div className="compat-details-panel">
             {/* Score ring — de-emphasised in details */}
-            <div className="score-display-compact" style={{ '--score-color': scoreColor } as React.CSSProperties}>
+            <div
+              className="score-display-compact"
+              style={{ '--score-color': scoreColor } as React.CSSProperties}
+            >
               <div className="score-ring-small">
                 <svg viewBox="0 0 80 80">
-                  <circle cx="40" cy="40" r="34" fill="none" stroke="rgba(136,192,208,0.1)" strokeWidth="6" />
                   <circle
-                    cx="40" cy="40" r="34" fill="none"
-                    stroke={scoreColor} strokeWidth="6"
+                    cx="40"
+                    cy="40"
+                    r="34"
+                    fill="none"
+                    stroke="rgba(136,192,208,0.1)"
+                    strokeWidth="6"
+                  />
+                  <circle
+                    cx="40"
+                    cy="40"
+                    r="34"
+                    fill="none"
+                    stroke={scoreColor}
+                    strokeWidth="6"
                     strokeDasharray={`${(overallScore / 100) * 213.628} 213.628`}
                     strokeLinecap="round"
                     transform="rotate(-90 40 40)"
                   />
                 </svg>
                 <div className="score-value-small">
-                  <span style={{ fontSize: '1.4rem', fontWeight: 700, color: scoreColor }}>{overallScore}</span>
+                  <span style={{ fontSize: '1.4rem', fontWeight: 700, color: scoreColor }}>
+                    {overallScore}
+                  </span>
                   <span style={{ fontSize: '0.75rem', color: scoreColor }}>%</span>
                 </div>
               </div>
@@ -247,7 +273,10 @@ export function CompatibilityCard({ data }: Props) {
                       </span>
                     </div>
                     <div className="category-bar">
-                      <div className="category-fill" style={{ width: `${score}%`, background: catColor }} />
+                      <div
+                        className="category-fill"
+                        style={{ width: `${score}%`, background: catColor }}
+                      />
                     </div>
                   </div>
                 );
@@ -259,11 +288,17 @@ export function CompatibilityCard({ data }: Props) {
               <h4>🌀 How your energies interact</h4>
               <div className="elements-display">
                 <span className="element-badge">
-                  {(data.people[0] as any).sign} ({(data.people[0] as any).sign && getElement((data.people[0] as any).sign)})
+                  {(data.people[0] as { sign?: string }).sign} (
+                  {(data.people[0] as { sign?: string }).sign &&
+                    getElement((data.people[0] as { sign?: string }).sign)}
+                  )
                 </span>
                 <span className="element-connector">×</span>
                 <span className="element-badge">
-                  {(data.people[1] as any).sign} ({(data.people[1] as any).sign && getElement((data.people[1] as any).sign)})
+                  {(data.people[1] as { sign?: string }).sign} (
+                  {(data.people[1] as { sign?: string }).sign &&
+                    getElement((data.people[1] as { sign?: string }).sign)}
+                  )
                 </span>
               </div>
             </div>

@@ -5,6 +5,7 @@ import SwiftUI
 
 struct JournalView: View {
     @Environment(AppStore.self) private var store
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @State private var vm = JournalVM()
     @State private var selectedReading: JournalReading?
     @State private var entryDraft: String = ""
@@ -22,6 +23,14 @@ struct JournalView: View {
                 }
                 .refreshable {
                     await vm.load(profile: store.activeProfile, isAuthenticated: store.isAuthenticated, forceRefresh: true)
+                }
+                .navigationDestination(isPresented: Binding(
+                    get: { horizontalSizeClass == .compact && selectedReading != nil },
+                    set: { if !$0 { selectedReading = nil } }
+                )) {
+                    if let reading = selectedReading {
+                        journalEditor(reading: reading)
+                    }
                 }
         } detail: {
             NavigationStack {
@@ -66,10 +75,9 @@ struct JournalView: View {
                             }
                         } else if let profile = store.activeProfile {
                             PremiumSectionHeader(
-                title: "section.journal.0.title".localized,
-                subtitle: vm.isLocalMode
-                                    ? "tern.journal.0a".localized : "tern.journal.0b".localized
-            )
+                                title: "section.journal.0.title".localized,
+                                subtitle: vm.isLocalMode ? "tern.journal.0a".localized : "tern.journal.0b".localized
+                            )
 
                             if !vm.prompts.isEmpty {
                                 CardView {
@@ -86,20 +94,17 @@ struct JournalView: View {
                             }
                             
                             if vm.isLoading {
-                                ProgressView("Loading journal...")
-                                    .tint(.white)
+                                PremiumStatusBanner(
+                                    title: "common.loading".localized,
+                                    message: "journal.loading.body".localized,
+                                    tone: .info
+                                )
                             } else if vm.readings.isEmpty {
-                                CardView {
-                                    VStack(alignment: .leading, spacing: 8) {
-                                        Text(vm.isLocalMode ? "tern.journal.1a".localized : "tern.journal.1b".localized)
-                                            .font(.headline)
-                                        Text(vm.isLocalMode
-                                             ? "tern.journal.2a".localized : "tern.journal.2b".localized
-                                        )
-                                            .font(.caption)
-                                            .foregroundStyle(Color.textSecondary)
-                                    }
-                                }
+                                PremiumStatusBanner(
+                                    title: vm.isLocalMode ? "tern.journal.1a".localized : "tern.journal.1b".localized,
+                                    message: vm.isLocalMode ? "tern.journal.2a".localized : "tern.journal.2b".localized,
+                                    tone: .info
+                                )
                             } else {
                                 ForEach(vm.readings) { reading in
                                     Button {
@@ -142,18 +147,14 @@ struct JournalView: View {
                             }
                             
                             if vm.isLocalMode {
-                                Button {
+                                GradientButton("ui.journal.4".localized, icon: "plus") {
                                     Task {
                                         let draft = await vm.makeLocalDraft(profileId: profile.id)
                                         selectedReading = draft
                                         entryDraft = ""
                                         outcomeDraft = .neutral
                                     }
-                                } label: {
-                                    Text("ui.journal.4".localized)
-                                        .frame(maxWidth: .infinity)
                                 }
-                                .buttonStyle(.borderedProminent)
                             }
                         }
                     }
@@ -172,9 +173,9 @@ struct JournalView: View {
             ScrollView {
                 VStack(spacing: 16) {
                     PremiumSectionHeader(
-                title: "section.journal.1.title".localized,
-                subtitle: "section.journal.1.subtitle".localized
-            )
+                        title: "section.journal.1.title".localized,
+                        subtitle: "section.journal.1.subtitle".localized
+                    )
 
                     Text(reading.scopeLabel ?? "Reading")
                         .font(.headline)
@@ -192,9 +193,15 @@ struct JournalView: View {
 
                     TextEditor(text: $entryDraft)
                         .frame(minHeight: 240)
-                        .padding(8)
-                        .background(Color.surfaceElevated)
-                        .cornerRadius(12)
+                        .padding(Space.sm)
+                        .background(
+                            RoundedRectangle(cornerRadius: Radius.sm)
+                                .fill(Color.surfaceElevated)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: Radius.sm)
+                                        .stroke(Color.borderSubtle, lineWidth: Stroke.hairline)
+                                )
+                        )
 
                     // Voice recording
                     HStack(spacing: 12) {
@@ -233,7 +240,7 @@ struct JournalView: View {
                         Spacer()
                     }
 
-                    Button("ui.journal.6".localized) {
+                    GradientButton("ui.journal.6".localized, icon: "checkmark.circle.fill") {
                         Task {
                             await vm.saveEntry(readingId: reading.id, entry: entryDraft)
                             await vm.saveOutcome(readingId: reading.id, outcome: outcomeDraft)
@@ -241,7 +248,6 @@ struct JournalView: View {
                             selectedReading = nil
                         }
                     }
-                    .buttonStyle(.borderedProminent)
                 }
                 .padding()
                 .readableContainer()

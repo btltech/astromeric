@@ -17,6 +17,7 @@ struct NumerologyView: View {
     @State private var explanationSource: AIInsightSource = .fallback
     @State private var explanationGeneratedAt: Date = Date()
     @State private var showExplanation = false
+    @State private var showAdvancedNumberWork = false
 
     private var numerologyColumns: [GridItem] {
         if dynamicTypeSize.isAccessibilitySize { return [GridItem(.flexible())] }
@@ -91,29 +92,26 @@ struct NumerologyView: View {
                                     }
                                     .disabled(isExplaining)
                                     
-                                    // Lucky Numbers
-                                    if let lucky = data.luckyNumbers, !lucky.isEmpty {
-                                        luckyNumbersSection(lucky)
-                                    }
-                                    
-                                    // Auspicious Days
-                                    if let days = data.auspiciousDays, !days.isEmpty {
-                                        auspiciousDaysSection(days)
-                                    }
-                                    
-                                    // Pinnacles
-                                    if let pinnacles = data.pinnacles, !pinnacles.isEmpty {
-                                        pinnaclesSection(pinnacles)
-                                    }
+                                    if hasAdvancedNumberWork(data) {
+                                        advancedNumberWorkSummary(data)
 
-                                    // Challenges
-                                    if let challenges = data.challenges, !challenges.isEmpty {
-                                        challengesSection(challenges)
-                                    }
-                                    
-                                    // Karmic Debts (only shown when present)
-                                    if let debts = data.karmicDebts, !debts.isEmpty {
-                                        karmicDebtsSection(debts)
+                                        if showAdvancedNumberWork {
+                                            if let lucky = data.luckyNumbers, !lucky.isEmpty {
+                                                luckyNumbersSection(lucky)
+                                            }
+                                            if let days = data.auspiciousDays, !days.isEmpty {
+                                                auspiciousDaysSection(days)
+                                            }
+                                            if let pinnacles = data.pinnacles, !pinnacles.isEmpty {
+                                                pinnaclesSection(pinnacles)
+                                            }
+                                            if let challenges = data.challenges, !challenges.isEmpty {
+                                                challengesSection(challenges)
+                                            }
+                                            if let debts = data.karmicDebts, !debts.isEmpty {
+                                                karmicDebtsSection(debts)
+                                            }
+                                        }
                                     }
                                 }
                                 .padding()
@@ -314,6 +312,60 @@ struct NumerologyView: View {
     }
     
     @State private var tappedNumerologyLuckyNumber: Int?
+
+    private func advancedNumberWorkSummary(_ data: NumerologyData) -> some View {
+        let detailCount = advancedNumberWorkCount(data)
+
+        return CardView {
+            VStack(alignment: .leading, spacing: Space.md) {
+                PremiumSectionHeader(
+                    title: "numerology.advanced.title".localized,
+                    subtitle: "numerology.advanced.subtitle".localized
+                )
+
+                HStack(spacing: Space.sm) {
+                    PremiumBadge(text: String(format: "numerology.advanced.count".localized, "\(detailCount)"), tint: .accentPrimary)
+                    if let debts = data.karmicDebts, !debts.isEmpty {
+                        PremiumBadge(text: String(format: "numerology.advanced.debts".localized, "\(debts.count)"), tint: .warningOrange)
+                    }
+                }
+
+                Button {
+                    withAnimation(.spring(response: 0.25, dampingFraction: 0.85)) {
+                        showAdvancedNumberWork.toggle()
+                    }
+                } label: {
+                    Label(
+                        showAdvancedNumberWork ? "numerology.advanced.hide".localized : "numerology.advanced.show".localized,
+                        systemImage: showAdvancedNumberWork ? "chevron.up" : "chevron.down"
+                    )
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Color.accentPrimary)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, Space.sm)
+                    .background(
+                        RoundedRectangle(cornerRadius: Radius.sm)
+                            .fill(Color.accentPrimary.opacity(0.12))
+                    )
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+
+    private func hasAdvancedNumberWork(_ data: NumerologyData) -> Bool {
+        advancedNumberWorkCount(data) > 0
+    }
+
+    private func advancedNumberWorkCount(_ data: NumerologyData) -> Int {
+        [
+            data.luckyNumbers?.isEmpty == false ? 1 : 0,
+            data.auspiciousDays?.isEmpty == false ? 1 : 0,
+            data.pinnacles?.isEmpty == false ? 1 : 0,
+            data.challenges?.isEmpty == false ? 1 : 0,
+            data.karmicDebts?.isEmpty == false ? 1 : 0
+        ].reduce(0, +)
+    }
     
     private func luckyNumbersSection(_ numbers: [Int]) -> some View {
         CardView {

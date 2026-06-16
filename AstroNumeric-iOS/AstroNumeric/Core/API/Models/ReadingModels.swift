@@ -140,8 +140,8 @@ struct PredictionData: Codable {
     let sections: [ForecastSection]
     let overallScore: Float
     let generatedAt: String
-    let tldr: String? = nil
-    let activeTransits: [ActiveTransit]? = nil
+    var tldr: String? = nil
+    var activeTransits: [ActiveTransit]? = nil
 
     enum CodingKeys: String, CodingKey {
         case profile

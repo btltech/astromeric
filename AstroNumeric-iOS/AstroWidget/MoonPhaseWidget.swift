@@ -109,10 +109,7 @@ struct MoonPhaseWidgetView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .containerBackground(for: .widget) {
-            LinearGradient(
-                colors: [Color(white: 0.12), Color(white: 0.05)],
-                startPoint: .top, endPoint: .bottom
-            )
+            WidgetCosmicBackground()
         }
     }
 }

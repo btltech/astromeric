@@ -12,13 +12,6 @@ struct ProfileView: View {
     @State private var editingProfile: Profile?
     @State private var profileToDelete: Profile?
     @State private var showDOB = false
-    @State private var notificationStatus: UNAuthorizationStatus = .notDetermined
-    @State private var pendingNotificationCount = 0
-    @State private var nextDailyReminderDate: Date?
-    @State private var nextDailyBriefDate: Date?
-    @State private var nextTransitAlertDate: Date?
-    @State private var hasAPNSToken = false
-    @State private var widgetRefreshDiagnostics = WidgetRefreshDiagnostics.empty
     
     var body: some View {
         NavigationStack {
@@ -39,8 +32,6 @@ struct ProfileView: View {
                         // Profile header
                         profileHeader
 
-                        systemDiagnosticsSection
-
                         // Profiles (multi-profile support)
                         if !store.profiles.isEmpty {
                             profilesSection
@@ -52,15 +43,9 @@ struct ProfileView: View {
                         } else {
                             noProfileSection
                         }
-                        
-                        // Settings
-                        settingsSection
 
-                        // Trust and support
-                        trustSection
-                        
-                        // App info
-                        appInfoSection
+                        // Dedicated destinations keep Profile focused on identity.
+                        profileCentersSection
                     }
                     .padding()
                     .readableContainer()
@@ -347,352 +332,44 @@ struct ProfileView: View {
             }
         }
     }
-    
-    // MARK: - Settings Section
-    
-    private var settingsSection: some View {
-        CardView {
-            VStack(alignment: .leading, spacing: 16) {
-                PremiumSectionHeader(
-                title: "section.profile.0.title".localized,
-                subtitle: "section.profile.0.subtitle".localized
-            )
-                
-                // Learn section link
-                NavigationLink {
-                    LearnView()
-                } label: {
-                    HStack(spacing: 12) {
-                        Image(systemName: "book.fill")
-                            .foregroundStyle(.blue)
-                        Text("ui.profile.7".localized)
-                            .font(.subheadline)
-                            .foregroundStyle(.primary)
-                        Spacer()
-                        Image(systemName: "chevron.right")
-                            .font(.label)
-                            .foregroundStyle(Color.textSecondary)
-                    }
-                }
 
-                Divider()
-
-                // Support links
-                Group {
-                    Text("ui.profile.8".localized)
-                        .font(.label.weight(.semibold))
-                        .foregroundStyle(Color.textSecondary)
-
-                    NavigationLink {
-                        UserGuideView()
-                    } label: {
-                        HStack(spacing: 12) {
-                            Image(systemName: "map.fill")
-                                .foregroundStyle(.teal)
-                            Text("ui.profile.9".localized)
-                                .font(.subheadline)
-                                .foregroundStyle(.primary)
-                            Spacer()
-                            Image(systemName: "chevron.right")
-                                .font(.label)
-                                .foregroundStyle(Color.textSecondary)
-                        }
-                    }
-                    .accessibilityLabel("User Guide")
-                    .accessibilityHint("Comprehensive guide to all app features")
-
-                    NavigationLink {
-                        HelpView()
-                    } label: {
-                        HStack(spacing: 12) {
-                            Image(systemName: "questionmark.circle.fill")
-                                .foregroundStyle(.orange)
-                            Text("ui.profile.10".localized)
-                                .font(.subheadline)
-                                .foregroundStyle(.primary)
-                            Spacer()
-                            Image(systemName: "chevron.right")
-                                .font(.label)
-                                .foregroundStyle(Color.textSecondary)
-                        }
-                    }
-                    .accessibilityLabel("Help and Frequently Asked Questions")
-                    .accessibilityHint("Searchable answers to common questions")
-
-                    NavigationLink {
-                        PrivacyView()
-                    } label: {
-                        HStack(spacing: 12) {
-                            Image(systemName: "lock.shield.fill")
-                                .foregroundStyle(.purple)
-                            Text("ui.profile.11".localized)
-                                .font(.subheadline)
-                                .foregroundStyle(.primary)
-                            Spacer()
-                            Image(systemName: "chevron.right")
-                                .font(.label)
-                                .foregroundStyle(Color.textSecondary)
-                        }
-                    }
-                    .accessibilityLabel("Privacy Policy")
-                    .accessibilityHint("How your data is collected, stored, and protected")
-                }
-
-                Divider()
-
-                Link(destination: supportEmailURL) {
-                    HStack(spacing: 12) {
-                        Image(systemName: "envelope.fill")
-                            .foregroundStyle(.green)
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("ui.profile.12".localized)
-                                .font(.subheadline)
-                                .foregroundStyle(.primary)
-                            Text("ui.profile.13".localized)
-                                .font(.meta)
-                                .foregroundStyle(Color.textSecondary)
-                        }
-                        Spacer()
-                        Image(systemName: "arrow.up.forward")
-                            .font(.label)
-                            .foregroundStyle(Color.textSecondary)
-                    }
-                }
-                .accessibilityLabel("Email support")
-                .accessibilityHint("Creates an email with app version and device details, without birth data")
-
-                Divider()
-
-                Toggle(isOn: Binding(
-                    get: { store.hideSensitiveDetailsEnabled },
-                    set: { newValue in
-                        let wasEnabled = store.hideSensitiveDetailsEnabled
-                        store.hideSensitiveDetailsEnabled = newValue
-                        if newValue {
-                            showDOB = false
-                        }
-                        if newValue && !wasEnabled {
-                            RelationshipsVM.scrubStoredSensitiveDetails()
-                            Task { await ResponseCache.shared.clearAll() }
-                        }
-                    }
-                )) {
-                    HStack(spacing: 12) {
-                        Image(systemName: "eye.slash.fill")
-                            .foregroundStyle(.purple)
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("ui.profile.14".localized)
-                                .font(.subheadline)
-                            Text("ui.profile.15".localized)
-                                .font(.meta)
-                                .foregroundStyle(Color.textSecondary)
-                        }
-                    }
-                }
-                .tint(.purple)
-                .accessibilityLabel("Hide Sensitive Details")
-                .accessibilityHint("Masks names and birth details in the app and sharing. It does not disable network-backed features or remove chart calculation data.")
-                
-                // Daily reminder toggle
-                Toggle(isOn: Binding(
-                    get: { store.dailyReminderEnabled },
-                    set: { newValue in
-                        store.dailyReminderEnabled = newValue
-                        if newValue {
-                            requestNotificationPermission()
-                        }
-                    }
-                )) {
-                    HStack(spacing: 12) {
-                        Image(systemName: "bell.fill")
-                            .foregroundStyle(.purple)
-                        Text("ui.profile.16".localized)
-                            .font(.subheadline)
-                    }
-                }
-                .tint(.purple)
-                
-                Divider()
-
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Diagnostics")
-                                .font(.subheadline.weight(.semibold))
-                            Text("Widget Refresh")
-                                .font(.meta)
-                                .foregroundStyle(Color.textSecondary)
-                            Text("Notifications")
-                                .font(.meta)
-                                .foregroundStyle(Color.textSecondary)
-                        }
-                        Spacer()
-                        Button {
-                            Task { await refreshSystemDiagnostics() }
-                        } label: {
-                            Image(systemName: "arrow.clockwise")
-                                .foregroundStyle(.purple)
-                                .frame(width: 44, height: 44)
-                                .contentShape(Rectangle())
-                        }
-                        .buttonStyle(ScaleButtonStyle())
-                        .accessibilityLabel("Refresh diagnostics")
-                        .accessibilityHint("Reloads widget and notification status")
-                    }
-                }
-                .accessibilityIdentifier("DiagnosticsSection")
-
-                Divider()
-                
-                // Language selector — temporarily hidden until full UI translation lands.
-                // Re-enable once all `Text(...)` literals are routed through `.localized`.
-                // LanguageSelectorRow()
-                // Divider()
-                
-                // Tone preference
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        Text("ui.profile.17".localized)
-                            .font(.subheadline)
-                        Spacer()
-                        Text(toneLabel)
-                            .font(.label)
-                            .foregroundStyle(Color.textSecondary)
-                    }
-                    
-                    Slider(
-                        value: Binding(
-                            get: { store.tonePreference },
-                            set: { store.tonePreference = $0 }
-                        ),
-                        in: 0...100
-                    )
-                    .tint(.purple)
-                    
-                    HStack {
-                        Text("ui.profile.18".localized)
-                            .font(.meta)
-                            .foregroundStyle(Color.textSecondary)
-                        Spacer()
-                        Text("ui.profile.19".localized)
-                            .font(.meta)
-                            .foregroundStyle(Color.textSecondary)
-                    }
-                }
-                
-                Divider()
-                
-                // Accessibility section
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("ui.profile.20".localized)
-                        .font(.label.weight(.semibold))
-                        .foregroundStyle(Color.textSecondary)
-                    
-                    Toggle(isOn: Binding(
-                        get: { store.highContrastEnabled },
-                        set: { store.highContrastEnabled = $0 }
-                    )) {
-                        HStack(spacing: 12) {
-                            Image(systemName: "circle.lefthalf.filled")
-                                .foregroundStyle(.orange)
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("ui.profile.21".localized)
-                                    .font(.subheadline)
-                                Text("ui.profile.22".localized)
-                                    .font(.meta)
-                                    .foregroundStyle(Color.textSecondary)
-                            }
-                        }
-                    }
-                    .tint(.orange)
-                    
-                    Toggle(isOn: Binding(
-                        get: { store.largeTextEnabled },
-                        set: { store.largeTextEnabled = $0 }
-                    )) {
-                        HStack(spacing: 12) {
-                            Image(systemName: "textformat.size.larger")
-                                .foregroundStyle(.blue)
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("ui.profile.23".localized)
-                                    .font(.subheadline)
-                                Text("ui.profile.24".localized)
-                                    .font(.meta)
-                                    .foregroundStyle(Color.textSecondary)
-                            }
-                        }
-                    }
-                    .tint(.blue)
-                }
-            }
-        }
-    }
-
-    // MARK: - Trust Section
-
-    private var trustSection: some View {
+    private var profileCentersSection: some View {
         CardView {
             VStack(alignment: .leading, spacing: 14) {
                 PremiumSectionHeader(
-                title: "section.profile.1.title".localized,
-                subtitle: "section.profile.1.subtitle".localized
-            )
-
-                trustPoint(
-                    icon: "lock.fill",
-                    title: "Private profile by default",
-                    detail: "Birth profiles and preferences start on this device."
+                    title: "Manage the app",
+                    subtitle: "Open a focused screen for settings, support, and advanced diagnostics."
                 )
 
-                trustPoint(
-                    icon: "eye.slash.fill",
-                    title: "Privacy mode",
-                    detail: "Masks names and birth details in the UI, support text, and sharing; it is not a network kill switch."
-                )
-
-                trustPoint(
-                    icon: "network",
-                    title: "Clear backend boundary",
-                    detail: "Forecasts, AI guidance, friend sync, widgets, and notifications use the backend only when those features need it."
-                )
-
-                Link(destination: supportEmailURL) {
-                    Label("ui.profile.35".localized, systemImage: "envelope.fill")
-                        .font(.headline)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
-                        .background(Color.green.opacity(0.18))
-                        .foregroundStyle(.green)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                NavigationLink {
+                    ProfileSettingsView()
+                } label: {
+                    PremiumActionCard(
+                        title: "Settings & Preferences",
+                        subtitle: "Privacy, notifications, tone, accessibility, and advanced status.",
+                        icon: "slider.horizontal.3",
+                        label: "Settings",
+                        accent: .accentPrimary,
+                        emphasized: true
+                    )
                 }
-                .accessibilityHint("Creates a privacy-safe support email with app version and device details")
-            }
-        }
-    }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Settings & Preferences")
 
-    private func trustPoint(icon: String, title: String, detail: String) -> some View {
-        HStack(alignment: .top, spacing: 12) {
-            Image(systemName: icon)
-                .foregroundStyle(.purple)
-                .frame(width: 24)
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(.subheadline.weight(.semibold))
-                Text(detail)
-                    .font(.meta)
-                    .foregroundStyle(Color.textSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
+                NavigationLink {
+                    ProfileSupportCenterView()
+                } label: {
+                    PremiumActionCard(
+                        title: "Help & Privacy",
+                        subtitle: "Guides, FAQs, legal details, and a direct support contact.",
+                        icon: "questionmark.circle.fill",
+                        label: "Support",
+                        accent: .cosmicBlue
+                    )
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Help & Privacy")
             }
-        }
-    }
-    
-    private var toneLabel: String {
-        switch store.tonePreference {
-        case 0..<25: return "Very Practical"
-        case 25..<50: return "Balanced Practical"
-        case 50..<75: return "Balanced Mystical"
-        default: return "Very Mystical"
         }
     }
     
@@ -729,23 +406,379 @@ struct ProfileView: View {
     }
     
 
-    // MARK: - App Info Section
-    
-    private var appInfoSection: some View {
-        VStack(spacing: 8) {
-            Text("ui.profile.25".localized)
+    @MainActor
+    private func deleteProfile(_ profile: Profile) async {
+        store.deleteProfileLocal(id: profile.id)
+    }
+}
+
+private struct ProfileSettingsView: View {
+    @Environment(AppStore.self) private var store
+
+    var body: some View {
+        ZStack {
+            CosmicBackgroundView(element: nil)
+                .ignoresSafeArea()
+
+            ScrollView {
+                VStack(spacing: Space.md) {
+                    PremiumScreenHeader(
+                        eyebrow: "profile.settings.eyebrow".localized,
+                        title: "profile.settings.title".localized,
+                        subtitle: "profile.settings.subtitle".localized,
+                        accent: .accentPrimary,
+                        chips: ["profile.settings.chip.0".localized, "profile.settings.chip.1".localized, "profile.settings.chip.2".localized]
+                    )
+
+                    NavigationLink {
+                        NotificationSettingsView()
+                    } label: {
+                        PremiumActionCard(
+                            title: "Notification Settings",
+                            subtitle: "Manage reminder schedules, moon alerts, transit notifications, and habit nudges.",
+                            icon: "bell.badge.fill",
+                            label: "Alerts",
+                            accent: .orange,
+                            emphasized: true
+                        )
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Notification Settings")
+
+                    privacyGroup
+                    guidanceToneGroup
+                    accessibilityGroup
+                    languageNotice
+
+                    NavigationLink {
+                        ProfileDiagnosticsView()
+                    } label: {
+                        PremiumActionCard(
+                            title: "Advanced Diagnostics",
+                            subtitle: "Inspect notification permissions, widget refresh state, cache counts, and device capabilities.",
+                            icon: "wrench.and.screwdriver.fill",
+                            label: "Advanced",
+                            accent: .orange
+                        )
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Advanced Diagnostics")
+                }
+                .padding()
+                .readableContainer()
+            }
+        }
+        .navigationTitle("settings.title".localized)
+        .navigationBarTitleDisplayMode(.inline)
+    }
+
+    private var privacyGroup: some View {
+        PremiumSettingsGroup(
+            title: "profile.settings.privacy.title".localized,
+            subtitle: "profile.settings.privacy.subtitle".localized,
+            icon: "lock.shield.fill",
+            accent: .accentPrimary
+        ) {
+            PremiumToggleRow(
+                title: "ui.profile.14".localized,
+                subtitle: "ui.profile.15".localized,
+                icon: "eye.slash.fill",
+                accent: .accentPrimary,
+                isOn: hideSensitiveDetailsBinding
+            )
+        }
+    }
+
+    private var guidanceToneGroup: some View {
+        PremiumSettingsGroup(
+            title: "profile.settings.guidance.title".localized,
+            subtitle: "profile.settings.guidance.subtitle".localized,
+            icon: "slider.horizontal.3",
+            accent: .accentSecondary
+        ) {
+            VStack(alignment: .leading, spacing: Space.sm) {
+                HStack(alignment: .firstTextBaseline) {
+                    Text("ui.profile.17".localized)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Color.textPrimary)
+                    Spacer()
+                    Text(toneLabel)
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(Color.accentSecondary)
+                        .padding(.horizontal, 9)
+                        .padding(.vertical, 5)
+                        .background(Capsule().fill(Color.accentSecondary.opacity(0.14)))
+                }
+
+                Slider(value: tonePreferenceBinding, in: 0...100)
+                    .tint(.accentSecondary)
+                    .accessibilityValue(toneLabel)
+
+                HStack {
+                    Text("ui.profile.18".localized)
+                    Spacer()
+                    Text("ui.profile.19".localized)
+                }
                 .font(.caption)
                 .foregroundStyle(Color.textSecondary)
-            
-            Text("ui.profile.26".localized)
-                .font(.meta)
-                .foregroundStyle(Color.textSecondary)
+            }
+        }
+    }
 
-            Text(appVersionText)
-                .font(.meta)
+    private var accessibilityGroup: some View {
+        PremiumSettingsGroup(
+            title: "profile.settings.accessibility.title".localized,
+            subtitle: "profile.settings.accessibility.subtitle".localized,
+            icon: "accessibility.fill",
+            accent: .cosmicBlue
+        ) {
+            PremiumToggleRow(
+                title: "ui.profile.21".localized,
+                subtitle: "ui.profile.22".localized,
+                icon: "circle.lefthalf.filled",
+                accent: .warningOrange,
+                isOn: highContrastBinding
+            )
+
+            PremiumDivider()
+
+            PremiumToggleRow(
+                title: "ui.profile.23".localized,
+                subtitle: "ui.profile.24".localized,
+                icon: "textformat.size.larger",
+                accent: .cosmicBlue,
+                isOn: largeTextBinding
+            )
+        }
+    }
+
+    private var languageNotice: some View {
+        PremiumStatusBanner(
+            title: "profile.settings.language.title".localized,
+            message: "profile.settings.language.body".localized,
+            tone: .info
+        )
+    }
+
+    private var hideSensitiveDetailsBinding: Binding<Bool> {
+        Binding(
+            get: { store.hideSensitiveDetailsEnabled },
+            set: { newValue in
+                let wasEnabled = store.hideSensitiveDetailsEnabled
+                store.hideSensitiveDetailsEnabled = newValue
+                if newValue && !wasEnabled {
+                    RelationshipsVM.scrubStoredSensitiveDetails()
+                    Task { await ResponseCache.shared.clearAll() }
+                }
+            }
+        )
+    }
+
+    private var tonePreferenceBinding: Binding<Double> {
+        Binding(
+            get: { store.tonePreference },
+            set: { store.tonePreference = $0 }
+        )
+    }
+
+    private var highContrastBinding: Binding<Bool> {
+        Binding(
+            get: { store.highContrastEnabled },
+            set: { store.highContrastEnabled = $0 }
+        )
+    }
+
+    private var largeTextBinding: Binding<Bool> {
+        Binding(
+            get: { store.largeTextEnabled },
+            set: { store.largeTextEnabled = $0 }
+        )
+    }
+
+    private var toneLabel: String {
+        switch store.tonePreference {
+        case 0..<25: return "profile.settings.tone.veryPractical".localized
+        case 25..<50: return "profile.settings.tone.balancedPractical".localized
+        case 50..<75: return "profile.settings.tone.balancedMystical".localized
+        default: return "profile.settings.tone.veryMystical".localized
+        }
+    }
+}
+
+private struct ProfileSupportCenterView: View {
+    @Environment(AppStore.self) private var store
+
+    var body: some View {
+        ZStack {
+            CosmicBackgroundView(element: nil)
+                .ignoresSafeArea()
+
+            ScrollView {
+                VStack(spacing: 24) {
+                    PremiumScreenHeader(
+                        eyebrow: "Support",
+                        title: "Help & Privacy",
+                        subtitle: "Find product guidance, legal details, and a privacy-safe support channel.",
+                        accent: .accentPrimary,
+                        chips: ["Guide", "FAQ", "Privacy", "Support"]
+                    )
+
+                    CardView {
+                        VStack(alignment: .leading, spacing: 16) {
+                            PremiumSectionHeader(
+                                title: "Learn & Support",
+                                subtitle: "Get oriented quickly or dig into the full reference material."
+                            )
+
+                            NavigationLink {
+                                LearnView()
+                            } label: {
+                                supportRow(
+                                    icon: "book.fill",
+                                    iconColor: .blue,
+                                    title: "ui.profile.7".localized,
+                                    subtitle: "Lessons and explainers across astrology and numerology."
+                                )
+                            }
+                            .buttonStyle(.plain)
+
+                            NavigationLink {
+                                UserGuideView()
+                            } label: {
+                                supportRow(
+                                    icon: "map.fill",
+                                    iconColor: .teal,
+                                    title: "ui.profile.9".localized,
+                                    subtitle: "A guided tour of the app and its core features."
+                                )
+                            }
+                            .buttonStyle(.plain)
+
+                            NavigationLink {
+                                HelpView()
+                            } label: {
+                                supportRow(
+                                    icon: "questionmark.circle.fill",
+                                    iconColor: .orange,
+                                    title: "ui.profile.10".localized,
+                                    subtitle: "Common questions, troubleshooting, and usage tips."
+                                )
+                            }
+                            .buttonStyle(.plain)
+
+                            NavigationLink {
+                                PrivacyView()
+                            } label: {
+                                supportRow(
+                                    icon: "lock.shield.fill",
+                                    iconColor: .purple,
+                                    title: "ui.profile.11".localized,
+                                    subtitle: "How your data is collected, stored, and protected."
+                                )
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel("Privacy Policy")
+                        }
+                    }
+
+                    CardView {
+                        VStack(alignment: .leading, spacing: 14) {
+                            PremiumSectionHeader(
+                                title: "Trust & Contact",
+                                subtitle: "Explain the privacy model and escalate issues without exposing birth data."
+                            )
+
+                            trustPoint(
+                                icon: "lock.fill",
+                                title: "Private profile by default",
+                                detail: "Birth profiles and preferences start on this device."
+                            )
+
+                            trustPoint(
+                                icon: "eye.slash.fill",
+                                title: "Privacy mode",
+                                detail: "Masks names and birth details in the UI, support text, and sharing."
+                            )
+
+                            trustPoint(
+                                icon: "network",
+                                title: "Clear backend boundary",
+                                detail: "Forecasts, AI guidance, friend sync, widgets, and notifications use the backend only when those features need it."
+                            )
+
+                            Link(destination: supportEmailURL) {
+                                Label("ui.profile.35".localized, systemImage: "envelope.fill")
+                                    .font(.headline)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 12)
+                                    .background(Color.green.opacity(0.18))
+                                    .foregroundStyle(.green)
+                                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                            }
+                        }
+                    }
+
+                    VStack(spacing: 8) {
+                        Text("ui.profile.25".localized)
+                            .font(.caption)
+                            .foregroundStyle(Color.textSecondary)
+
+                        Text("ui.profile.26".localized)
+                            .font(.meta)
+                            .foregroundStyle(Color.textSecondary)
+
+                        Text(appVersionText)
+                            .font(.meta)
+                            .foregroundStyle(Color.textSecondary)
+                    }
+                }
+                .padding()
+                .readableContainer()
+            }
+        }
+        .navigationTitle("Support")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+
+    @ViewBuilder
+    private func supportRow(icon: String, iconColor: Color, title: String, subtitle: String) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .foregroundStyle(iconColor)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.subheadline)
+                    .foregroundStyle(.primary)
+                Text(subtitle)
+                    .font(.meta)
+                    .foregroundStyle(Color.textSecondary)
+            }
+
+            Spacer()
+
+            Image(systemName: "chevron.right")
+                .font(.label)
                 .foregroundStyle(Color.textSecondary)
         }
-        .padding(.top)
+    }
+
+    @ViewBuilder
+    private func trustPoint(icon: String, title: String, detail: String) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: icon)
+                .foregroundStyle(.purple)
+                .frame(width: 24)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.subheadline.weight(.semibold))
+                Text(detail)
+                    .font(.meta)
+                    .foregroundStyle(Color.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
     }
 
     private var appVersionText: String {
@@ -786,22 +819,173 @@ struct ProfileView: View {
         No birth date, birth time, birthplace, journal text, or chart data is included automatically.
         """
     }
-    
-    // MARK: - Helpers
-    
-    private func requestNotificationPermission() {
-        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { granted, _ in
-            if !granted {
-                DispatchQueue.main.async {
-                    store.dailyReminderEnabled = false
+}
+
+private struct ProfileDiagnosticsView: View {
+    @Environment(AppStore.self) private var store
+    @State private var notificationStatus: UNAuthorizationStatus = .notDetermined
+    @State private var pendingNotificationCount = 0
+    @State private var nextDailyReminderDate: Date?
+    @State private var nextDailyBriefDate: Date?
+    @State private var nextTransitAlertDate: Date?
+    @State private var hasAPNSToken = false
+    @State private var widgetRefreshDiagnostics = WidgetRefreshDiagnostics.empty
+    @State private var cacheMemCount = 0
+    @State private var cacheDiskCount = 0
+
+    var body: some View {
+        ZStack {
+            CosmicBackgroundView(element: nil)
+                .ignoresSafeArea()
+
+            ScrollView {
+                VStack(spacing: 24) {
+                    PremiumScreenHeader(
+                        eyebrow: "Advanced",
+                        title: "Diagnostics",
+                        subtitle: "Inspect notification, cache, widget, and device state without cluttering the main profile screen.",
+                        accent: .orange,
+                        chips: ["Notifications", "Widgets", "Cache"]
+                    )
+
+                    CardView {
+                        VStack(alignment: .leading, spacing: 12) {
+                            HStack {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "wrench.and.screwdriver")
+                                        .foregroundStyle(.red)
+                                    Text("ui.profile.27".localized)
+                                        .font(.headline)
+                                }
+                                Spacer()
+                                Button {
+                                    Task { await refreshSystemDiagnostics() }
+                                } label: {
+                                    Image(systemName: "arrow.clockwise")
+                                        .foregroundStyle(.purple)
+                                        .frame(width: 44, height: 44)
+                                        .contentShape(Rectangle())
+                                }
+                                .buttonStyle(ScaleButtonStyle())
+                                .accessibilityLabel("Refresh diagnostics")
+                            }
+
+                            Divider()
+
+                            HStack {
+                                Circle()
+                                    .fill(.green)
+                                    .frame(width: 8, height: 8)
+                                Text("ui.profile.28".localized)
+                                    .font(.subheadline)
+                                Spacer()
+                                Text("ui.profile.29".localized)
+                                    .font(.caption.monospaced())
+                                    .foregroundStyle(.green)
+                            }
+
+                            HStack {
+                                Circle()
+                                    .fill(.green)
+                                    .frame(width: 8, height: 8)
+                                Text("ui.profile.30".localized)
+                                    .font(.subheadline)
+                                Spacer()
+                                Text(String(format: "fmt.profile.0".localized, "\(cacheMemCount)", "\(cacheDiskCount)"))
+                                    .font(.caption.monospaced())
+                                    .foregroundStyle(.orange)
+                            }
+
+                            HStack {
+                                Circle()
+                                    .fill(HKHealthStore.isHealthDataAvailable() ? .green : .red)
+                                    .frame(width: 8, height: 8)
+                                Text("ui.profile.31".localized)
+                                    .font(.subheadline)
+                                Spacer()
+                                Text(HKHealthStore.isHealthDataAvailable() ? "tern.profile.3a".localized : "tern.profile.3b".localized)
+                                    .font(.caption.monospaced())
+                                    .foregroundStyle(HKHealthStore.isHealthDataAvailable() ? .green : .red)
+                            }
+
+                            Divider()
+
+                            diagnosticStatusRow(
+                                title: "Notifications",
+                                status: notificationStatusLabel(notificationStatus),
+                                color: notificationStatusColor(notificationStatus)
+                            )
+
+                            diagnosticValueRow(title: "Pending Requests", value: "\(pendingNotificationCount)")
+
+                            diagnosticValueRow(
+                                title: "APNs Token",
+                                value: hasAPNSToken ? "tern.profile.4a".localized : "tern.profile.4b".localized,
+                                accent: hasAPNSToken ? .green : .orange
+                            )
+
+                            diagnosticScheduleRow(
+                                title: "Daily Reminder",
+                                date: nextDailyReminderDate,
+                                fallback: store.dailyReminderEnabled ? "tern.profile.5a".localized : "tern.profile.5b".localized
+                            )
+
+                            diagnosticScheduleRow(
+                                title: "Morning Brief",
+                                date: nextDailyBriefDate,
+                                fallback: "NOT SCHEDULED"
+                            )
+
+                            diagnosticScheduleRow(
+                                title: "Transit Alert",
+                                date: nextTransitAlertDate,
+                                fallback: "NOT SCHEDULED"
+                            )
+
+                            Divider()
+
+                            diagnosticScheduleRow(
+                                title: "Widget Sync",
+                                date: widgetRefreshDiagnostics.overall,
+                                fallback: "NO SHARED DATA"
+                            )
+
+                            diagnosticScheduleRow(
+                                title: "Morning Brief Cache",
+                                date: widgetRefreshDiagnostics.morningBrief,
+                                fallback: "EMPTY"
+                            )
+
+                            diagnosticScheduleRow(
+                                title: "Daily Summary Cache",
+                                date: widgetRefreshDiagnostics.dailySummary,
+                                fallback: "EMPTY"
+                            )
+
+                            diagnosticScheduleRow(
+                                title: "Planetary Hour Cache",
+                                date: widgetRefreshDiagnostics.planetaryHour,
+                                fallback: "EMPTY"
+                            )
+
+                            diagnosticScheduleRow(
+                                title: "Moon Phase Cache",
+                                date: widgetRefreshDiagnostics.moonPhase,
+                                fallback: "EMPTY"
+                            )
+                        }
+                    }
                 }
+                .padding()
+                .readableContainer()
             }
         }
-    }
-
-    @MainActor
-    private func deleteProfile(_ profile: Profile) async {
-        store.deleteProfileLocal(id: profile.id)
+        .navigationTitle("Diagnostics")
+        .navigationBarTitleDisplayMode(.inline)
+        .accessibilityIdentifier("DiagnosticsSection")
+        .task {
+            await refreshSystemDiagnostics()
+        }
     }
 
     @MainActor
@@ -903,164 +1087,6 @@ struct ProfileView: View {
                     .font(.caption.monospaced())
                     .foregroundStyle(.orange)
             }
-        }
-    }
-    
-    // MARK: - System Diagnostics
-    
-    @State private var cacheMemCount = 0
-    @State private var cacheDiskCount = 0
-    
-    private var systemDiagnosticsSection: some View {
-        CardView {
-            VStack(alignment: .leading, spacing: 12) {
-                HStack {
-                    HStack(spacing: 8) {
-                        Image(systemName: "wrench.and.screwdriver")
-                            .foregroundStyle(.red)
-                        Text("ui.profile.27".localized)
-                            .font(.headline)
-                    }
-                    Spacer()
-                    Button {
-                        Task { await refreshSystemDiagnostics() }
-                    } label: {
-                        Image(systemName: "arrow.clockwise")
-                            .foregroundStyle(.purple)
-                            .frame(width: 44, height: 44)
-                            .contentShape(Rectangle())
-                    }
-                    .buttonStyle(ScaleButtonStyle())
-                    .accessibilityLabel("Refresh diagnostics")
-                    .accessibilityHint("Reloads cache, widget, and notification status")
-                }
-                
-                Divider()
-                
-                // Ephemeris Engine
-                HStack {
-                    Circle()
-                        .fill(.green)
-                        .frame(width: 8, height: 8)
-                    Text("ui.profile.28".localized)
-                        .font(.subheadline)
-                    Spacer()
-                    Text("ui.profile.29".localized)
-                        .font(.caption.monospaced())
-                        .foregroundStyle(.green)
-                }
-                
-                // ResponseCache
-                HStack {
-                    Circle()
-                        .fill(.green)
-                        .frame(width: 8, height: 8)
-                    Text("ui.profile.30".localized)
-                        .font(.subheadline)
-                    Spacer()
-                    Text(String(format: "fmt.profile.0".localized, "\(cacheMemCount)", "\(cacheDiskCount)"))
-                        .font(.caption.monospaced())
-                        .foregroundStyle(.orange)
-                }
-                
-                // HealthKit
-                HStack {
-                    Circle()
-                        .fill(HKHealthStore.isHealthDataAvailable() ? .green : .red)
-                        .frame(width: 8, height: 8)
-                    Text("ui.profile.31".localized)
-                        .font(.subheadline)
-                    Spacer()
-                    Text(HKHealthStore.isHealthDataAvailable() ? "tern.profile.3a".localized : "tern.profile.3b".localized)
-                        .font(.caption.monospaced())
-                        .foregroundStyle(HKHealthStore.isHealthDataAvailable() ? .green : .red)
-                }
-
-                Divider()
-
-                diagnosticStatusRow(
-                    title: "Notifications",
-                    status: notificationStatusLabel(notificationStatus),
-                    color: notificationStatusColor(notificationStatus)
-                )
-
-                diagnosticValueRow(title: "Pending Requests", value: "\(pendingNotificationCount)")
-
-                diagnosticValueRow(
-                    title: "APNs Token",
-                    value: hasAPNSToken ? "tern.profile.4a".localized : "tern.profile.4b".localized,
-                    accent: hasAPNSToken ? .green : .orange
-                )
-
-                diagnosticScheduleRow(
-                    title: "Daily Reminder",
-                    date: nextDailyReminderDate,
-                    fallback: store.dailyReminderEnabled ? "tern.profile.5a".localized : "tern.profile.5b".localized
-                )
-
-                diagnosticScheduleRow(
-                    title: "Morning Brief",
-                    date: nextDailyBriefDate,
-                    fallback: "NOT SCHEDULED"
-                )
-
-                diagnosticScheduleRow(
-                    title: "Transit Alert",
-                    date: nextTransitAlertDate,
-                    fallback: "NOT SCHEDULED"
-                )
-
-                Divider()
-
-                diagnosticScheduleRow(
-                    title: "Widget Sync",
-                    date: widgetRefreshDiagnostics.overall,
-                    fallback: "NO SHARED DATA"
-                )
-
-                diagnosticScheduleRow(
-                    title: "Morning Brief Cache",
-                    date: widgetRefreshDiagnostics.morningBrief,
-                    fallback: "EMPTY"
-                )
-
-                diagnosticScheduleRow(
-                    title: "Daily Summary Cache",
-                    date: widgetRefreshDiagnostics.dailySummary,
-                    fallback: "EMPTY"
-                )
-
-                diagnosticScheduleRow(
-                    title: "Planetary Hour Cache",
-                    date: widgetRefreshDiagnostics.planetaryHour,
-                    fallback: "EMPTY"
-                )
-
-                diagnosticScheduleRow(
-                    title: "Moon Phase Cache",
-                    date: widgetRefreshDiagnostics.moonPhase,
-                    fallback: "EMPTY"
-                )
-                
-                // App Version
-                HStack {
-                    Image(systemName: "info.circle")
-                        .foregroundStyle(.purple)
-                        .frame(width: 8)
-                    Text("ui.profile.32".localized)
-                        .font(.subheadline)
-                    Spacer()
-                    let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?"
-                    let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "?"
-                    Text("v\(version) (\(build))")
-                        .font(.caption.monospaced())
-                        .foregroundStyle(Color.textSecondary)
-                }
-            }
-        }
-        .accessibilityIdentifier("DiagnosticsSection")
-        .task {
-            await refreshSystemDiagnostics()
         }
     }
 }

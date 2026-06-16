@@ -16,11 +16,14 @@ Notes for deployment:
 from __future__ import annotations
 
 import hashlib
+import logging
 import os
 import re
 from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Optional
 from zoneinfo import ZoneInfo
+
+logger = logging.getLogger(__name__)
 
 DEFAULT_EPHEMERIS = "/app/ephemeris"
 LOCAL_EPHEMERIS = os.path.join(os.path.dirname(__file__), "ephemeris")
@@ -54,6 +57,68 @@ try:
     HAS_FLATLIB = True
 except ImportError:
     HAS_FLATLIB = False
+
+
+# When STRICT_EPHEMERIS is enabled (recommended in production), the service will
+# refuse to serve deterministic *stub* charts and raise instead. This guarantees
+# a hashed placeholder chart can never be mistaken for a real astronomical one.
+STRICT_EPHEMERIS = os.getenv("STRICT_EPHEMERIS", "").strip().lower() in {
+    "1",
+    "true",
+    "yes",
+    "on",
+}
+
+# Expected Swiss Ephemeris data files for accurate planet/moon/asteroid positions.
+_EXPECTED_EPHE_FILES = ("sepl_18.se1", "semo_18.se1", "seas_18.se1")
+
+
+def ephemeris_status() -> Dict:
+    """Report the real calculation backend state for health checks / startup logs.
+
+    `degraded` is True whenever charts would fall back to the deterministic stub
+    (i.e. flatlib is unavailable), which must never be confused with real output.
+    """
+    try:
+        present = sorted(
+            f
+            for f in _EXPECTED_EPHE_FILES
+            if os.path.isfile(os.path.join(EPHEMERIS_PATH, f))
+        )
+    except OSError:
+        present = []
+    missing = [f for f in _EXPECTED_EPHE_FILES if f not in present]
+    return {
+        "has_flatlib": HAS_FLATLIB,
+        "has_swisseph": HAS_SWISSEPH,
+        "ephemeris_path": EPHEMERIS_PATH,
+        "ephemeris_files_present": present,
+        "ephemeris_files_missing": missing,
+        "strict_ephemeris": STRICT_EPHEMERIS,
+        "degraded": not HAS_FLATLIB,
+        "provider": "flatlib" if HAS_FLATLIB else "stub",
+    }
+
+
+def log_ephemeris_status() -> Dict:
+    """Log the ephemeris backend state once at startup; return the status dict."""
+    status = ephemeris_status()
+    if status["degraded"]:
+        logger.error(
+            "EPHEMERIS DEGRADED: flatlib unavailable - charts will use the "
+            "deterministic STUB (not real astronomy). Status: %s",
+            status,
+        )
+    else:
+        if status["ephemeris_files_missing"]:
+            logger.warning(
+                "Ephemeris ready but some data files are missing %s at %s; "
+                "asteroid/extended-body accuracy may be reduced.",
+                status["ephemeris_files_missing"],
+                EPHEMERIS_PATH,
+            )
+        logger.info("Ephemeris ready (provider=flatlib, path=%s)", EPHEMERIS_PATH)
+    return status
 
 
 PLANETS = [
@@ -579,6 +644,18 @@ def _get_house_for_longitude(planet_lon: float, house_cusps: List[float]) -> int
 def _build_chart(dt: datetime, profile: Dict, chart_type: str) -> Dict:
     # Fallback: if flatlib isn't installed, return a safe stub chart so the app can still respond.
     if not HAS_FLATLIB:
+        if STRICT_EPHEMERIS:
+            # Never silently serve a fake chart in strict (production) mode.
+            raise RuntimeError(
+                "Ephemeris backend unavailable (flatlib not installed) and "
+                "STRICT_EPHEMERIS is enabled; refusing to serve a stub chart."
+            )
+        logger.error(
+            "Serving STUB chart (flatlib unavailable) for chart_type=%s - "
+            "results are NOT real astronomy. Install flatlib/pyswisseph and "
+            "Swiss Ephemeris files to fix.",
+            chart_type,
+        )
         return _chart_stub(dt, profile, chart_type)
 
     try:
@@ -893,6 +970,7 @@ def _chart_stub(dt: datetime, profile: Dict, chart_type: str) -> Dict:
             },
             "house_system": profile.get("house_system", "Placidus"),
             "provider": "stub",
+            "degraded": True,
         },
         "planets": planets,
         "points": [],

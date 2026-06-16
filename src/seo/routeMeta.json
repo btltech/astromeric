@@ -1,0 +1,50 @@
+{
+  "/": {
+    "title": "AstroNumeric | Daily Insight, Birth Chart & Numerology",
+    "description": "AstroNumeric combines astrology, numerology, compatibility, and timing in one clear daily signal. Birth chart, personal cycles, and timing guidance in one place."
+  },
+  "/reading": {
+    "title": "Daily, Weekly & Monthly Readings | AstroNumeric",
+    "description": "Personalized daily, weekly, and monthly readings across five life tracks — General, Love, Money, Health, and Spiritual — with a TL;DR, affirmations, and a daily action."
+  },
+  "/charts": {
+    "title": "Birth Chart & Natal Astrology | AstroNumeric",
+    "description": "Calculate an accurate natal birth chart with planetary positions, houses, aspects, ascendant, and midheaven — powered by the Swiss Ephemeris."
+  },
+  "/numerology": {
+    "title": "Numerology Calculator — Life Path & Core Numbers | AstroNumeric",
+    "description": "A complete numerology profile: Life Path, Expression, Soul Urge, Personality, and Maturity numbers, plus Personal Year/Month/Day cycles, Pinnacles, and Challenges."
+  },
+  "/relationships": {
+    "title": "Compatibility — Astrology & Numerology Synastry | AstroNumeric",
+    "description": "Compare two people with astrology synastry and numerology compatibility for a combined relationship score, strengths, friction points, and practical advice."
+  },
+  "/tools": {
+    "title": "Cosmic Tools — Moon Phases & Timing | AstroNumeric",
+    "description": "Track the current moon phase, find favourable timing for what matters, and follow live planetary movements and transits."
+  },
+  "/year-ahead": {
+    "title": "Year Ahead Forecast | AstroNumeric",
+    "description": "A forward look at your year: personal year cycle, month-by-month themes, and the timing of major turning points."
+  },
+  "/learn": {
+    "title": "Learning Center — Zodiac & Numerology Glossary | AstroNumeric",
+    "description": "Learn the meaning of all 12 zodiac signs and every numerology number, from Life Path 1 to the master numbers 11, 22, and 33."
+  },
+  "/support": {
+    "title": "Support Center | AstroNumeric",
+    "description": "Help and answers for AstroNumeric — accounts, profiles, readings, charts, and billing."
+  },
+  "/privacy-policy": {
+    "title": "Privacy Policy | AstroNumeric",
+    "description": "How AstroNumeric collects, uses, and protects your data, including birth details used to calculate your chart."
+  },
+  "/terms": {
+    "title": "Terms of Service | AstroNumeric",
+    "description": "The terms that govern your use of AstroNumeric."
+  },
+  "/cookie-policy": {
+    "title": "Cookie Policy | AstroNumeric",
+    "description": "How AstroNumeric uses cookies and similar technologies."
+  }
+}

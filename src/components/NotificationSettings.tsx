@@ -28,7 +28,7 @@ const FREQ_OPTIONS = [
 export function NotificationSettings({ token }: { token?: string | null }) {
   const supported = 'serviceWorker' in navigator && 'PushManager' in window;
   const [permission, setPermission] = useState<PermissionState>(
-    supported ? (Notification.permission as PermissionState) : 'denied',
+    supported ? (Notification.permission as PermissionState) : 'denied'
   );
   const [subState, setSubState] = useState<SubState>('idle');
   const [error, setError] = useState<string | null>(null);
@@ -44,7 +44,9 @@ export function NotificationSettings({ token }: { token?: string | null }) {
     if (!token) return;
     getAlertPreferences()
       .then((p) => setPrefs(p))
-      .catch(() => {/* ignore */});
+      .catch(() => {
+        /* ignore */
+      });
   }, [token]);
 
   async function handleSubscribe() {
@@ -114,33 +116,40 @@ export function NotificationSettings({ token }: { token?: string | null }) {
 
       {permission === 'denied' && (
         <div className="notif-settings__blocked">
-          Notifications are blocked in your browser. To enable them, update your
-          browser's site settings and reload.
+          Notifications are blocked in your browser. To enable them, update your browser&apos;s site
+          settings and reload.
         </div>
       )}
 
       {permission === 'default' && (
-        <button className="btn btn-primary" onClick={handleRequestPermission} disabled={subState === 'subscribing'}>
+        <button
+          className="btn btn-primary"
+          onClick={handleRequestPermission}
+          disabled={subState === 'subscribing'}
+        >
           {subState === 'subscribing' ? 'Subscribing…' : 'Enable Notifications'}
         </button>
       )}
 
       {permission === 'granted' && subState !== 'subscribed' && (
-        <button className="btn btn-primary" onClick={handleSubscribe} disabled={subState === 'subscribing'}>
+        <button
+          className="btn btn-primary"
+          onClick={handleSubscribe}
+          disabled={subState === 'subscribing'}
+        >
           {subState === 'subscribing' ? 'Subscribing…' : 'Activate Alerts'}
         </button>
       )}
 
-      {(permission === 'granted' && subState === 'subscribed') && (
+      {permission === 'granted' && subState === 'subscribed' && (
         <div className="notif-settings__active">
           <span className="notif-settings__badge">✓ Alerts active</span>
-          <button
-            className="btn btn-secondary notif-settings__test-btn"
-            onClick={handleTest}
-          >
+          <button className="btn btn-secondary notif-settings__test-btn" onClick={handleTest}>
             Send test notification
           </button>
-          {testSent && <p className="notif-settings__test-ok">Test sent! Check your notifications.</p>}
+          {testSent && (
+            <p className="notif-settings__test-ok">Test sent! Check your notifications.</p>
+          )}
         </div>
       )}
 
@@ -155,9 +164,7 @@ export function NotificationSettings({ token }: { token?: string | null }) {
             <input
               type="checkbox"
               checked={prefs.alert_mercury_retrograde}
-              onChange={(e) =>
-                setPrefs({ ...prefs, alert_mercury_retrograde: e.target.checked })
-              }
+              onChange={(e) => setPrefs({ ...prefs, alert_mercury_retrograde: e.target.checked })}
             />
             Mercury retrograde alerts
           </label>
@@ -170,16 +177,14 @@ export function NotificationSettings({ token }: { token?: string | null }) {
               onChange={(e) => setPrefs({ ...prefs, alert_frequency: e.target.value })}
             >
               {FREQ_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>{o.label}</option>
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
               ))}
             </select>
           </div>
 
-          <button
-            className="btn btn-secondary"
-            onClick={handleSavePrefs}
-            disabled={savingPrefs}
-          >
+          <button className="btn btn-secondary" onClick={handleSavePrefs} disabled={savingPrefs}>
             {savingPrefs ? 'Saving…' : 'Save preferences'}
           </button>
         </div>

@@ -115,7 +115,8 @@ export function CookieConsent() {
             </div>
 
             <p className="cookie-consent__summary">
-              Essential cookies stay on. Choose whether you also want analytics and marketing cookies.
+              Essential cookies stay on. Choose whether you also want analytics and marketing
+              cookies.
             </p>
 
             <div className="cookie-consent__options">

@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import type { PredictionData } from '../types';
 import { SectionGrid } from './SectionGrid';
 import { DailyGuidance } from './DailyGuidance';
-import { ApiError, fetchAiExplanation, chatWithCosmicGuide } from '../api/client';
+import { fetchAiExplanation, chatWithCosmicGuide } from '../api/client';
 import { useStore } from '../store/useStore';
 import { useProfiles } from '../hooks';
 import { toast } from './Toast';
@@ -61,7 +61,7 @@ const BIRTHSTONES: Record<number, { stone: string; color: string }> = {
 
 export function FortuneResult({ data, onReset }: Props) {
   // Get user and token from store for paid check
-  const { user, token } = useStore();
+  const { token } = useStore();
   const { selectedProfile } = useProfiles();
   const isPaid = true; // All features are free now
 
@@ -85,9 +85,9 @@ export function FortuneResult({ data, onReset }: Props) {
   // Use theme as headline if summary is missing
   const headline = data.summary?.headline || data.theme;
   const [aiInsight, setAiInsight] = useState<string | null>(null);
-  const [aiInsightProvider, setAiInsightProvider] = useState<string | null>(null);
+  const [_aiInsightProvider, setAiInsightProvider] = useState<string | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
-  const [showUpgradeMessage, setShowUpgradeMessage] = useState(false);
+  const [_showUpgradeMessage, setShowUpgradeMessage] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
 
   // Cosmic Guide Chat State
@@ -105,7 +105,8 @@ export function FortuneResult({ data, onReset }: Props) {
 
     if (sunSign) chips.push(`${sunSign} sun`);
     if (typeof data.life_path_number === 'number') chips.push(`Life Path ${data.life_path_number}`);
-    if (data.lucky_numbers?.length) chips.push(`Lucky ${data.lucky_numbers.slice(0, 2).join(' · ')}`);
+    if (data.lucky_numbers?.length)
+      chips.push(`Lucky ${data.lucky_numbers.slice(0, 2).join(' · ')}`);
 
     return chips.slice(0, 3);
   }, [data.life_path_number, data.lucky_numbers, sunSign]);
@@ -133,14 +134,19 @@ export function FortuneResult({ data, onReset }: Props) {
   const readingDrivers = useMemo(() => {
     const rows = keyTakeaways.map((factor) => ({
       title: [factor.aspect, factor.impact].filter(Boolean).join(' · ') || 'Forecast driver',
-      detail: factor.description ?? headline ?? 'The reading engine elevated this theme as one of the main drivers.',
+      detail:
+        factor.description ??
+        headline ??
+        'The reading engine elevated this theme as one of the main drivers.',
     }));
 
     if (rows.length < 3) {
       for (const section of data.sections) {
         if (rows.length >= 3) break;
 
-        const topTopic = Object.entries(section.topic_scores ?? {}).sort((left, right) => right[1] - left[1])[0];
+        const topTopic = Object.entries(section.topic_scores ?? {}).sort(
+          (left, right) => right[1] - left[1]
+        )[0];
         rows.push({
           title: topTopic ? `${section.title} · ${topTopic[0].replace(/_/g, ' ')}` : section.title,
           detail:
@@ -318,7 +324,7 @@ export function FortuneResult({ data, onReset }: Props) {
         sunSign,
         moonSign,
         risingSign,
-        messages as any, // Cast for now if types mismatch slightly
+        messages as Parameters<typeof chatWithCosmicGuide>[4],
         token ?? undefined
       );
 
@@ -379,7 +385,10 @@ export function FortuneResult({ data, onReset }: Props) {
         <article className="reading-signal-card reading-signal-card--positive">
           <span className="reading-signal-card__label">Best move</span>
           <strong>{actionSignals.bestMove}</strong>
-          <p>Start with the strongest opening the forecast is giving you instead of reading every section equally.</p>
+          <p>
+            Start with the strongest opening the forecast is giving you instead of reading every
+            section equally.
+          </p>
         </article>
 
         <article className="reading-signal-card reading-signal-card--warning">

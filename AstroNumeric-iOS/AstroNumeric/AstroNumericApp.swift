@@ -104,8 +104,12 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         switch categoryId {
         case NotificationService.Category.dailyReading.rawValue:
             if actionId == "VIEW_READING" || actionId == UNNotificationDefaultActionIdentifier {
-                // Navigate to reading tab
-                NotificationCenter.default.post(name: .navigateToTab, object: nil, userInfo: ["tab": 0])
+                let destination = TodayRecommendation.make(profile: AppStore.shared.activeProfile).destination
+                NotificationCenter.default.post(
+                    name: .openTodayDestination,
+                    object: nil,
+                    userInfo: destination.notificationUserInfo
+                )
             }
             
         case NotificationService.Category.habitReminder.rawValue:

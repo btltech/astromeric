@@ -24,7 +24,8 @@ const wizardSteps = [
     label: 'Birth time',
     eyebrow: 'Step 2 of 4',
     title: 'When were you born?',
-    description: 'Your birth date powers the base reading. Add birth time too when you want sharper chart timing.',
+    description:
+      'Your birth date powers the base reading. Add birth time too when you want sharper chart timing.',
     hint: 'Time of birth is optional, but it improves house placement and timing-heavy views.',
   },
   {
@@ -32,7 +33,8 @@ const wizardSteps = [
     label: 'Birth place',
     eyebrow: 'Step 3 of 4',
     title: 'Where were you born?',
-    description: 'Choose the city or town that anchors timezone and geographic context for the chart.',
+    description:
+      'Choose the city or town that anchors timezone and geographic context for the chart.',
     hint: 'Pick a specific place so the live reading can land in the right timezone.',
   },
   {
@@ -88,7 +90,9 @@ export function FortuneForm({ onSubmit, isLoading, showSaveOption = true }: Prop
       return;
     }
     if (step === 3 && !locationIsSelected) {
-      setErrors({ place_of_birth: 'Choose a birth place from the search results before continuing.' });
+      setErrors({
+        place_of_birth: 'Choose a birth place from the search results before continuing.',
+      });
       return;
     }
     setErrors({});
@@ -138,7 +142,12 @@ export function FortuneForm({ onSubmit, isLoading, showSaveOption = true }: Prop
         return current;
       }
 
-      if (!current.place_of_birth && !current.timezone && current.latitude == null && current.longitude == null) {
+      if (
+        !current.place_of_birth &&
+        !current.timezone &&
+        current.latitude == null &&
+        current.longitude == null
+      ) {
         return current;
       }
 
@@ -176,8 +185,8 @@ export function FortuneForm({ onSubmit, isLoading, showSaveOption = true }: Prop
                 wizardStep.id === step
                   ? 'wizard-step wizard-step--active'
                   : wizardStep.id < step
-                    ? 'wizard-step wizard-step--completed'
-                    : 'wizard-step'
+                  ? 'wizard-step wizard-step--completed'
+                  : 'wizard-step'
               }
             >
               <div className="wizard-dot">{wizardStep.id}</div>

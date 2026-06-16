@@ -7,6 +7,8 @@ struct ChartView: View {
     @Environment(AppStore.self) private var store
     @State private var viewModel = ChartVM()
     @State private var isRevealing = true
+    @State private var showAllPlacements = false
+    @State private var showAllAspects = false
     
     var body: some View {
         NavigationStack {
@@ -209,7 +211,9 @@ struct ChartView: View {
     // MARK: - Placements
     
     private var placementsSection: some View {
-        CardView {
+        let visiblePlacements = showAllPlacements ? viewModel.placements : Array(viewModel.placements.prefix(7))
+
+        return CardView {
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
                     Text("ui.chart.3".localized)
@@ -234,7 +238,7 @@ struct ChartView: View {
                     Divider()
                 }
                 
-                ForEach(viewModel.placements, id: \.name) { planet in
+                ForEach(visiblePlacements, id: \.name) { planet in
                     let isHouseDependent = viewModel.birthTimeAssumed &&
                         ["Ascendant", "Midheaven", "ASC", "MC"].contains(planet.name)
                     HStack(alignment: .top) {
@@ -285,9 +289,27 @@ struct ChartView: View {
                     }
                     .opacity(isHouseDependent ? 0.7 : 1.0)
                     
-                    if planet.name != viewModel.placements.last?.name {
+                    if planet.name != visiblePlacements.last?.name {
                         Divider()
                     }
+                }
+
+                if viewModel.placements.count > 7 {
+                    Button {
+                        withAnimation(.spring(response: 0.25, dampingFraction: 0.85)) {
+                            showAllPlacements.toggle()
+                        }
+                    } label: {
+                        Label(
+                            showAllPlacements ? "chart.showLessPlacements".localized : "chart.showAllPlacements".localized,
+                            systemImage: showAllPlacements ? "chevron.up" : "chevron.down"
+                        )
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(Color.accentPrimary)
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, 4)
+                    }
+                    .buttonStyle(.plain)
                 }
             }
         }
@@ -348,22 +370,43 @@ struct ChartView: View {
     // MARK: - Aspects
     
     private var aspectsSection: some View {
-        CardView {
+        let visibleAspects = showAllAspects ? viewModel.aspects : Array(viewModel.aspects.prefix(5))
+
+        return CardView {
             VStack(alignment: .leading, spacing: 12) {
-                Text("ui.chart.5".localized)
-                    .font(.headline)
+                PremiumSectionHeader(
+                    title: "ui.chart.5".localized,
+                    subtitle: "chart.aspects.subtitle".localized
+                )
                 
-                ForEach(viewModel.aspects.prefix(5), id: \.self) { aspect in
-                    HStack {
-                        Text("\(aspect.planet1) \(aspect.aspectType) \(aspect.planet2)")
-                            .font(.subheadline)
-                        
-                        Spacer()
-                        
-                        Text(String(format: "%.1f°", aspect.orb ?? 0))
-                            .font(.caption)
-                            .foregroundStyle(Color.textSecondary)
+                ForEach(visibleAspects, id: \.self) { aspect in
+                    AspectSummaryRow(
+                        title: "\(aspect.planet1) \(aspect.aspectType) \(aspect.planet2)",
+                        orb: aspect.orb,
+                        accent: aspectColor(aspect.aspectType)
+                    )
+
+                    if aspect != visibleAspects.last {
+                        Divider()
                     }
+                }
+
+                if viewModel.aspects.count > 5 {
+                    Button {
+                        withAnimation(.spring(response: 0.25, dampingFraction: 0.85)) {
+                            showAllAspects.toggle()
+                        }
+                    } label: {
+                        Label(
+                            showAllAspects ? "chart.showFewerAspects".localized : "chart.showAllAspects".localized,
+                            systemImage: showAllAspects ? "chevron.up" : "chevron.down"
+                        )
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(Color.accentPrimary)
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, 4)
+                    }
+                    .buttonStyle(.plain)
                 }
             }
         }
@@ -456,6 +499,15 @@ struct ChartView: View {
         }
     }
 
+    private func aspectColor(_ aspectType: String) -> Color {
+        switch aspectType.lowercased() {
+        case "trine", "sextile": return .positiveGreen
+        case "square", "opposition": return .warningOrange
+        case "conjunction": return .accentPrimary
+        default: return .cosmicBlue
+        }
+    }
+
     private func planetEmoji(_ name: String) -> String {
         switch name.lowercased() {
         case "sun": return "☀️"
@@ -473,7 +525,7 @@ struct ChartView: View {
     }
 
     private var dignityCount: Int {
-        viewModel.placements.compactMap(\ .dignity).count
+        viewModel.placements.compactMap(\.dignity).count
     }
 
     private var chartAuthorityHeadline: String {
@@ -528,6 +580,35 @@ struct DataQualityBanner: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(color.opacity(0.1))
         .clipShape(RoundedRectangle(cornerRadius: 10))
+    }
+}
+
+private struct AspectSummaryRow: View {
+    let title: String
+    let orb: Double?
+    let accent: Color
+
+    var body: some View {
+        HStack(alignment: .center, spacing: Space.sm) {
+            Image(systemName: "point.3.connected.trianglepath.dotted")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(accent)
+                .frame(width: 30, height: 30)
+                .background(Circle().fill(accent.opacity(0.14)))
+
+            Text(title)
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(Color.textPrimary)
+
+            Spacer(minLength: Space.sm)
+
+            Text(String(format: "%.1f°", orb ?? 0))
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(accent)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(Capsule().fill(accent.opacity(0.14)))
+        }
     }
 }
 

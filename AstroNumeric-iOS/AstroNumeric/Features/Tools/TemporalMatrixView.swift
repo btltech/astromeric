@@ -65,7 +65,7 @@ struct TemporalMatrixView: View {
     private var headerSection: some View {
         VStack(spacing: 6) {
             Text("⏱")
-                .font(.system(.largeTitle))
+                .font(.system(.title2))
             Text("ui.temporalMatrix.0".localized)
                 .font(.title3.bold())
             Text("ui.temporalMatrix.1".localized)

@@ -392,20 +392,25 @@ export async function fetchCompatibility(
   person_a: ProfilePayload,
   person_b: ProfilePayload
 ): Promise<LiveCompatibilityResult> {
-  const response = await apiFetch<ApiResponse<LiveCompatibilityResult>>('/v2/compatibility/romantic', {
-    method: 'POST',
-    body: JSON.stringify({
-      person_a: toFlatProfilePayload(person_a),
-      person_b: toFlatProfilePayload(person_b),
-    }),
-  });
+  const response = await apiFetch<ApiResponse<LiveCompatibilityResult>>(
+    '/v2/compatibility/romantic',
+    {
+      method: 'POST',
+      body: JSON.stringify({
+        person_a: toFlatProfilePayload(person_a),
+        person_b: toFlatProfilePayload(person_b),
+      }),
+    }
+  );
   if (response.status === 'success' && response.data) {
     return response.data;
   }
   throw new Error(response.message || 'Failed to fetch compatibility');
 }
 
-export async function fetchNumerologyProfile(profile: ProfilePayload): Promise<LiveNumerologyProfile> {
+export async function fetchNumerologyProfile(
+  profile: ProfilePayload
+): Promise<LiveNumerologyProfile> {
   const response = await apiFetch<ApiResponse<LiveNumerologyProfile>>('/v2/numerology/profile', {
     method: 'POST',
     body: JSON.stringify({
@@ -664,8 +669,7 @@ interface RawLearningModule {
 function normalizeLearningModule(module: RawLearningModule): LearningModule {
   return {
     ...module,
-    item_count:
-      module.item_count ?? module.keywords?.length ?? module.related_modules?.length ?? 1,
+    item_count: module.item_count ?? module.keywords?.length ?? module.related_modules?.length ?? 1,
   };
 }
 
@@ -683,7 +687,7 @@ export function fetchLearningModules(category?: string, difficulty?: string) {
   return apiFetch<LearningLegacyPageResponse<RawLearningModule>>(
     `/v2/learning/modules${query ? `?${query}` : ''}`,
     {
-    method: 'GET',
+      method: 'GET',
     }
   ).then((response) => ({
     modules: response.data.map(normalizeLearningModule),
@@ -754,8 +758,9 @@ export function fetchYearAhead(profile: ProfilePayload, year?: number) {
 }
 
 export function fetchVapidKey(): Promise<string> {
-  return apiFetch<{ public_key: string }>('/v2/alerts/vapid-key', { method: 'GET' })
-    .then((r) => (r as unknown as { public_key: string }).public_key);
+  return apiFetch<{ public_key: string }>('/v2/alerts/vapid-key', { method: 'GET' }).then(
+    (r) => (r as unknown as { public_key: string }).public_key
+  );
 }
 
 export function subscribePush(sub: PushSubscriptionJSON): Promise<void> {
@@ -769,11 +774,20 @@ export function testPushNotification(): Promise<void> {
   return apiFetch('/v2/alerts/test-notify', { method: 'POST' }).then(() => undefined);
 }
 
-export function getAlertPreferences(): Promise<{ alert_mercury_retrograde: boolean; alert_frequency: string }> {
-  return apiFetch('/v2/alerts/preferences', { method: 'GET' }) as Promise<{ alert_mercury_retrograde: boolean; alert_frequency: string }>;
+export function getAlertPreferences(): Promise<{
+  alert_mercury_retrograde: boolean;
+  alert_frequency: string;
+}> {
+  return apiFetch('/v2/alerts/preferences', { method: 'GET' }) as Promise<{
+    alert_mercury_retrograde: boolean;
+    alert_frequency: string;
+  }>;
 }
 
-export function updateAlertPreferences(prefs: { alert_mercury_retrograde: boolean; alert_frequency: string }): Promise<void> {
+export function updateAlertPreferences(prefs: {
+  alert_mercury_retrograde: boolean;
+  alert_frequency: string;
+}): Promise<void> {
   return apiFetch('/v2/alerts/preferences', {
     method: 'POST',
     body: JSON.stringify(prefs),
@@ -795,9 +809,12 @@ export function fetchCurrentMoonPhase() {
 }
 
 export function fetchUpcomingMoonEvents(days: number = 30) {
-  return apiFetch<ApiResponse<{ events: MoonEvent[]; days_ahead: number }>>(`/v2/moon/upcoming?days=${days}`, {
-    method: 'GET',
-  }).then((response) => {
+  return apiFetch<ApiResponse<{ events: MoonEvent[]; days_ahead: number }>>(
+    `/v2/moon/upcoming?days=${days}`,
+    {
+      method: 'GET',
+    }
+  ).then((response) => {
     if (response.status === 'success' && response.data) {
       return response.data.events ?? [];
     }
@@ -907,11 +924,11 @@ export function addJournalEntry(request: JournalEntryRequest, token: string) {
   return apiFetch<ApiResponse<{ success: boolean; message: string; entry: JournalEntry }>>(
     '/v2/journal/entry',
     {
-    method: 'POST',
-    body: JSON.stringify(request),
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+      method: 'POST',
+      body: JSON.stringify(request),
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     }
   ).then((response) => unwrapResponseData(response, 'Journal entry could not be saved.'));
 }
@@ -1106,17 +1123,7 @@ export function fetchRelationshipPhases() {
 
 // ========== HABIT TRACKER API ==========
 
-import type {
-  HabitCategory,
-  LunarHabitGuidance,
-  LunarAlignment,
-  HabitRecommendation,
-  Habit,
-  HabitCompletion,
-  HabitStreak,
-  HabitForecast,
-  LunarCycleReport,
-} from '../types';
+import type { HabitCategory, LunarHabitGuidance, Habit, HabitCompletion } from '../types';
 
 /**
  * Get all habit categories

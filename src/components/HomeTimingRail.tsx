@@ -1,9 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import {
-  fetchTimingActivities,
-  fetchTimingAdvice,
-  type ProfilePayload,
-} from '../api/client';
+import { fetchTimingActivities, fetchTimingAdvice, type ProfilePayload } from '../api/client';
 import { useActiveProfile } from '../hooks';
 import type { SavedProfile, TimingActivity, TimingAdviceResult } from '../types';
 import './HomeTimingRail.css';
@@ -78,12 +74,16 @@ export function HomeTimingRail() {
           return;
         }
 
-        const filtered = data.activities.filter((activity) => preferredActivityIds.has(activity.id));
+        const filtered = data.activities.filter((activity) =>
+          preferredActivityIds.has(activity.id)
+        );
         const nextActivities = filtered.length > 0 ? filtered : fallbackActivities;
 
         setActivities(nextActivities);
         setSelectedActivity((current) =>
-          nextActivities.some((activity) => activity.id === current) ? current : nextActivities[0].id
+          nextActivities.some((activity) => activity.id === current)
+            ? current
+            : nextActivities[0].id
         );
       } catch {
         if (!isCancelled) {
@@ -151,10 +151,10 @@ export function HomeTimingRail() {
       <div className="timing-rail__header">
         <div>
           <span className="timing-rail__eyebrow">Live decision windows</span>
-          <h2 id="timing-rail-title">The best time to act — for whatever you're planning next.</h2>
-          <p>
-            Activity-specific timing scores, best hours, and upcoming windows — updated daily.
-          </p>
+          <h2 id="timing-rail-title">
+            The best time to act — for whatever you&apos;re planning next.
+          </h2>
+          <p>Activity-specific timing scores, best hours, and upcoming windows — updated daily.</p>
         </div>
 
         <div className="timing-rail__status-row">
@@ -168,7 +168,9 @@ export function HomeTimingRail() {
           <button
             key={activity.id}
             type="button"
-            className={`timing-rail__tab ${selectedActivity === activity.id ? 'timing-rail__tab--active' : ''}`}
+            className={`timing-rail__tab ${
+              selectedActivity === activity.id ? 'timing-rail__tab--active' : ''
+            }`}
             onClick={() => setSelectedActivity(activity.id)}
           >
             {activity.name}
@@ -207,11 +209,15 @@ export function HomeTimingRail() {
 
             <article className="timing-rail__signal-card">
               <span className="timing-rail__card-label">Best upcoming</span>
-              <strong>{`${formatWeekday(timingResult.best_upcoming.date, timingResult.best_upcoming.weekday)} · ${timingResult.best_upcoming.score}%`}</strong>
+              <strong>{`${formatWeekday(
+                timingResult.best_upcoming.date,
+                timingResult.best_upcoming.weekday
+              )} · ${timingResult.best_upcoming.score}%`}</strong>
               <p>
                 {timingResult.today_is_best
                   ? 'Today already holds the strongest window for this activity.'
-                  : timingResult.best_upcoming.recommendations[0] ?? 'No standout window found for this activity yet.'}
+                  : timingResult.best_upcoming.recommendations[0] ??
+                    'No standout window found for this activity yet.'}
               </p>
             </article>
 
@@ -230,8 +236,13 @@ export function HomeTimingRail() {
 
           <div className="timing-rail__days">
             {nextDays.map((day) => (
-              <article key={day.date} className={`timing-rail__day timing-rail__day--${getScoreTone(day.score)}`}>
-                <span className="timing-rail__day-name">{formatWeekday(day.date, day.weekday)}</span>
+              <article
+                key={day.date}
+                className={`timing-rail__day timing-rail__day--${getScoreTone(day.score)}`}
+              >
+                <span className="timing-rail__day-name">
+                  {formatWeekday(day.date, day.weekday)}
+                </span>
                 <strong>{day.emoji}</strong>
                 <span className="timing-rail__day-score">{`${day.score}%`}</span>
                 <p>{day.rating}</p>

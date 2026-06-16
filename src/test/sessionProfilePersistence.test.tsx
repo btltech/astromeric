@@ -121,8 +121,9 @@ describe('session profile persistence', () => {
       ]);
       useStore.getState().setSelectedProfileId(null);
       useStore.getState().setAuth('token', {
-        id: 1,
+        id: '1',
         email: 'copilot@example.com',
+        is_paid: false,
       });
       useStore.getState().logout();
     });

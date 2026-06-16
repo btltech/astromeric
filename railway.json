@@ -13,6 +13,8 @@
   },
   "env": {
     "EPHEMERIS_PATH": "/app/app/ephemeris",
-    "LOG_LEVEL": "info"
+    "LOG_LEVEL": "info",
+    "APP_ENV": "production",
+    "STRICT_EPHEMERIS": "1"
   }
 }

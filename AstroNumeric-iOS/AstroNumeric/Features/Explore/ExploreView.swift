@@ -17,11 +17,20 @@ struct ExploreView: View {
         return [GridItem(.flexible()), GridItem(.flexible())]
     }
     
-    enum ExploreCategory: String, CaseIterable {
-        case tools = "Tools"
-        case learn = "Learn"
-        case habits = "Habits"
-        case relationships = "Relations"
+    enum ExploreCategory: CaseIterable {
+        case tools
+        case learn
+        case habits
+        case relationships
+
+        var title: String {
+            switch self {
+            case .tools: return "explore.category.tools".localized
+            case .learn: return "explore.category.learn".localized
+            case .habits: return "explore.category.habits".localized
+            case .relationships: return "explore.category.relationships".localized
+            }
+        }
         
         var icon: String {
             switch self {
@@ -93,7 +102,7 @@ struct ExploreView: View {
             }
             .navigationTitle("nav.explore".localized)
             .navigationBarTitleDisplayMode(.inline)
-            .searchable(text: $searchText, prompt: "Search \(selectedCategory.rawValue.lowercased())...")
+            .searchable(text: $searchText, prompt: String(format: "fmt.explore.search".localized, selectedCategory.title.lowercased()))
         }
     }
     
@@ -104,7 +113,7 @@ struct ExploreView: View {
             HStack(spacing: 12) {
                 ForEach(ExploreCategory.allCases, id: \.self) { category in
                     CategoryChip(
-                        title: category.rawValue,
+                        title: category.title,
                         icon: category.icon,
                         color: category.color,
                         isSelected: selectedCategory == category
@@ -133,7 +142,9 @@ struct ExploreView: View {
             ExploreToolItem(title: "Notifications", icon: "bell.badge.fill", color: .orange, description: "Manage reminder and moon alert timing.", provenance: nil, destination: AnyView(NotificationSettingsView())),
             ExploreToolItem(title: "Year Ahead", icon: "calendar", color: .blue, description: "Long-range forecast from your solar and numerology cycle.", provenance: .calculated, destination: AnyView(YearAheadView())),
             ExploreToolItem(title: "Moon Events", icon: "moon.stars.fill", color: .indigo, description: "Upcoming lunar phases with exact timing.", provenance: .calculated, destination: AnyView(MoonEventsView())),
-            ExploreToolItem(title: "Life Phase", icon: "arrow.trianglehead.clockwise", color: Color(hue: 0.57, saturation: 0.7, brightness: 0.9), description: "Your current cycle interpreted from annual timing.", provenance: .hybrid, destination: AnyView(YearAheadView())),
+            ExploreToolItem(title: "Birthstone", icon: "diamond.fill", color: .mint, description: "Stones, signs, meanings, and practical ways to work with them.", provenance: .interpretive, destination: AnyView(BirthstoneGuidanceView())),
+            ExploreToolItem(title: "Temporal Matrix", icon: "point.3.connected.trianglepath.dotted", color: .cyan, description: "A structured view of current life phase, cycles, and timing signals.", provenance: .hybrid, destination: AnyView(TemporalMatrixView())),
+            ExploreToolItem(title: "Life Phase", icon: "arrow.trianglehead.clockwise", color: .teal, description: "Your current cycle interpreted from annual timing.", provenance: .hybrid, destination: AnyView(TemporalMatrixView())),
         ]
         if searchText.isEmpty { return all }
         let q = searchText.lowercased()

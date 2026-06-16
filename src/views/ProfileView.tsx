@@ -48,9 +48,7 @@ export function ProfileView() {
       <section className="product-desk__hero">
         <span className="product-desk__eyebrow">Profile desk</span>
         <h1>Your profile and account settings.</h1>
-        <p>
-          Active identity, storage source, and sync status in one place.
-        </p>
+        <p>Active identity, storage source, and sync status in one place.</p>
         <div className="product-desk__chips">
           <span className="product-desk__chip">Active profile</span>
           <span className="product-desk__chip">Local vs session vs cloud</span>
@@ -90,14 +88,14 @@ export function ProfileView() {
                 {activeProfileSource === 'session'
                   ? 'This is a session profile. Save it to keep it across browser sessions.'
                   : activeProfileSource === 'local'
-                    ? 'This profile is saved on your device. Sign in to sync it across devices.'
-                    : 'This profile is saved to your account and available across devices.'}
+                  ? 'This profile is saved on your device. Sign in to sync it across devices.'
+                  : 'This profile is saved to your account and available across devices.'}
               </p>
             </div>
           ) : (
             <div className="product-desk__empty">
-              No profile is active yet. Start on the reading desk to create one and bring the rest of
-              the product to life.
+              No profile is active yet. Start on the reading desk to create one and bring the rest
+              of the product to life.
             </div>
           )}
         </article>
@@ -107,7 +105,9 @@ export function ProfileView() {
           <div className="product-desk__stats">
             <div className="product-desk__stat">
               <span className="product-desk__label">Account</span>
-              <span className="product-desk__value">{token ? user?.email ?? 'Connected' : 'Not connected'}</span>
+              <span className="product-desk__value">
+                {token ? user?.email ?? 'Connected' : 'Not connected'}
+              </span>
             </div>
             <div className="product-desk__stat">
               <span className="product-desk__label">Cloud history</span>
@@ -125,7 +125,9 @@ export function ProfileView() {
           <div className="product-desk__stats">
             <div className="product-desk__stat">
               <span className="product-desk__label">Browser session</span>
-              <span className="product-desk__value">{sessionProfile ? '1 active' : 'None active'}</span>
+              <span className="product-desk__value">
+                {sessionProfile ? '1 active' : 'None active'}
+              </span>
             </div>
             <div className="product-desk__stat">
               <span className="product-desk__label">Device-local</span>

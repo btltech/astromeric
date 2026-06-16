@@ -16,7 +16,7 @@ def test_learning_modules_returns_legacy_and_v2_pagination_fields():
     assert isinstance(body["data"], list)
     assert body["data"] == body["items"]
     assert body["page"] == 1
-    assert body["page_size"] == 10
+    assert body["page_size"] == 50
     assert body["pages"] >= 1
     assert isinstance(body["has_next"], bool)
     assert isinstance(body["has_prev"], bool)

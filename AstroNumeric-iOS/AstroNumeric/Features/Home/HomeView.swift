@@ -10,27 +10,15 @@ import SwiftUI
 
 struct HomeView: View {
     @Environment(AppStore.self) private var store
-    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(\.horizontalSizeClass) private var hSizeClass
     @Environment(\.verticalSizeClass) private var vSizeClass
     @AppStorage("useChaldeanNumerology") private var useChaldeanNumerology = false
     @State private var vm = HomeVM()
-    @State private var isMysticMode = true // Toggle state
     @State private var timeOffset: Double = 0 // Time scrubber state
-
-    private var bento: AdaptiveBentoColumns {
-        AdaptiveBentoColumns(
-            hSize: hSizeClass,
-            vSize: vSizeClass,
-            isAccessibilityType: dynamicTypeSize.isAccessibilitySize
-        )
-    }
-
-    private var columns: [GridItem] { bento.columns }
-    private var gridColumnCount: Int { bento.columnCount }
-
-    /// Compact landscape iPhone needs less vertical breathing room.
-    private var verticalRhythm: CGFloat { vSizeClass == .compact ? 16 : 24 }
+    @State private var showAdvancedTiming = false
+    @State private var showCreateProfileSheet = false
+    @State private var editingProfileFromHome: Profile?
+    @State private var navigationTarget: TodayDestination?
     private var topInset: CGFloat { vSizeClass == .compact ? 4 : 16 }
     
     var body: some View {
@@ -43,28 +31,17 @@ struct HomeView: View {
                     .ignoresSafeArea()
 
                 ScrollView {
-                    VStack(alignment: .leading, spacing: Space.lg) {
+                    VStack(alignment: .leading, spacing: Space.md) {
                         // 1. Screen header — date + greeting
                         headerView
 
-                        // 2. Today's primary insight — ONLY gradient card on the page
-                        todayInsightCard
+                        // 2. Unified Today snapshot: insight, next move, and key signals
+                        todaySnapshotCard
 
-                        // 3. One recommended next action
-                        recommendedActionCard
+                        // 3. Immediate actions without burying the daily flow
+                        todayQuickActions
 
-                        // 4. At-a-glance metrics row (personal day + moon)
-                        metricsRow
-
-                        // 5. Quick Tools horizontal scroll
-                        quickToolsSection
-
-                        // 6. Daily Reading detail (below fold)
-                        if let reading = vm.dailyReading {
-                            dailyReadingCard(reading)
-                        }
-
-                        // 7. Weekly Timing card
+                        // 4. Weekly Timing card
                         NavigationLink {
                             WeeklyVibeView(showShare: true)
                         } label: {
@@ -72,11 +49,11 @@ struct HomeView: View {
                         }
                         .buttonStyle(ScaleButtonStyle())
 
-                        // 8. Habits widget
+                        // 6. Habits widget
                         habitsWidget
 
-                        // 9. Time Scrubber (power user feature)
-                        timeScrubber
+                        // 7. Advanced timing controls
+                        advancedTimingSection
                     }
                     .padding(.horizontal, hSizeClass == .regular ? 28 : Space.md)
                     .padding(.bottom, Space.xl)
@@ -105,6 +82,19 @@ struct HomeView: View {
                 await vm.loadDashboard(for: profile)
                 Task { await vm.preloadWeek(for: profile) }
             }
+            .navigationDestination(item: $navigationTarget) { destination in
+                todayDestinationView(for: destination)
+            }
+            .sheet(isPresented: $showCreateProfileSheet) {
+                EditProfileView()
+            }
+            .sheet(item: $editingProfileFromHome) { profile in
+                EditProfileView(profile: profile)
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .openTodayDestination)) { notification in
+                guard let destination = TodayDestination.from(userInfo: notification.userInfo) else { return }
+                openTodayDestination(destination)
+            }
         }
     }
 
@@ -120,26 +110,11 @@ struct HomeView: View {
                 .padding(.top, topInset)
 
             Text("ui.home.0".localized)
-                .font(.system(.title, design: .serif).weight(.bold))
+                .font(.system(.title2, design: .serif).weight(.bold))
                 .foregroundStyle(Color.textPrimary)
+                .lineLimit(2)
+                .fixedSize(horizontal: false, vertical: true)
         }
-    }
-
-    private var todayInsightCard: some View {
-        NavigationLink {
-            ReadingView()
-        } label: {
-            PremiumHeroCard(
-                eyebrow: getSunSignHeading(),
-                title: heroHeadlineText,
-                bodyText: heroSupportCopy,
-                accent: .accentPrimary,
-                chips: todayChips
-            )
-        }
-        .buttonStyle(ScaleButtonStyle())
-        .accessibilityLabel("Today's insight")
-        .accessibilityHint("Opens your full daily reading")
     }
 
     private var todayChips: [String] {
@@ -150,135 +125,273 @@ struct HomeView: View {
         return chips
     }
 
-    private var recommendedActionCard: some View {
-        NavigationLink {
+    private var todaySnapshotCard: some View {
+        let recommendation = todayRecommendation
+
+        return VStack(alignment: .leading, spacing: Space.md) {
+            Button {
+                openTodayDestination(.reading)
+            } label: {
+                VStack(alignment: .leading, spacing: Space.sm) {
+                    HStack(alignment: .top) {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text(getSunSignHeading())
+                                .font(.system(.caption2, design: .monospaced).weight(.bold))
+                                .tracking(1.6)
+                                .foregroundStyle(Color.textMuted)
+
+                            Text(heroHeadlineText)
+                                .font(.system(.title3, design: .serif).weight(.bold))
+                                .foregroundStyle(.white)
+                                .lineLimit(3)
+                                .multilineTextAlignment(.leading)
+
+                            Text(heroSupportCopy)
+                                .font(.subheadline)
+                                .foregroundStyle(Color.textSecondary)
+                                .lineLimit(3)
+                                .multilineTextAlignment(.leading)
+                        }
+
+                        Spacer(minLength: Space.md)
+
+                        Image(systemName: "sparkles.rectangle.stack.fill")
+                            .font(.title2.weight(.semibold))
+                            .foregroundStyle(Color.accentPrimary)
+                            .padding(12)
+                            .background(Color.white.opacity(0.08), in: RoundedRectangle(cornerRadius: Radius.sm))
+                    }
+
+                    if !todayChips.isEmpty {
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: Space.xs) {
+                                ForEach(todayChips, id: \.self) { chip in
+                                    PremiumBadge(text: chip, tint: .accentPrimary)
+                                }
+                            }
+                        }
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Today's snapshot")
+            .accessibilityHint("Opens your full daily reading")
+
+            Divider()
+                .overlay(Color.white.opacity(0.08))
+
+            Button {
+                openTodayDestination(recommendation.destination)
+            } label: {
+                HStack(spacing: Space.md) {
+                    Image(systemName: recommendation.icon)
+                        .font(.system(.title3, weight: .semibold))
+                        .foregroundStyle(recommendation.accent)
+                        .frame(width: 42, height: 42)
+                        .background(
+                            RoundedRectangle(cornerRadius: Radius.sm)
+                                .fill(recommendation.accent.opacity(0.16))
+                        )
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack(spacing: 6) {
+                            Text(recommendation.title)
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(Color.textPrimary)
+                            PremiumBadge(text: recommendation.label, tint: recommendation.accent)
+                        }
+
+                        Text(recommendation.subtitle)
+                            .font(.caption)
+                            .foregroundStyle(Color.textSecondary)
+                            .multilineTextAlignment(.leading)
+                    }
+
+                    Spacer(minLength: Space.md)
+
+                    Image(systemName: "arrow.right")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(Color.textSecondary)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .buttonStyle(.plain)
+
+            HStack(spacing: Space.sm) {
+                Button {
+                    openTodayDestination(.numerology)
+                } label: {
+                    VStack(alignment: .leading, spacing: Space.xs) {
+                        Text("ui.home.2".localized)
+                            .font(.system(.caption2, design: .monospaced))
+                            .tracking(1.4)
+                            .foregroundStyle(Color.textMuted)
+
+                        HStack(alignment: .firstTextBaseline, spacing: 4) {
+                            if let n = vm.personalDayNumber {
+                                Text(String(n))
+                                    .font(.system(.title3, design: .serif).weight(.semibold))
+                                    .foregroundStyle(.white)
+                            } else {
+                                PremiumSkeleton(cornerRadius: 6, height: 28, width: 34)
+                            }
+                            Text("ui.home.3".localized)
+                                .font(.system(.caption2, design: .monospaced))
+                                .foregroundStyle(Color.textMuted)
+                        }
+
+                        if let desc = vm.personalDayDescription {
+                            Text(desc)
+                                .font(.caption)
+                                .foregroundStyle(Color.textSecondary)
+                                .lineLimit(2)
+                        } else {
+                            PremiumSkeletonStack(lines: 2)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, minHeight: 112, alignment: .topLeading)
+                    .padding(Space.md)
+                    .background(Color.white.opacity(0.04), in: RoundedRectangle(cornerRadius: Radius.md))
+                }
+                .buttonStyle(.plain)
+
+                Button {
+                    openTodayDestination(.moonPhase)
+                } label: {
+                    VStack(alignment: .leading, spacing: Space.xs) {
+                        HStack(spacing: Space.xs) {
+                            Circle()
+                                .fill(Color.cosmicPurple)
+                                .frame(width: 7, height: 7)
+                            Text("ui.home.4".localized)
+                                .font(.system(.caption2, design: .monospaced))
+                                .tracking(1.4)
+                                .foregroundStyle(Color.cosmicPurple)
+                        }
+
+                        Text(vm.moonPhaseEmoji + " " + (vm.moonPhaseName == "Loading..." ? "—" : vm.moonPhaseName))
+                            .font(.system(.subheadline, design: .serif).weight(.semibold))
+                            .foregroundStyle(.white)
+                            .lineLimit(2)
+
+                        Text(moonPhaseSupportCopy)
+                            .font(.caption)
+                            .foregroundStyle(Color.textSecondary)
+                            .lineLimit(2)
+                    }
+                    .frame(maxWidth: .infinity, minHeight: 112, alignment: .topLeading)
+                    .padding(Space.md)
+                    .background(Color.white.opacity(0.04), in: RoundedRectangle(cornerRadius: Radius.md))
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(Space.md)
+        .background(
+            RoundedRectangle(cornerRadius: Radius.lg)
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            Color.accentPrimary.opacity(0.18),
+                            Color.cardBackground.opacity(0.96),
+                            Color.cosmicPurple.opacity(0.12)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: Radius.lg)
+                        .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                )
+        )
+        .elevatedCardShadow()
+    }
+
+    private var todayRecommendationContext: TodayRecommendationContext {
+        TodayRecommendationContext(
+            hasReading: vm.dailyReading != nil,
+            habitsCompletedToday: vm.habitsCompletedToday,
+            totalHabits: vm.totalHabits,
+            dailyAdvice: vm.dailyAdvice
+        )
+    }
+
+    private var todayRecommendation: TodayRecommendation {
+        TodayRecommendation.make(profile: store.activeProfile, context: todayRecommendationContext)
+    }
+
+    @ViewBuilder
+    private func todayDestinationView(for destination: TodayDestination) -> some View {
+        switch destination {
+        case .reading:
+            ReadingView()
+        case .timing:
             TimingAdvisorView()
+        case .journal:
+            JournalView()
+        case .numerology:
+            NumerologyView()
+        case .moonPhase:
+            MoonPhaseView()
+        case .createProfile, .editProfile:
+            VStack(alignment: .leading, spacing: Space.sm) {
+                Text("Complete your profile from Home")
+                    .font(.headline)
+                Text("Home opens profile completion as a sheet for this route.")
+                    .font(.caption)
+                    .foregroundStyle(Color.textSecondary)
+            }
+            .padding(Space.md)
+            .readableContainer()
+        }
+    }
+
+    private var exploreHubCard: some View {
+        Button {
+            NotificationCenter.default.post(name: .navigateToTab, object: nil, userInfo: ["tab": 1])
         } label: {
             PremiumActionCard(
-                title: "section.timingAdvisor.0.title".localized,
-                subtitle: "section.timingAdvisor.0.subtitle".localized,
-                icon: "clock.badge.checkmark.fill",
-                label: "label.recommended".localized,
-                accent: .cosmicPurple,
+                title: "hero.explore.title".localized,
+                subtitle: "hero.explore.body".localized,
+                icon: "safari.fill",
+                label: "nav.explore".localized,
+                accent: .accentPrimary,
                 emphasized: true
             )
         }
         .buttonStyle(ScaleButtonStyle())
+        .accessibilityHint("Switches to Explore for tools, habits, relationships, and settings")
     }
 
-    private var metricsRow: some View {
-        HStack(spacing: Space.sm) {
-            numerologyMetricTile
-            moonMetricTile
-        }
-    }
-
-    private var numerologyMetricTile: some View {
-        NavigationLink {
-            NumerologyView()
-        } label: {
-            VStack(alignment: .leading, spacing: Space.sm) {
-                Text("ui.home.2".localized)
-                    .font(.system(.caption2, design: .monospaced))
-                    .tracking(1.4)
-                    .foregroundStyle(Color.textMuted)
-
-                HStack(alignment: .firstTextBaseline, spacing: 4) {
-                    if let n = vm.personalDayNumber {
-                        Text(String(n))
-                            .font(.system(.title, design: .serif).weight(.semibold))
-                            .foregroundStyle(.white)
-                    } else {
-                        PremiumSkeleton(cornerRadius: 6, height: 36, width: 44)
-                    }
-                    Text("ui.home.3".localized)
-                        .font(.system(.caption2, design: .monospaced))
-                        .foregroundStyle(Color.textMuted)
-                }
-
-                Group {
-                    if let desc = vm.personalDayDescription {
-                        Text(desc)
-                            .font(.caption)
-                            .foregroundStyle(Color.textSecondary)
-                            .lineLimit(2)
-                    } else {
-                        PremiumSkeletonStack(lines: 2)
-                    }
-                }
+    private var todayQuickActions: some View {
+        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: Space.sm), count: 3), spacing: Space.sm) {
+            HomeQuickActionButton(
+                title: "nav.explore".localized,
+                icon: "safari.fill",
+                accent: .accentPrimary
+            ) {
+                NotificationCenter.default.post(name: .navigateToTab, object: nil, userInfo: ["tab": 1])
             }
-            .padding(Space.md)
-            .frame(maxWidth: .infinity, minHeight: 130, alignment: .topLeading)
-            .background(PremiumCardBackground(cornerRadius: Radius.md))
-            .elevatedCardShadow()
-        }
-        .buttonStyle(ScaleButtonStyle())
-    }
 
-    private var moonMetricTile: some View {
-        NavigationLink {
-            MoonPhaseView()
-        } label: {
-            VStack(alignment: .leading, spacing: Space.sm) {
-                HStack(spacing: Space.xs) {
-                    Circle()
-                        .fill(Color.cosmicPurple)
-                        .frame(width: 7, height: 7)
-                    Text("ui.home.4".localized)
-                        .font(.system(.caption2, design: .monospaced))
-                        .tracking(1.4)
-                        .foregroundStyle(Color.cosmicPurple)
-                }
-
-                Text(vm.moonPhaseEmoji + " " + (vm.moonPhaseName == "Loading..." ? "—" : vm.moonPhaseName))
-                    .font(.system(.subheadline, design: .serif).weight(.semibold))
-                    .foregroundStyle(.white)
-                    .lineLimit(2)
-
-                Text(moonPhaseSupportCopy)
-                    .font(.caption)
-                    .foregroundStyle(Color.textSecondary)
-                    .lineLimit(3)
+            HomeQuickActionButton(
+                title: "screen.timingAdvisor".localized,
+                icon: "clock.badge.checkmark.fill",
+                accent: .positiveGreen
+            ) {
+                openTodayDestination(.timing)
             }
-            .padding(Space.md)
-            .frame(maxWidth: .infinity, minHeight: 130, alignment: .topLeading)
-            .background(
-                PremiumCardBackground(
-                    cornerRadius: Radius.md,
-                    stroke: Color.cosmicPurple.opacity(0.20)
-                )
-            )
-            .elevatedCardShadow()
-        }
-        .buttonStyle(ScaleButtonStyle())
-    }
 
-    private var quickToolsSection: some View {
-        VStack(alignment: .leading, spacing: Space.sm) {
-            Text("ui.home.8".localized)
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(Color.textPrimary)
-
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: Space.sm) {
-                    QuickToolButton(title: "Tarot", icon: "suit.spade.fill", color: .cosmicPurple) {
-                        TarotView()
-                    }
-                    QuickToolButton(title: "Oracle", icon: "questionmark.circle.fill", color: .cosmicBlue) {
-                        OracleView()
-                    }
-                    QuickToolButton(title: "Affirmation", icon: "star.fill", color: .orange) {
-                        AffirmationView()
-                    }
-                    QuickToolButton(title: "Moon", icon: "moon.fill", color: .indigo) {
-                        MoonPhaseView()
-                    }
-                    QuickToolButton(title: "Timing", icon: "clock.fill", color: .green) {
-                        TimingAdvisorView()
-                    }
-                }
+            HomeQuickActionButton(
+                title: "screen.journal".localized,
+                icon: "book.closed.fill",
+                accent: .accentSecondary
+            ) {
+                openTodayDestination(.journal)
             }
         }
+        .accessibilityElement(children: .contain)
     }
 
     private var habitsWidget: some View {
@@ -314,41 +427,55 @@ struct HomeView: View {
         .accessibilityHint("Double tap to view your habits")
     }
 
-    private var timeScrubber: some View {
-        VStack(spacing: Space.sm) {
-            HStack {
-                Text("ui.home.5".localized)
-                    .font(.system(.caption2, design: .monospaced))
-                    .tracking(1.6)
-                    .foregroundStyle(Color.textMuted)
-                Spacer()
-                NavigationLink {
-                    ReadingView()
-                } label: {
-                    Image(systemName: "chevron.right")
-                        .font(.caption.weight(.semibold))
+    private var advancedTimingSection: some View {
+        CardView {
+            DisclosureGroup(isExpanded: $showAdvancedTiming) {
+                VStack(alignment: .leading, spacing: Space.sm) {
+                    Text("Compare nearby days without crowding the main dashboard.")
+                        .font(.caption)
                         .foregroundStyle(Color.textSecondary)
-                }
-            }
-            TimeScrubber(offset: $timeOffset) { newValue in
-                let targetDate = Date().addingTimeInterval(newValue * 86400)
-                if let cachedData = vm.getFromCache(for: targetDate) {
-                    vm.applyCachedData(cachedData)
-                } else {
-                    Task {
-                        try? await Task.sleep(nanoseconds: 300_000_000)
-                        if self.timeOffset == newValue {
-                            if let profile = store.activeProfile {
-                                await vm.loadDashboard(for: profile, date: targetDate)
+
+                    TimeScrubber(offset: $timeOffset) { newValue in
+                        let targetDate = Date().addingTimeInterval(newValue * 86400)
+                        if let cachedData = vm.getFromCache(for: targetDate) {
+                            vm.applyCachedData(cachedData)
+                        } else {
+                            Task {
+                                try? await Task.sleep(nanoseconds: 300_000_000)
+                                if self.timeOffset == newValue {
+                                    if let profile = store.activeProfile {
+                                        await vm.loadDashboard(for: profile, date: targetDate)
+                                    }
+                                }
                             }
                         }
                     }
                 }
+                .padding(.top, Space.sm)
+            } label: {
+                HStack(spacing: Space.md) {
+                    Image(systemName: "clock.arrow.trianglehead.counterclockwise.rotate.90")
+                        .font(.title3.weight(.semibold))
+                        .foregroundStyle(Color.cosmicPurple)
+                        .frame(width: 42, height: 42)
+                        .background(
+                            RoundedRectangle(cornerRadius: Radius.sm)
+                                .fill(Color.cosmicPurple.opacity(0.15))
+                        )
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Advanced timing")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(Color.textPrimary)
+
+                        Text("Inspect how the next week shifts before you act.")
+                            .font(.caption)
+                            .foregroundStyle(Color.textSecondary)
+                    }
+                }
             }
+            .tint(Color.textPrimary)
         }
-        .padding(Space.md)
-        .background(PremiumCardBackground(cornerRadius: Radius.md))
-        .elevatedCardShadow()
     }
 
     private func dailyReadingCard(_ reading: DailyReadingSummary) -> some View {
@@ -411,6 +538,21 @@ struct HomeView: View {
         store.activeProfile?.sunSign ?? "Aquarius"
     }
 
+    private func openTodayDestination(_ destination: TodayDestination) {
+        switch destination {
+        case .createProfile:
+            showCreateProfileSheet = true
+        case .editProfile:
+            if let profile = store.activeProfile {
+                editingProfileFromHome = profile
+            } else {
+                showCreateProfileSheet = true
+            }
+        case .reading, .timing, .journal, .numerology, .moonPhase:
+            navigationTarget = destination
+        }
+    }
+
     // MARK: - Share Logic
     
     @MainActor
@@ -443,49 +585,6 @@ struct HomeView: View {
             return "?"
         }
         return String(lifePath)
-    }
-}
-
-// MARK: - Quick Tool Button
-
-struct QuickToolButton<Destination: View>: View {
-    let title: String
-    let icon: String
-    let color: Color
-    let destination: () -> Destination
-
-    init(title: String, icon: String, color: Color, @ViewBuilder destination: @escaping () -> Destination) {
-        self.title = title
-        self.icon = icon
-        self.color = color
-        self.destination = destination
-    }
-
-    var body: some View {
-        NavigationLink {
-            destination()
-        } label: {
-            VStack(spacing: Space.xs) {
-                Image(systemName: icon)
-                    .font(.title3)
-                    .foregroundStyle(color)
-                    .frame(width: 44, height: 44)
-                    .background(color.opacity(0.18))
-                    .clipShape(RoundedRectangle(cornerRadius: Radius.sm))
-
-                Text(title)
-                    .font(.caption.weight(.medium))
-                    .foregroundStyle(Color.textPrimary)
-            }
-            .padding(.vertical, Space.sm)
-            .padding(.horizontal, 10)
-            .background(Color.surfaceBase)
-            .clipShape(RoundedRectangle(cornerRadius: Radius.legacy))
-        }
-        .buttonStyle(ScaleButtonStyle())
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel(title)
-        .accessibilityHint("Opens \(title)")
     }
 }
 
@@ -542,6 +641,44 @@ struct CosmicIDCard: View {
             .padding(40)
         }
         .frame(width: 375, height: 600)
+    }
+}
+
+struct HomeQuickActionButton: View {
+    let title: String
+    let icon: String
+    let accent: Color
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: Space.xs) {
+                Image(systemName: icon)
+                    .font(.system(.title3, weight: .semibold))
+                    .foregroundStyle(accent)
+                    .frame(width: 38, height: 38)
+                    .background(Circle().fill(accent.opacity(0.14)))
+
+                Text(title)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(Color.textPrimary)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.center)
+                    .minimumScaleFactor(0.75)
+            }
+            .frame(maxWidth: .infinity, minHeight: 90)
+            .padding(Space.sm)
+            .background(
+                RoundedRectangle(cornerRadius: Radius.md)
+                    .fill(Color.cardBackground.opacity(0.88))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: Radius.md)
+                            .stroke(Color.borderSubtle, lineWidth: Stroke.hairline)
+                    )
+            )
+        }
+        .buttonStyle(ScaleButtonStyle())
+        .accessibilityLabel(title)
     }
 }
 

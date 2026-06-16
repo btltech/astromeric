@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   fetchLearningGlossary,
@@ -7,6 +7,7 @@ import {
   type LearningModule,
 } from '../api/client';
 import { DocumentMeta } from '../components/DocumentMeta';
+import { getRouteMeta } from '../seo/routeMeta';
 import { useActiveProfile } from '../hooks';
 import './ProductDesk.css';
 import './LearnView.css';
@@ -232,7 +233,8 @@ const fallbackModulesByCategory: Record<LearnCategoryId, LearningModule[]> = {
 const fallbackGlossaryEntries: LearningGlossaryEntry[] = [
   {
     term: 'Aspect',
-    definition: 'The angular relationship between two planets and the tension or harmony it creates.',
+    definition:
+      'The angular relationship between two planets and the tension or harmony it creates.',
     category: 'astrology',
     usage_example: 'A trine usually reads as easier flow between two planetary functions.',
     related_terms: ['conjunction', 'trine', 'opposition'],
@@ -241,26 +243,31 @@ const fallbackGlossaryEntries: LearningGlossaryEntry[] = [
     term: 'House',
     definition: 'One of the twelve life areas used to place planetary experience into context.',
     category: 'astrology',
-    usage_example: 'The seventh house tends to frame partnerships, contracts, and one-to-one dynamics.',
+    usage_example:
+      'The seventh house tends to frame partnerships, contracts, and one-to-one dynamics.',
     related_terms: ['cusp', 'ruler'],
   },
   {
     term: 'Life Path',
-    definition: 'The core numerology number derived from the birth date that frames long-arc direction.',
+    definition:
+      'The core numerology number derived from the birth date that frames long-arc direction.',
     category: 'numerology',
     usage_example: 'A Life Path 6 often emphasizes care, responsibility, and relational duty.',
     related_terms: ['destiny number', 'personal year'],
   },
   {
     term: 'Rising Sign',
-    definition: 'The zodiac sign on the eastern horizon at birth, used to frame how life arrives and how a person presents.',
+    definition:
+      'The zodiac sign on the eastern horizon at birth, used to frame how life arrives and how a person presents.',
     category: 'zodiac',
-    usage_example: 'The Rising sign often shapes the first impression before the Sun sign becomes visible.',
+    usage_example:
+      'The Rising sign often shapes the first impression before the Sun sign becomes visible.',
     related_terms: ['ascendant', 'houses'],
   },
   {
     term: 'Personal Year',
-    definition: 'A numerology cycle that describes the main annual timing theme a person is moving through.',
+    definition:
+      'A numerology cycle that describes the main annual timing theme a person is moving through.',
     category: 'numerology',
     usage_example: 'A Personal Year 9 often brings completion, closure, or necessary release.',
     related_terms: ['life path', 'cycles'],
@@ -274,7 +281,7 @@ function readCompletedModuleIds() {
 
   try {
     const stored = window.localStorage.getItem(COMPLETED_LESSON_STORAGE_KEY);
-    return stored ? ((JSON.parse(stored) as string[]).filter(Boolean)) : [];
+    return stored ? (JSON.parse(stored) as string[]).filter(Boolean) : [];
   } catch {
     return [] as string[];
   }
@@ -308,9 +315,8 @@ export function LearnView() {
   const { activeProfile, activeProfileSourceLabel, hasActiveProfile } = useActiveProfile();
   const [selectedCategory, setSelectedCategory] = useState<LearnCategoryId>('astrology');
   const [modules, setModules] = useState<LearningModule[]>(fallbackModulesByCategory.astrology);
-  const [selectedModuleId, setSelectedModuleId] = useState<string | null>(
-    fallbackModulesByCategory.astrology[0]?.id ?? null
-  );
+  const [selectedModuleId, setSelectedModuleId] = useState<string | null>(null);
+  const [lessonOpen, setLessonOpen] = useState(false);
   const [glossaryEntries, setGlossaryEntries] = useState<LearningGlossaryEntry[]>([]);
   const [selectedGlossaryTerm, setSelectedGlossaryTerm] = useState<string | null>(null);
   const [glossarySearch, setGlossarySearch] = useState('');
@@ -322,6 +328,7 @@ export function LearnView() {
   const [loadingGlossary, setLoadingGlossary] = useState(true);
   const [moduleIssue, setModuleIssue] = useState<string | null>(null);
   const [glossaryIssue, setGlossaryIssue] = useState<string | null>(null);
+  const lessonDrawerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let isCancelled = false;
@@ -339,12 +346,12 @@ export function LearnView() {
         if (!isCancelled) {
           setModules(nextModules);
           setSelectedModuleId((current) =>
-            nextModules.some((module) => module.id === current) ? current : nextModules[0]?.id ?? null
+            nextModules.some((module) => module.id === current)
+              ? current
+              : nextModules[0]?.id ?? null
           );
           setModuleIssue(
-            response.modules.length > 0
-              ? null
-              : 'Showing built-in lessons for this category.'
+            response.modules.length > 0 ? null : 'Showing built-in lessons for this category.'
           );
         }
       } catch {
@@ -382,17 +389,18 @@ export function LearnView() {
 
       try {
         const response = await fetchLearningGlossary();
-        const nextEntries = response.entries.length > 0 ? response.entries : fallbackGlossaryEntries;
+        const nextEntries =
+          response.entries.length > 0 ? response.entries : fallbackGlossaryEntries;
 
         if (!isCancelled) {
           setGlossaryEntries(nextEntries);
           setSelectedGlossaryTerm((current) =>
-            nextEntries.some((entry) => entry.term === current) ? current : nextEntries[0]?.term ?? null
+            nextEntries.some((entry) => entry.term === current)
+              ? current
+              : nextEntries[0]?.term ?? null
           );
           setGlossaryIssue(
-            response.entries.length > 0
-              ? null
-              : 'Showing built-in glossary entries.'
+            response.entries.length > 0 ? null : 'Showing built-in glossary entries.'
           );
         }
       } catch {
@@ -422,7 +430,8 @@ export function LearnView() {
   }, []);
 
   const selectedCategoryMeta = useMemo(
-    () => learnCategories.find((category) => category.id === selectedCategory) ?? learnCategories[0],
+    () =>
+      learnCategories.find((category) => category.id === selectedCategory) ?? learnCategories[0],
     [selectedCategory]
   );
   const completedModuleIdSet = useMemo(() => new Set(completedModuleIds), [completedModuleIds]);
@@ -434,7 +443,8 @@ export function LearnView() {
     () => modules.filter((module) => completedModuleIdSet.has(module.id)).length,
     [completedModuleIdSet, modules]
   );
-  const completionRate = modules.length > 0 ? Math.round((completedInCategory / modules.length) * 100) : 0;
+  const completionRate =
+    modules.length > 0 ? Math.round((completedInCategory / modules.length) * 100) : 0;
   const nextLesson = useMemo(
     () => modules.find((module) => !completedModuleIdSet.has(module.id)) ?? modules[0] ?? null,
     [completedModuleIdSet, modules]
@@ -453,7 +463,8 @@ export function LearnView() {
   const filteredGlossaryEntries = useMemo(
     () =>
       glossaryEntries.filter((entry) => {
-        const matchesCategory = selectedGlossaryCategory === 'all' || entry.category === selectedGlossaryCategory;
+        const matchesCategory =
+          selectedGlossaryCategory === 'all' || entry.category === selectedGlossaryCategory;
         const matchesSearch =
           glossarySearch.trim().length === 0 ||
           entry.term.toLowerCase().includes(glossarySearch.trim().toLowerCase()) ||
@@ -473,12 +484,17 @@ export function LearnView() {
   }, [filteredGlossaryEntries]);
 
   const selectedGlossaryEntry = useMemo(
-    () => filteredGlossaryEntries.find((entry) => entry.term === selectedGlossaryTerm) ?? filteredGlossaryEntries[0] ?? null,
+    () =>
+      filteredGlossaryEntries.find((entry) => entry.term === selectedGlossaryTerm) ??
+      filteredGlossaryEntries[0] ??
+      null,
     [filteredGlossaryEntries, selectedGlossaryTerm]
   );
   const profileLabel = hasActiveProfile ? activeProfile?.name ?? 'Connected' : 'Optional';
   const profileSourceLabel = hasActiveProfile ? activeProfileSourceLabel : 'No active profile';
-  const learnIssues = [moduleIssue, glossaryIssue].filter((issue): issue is string => Boolean(issue));
+  const learnIssues = [moduleIssue, glossaryIssue].filter((issue): issue is string =>
+    Boolean(issue)
+  );
 
   function handleToggleComplete(moduleId: string) {
     setCompletedModuleIds((current) => {
@@ -490,19 +506,32 @@ export function LearnView() {
     });
   }
 
+  function handleOpenLesson(moduleId: string) {
+    setSelectedModuleId(moduleId);
+    setLessonOpen(true);
+    // On mobile, scroll drawer into view after it opens
+    requestAnimationFrame(() => {
+      lessonDrawerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }
+
+  function handleCloseLesson() {
+    setLessonOpen(false);
+  }
+
   return (
     <div className="product-desk learn-view">
       <DocumentMeta
-        title="AstroNumeric — Learn Desk"
-        description="Lessons, glossary, and study progress for astrology and numerology."
+        title={getRouteMeta('/learn').title}
+        description={getRouteMeta('/learn').description}
       />
 
       <section className="product-desk__hero">
         <span className="product-desk__eyebrow">Learn desk</span>
         <h1>Astrology and numerology — explained.</h1>
         <p>
-          Lessons, glossary, and study progress in one place. Start with a category, go deep on
-          a lesson, then look up any term that needs more context.
+          Lessons, glossary, and study progress in one place. Start with a category, go deep on a
+          lesson, then look up any term that needs more context.
         </p>
         <div className="product-desk__chips">
           <span className="product-desk__chip">Category lanes</span>
@@ -548,17 +577,22 @@ export function LearnView() {
             </div>
             <div className="product-desk__stat">
               <span className="product-desk__label">Category progress</span>
-              <span className="product-desk__value">{loadingModules ? 'Loading...' : `${completionRate}%`}</span>
+              <span className="product-desk__value">
+                {loadingModules ? 'Loading...' : `${completionRate}%`}
+              </span>
             </div>
           </div>
           <p className="product-desk__note">
-            Explore a category after running a reading, chart pass, or compatibility check to understand what drove the result.
+            Explore a category after running a reading, chart pass, or compatibility check to
+            understand what drove the result.
           </p>
         </article>
 
         <article className="product-desk__panel product-desk__panel--wide">
           <h2>Category lanes</h2>
-          <p className="product-desk__note">Pick the learning lane that matches the desk the user just came from.</p>
+          <p className="product-desk__note">
+            Pick the learning lane that matches the desk the user just came from.
+          </p>
           <div className="learn-view__category-row" role="tablist" aria-label="Learn categories">
             {learnCategories.map((category) => (
               <button
@@ -584,108 +618,174 @@ export function LearnView() {
           <div className="product-desk__stats">
             <div className="product-desk__stat">
               <span className="product-desk__label">Lessons in lane</span>
-              <span className="product-desk__value">{loadingModules ? 'Loading...' : modules.length}</span>
+              <span className="product-desk__value">
+                {loadingModules ? 'Loading...' : modules.length}
+              </span>
             </div>
             <div className="product-desk__stat">
               <span className="product-desk__label">Completed here</span>
-              <span className="product-desk__value">{loadingModules ? 'Loading...' : completedInCategory}</span>
+              <span className="product-desk__value">
+                {loadingModules ? 'Loading...' : completedInCategory}
+              </span>
             </div>
             <div className="product-desk__stat">
               <span className="product-desk__label">Next lesson</span>
-              <span className="product-desk__value">{nextLesson?.title ?? 'Waiting on lessons'}</span>
+              <span className="product-desk__value">
+                {nextLesson?.title ?? 'Waiting on lessons'}
+              </span>
             </div>
           </div>
           <div className="learn-view__module-grid">
             {modules.map((module) => {
               const completed = completedModuleIdSet.has(module.id);
+              const isActive = module.id === selectedModuleId && lessonOpen;
 
               return (
                 <button
                   key={module.id}
                   type="button"
                   className={
-                    module.id === selectedModule?.id
+                    isActive
                       ? 'learn-view__module-card learn-view__module-card--active'
                       : 'learn-view__module-card'
                   }
-                  onClick={() => setSelectedModuleId(module.id)}
+                  onClick={() => handleOpenLesson(module.id)}
                 >
                   <div className="learn-view__module-topline">
-                    <span className="product-desk__badge">{formatDifficulty(module.difficulty)}</span>
+                    <span className="product-desk__badge">
+                      {formatDifficulty(module.difficulty)}
+                    </span>
                     <span>{formatDuration(module.duration_minutes)}</span>
                   </div>
                   <strong>{module.title}</strong>
                   <p>{trimCopy(module.description, 120)}</p>
                   <div className="learn-view__module-topline learn-view__module-topline--foot">
                     <span>{module.category ?? selectedCategoryMeta.label}</span>
-                    <span>{completed ? 'Completed' : 'Open lesson'}</span>
+                    <span className="learn-view__open-cta">
+                      {completed ? '✓ Completed' : 'Open lesson →'}
+                    </span>
                   </div>
                 </button>
               );
             })}
           </div>
+
+          {/* Inline lesson drawer — opens below the grid when a card is clicked */}
+          {lessonOpen && selectedModule ? (
+            <div
+              ref={lessonDrawerRef}
+              className="learn-view__drawer"
+              role="region"
+              aria-label="Lesson detail"
+            >
+              <div className="learn-view__drawer-header">
+                <div className="learn-view__drawer-title-row">
+                  <div>
+                    <span className="product-desk__badge">
+                      {formatDifficulty(selectedModule.difficulty)}
+                    </span>
+                    <h3 className="learn-view__drawer-title">{selectedModule.title}</h3>
+                    <p className="learn-view__drawer-subtitle">{selectedModule.description}</p>
+                  </div>
+                  <button
+                    type="button"
+                    className="learn-view__drawer-close"
+                    onClick={handleCloseLesson}
+                    aria-label="Close lesson"
+                  >
+                    ✕
+                  </button>
+                </div>
+                <div className="learn-view__detail-meta">
+                  <span>{formatDuration(selectedModule.duration_minutes)}</span>
+                  <span>{selectedModule.category ?? selectedCategoryMeta.label}</span>
+                  <span>
+                    {completedModuleIdSet.has(selectedModule.id)
+                      ? '✓ Completed'
+                      : 'Not yet completed'}
+                  </span>
+                </div>
+              </div>
+
+              <div className="learn-view__drawer-body">
+                <p className="learn-view__drawer-content">
+                  {selectedModule.content ?? selectedModule.description}
+                </p>
+
+                {(selectedModule.keywords ?? []).length > 0 ? (
+                  <div className="learn-view__keyword-row">
+                    {(selectedModule.keywords ?? []).map((keyword) => (
+                      <span key={keyword} className="learn-view__keyword">
+                        {keyword}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
+
+                {relatedModules.length > 0 ? (
+                  <div className="learn-view__related-row">
+                    <span className="product-desk__label">Related lessons</span>
+                    <div className="product-desk__linkgrid">
+                      {relatedModules.map((mod) => (
+                        <button
+                          key={mod.id}
+                          type="button"
+                          className="product-desk__linkcard learn-view__related-card"
+                          onClick={() => handleOpenLesson(mod.id)}
+                        >
+                          <strong>{mod.title}</strong>
+                          <span>{trimCopy(mod.description, 90)}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+
+                <button
+                  type="button"
+                  className={
+                    completedModuleIdSet.has(selectedModule.id)
+                      ? 'btn-secondary learn-view__complete-button'
+                      : 'btn-primary learn-view__complete-button'
+                  }
+                  onClick={() => handleToggleComplete(selectedModule.id)}
+                >
+                  {completedModuleIdSet.has(selectedModule.id)
+                    ? 'Mark as not completed'
+                    : 'Mark lesson completed'}
+                </button>
+              </div>
+            </div>
+          ) : null}
         </article>
 
         <article className="product-desk__panel">
-          <h2>Lesson detail</h2>
-          {selectedModule ? (
-            <div className="learn-view__detail-stack">
-              <div className="learn-view__detail-header">
-                <span className="product-desk__badge">{formatDifficulty(selectedModule.difficulty)}</span>
-                <strong>{selectedModule.title}</strong>
-                <p>{selectedModule.description}</p>
-              </div>
-              <div className="learn-view__detail-meta">
-                <span>{formatDuration(selectedModule.duration_minutes)}</span>
-                <span>{selectedModule.category ?? selectedCategoryMeta.label}</span>
-                <span>{completedModuleIdSet.has(selectedModule.id) ? 'Completed' : 'Not completed'}</span>
-              </div>
-              <p className="product-desk__note">{selectedModule.content ?? selectedModule.description}</p>
-
-              {(selectedModule.keywords ?? []).length > 0 ? (
-                <div className="learn-view__keyword-row">
-                  {(selectedModule.keywords ?? []).map((keyword) => (
-                    <span key={keyword} className="learn-view__keyword">
-                      {keyword}
-                    </span>
-                  ))}
-                </div>
-              ) : null}
-
-              {relatedModules.length > 0 ? (
-                <div className="learn-view__related-row">
-                  <span className="product-desk__label">Related lessons</span>
-                  <div className="product-desk__linkgrid">
-                    {relatedModules.map((module) => (
-                      <button
-                        key={module.id}
-                        type="button"
-                        className="product-desk__linkcard learn-view__related-card"
-                        onClick={() => setSelectedModuleId(module.id)}
-                      >
-                        <strong>{module.title}</strong>
-                        <span>{trimCopy(module.description, 90)}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-
-              <button
-                type="button"
-                className={
-                  completedModuleIdSet.has(selectedModule.id)
-                    ? 'btn-secondary learn-view__complete-button'
-                    : 'btn-primary learn-view__complete-button'
-                }
-                onClick={() => handleToggleComplete(selectedModule.id)}
-              >
-                {completedModuleIdSet.has(selectedModule.id) ? 'Mark as not completed' : 'Mark lesson completed'}
-              </button>
+          <h2>Progress</h2>
+          <div className="product-desk__stats">
+            <div className="product-desk__stat">
+              <span className="product-desk__label">Category progress</span>
+              <span className="product-desk__value">
+                {loadingModules ? 'Loading...' : `${completionRate}%`}
+              </span>
             </div>
-          ) : (
-            <p className="product-desk__note">Pick a lesson from the library to open its detail view.</p>
-          )}
+            <div className="product-desk__stat">
+              <span className="product-desk__label">Completed</span>
+              <span className="product-desk__value">
+                {loadingModules ? '—' : `${completedInCategory} / ${modules.length}`}
+              </span>
+            </div>
+          </div>
+          <p className="product-desk__note">
+            {nextLesson ? `Next up: ${nextLesson.title}` : 'All lessons in this lane completed.'}
+          </p>
+          {!lessonOpen ? (
+            <p
+              className="product-desk__note"
+              style={{ color: 'rgba(136,192,208,0.8)', marginTop: '0.5rem' }}
+            >
+              ← Click any lesson card to open it here.
+            </p>
+          ) : null}
         </article>
 
         <article id="glossary-lane" className="product-desk__panel product-desk__panel--full">
@@ -767,7 +867,9 @@ export function LearnView() {
                   ) : null}
                 </>
               ) : (
-                <p className="product-desk__note">Pick a glossary term to open its definition and usage.</p>
+                <p className="product-desk__note">
+                  Pick a glossary term to open its definition and usage.
+                </p>
               )}
             </div>
           </div>
@@ -778,15 +880,23 @@ export function LearnView() {
           <div className="product-desk__linkgrid">
             <Link to="/reading" className="product-desk__linkcard">
               <strong>Generate a reading</strong>
-              <span>Start with a live result, then open learn when a term or pattern needs context.</span>
+              <span>
+                Start with a live result, then open learn when a term or pattern needs context.
+              </span>
             </Link>
             <Link to="/journal" className="product-desk__linkcard">
               <strong>Capture the lesson</strong>
-              <span>Move from study into the journal workspace once the user has something to test or apply.</span>
+              <span>
+                Move from study into the journal workspace once the user has something to test or
+                apply.
+              </span>
             </Link>
             <Link to="/tools" className="product-desk__linkcard">
               <strong>Use the tools desk</strong>
-              <span>Take sharper questions into tarot, timing, or guide flows after the concept is clear.</span>
+              <span>
+                Take sharper questions into tarot, timing, or guide flows after the concept is
+                clear.
+              </span>
             </Link>
           </div>
         </article>

@@ -75,33 +75,38 @@ const SIGN_INFO: Record<string, { element: string; modality: string; emoji: stri
 const TRAIT_FRIENDLY_NAME: Record<string, string> = {
   'Core Self': 'Who you are at your core',
   'Emotional Style': 'How you feel and recharge',
-  'Communication': 'How you think and talk',
+  Communication: 'How you think and talk',
   'Love Language': 'What you need in relationships',
   'Drive & Energy': 'How you take action',
 };
 
 // Actionable advice for each trait category — single, specific action
 const TRAIT_ACTIONS: Record<string, string> = {
-  'Core Self': "Use this energy when you need to make a decision — your instinct here is usually right.",
-  'Emotional Style': "Before saying yes to anything today, check whether it actually aligns with what you need.",
-  'Communication': "Say the direct version of what you mean — this style is a strength, not a problem.",
-  'Love Language': "Tell one person what you need today instead of waiting for them to figure it out.",
-  'Drive & Energy': "Block your hardest task for your natural energy peak window and protect that time.",
+  'Core Self':
+    'Use this energy when you need to make a decision — your instinct here is usually right.',
+  'Emotional Style':
+    'Before saying yes to anything today, check whether it actually aligns with what you need.',
+  Communication:
+    'Say the direct version of what you mean — this style is a strength, not a problem.',
+  'Love Language':
+    'Tell one person what you need today instead of waiting for them to figure it out.',
+  'Drive & Energy':
+    'Block your hardest task for your natural energy peak window and protect that time.',
 };
 
 // Plain-English translations of element + modality pairs for Core Self
 const CORE_SELF_DESC: Record<string, string> = {
   'Fire-Cardinal': 'You initiate. You spark things into motion and lead naturally.',
-  'Fire-Fixed':    'You burn with steady purpose. Once committed, you see it through.',
-  'Fire-Mutable':  'You adapt quickly and bring energy wherever you go.',
+  'Fire-Fixed': 'You burn with steady purpose. Once committed, you see it through.',
+  'Fire-Mutable': 'You adapt quickly and bring energy wherever you go.',
   'Earth-Cardinal': 'You build things. You turn ideas into tangible results.',
-  'Earth-Fixed':   'You are reliable and immovable. People count on your consistency.',
+  'Earth-Fixed': 'You are reliable and immovable. People count on your consistency.',
   'Earth-Mutable': 'You are practical and flexible — you find what works and use it.',
-  'Air-Cardinal':  'You connect people and ideas. You are the one who starts conversations.',
-  'Air-Fixed':     'You think independently and hold your positions firmly.',
-  'Air-Mutable':   'You absorb and synthesise ideas from everywhere around you.',
+  'Air-Cardinal': 'You connect people and ideas. You are the one who starts conversations.',
+  'Air-Fixed': 'You think independently and hold your positions firmly.',
+  'Air-Mutable': 'You absorb and synthesise ideas from everywhere around you.',
   'Water-Cardinal': 'You feel deeply and move with emotional intelligence.',
-  'Water-Fixed':   'Your emotional depth is your greatest strength — you go all in.',
+  'Water-Fixed': 'Your emotional depth is your greatest strength — you go all in.',
   'Water-Mutable': 'You are highly intuitive. You pick up on what others miss.',
 };
 
@@ -156,7 +161,9 @@ const getPersonalityTraits = (chartData: ChartData) => {
     traits.push({
       category: 'Drive & Energy',
       trait: `${sign} Action`,
-      description: `You take action in a ${getActionStyle(sign)} way — this is how you get things done.`,
+      description: `You take action in a ${getActionStyle(
+        sign
+      )} way — this is how you get things done.`,
     });
   }
 
@@ -477,19 +484,24 @@ export function ChartView({ profile, onExportPDF }: Props) {
 
         {activeTab === 'traits' && (
           <div className="traits-grid">
-            {(showAllTraits ? personalityTraits : personalityTraits.slice(0, 3)).map((trait, index) => (
-              <div key={index} className="trait-card">
-                <span className="trait-category">{trait.category}</span>
-                <h4 className="trait-title">{TRAIT_FRIENDLY_NAME[trait.category] || trait.trait}</h4>
-                <p className="trait-description">{trait.description}</p>
-                <p className="trait-action">→ {TRAIT_ACTIONS[trait.category] || 'Use this awareness in your everyday decisions.'}</p>
-              </div>
-            ))}
+            {(showAllTraits ? personalityTraits : personalityTraits.slice(0, 3)).map(
+              (trait, index) => (
+                <div key={index} className="trait-card">
+                  <span className="trait-category">{trait.category}</span>
+                  <h4 className="trait-title">
+                    {TRAIT_FRIENDLY_NAME[trait.category] || trait.trait}
+                  </h4>
+                  <p className="trait-description">{trait.description}</p>
+                  <p className="trait-action">
+                    →{' '}
+                    {TRAIT_ACTIONS[trait.category] ||
+                      'Use this awareness in your everyday decisions.'}
+                  </p>
+                </div>
+              )
+            )}
             {personalityTraits.length > 3 && (
-              <button
-                className="traits-show-more"
-                onClick={() => setShowAllTraits((v) => !v)}
-              >
+              <button className="traits-show-more" onClick={() => setShowAllTraits((v) => !v)}>
                 {showAllTraits ? 'Show less' : `Show ${personalityTraits.length - 3} more traits`}
               </button>
             )}
@@ -525,10 +537,14 @@ export function ChartView({ profile, onExportPDF }: Props) {
                   return (
                     <p key={element} className="element-note strong">
                       <strong>Strong {element} energy.</strong>{' '}
-                      {element === 'Fire' && 'You lead with action and enthusiasm. Channel it by picking one thing to start this week rather than spreading yourself thin.'}
-                      {element === 'Earth' && 'You are grounded and reliable. Use that to tackle the practical task you have been delaying.'}
-                      {element === 'Air' && 'You think clearly and communicate well. Use this to have the conversation you have been putting off.'}
-                      {element === 'Water' && 'You read situations and people well. Trust your first impression today — it is usually right.'}
+                      {element === 'Fire' &&
+                        'You lead with action and enthusiasm. Channel it by picking one thing to start this week rather than spreading yourself thin.'}
+                      {element === 'Earth' &&
+                        'You are grounded and reliable. Use that to tackle the practical task you have been delaying.'}
+                      {element === 'Air' &&
+                        'You think clearly and communicate well. Use this to have the conversation you have been putting off.'}
+                      {element === 'Water' &&
+                        'You read situations and people well. Trust your first impression today — it is usually right.'}
                     </p>
                   );
                 }
@@ -536,10 +552,14 @@ export function ChartView({ profile, onExportPDF }: Props) {
                   return (
                     <p key={element} className="element-note weak">
                       <strong>Low {element} energy.</strong>{' '}
-                      {element === 'Fire' && 'Motivation comes harder for you. Start with one tiny action — momentum builds from there.'}
-                      {element === 'Earth' && 'Practical follow-through is a growth area. Write down one concrete next step before finishing anything.'}
-                      {element === 'Air' && 'Stepping back and looking at things objectively takes effort. Ask one trusted person for their honest take before deciding.'}
-                      {element === 'Water' && 'Tuning into feelings — yours or others — takes practice. Before reacting, pause and ask: what is actually going on here?'}
+                      {element === 'Fire' &&
+                        'Motivation comes harder for you. Start with one tiny action — momentum builds from there.'}
+                      {element === 'Earth' &&
+                        'Practical follow-through is a growth area. Write down one concrete next step before finishing anything.'}
+                      {element === 'Air' &&
+                        'Stepping back and looking at things objectively takes effort. Ask one trusted person for their honest take before deciding.'}
+                      {element === 'Water' &&
+                        'Tuning into feelings — yours or others — takes practice. Before reacting, pause and ask: what is actually going on here?'}
                     </p>
                   );
                 }

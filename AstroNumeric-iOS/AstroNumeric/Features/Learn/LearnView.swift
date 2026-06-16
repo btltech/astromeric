@@ -4,6 +4,7 @@
 import SwiftUI
 
 struct LearnView: View {
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @State private var viewModel = LearnVM()
     @State private var selectedModule: LearningModule?
     @State private var showGlossary = false
@@ -15,6 +16,14 @@ struct LearnView: View {
                 .navigationTitle("screen.learn".localized)
                 .navigationBarTitleDisplayMode(.inline)
                 .task { await viewModel.fetchModules() }
+                .navigationDestination(isPresented: Binding(
+                    get: { horizontalSizeClass == .compact && selectedModule != nil },
+                    set: { if !$0 { selectedModule = nil } }
+                )) {
+                    if let module = selectedModule {
+                        LessonDetailView(module: module)
+                    }
+                }
                 .sheet(isPresented: $showGlossary) {
                     GlossaryView()
                 }

@@ -1,5 +1,36 @@
 import '@testing-library/jest-dom';
 
+// Mock localStorage and sessionStorage
+const mockStorage = () => {
+  let store: Record<string, string> = {};
+  return {
+    getItem: vi.fn((key: string) => store[key] || null),
+    setItem: vi.fn((key: string, value: string) => {
+      store[key] = String(value);
+    }),
+    removeItem: vi.fn((key: string) => {
+      delete store[key];
+    }),
+    clear: vi.fn(() => {
+      store = {};
+    }),
+    length: 0,
+    key: vi.fn((index: number) => Object.keys(store)[index] || null),
+  };
+};
+
+Object.defineProperty(window, 'localStorage', {
+  value: mockStorage(),
+  writable: true,
+  configurable: true,
+});
+
+Object.defineProperty(window, 'sessionStorage', {
+  value: mockStorage(),
+  writable: true,
+  configurable: true,
+});
+
 // Mock window.matchMedia
 Object.defineProperty(window, 'matchMedia', {
   writable: true,

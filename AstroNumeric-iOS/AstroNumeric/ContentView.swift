@@ -1,5 +1,5 @@
 // ContentView.swift
-// Root navigation with 4-tab structure + Floating AI Button
+// Root navigation with 4-tab structure and Explore hub + Floating AI Button
 
 import SwiftUI
 
@@ -17,14 +17,14 @@ struct ContentView: View {
     
     enum Tab: String, CaseIterable {
         case home = "Home"
-        case tools = "Tools"
+        case explore = "Explore"
         case charts = "Charts"
         case profile = "Profile"
         
         var icon: String {
             switch self {
             case .home: return "house.fill"
-            case .tools: return "wrench.and.screwdriver.fill"
+            case .explore: return "safari.fill"
             case .charts: return "chart.pie.fill"
             case .profile: return "person.circle"
             }
@@ -34,7 +34,7 @@ struct ContentView: View {
         var label: String {
             switch self {
             case .home: return "tab.home".localized
-            case .tools: return "tab.tools".localized
+            case .explore: return "nav.explore".localized
             case .charts: return "tab.charts".localized
             case .profile: return "tab.profile".localized
             }
@@ -88,11 +88,11 @@ struct ContentView: View {
                     }
                     .tag(Tab.home)
                 
-                ToolsView()
+                ExploreView()
                     .tabItem {
-                        Label(Tab.tools.label, systemImage: Tab.tools.icon)
+                        Label(Tab.explore.label, systemImage: Tab.explore.icon)
                     }
-                    .tag(Tab.tools)
+                    .tag(Tab.explore)
                 
                 ChartsView()
                     .tabItem {
@@ -141,9 +141,10 @@ struct ContentView: View {
                     profile: profile,
                     moonSign: store.activeMoonSign,
                     risingSign: store.activeRisingSign,
-                    onDailyGuide: {
+                    primaryRecommendation: TodayRecommendation.make(profile: profile),
+                    onPrimaryAction: {
                         finishFirstRunProfileComplete()
-                        selectedTab = .home
+                        openTodayDestination(TodayRecommendation.make(profile: profile).destination)
                     },
                     onChart: {
                         finishFirstRunProfileComplete()
@@ -164,11 +165,14 @@ struct ContentView: View {
         // Handle push notification navigation
         .onReceive(NotificationCenter.default.publisher(for: .navigateToTab)) { notification in
             if let tabIndex = notification.userInfo?["tab"] as? Int {
-                let tabs: [Tab] = [.home, .tools, .charts, .profile]
+                let tabs: [Tab] = [.home, .explore, .charts, .profile]
                 if tabIndex >= 0 && tabIndex < tabs.count {
                     selectedTab = tabs[tabIndex]
                 }
             }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .openTodayDestination)) { _ in
+            selectedTab = .home
         }
     }
 
@@ -201,6 +205,162 @@ struct ContentView: View {
         firstRunProfileCompletionShown = true
         showFirstRunProfileComplete = false
     }
+
+    private func openTodayDestination(_ destination: TodayDestination) {
+        selectedTab = .home
+        DispatchQueue.main.async {
+            NotificationCenter.default.post(
+                name: .openTodayDestination,
+                object: nil,
+                userInfo: destination.notificationUserInfo
+            )
+        }
+    }
+}
+
+enum TodayDestination: String, Identifiable {
+    case createProfile
+    case editProfile
+    case reading
+    case timing
+    case journal
+    case numerology
+    case moonPhase
+
+    var id: String { rawValue }
+
+    static func from(userInfo: [AnyHashable: Any]?) -> TodayDestination? {
+        guard let rawValue = userInfo?["destination"] as? String else { return nil }
+        return TodayDestination(rawValue: rawValue)
+    }
+
+    var notificationUserInfo: [AnyHashable: Any] {
+        ["destination": rawValue]
+    }
+}
+
+struct TodayRecommendationContext {
+    var hasReading = false
+    var habitsCompletedToday = 0
+    var totalHabits = 0
+    var dailyAdvice: String?
+
+    static let empty = TodayRecommendationContext()
+}
+
+struct TodayRecommendation {
+    let title: String
+    let subtitle: String
+    let icon: String
+    let label: String
+    let ctaTitle: String
+    let accent: Color
+    let destination: TodayDestination
+
+    static func make(
+        profile: Profile?,
+        context: TodayRecommendationContext = .empty
+    ) -> TodayRecommendation {
+        guard let profile else {
+            return TodayRecommendation(
+                title: "Create your birth profile",
+                subtitle: "Add your birth details to unlock today’s reading, timing, and moon context.",
+                icon: "person.crop.circle.badge.plus",
+                label: "Start Here",
+                ctaTitle: "Create Profile",
+                accent: .accentPrimary,
+                destination: .createProfile
+            )
+        }
+
+        switch profile.dataQuality {
+        case .dateOnly:
+            return TodayRecommendation(
+                title: "Add your birth place",
+                subtitle: "Your Sun sign is ready, but place and time unlock a sharper chart and daily timing.",
+                icon: "mappin.and.ellipse",
+                label: "Sharpen Chart",
+                ctaTitle: "Add Birth Place",
+                accent: .orange,
+                destination: .editProfile
+            )
+        case .dateAndPlace:
+            return TodayRecommendation(
+                title: "Add your birth time",
+                subtitle: "Unlock your rising sign, houses, and tighter timing windows with one update.",
+                icon: "clock.badge.exclamationmark",
+                label: "Sharpen Chart",
+                ctaTitle: "Add Birth Time",
+                accent: .orange,
+                destination: .editProfile
+            )
+        case .full:
+            break
+        }
+
+        if !context.hasReading {
+            return TodayRecommendation(
+                title: "Open your daily guide",
+                subtitle: "Your chart, numbers, and live sky are ready for today.",
+                icon: "sparkles",
+                label: "Today",
+                ctaTitle: "Open Daily Guide",
+                accent: .accentPrimary,
+                destination: .reading
+            )
+        }
+
+        if context.totalHabits > 0 && context.habitsCompletedToday == 0 {
+            return TodayRecommendation(
+                title: "Place your key move",
+                subtitle: "Check the strongest window before the day gets noisy.",
+                icon: "clock.badge.checkmark.fill",
+                label: "Right Now",
+                ctaTitle: "Check Timing",
+                accent: .green,
+                destination: .timing
+            )
+        }
+
+        if let advice = condensed(context.dailyAdvice) {
+            return TodayRecommendation(
+                title: "Keep today’s cue close",
+                subtitle: advice,
+                icon: "book.closed.fill",
+                label: "Reflect",
+                ctaTitle: "Open Journal",
+                accent: .cosmicPurple,
+                destination: .journal
+            )
+        }
+
+        return TodayRecommendation(
+            title: "Review your timing",
+            subtitle: "Use the live sky to place your most important call, launch, or conversation.",
+            icon: "clock.badge.checkmark.fill",
+            label: "Recommended",
+            ctaTitle: "Review Timing",
+            accent: .cosmicPurple,
+            destination: .timing
+        )
+    }
+
+    private static func condensed(_ advice: String?) -> String? {
+        guard let advice = advice?
+            .replacingOccurrences(of: "\n", with: " ")
+            .trimmingCharacters(in: .whitespacesAndNewlines),
+            !advice.isEmpty else {
+            return nil
+        }
+
+        guard advice.count > 96 else { return advice }
+        let endIndex = advice.index(advice.startIndex, offsetBy: 93)
+        return String(advice[..<endIndex]) + "..."
+    }
+}
+
+extension Notification.Name {
+    static let openTodayDestination = Notification.Name("openTodayDestination")
 }
 
 private struct FirstRunProfilePromptView: View {
@@ -342,7 +502,8 @@ private struct FirstRunProfileCompleteView: View {
     let profile: Profile
     let moonSign: String?
     let risingSign: String?
-    let onDailyGuide: () -> Void
+    let primaryRecommendation: TodayRecommendation
+    let onPrimaryAction: () -> Void
     let onChart: () -> Void
     let onDismiss: () -> Void
 
@@ -419,8 +580,8 @@ private struct FirstRunProfileCompleteView: View {
 
     private var actions: some View {
         VStack(spacing: 12) {
-            GradientButton("See Daily Guide", icon: "sparkles") {
-                onDailyGuide()
+            GradientButton(primaryRecommendation.ctaTitle, icon: primaryRecommendation.icon) {
+                onPrimaryAction()
             }
 
             Button {

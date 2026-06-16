@@ -6,6 +6,7 @@ import {
   type ProfilePayload,
 } from '../api/client';
 import { DocumentMeta } from '../components/DocumentMeta';
+import { getRouteMeta } from '../seo/routeMeta';
 import { useProfiles } from '../hooks';
 import { useStore } from '../store/useStore';
 import type { SavedProfile } from '../types';
@@ -88,9 +89,8 @@ export function RelationshipsView() {
 
       const fulfilled = results
         .filter(
-          (
-            entry
-          ): entry is PromiseFulfilledResult<RelationshipSummary> => entry.status === 'fulfilled'
+          (entry): entry is PromiseFulfilledResult<RelationshipSummary> =>
+            entry.status === 'fulfilled'
         )
         .map((entry) => entry.value)
         .sort((left, right) => right.result.overall_score - left.result.overall_score);
@@ -131,8 +131,8 @@ export function RelationshipsView() {
   return (
     <div className="product-desk">
       <DocumentMeta
-        title="AstroNumeric — Relationships Desk"
-        description="Track relationship timing, compatibility scores, and your strongest connections."
+        title={getRouteMeta('/relationships').title}
+        description={getRouteMeta('/relationships').description}
       />
 
       <section className="product-desk__hero">
@@ -163,7 +163,9 @@ export function RelationshipsView() {
           <div className="product-desk__stats">
             <div className="product-desk__stat">
               <span className="product-desk__label">Active profile</span>
-              <span className="product-desk__value">{selectedProfile?.name ?? 'Waiting for profile input'}</span>
+              <span className="product-desk__value">
+                {selectedProfile?.name ?? 'Waiting for profile input'}
+              </span>
             </div>
             <div className="product-desk__stat">
               <span className="product-desk__label">Profile source</span>
@@ -187,19 +189,26 @@ export function RelationshipsView() {
             <li className="product-desk__list-item">
               <div>
                 <strong>Lock the primary</strong>
-                <span className="product-desk__meta">Set your active profile first — everyone else is ranked against it.</span>
+                <span className="product-desk__meta">
+                  Set your active profile first — everyone else is ranked against it.
+                </span>
               </div>
             </li>
             <li className="product-desk__list-item">
               <div>
                 <strong>Review the field</strong>
-                <span className="product-desk__meta">Use score, strongest dimension, and summary copy to decide which pairing deserves deeper time.</span>
+                <span className="product-desk__meta">
+                  Use score, strongest dimension, and summary copy to decide which pairing deserves
+                  deeper time.
+                </span>
               </div>
             </li>
             <li className="product-desk__list-item">
               <div>
                 <strong>Hand off to charts</strong>
-                <span className="product-desk__meta">Selecting a person here opens their full compatibility chart.</span>
+                <span className="product-desk__meta">
+                  Selecting a person here opens their full compatibility chart.
+                </span>
               </div>
             </li>
           </ul>
@@ -210,19 +219,27 @@ export function RelationshipsView() {
           <div className="product-desk__stats">
             <div className="product-desk__stat">
               <span className="product-desk__label">Loaded pairings</span>
-              <span className="product-desk__value">{loading ? 'Loading...' : summaries.length}</span>
+              <span className="product-desk__value">
+                {loading ? 'Loading...' : summaries.length}
+              </span>
             </div>
             <div className="product-desk__stat">
               <span className="product-desk__label">Average score</span>
-              <span className="product-desk__value">{averageScore !== null ? `${averageScore}%` : '...'}</span>
+              <span className="product-desk__value">
+                {averageScore !== null ? `${averageScore}%` : '...'}
+              </span>
             </div>
             <div className="product-desk__stat">
               <span className="product-desk__label">Strongest match</span>
-              <span className="product-desk__value">{strongestMatch?.profile.name ?? 'Waiting on summaries'}</span>
+              <span className="product-desk__value">
+                {strongestMatch?.profile.name ?? 'Waiting on summaries'}
+              </span>
             </div>
             <div className="product-desk__stat">
               <span className="product-desk__label">Selected pairing</span>
-              <span className="product-desk__value">{selectedPairing?.profile.name ?? 'None selected'}</span>
+              <span className="product-desk__value">
+                {selectedPairing?.profile.name ?? 'None selected'}
+              </span>
             </div>
           </div>
           {error && <p className="product-desk__note">{error}</p>}
@@ -249,8 +266,8 @@ export function RelationshipsView() {
                       {summary
                         ? `${score}% · ${formatScore(score ?? 0)}`
                         : loading
-                          ? 'Loading live compatibility summary'
-                          : 'Compatibility summary unavailable'}
+                        ? 'Loading live compatibility summary'
+                        : 'Compatibility summary unavailable'}
                     </span>
                     <span>
                       {summary
@@ -284,7 +301,9 @@ export function RelationshipsView() {
                       <strong>{item.profile.name}</strong>
                       <span className="product-desk__meta">
                         {strongestDimension
-                          ? `${formatDimensionLabel(strongestDimension.name)} is currently the strongest dimension.`
+                          ? `${formatDimensionLabel(
+                              strongestDimension.name
+                            )} is currently the strongest dimension.`
                           : item.result.summary}
                       </span>
                     </div>
@@ -308,8 +327,8 @@ export function RelationshipsView() {
             {selectedPairing
               ? `The pairing with ${selectedPairing.profile.name} is primed for the deeper charts board.`
               : strongestMatch
-                ? `Start with ${strongestMatch.profile.name}, then open charts for the full compatibility board.`
-                : 'Add a second profile to unlock chart comparisons.'}
+              ? `Start with ${strongestMatch.profile.name}, then open charts for the full compatibility board.`
+              : 'Add a second profile to unlock chart comparisons.'}
           </p>
           <div className="product-desk__actions">
             <Link to="/charts#compatibility-board" className="btn-primary product-desk__action">

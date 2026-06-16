@@ -23,7 +23,14 @@ module.exports = {
     'react/react-in-jsx-scope': 'off',
     'react/no-unknown-property': 'off',
     '@typescript-eslint/no-explicit-any': 'warn',
-    '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+    '@typescript-eslint/no-unused-vars': [
+      'warn',
+      {
+        argsIgnorePattern: '^_',
+        varsIgnorePattern: '^_',
+        destructuredArrayIgnorePattern: '^_',
+      },
+    ],
     'no-constant-condition': 'warn',
   },
 };

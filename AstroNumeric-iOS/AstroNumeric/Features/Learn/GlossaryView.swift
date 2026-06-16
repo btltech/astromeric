@@ -4,6 +4,7 @@
 import SwiftUI
 
 struct GlossaryView: View {
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @State private var entries: [GlossaryEntry] = []
     @State private var isLoading = false
     @State private var error: String?
@@ -31,6 +32,14 @@ struct GlossaryView: View {
                 .navigationBarTitleDisplayMode(.inline)
                 .searchable(text: $searchText, prompt: "Search terms…")
                 .task { await load() }
+                .navigationDestination(isPresented: Binding(
+                    get: { horizontalSizeClass == .compact && selectedEntry != nil },
+                    set: { if !$0 { selectedEntry = nil } }
+                )) {
+                    if let entry = selectedEntry {
+                        GlossaryDetailView(entry: entry)
+                    }
+                }
         } detail: {
             NavigationStack {
                 if let entry = selectedEntry {

@@ -44,14 +44,14 @@ struct GradientButton: View {
             .font(.headline)
             .foregroundStyle(.white)
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 16)
+            .padding(.vertical, Space.md)
             .background(
-                RoundedRectangle(cornerRadius: 16)
+                RoundedRectangle(cornerRadius: Radius.sm)
                     .fill(
                         LinearGradient(
                             colors: [
-                                Color(red: 0.5, green: 0.3, blue: 0.9),
-                                Color(red: 0.3, green: 0.2, blue: 0.7)
+                                Color.accentPrimary,
+                                Color.cosmicBlue.opacity(0.88)
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
@@ -59,13 +59,13 @@ struct GradientButton: View {
                     )
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 16)
+                RoundedRectangle(cornerRadius: Radius.sm)
                     .strokeBorder(
-                        Color.white.opacity(0.2),
-                        lineWidth: 1
+                        Color.white.opacity(0.20),
+                        lineWidth: Stroke.hairline
                     )
             )
-            .shadow(color: Color.purple.opacity(0.4), radius: 10, y: 4)
+            .shadow(color: Color.accentPrimary.opacity(0.28), radius: 10, y: 4)
             .scaleEffect(isPressed ? 0.98 : 1)
             .animation(reduceMotion ? nil : .spring(duration: 0.2), value: isPressed)
         }
@@ -108,16 +108,17 @@ struct SecondaryButton: View {
             .font(.subheadline.weight(.medium))
             .foregroundStyle(.primary)
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 14)
+            .padding(.vertical, Space.sm + Space.xs)
             .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(.ultraThinMaterial)
+                RoundedRectangle(cornerRadius: Radius.sm)
+                    .fill(Color.surfaceBase)
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .strokeBorder(Color.white.opacity(0.2), lineWidth: 1)
+                RoundedRectangle(cornerRadius: Radius.sm)
+                    .strokeBorder(Color.borderSubtle, lineWidth: Stroke.hairline)
             )
         }
+        .buttonStyle(ScaleButtonStyle())
     }
 }
 
@@ -150,18 +151,19 @@ struct DestructiveButton: View {
                 Text(title)
             }
             .font(.subheadline.weight(.medium))
-            .foregroundStyle(.red)
+            .foregroundStyle(Color.negativeRed)
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 14)
+            .padding(.vertical, Space.sm + Space.xs)
             .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color.red.opacity(0.15))
+                RoundedRectangle(cornerRadius: Radius.sm)
+                    .fill(Color.negativeRed.opacity(0.14))
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .strokeBorder(Color.red.opacity(0.3), lineWidth: 1)
+                RoundedRectangle(cornerRadius: Radius.sm)
+                    .strokeBorder(Color.negativeRed.opacity(0.30), lineWidth: Stroke.hairline)
             )
         }
+        .buttonStyle(ScaleButtonStyle())
     }
 }
 
@@ -182,9 +184,14 @@ struct IconButton: View {
                 .frame(width: 44, height: 44)
                 .background(
                     Circle()
-                        .fill(.ultraThinMaterial)
+                        .fill(Color.surfaceBase)
+                        .overlay(
+                            Circle()
+                                .stroke(Color.borderSubtle, lineWidth: Stroke.hairline)
+                        )
                 )
         }
+        .buttonStyle(ScaleButtonStyle())
     }
 }
 

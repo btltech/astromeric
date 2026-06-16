@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import type { ProfilePayload } from '../api/client';
 import { DocumentMeta } from '../components/DocumentMeta';
+import { getRouteMeta } from '../seo/routeMeta';
 import { FortuneForm } from '../components/FortuneForm';
 import { FortuneResult } from '../components/FortuneResult';
 import { ProfileSelector } from '../components/ProfileSelector';
@@ -123,15 +124,17 @@ export function ReadingView() {
       didAutoOpenForm.current = true;
       setShowCreateForm(true);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const isFirstRun = profiles.length === 0 && readingCount === 0 && !result;
-  const isAwaitingFirstReading = !isFirstRun && profiles.length > 0 && readingCount === 0 && !result;
+  const isAwaitingFirstReading =
+    !isFirstRun && profiles.length > 0 && readingCount === 0 && !result;
 
   const recentReadings = useMemo(() => [...readings].slice(-3).reverse(), [readings]);
   const latestLocalReading = recentReadings[0] ?? null;
-  const activeProfileLabel = selectedProfile ? formatProfileMeta(selectedProfile) : 'No active profile yet';
+  const activeProfileLabel = selectedProfile
+    ? formatProfileMeta(selectedProfile)
+    : 'No active profile yet';
   const profileStorageLabel = useMemo(() => {
     if (!selectedProfile) {
       return null;
@@ -159,7 +162,10 @@ export function ReadingView() {
       },
       {
         label: 'Birth place',
-        value: selectedProfile.place_of_birth || selectedProfile.timezone || 'Add a location for chart timing',
+        value:
+          selectedProfile.place_of_birth ||
+          selectedProfile.timezone ||
+          'Add a location for chart timing',
       },
     ];
   }, [selectedProfile]);
@@ -255,7 +261,10 @@ export function ReadingView() {
   const authEmailIsValid =
     trimmedAuthEmail.length === 0 || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedAuthEmail);
   const canSubmitAuth =
-    trimmedAuthEmail.length > 0 && trimmedAuthPassword.length > 0 && authEmailIsValid && authAction === null;
+    trimmedAuthEmail.length > 0 &&
+    trimmedAuthPassword.length > 0 &&
+    authEmailIsValid &&
+    authAction === null;
   const accountStats = useMemo(() => {
     if (isAuthenticated) {
       return [
@@ -272,7 +281,9 @@ export function ReadingView() {
         {
           label: 'Cloud history',
           value: allowCloudHistory ? 'On' : 'Off',
-          detail: allowCloudHistory ? 'future readings save to your account' : 'readings save to this device only',
+          detail: allowCloudHistory
+            ? 'future readings save to your account'
+            : 'readings save to this device only',
         },
       ];
     }
@@ -399,7 +410,7 @@ export function ReadingView() {
             }
       );
     } catch (authError) {
-        clearAutoFetchSuppression();
+      clearAutoFetchSuppression();
       const message = authError instanceof Error ? authError.message : 'Account connection failed.';
       setAccountMessage({ tone: 'error', text: message });
     } finally {
@@ -437,8 +448,8 @@ export function ReadingView() {
   return (
     <>
       <DocumentMeta
-        title="AstroNumeric — Reading Desk"
-        description="Create a profile and run daily, weekly, or monthly readings."
+        title={getRouteMeta('/reading').title}
+        description={getRouteMeta('/reading').description}
       />
 
       <div className="reading-page">
@@ -453,25 +464,21 @@ export function ReadingView() {
             </p>
 
             {!isFirstRun && (
-            <div className="reading-hero__actions">
-              <button
-                type="button"
-                className="btn-primary"
-                onClick={() => {
-                  setShowCreateForm(true);
-                  setResult(null);
-                }}
-              >
-                Create a profile
-              </button>
-              <button
-                type="button"
-                className="btn-secondary"
-                onClick={handleGenerateReading}
-              >
-                Run {selectedScope} reading
-              </button>
-            </div>
+              <div className="reading-hero__actions">
+                <button
+                  type="button"
+                  className="btn-primary"
+                  onClick={() => {
+                    setShowCreateForm(true);
+                    setResult(null);
+                  }}
+                >
+                  Create a profile
+                </button>
+                <button type="button" className="btn-secondary" onClick={handleGenerateReading}>
+                  Run {selectedScope} reading
+                </button>
+              </div>
             )}
 
             <div className="reading-link-row">
@@ -485,31 +492,31 @@ export function ReadingView() {
           </div>
 
           {!isFirstRun && (
-          <div className="reading-hero__meta">
-            <div className="reading-hero__stats">
-              <article className="reading-hero__stat">
-                <span>Streak</span>
-                <strong>{streakCount}</strong>
-                <p>Days in a row you've opened your reading.</p>
-              </article>
-              <article className="reading-hero__stat">
-                <span>Profiles</span>
-                <strong>{profiles.length}</strong>
-                <p>Birth profiles saved to your account.</p>
-              </article>
-              <article className="reading-hero__stat">
-                <span>Recent reads</span>
-                <strong>{readingCount}</strong>
-                <p>Readings stored in this session.</p>
-              </article>
-            </div>
+            <div className="reading-hero__meta">
+              <div className="reading-hero__stats">
+                <article className="reading-hero__stat">
+                  <span>Streak</span>
+                  <strong>{streakCount}</strong>
+                  <p>Days in a row you&apos;ve opened your reading.</p>
+                </article>
+                <article className="reading-hero__stat">
+                  <span>Profiles</span>
+                  <strong>{profiles.length}</strong>
+                  <p>Birth profiles saved to your account.</p>
+                </article>
+                <article className="reading-hero__stat">
+                  <span>Recent reads</span>
+                  <strong>{readingCount}</strong>
+                  <p>Readings stored in this session.</p>
+                </article>
+              </div>
 
-            <div className="reading-hero__profile-card">
-              <span className="reading-hero__profile-label">Active profile</span>
-              <strong>{selectedProfile?.name ?? 'Waiting for profile input'}</strong>
-              <p>{activeProfileLabel}</p>
+              <div className="reading-hero__profile-card">
+                <span className="reading-hero__profile-label">Active profile</span>
+                <strong>{selectedProfile?.name ?? 'Waiting for profile input'}</strong>
+                <p>{activeProfileLabel}</p>
+              </div>
             </div>
-          </div>
           )}
         </section>
 
@@ -590,11 +597,7 @@ export function ReadingView() {
               />
 
               {showCreateForm ? (
-                <FortuneForm
-                  onSubmit={handleProfileCreate}
-                  isLoading={loading}
-                  showSaveOption
-                />
+                <FortuneForm onSubmit={handleProfileCreate} isLoading={loading} showSaveOption />
               ) : (
                 <div className="reading-profile-summary">
                   <div className="reading-profile-summary__meta">
@@ -660,7 +663,8 @@ export function ReadingView() {
                       </label>
                     ) : (
                       <p className="reading-helper-copy">
-                        Profiles saved on this device are kept here. Sign in to sync them to your account.
+                        Profiles saved on this device are kept here. Sign in to sync them to your
+                        account.
                       </p>
                     )}
                   </div>
@@ -684,13 +688,15 @@ export function ReadingView() {
 
                   <article className="reading-history-summary__metric">
                     <span>Latest save</span>
-                    <strong>{latestLocalReading ? formatRecentDate(latestLocalReading.date) : 'Not yet'}</strong>
+                    <strong>
+                      {latestLocalReading ? formatRecentDate(latestLocalReading.date) : 'Not yet'}
+                    </strong>
                     <p>
                       {latestLocalReading
                         ? latestLocalReading.profile?.name ?? 'Session reading'
                         : selectedProfile
-                          ? `Ready for ${selectedProfile.name}`
-                          : 'Create a profile to start'}
+                        ? `Ready for ${selectedProfile.name}`
+                        : 'Create a profile to start'}
                     </p>
                   </article>
                 </div>
@@ -724,7 +730,8 @@ export function ReadingView() {
                 <div className="reading-empty-state reading-empty-state--history">
                   <strong>No local readings yet</strong>
                   <p>
-                    Your first reading is saved on this device. Sign in later to sync it across devices.
+                    Your first reading is saved on this device. Sign in later to sync it across
+                    devices.
                   </p>
 
                   <div className="reading-empty-state__pills">
@@ -736,9 +743,13 @@ export function ReadingView() {
                   <button
                     type="button"
                     className="btn-secondary"
-                    onClick={selectedProfile ? handleGenerateReading : () => setShowCreateForm(true)}
+                    onClick={
+                      selectedProfile ? handleGenerateReading : () => setShowCreateForm(true)
+                    }
                   >
-                    {selectedProfile ? `Generate first ${selectedScope} reading` : 'Create a profile first'}
+                    {selectedProfile
+                      ? `Generate first ${selectedScope} reading`
+                      : 'Create a profile first'}
                   </button>
                 </div>
               )}
@@ -768,9 +779,7 @@ export function ReadingView() {
                     ))}
                   </div>
 
-                  <div className="reading-account-inline-note">
-                    {connectedAccountNote}
-                  </div>
+                  <div className="reading-account-inline-note">{connectedAccountNote}</div>
 
                   <div className="reading-account-card__actions">
                     <button
@@ -782,8 +791,8 @@ export function ReadingView() {
                       {authAction === 'sync'
                         ? 'Syncing...'
                         : hasPendingRailwaySync
-                          ? 'Sync local data now'
-                          : 'Sync account'}
+                        ? 'Sync local data now'
+                        : 'Sync account'}
                     </button>
                     <button type="button" className="btn-secondary" onClick={logout}>
                       Disconnect account
@@ -809,8 +818,12 @@ export function ReadingView() {
                   </div>
 
                   <div className="reading-account-benefits">
-                    <span className="reading-account-benefit">Keep your profiles across devices</span>
-                    <span className="reading-account-benefit">Access your reading history anywhere</span>
+                    <span className="reading-account-benefit">
+                      Keep your profiles across devices
+                    </span>
+                    <span className="reading-account-benefit">
+                      Access your reading history anywhere
+                    </span>
                     <span className="reading-account-benefit">Save readings to your account</span>
                   </div>
 
@@ -837,15 +850,11 @@ export function ReadingView() {
                   </label>
 
                   {!authEmailIsValid && trimmedAuthEmail.length > 0 && (
-                    <p className="reading-account-validation">
-                      Enter a valid email address.
-                    </p>
+                    <p className="reading-account-validation">Enter a valid email address.</p>
                   )}
 
                   {trimmedAuthEmail.length > 0 && trimmedAuthPassword.length === 0 && (
-                    <p className="reading-account-validation">
-                      Add a password to continue.
-                    </p>
+                    <p className="reading-account-validation">Add a password to continue.</p>
                   )}
 
                   <div className="reading-account-card__actions">
@@ -904,7 +913,11 @@ export function ReadingView() {
                   <div className="reading-empty-state reading-empty-state--large">
                     <div className="reading-empty-state__intro">
                       <span className="reading-empty-state__eyebrow">Idle desk</span>
-                      <strong>{selectedProfile ? `Ready for ${selectedProfile.name}` : 'Start with profile input'}</strong>
+                      <strong>
+                        {selectedProfile
+                          ? `Ready for ${selectedProfile.name}`
+                          : 'Start with profile input'}
+                      </strong>
                       <p>
                         {selectedProfile
                           ? `Ready for ${selectedScope} reading.`
@@ -925,13 +938,18 @@ export function ReadingView() {
 
                       <article className="reading-idle-card">
                         <span>Selected scope</span>
-                        <strong>{scopeOptions.find((scope) => scope.id === selectedScope)?.label ?? 'Daily'}</strong>
+                        <strong>
+                          {scopeOptions.find((scope) => scope.id === selectedScope)?.label ??
+                            'Daily'}
+                        </strong>
                         <p>{getScopePreview(selectedScope)}</p>
                       </article>
 
                       <article className="reading-idle-card">
                         <span>Next unlock</span>
-                        <strong>{selectedProfile ? 'Live result stack' : 'Profile + result stack'}</strong>
+                        <strong>
+                          {selectedProfile ? 'Live result stack' : 'Profile + result stack'}
+                        </strong>
                         <p>
                           {selectedProfile
                             ? `Run the ${selectedScope} reading to load summary, drivers, and follow-up tools.`
@@ -944,7 +962,9 @@ export function ReadingView() {
                       <button
                         type="button"
                         className="btn-primary"
-                        onClick={selectedProfile ? handleGenerateReading : () => setShowCreateForm(true)}
+                        onClick={
+                          selectedProfile ? handleGenerateReading : () => setShowCreateForm(true)
+                        }
                       >
                         {selectedProfile ? `Generate ${selectedScope} reading` : 'Create a profile'}
                       </button>

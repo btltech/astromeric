@@ -48,7 +48,7 @@ struct LessonDetailView: View {
     }
     
     private var headerSection: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 12) {
             ZStack {
                 Circle()
                     .fill(
@@ -58,15 +58,15 @@ struct LessonDetailView: View {
                             endPoint: .bottomTrailing
                         )
                     )
-                    .frame(width: 80, height: 80)
+                    .frame(width: 64, height: 64)
                 
                 Image(systemName: module.icon)
-                    .font(.system(.largeTitle))
+                    .font(.system(.title2, weight: .semibold))
                     .foregroundStyle(.white)
             }
             
             Text(module.title)
-                .font(.title2.bold())
+                .font(.title3.bold())
                 .multilineTextAlignment(.center)
             
             HStack(spacing: 16) {

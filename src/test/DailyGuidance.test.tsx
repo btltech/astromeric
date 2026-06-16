@@ -27,14 +27,14 @@ describe('DailyGuidance', () => {
 
   it('renders the guidance title', () => {
     render(<DailyGuidance guidance={mockGuidance} />);
-    expect(screen.getByText(/Daily Cosmic Guidance/i)).toBeInTheDocument();
+    expect(screen.getByText(/Today's Guidance/i)).toBeInTheDocument();
   });
 
   it('renders embrace section correctly', () => {
     render(<DailyGuidance guidance={mockGuidance} />);
 
-    // Check tab label
-    expect(screen.getByText('Embrace')).toBeInTheDocument();
+    // Check section label
+    expect(screen.getByText('What to do')).toBeInTheDocument();
 
     // Check activities
     expect(screen.getByText('Action')).toBeInTheDocument();
@@ -48,16 +48,12 @@ describe('DailyGuidance', () => {
     expect(screen.getByTitle('Gold')).toBeInTheDocument();
   });
 
-  it('renders avoid section correctly', async () => {
+  it('renders avoid section correctly', () => {
     render(<DailyGuidance guidance={mockGuidance} />);
 
-    // Switch to avoid tab
-    const avoidTab = screen.getByRole('tab', { name: /Avoid/i });
-    fireEvent.click(avoidTab);
-
     // Check activities
-    expect(await screen.findByText('Procrastination')).toBeInTheDocument();
-    expect(await screen.findByText('Conflict')).toBeInTheDocument();
+    expect(screen.getByText('Procrastination')).toBeInTheDocument();
+    expect(screen.getByText('Conflict')).toBeInTheDocument();
 
     // Check colors
     expect(screen.getByTitle('Black')).toBeInTheDocument();
@@ -79,8 +75,8 @@ describe('DailyGuidance', () => {
 
     render(<DailyGuidance guidance={emptyGuidance} />);
 
-    expect(screen.getByText('Embrace')).toBeInTheDocument();
-    expect(screen.getByText('Avoid')).toBeInTheDocument();
+    expect(screen.getByText('What to do')).toBeInTheDocument();
+    expect(screen.getByText('What to avoid')).toBeInTheDocument();
 
     // Should not find any list items or badges
     expect(screen.queryByTitle('Red')).not.toBeInTheDocument();
@@ -103,9 +99,11 @@ describe('DailyGuidance', () => {
 
     render(<DailyGuidance guidance={guidanceWithRetrogrades} />);
 
-    expect(screen.getByText(/Cosmic Context/i)).toBeInTheDocument();
+    // Expand why section
+    const whyToggle = screen.getByRole('button', { name: /Why these recommendations/i });
+    fireEvent.click(whyToggle);
+
     expect(screen.getByText(/Mercury Retrograde/)).toBeInTheDocument();
-    expect(screen.getByText(/in Virgo/)).toBeInTheDocument();
 
     // Need to expand card to see impact
     const card = screen.getByRole('button', { name: /Mercury Retrograde/i });
@@ -129,14 +127,17 @@ describe('DailyGuidance', () => {
 
     render(<DailyGuidance guidance={guidanceWithVOC} />);
 
-    expect(screen.getByText(/Void-of-Course Moon/i)).toBeInTheDocument();
+    // Expand why section
+    const whyToggle = screen.getByRole('button', { name: /Why these recommendations/i });
+    fireEvent.click(whyToggle);
+
+    expect(screen.getByText(/Moon Energy Is Low/i)).toBeInTheDocument();
 
     // Need to expand card to see details
-    const card = screen.getByRole('button', { name: /Void-of-Course Moon/i });
+    const card = screen.getByRole('button', { name: /Moon Energy Is Low/i });
     fireEvent.click(card);
 
-    expect(screen.getByText(/Scorpio/)).toBeInTheDocument();
-    expect(screen.getByText(/Sagittarius/)).toBeInTheDocument();
+    expect(screen.getByText(/Avoid starting new projects/)).toBeInTheDocument();
   });
 
   it('displays current planetary hour when provided', () => {
@@ -153,11 +154,14 @@ describe('DailyGuidance', () => {
 
     render(<DailyGuidance guidance={guidanceWithHour} />);
 
-    expect(screen.getByText(/Jupiter Hour/i)).toBeInTheDocument();
-    expect(screen.getByText('2:00 PM - 3:00 PM')).toBeInTheDocument();
+    // Expand why section
+    const whyToggle = screen.getByRole('button', { name: /Why these recommendations/i });
+    fireEvent.click(whyToggle);
+
+    expect(screen.getByRole('button', { name: /Focus window/i })).toBeInTheDocument();
 
     // Need to expand to see quality and suggestion
-    const card = screen.getByRole('button', { name: /Jupiter Hour/i });
+    const card = screen.getByRole('button', { name: /Focus window/i });
     fireEvent.click(card);
 
     expect(screen.getByText(/Favorable/i)).toBeInTheDocument();
@@ -187,6 +191,10 @@ describe('DailyGuidance', () => {
     };
 
     render(<DailyGuidance guidance={guidanceWithHouseImpact} />);
+
+    // Expand why section
+    const whyToggle = screen.getByRole('button', { name: /Why these recommendations/i });
+    fireEvent.click(whyToggle);
 
     // Expand card
     const card = screen.getByRole('button', { name: /Venus Retrograde/i });

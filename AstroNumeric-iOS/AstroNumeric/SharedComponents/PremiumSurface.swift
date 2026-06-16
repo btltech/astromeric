@@ -303,3 +303,218 @@ struct PremiumFilterChip: View {
             .animation(.spring(response: 0.25, dampingFraction: 0.75), value: isSelected)
     }
 }
+
+// MARK: - Premium Status Banner
+
+enum PremiumStatusTone {
+    case info
+    case success
+    case warning
+    case critical
+
+    var accent: Color {
+        switch self {
+        case .info: return .cosmicBlue
+        case .success: return .positiveGreen
+        case .warning: return .warningOrange
+        case .critical: return .negativeRed
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .info: return "info.circle.fill"
+        case .success: return "checkmark.seal.fill"
+        case .warning: return "exclamationmark.triangle.fill"
+        case .critical: return "xmark.octagon.fill"
+        }
+    }
+}
+
+struct PremiumStatusBanner: View {
+    let title: String
+    let message: String
+    var tone: PremiumStatusTone = .info
+    var actionTitle: String?
+    var action: (() -> Void)?
+
+    var body: some View {
+        HStack(alignment: .top, spacing: Space.sm) {
+            Image(systemName: tone.icon)
+                .font(.title3.weight(.semibold))
+                .foregroundStyle(tone.accent)
+                .frame(width: 28)
+
+            VStack(alignment: .leading, spacing: Space.xs) {
+                Text(title)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Color.textPrimary)
+
+                Text(message)
+                    .font(.caption)
+                    .foregroundStyle(Color.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                if let actionTitle, let action {
+                    Button(actionTitle, action: action)
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(tone.accent)
+                        .padding(.top, 2)
+                }
+            }
+
+            Spacer(minLength: Space.sm)
+        }
+        .padding(Space.md)
+        .background(
+            RoundedRectangle(cornerRadius: Radius.md)
+                .fill(tone.accent.opacity(0.10))
+                .overlay(
+                    RoundedRectangle(cornerRadius: Radius.md)
+                        .stroke(tone.accent.opacity(0.26), lineWidth: Stroke.hairline)
+                )
+        )
+    }
+}
+
+// MARK: - Premium Settings Surfaces
+
+struct PremiumSettingsGroup<Content: View>: View {
+    let title: String
+    let subtitle: String
+    let icon: String
+    var accent: Color = .accentPrimary
+    let content: Content
+
+    init(
+        title: String,
+        subtitle: String,
+        icon: String,
+        accent: Color = .accentPrimary,
+        @ViewBuilder content: () -> Content
+    ) {
+        self.title = title
+        self.subtitle = subtitle
+        self.icon = icon
+        self.accent = accent
+        self.content = content()
+    }
+
+    var body: some View {
+        CardView {
+            VStack(alignment: .leading, spacing: Space.md) {
+                HStack(alignment: .top, spacing: Space.sm) {
+                    Image(systemName: icon)
+                        .font(.system(.title3, weight: .semibold))
+                        .foregroundStyle(accent)
+                        .frame(width: 36, height: 36)
+                        .background(
+                            RoundedRectangle(cornerRadius: Radius.sm)
+                                .fill(accent.opacity(0.14))
+                        )
+
+                    PremiumSectionHeader(title: title, subtitle: subtitle)
+                }
+
+                content
+            }
+        }
+    }
+}
+
+struct PremiumToggleRow: View {
+    let title: String
+    let subtitle: String
+    let icon: String
+    var accent: Color = .accentPrimary
+    @Binding var isOn: Bool
+
+    init(
+        title: String,
+        subtitle: String,
+        icon: String,
+        accent: Color = .accentPrimary,
+        isOn: Binding<Bool>
+    ) {
+        self.title = title
+        self.subtitle = subtitle
+        self.icon = icon
+        self.accent = accent
+        self._isOn = isOn
+    }
+
+    var body: some View {
+        Toggle(isOn: $isOn) {
+            HStack(alignment: .top, spacing: Space.sm) {
+                Image(systemName: icon)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(accent)
+                    .frame(width: 28, height: 28)
+                    .background(Circle().fill(accent.opacity(0.13)))
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Color.textPrimary)
+                    if !subtitle.isEmpty {
+                        Text(subtitle)
+                            .font(.caption)
+                            .foregroundStyle(Color.textSecondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+            }
+        }
+        .tint(accent)
+        .accessibilityIdentifier(title)
+        .accessibilityLabel(title)
+        .accessibilityValue(isOn ? "On" : "Off")
+        .accessibilityHint(subtitle)
+    }
+}
+
+struct PremiumValueRow: View {
+    let title: String
+    let value: String
+    var subtitle: String = ""
+    var icon: String = "chevron.right"
+    var accent: Color = .accentPrimary
+
+    var body: some View {
+        HStack(alignment: .center, spacing: Space.sm) {
+            Image(systemName: icon)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(accent)
+                .frame(width: 28, height: 28)
+                .background(Circle().fill(accent.opacity(0.13)))
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Color.textPrimary)
+                if !subtitle.isEmpty {
+                    Text(subtitle)
+                        .font(.caption)
+                        .foregroundStyle(Color.textSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+
+            Spacer(minLength: Space.sm)
+
+            Text(value)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(accent)
+                .padding(.horizontal, 9)
+                .padding(.vertical, 5)
+                .background(Capsule().fill(accent.opacity(0.14)))
+        }
+    }
+}
+
+struct PremiumDivider: View {
+    var body: some View {
+        Divider()
+            .overlay(Color.borderSubtle)
+    }
+}

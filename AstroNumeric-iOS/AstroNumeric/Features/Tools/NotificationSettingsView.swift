@@ -2,6 +2,7 @@
 // Notification preferences and scheduling
 
 import SwiftUI
+import UserNotifications
 
 struct NotificationSettingsView: View {
     @Environment(AppStore.self) private var store
@@ -16,6 +17,7 @@ struct NotificationSettingsView: View {
     @State private var timingTime = Date()
     @State private var transitTime = Date()
     @State private var statusText: String?
+    @State private var authorizationStatus: UNAuthorizationStatus = .notDetermined
     @AppStorage("alerts.mercury_retrograde") private var mercuryRetrogradeAlerts = true
     @AppStorage("alerts.frequency") private var alertFrequency = "every_retrograde"
     @AppStorage("settings.transitAlerts.enabled") private var proactiveTransitAlerts = true
@@ -28,7 +30,7 @@ struct NotificationSettingsView: View {
                     .ignoresSafeArea()
                 
                 ScrollView {
-                    VStack(spacing: 16) {
+                    VStack(spacing: Space.md) {
                         PremiumScreenHeader(
                             eyebrow: "hero.notificationSettings.eyebrow".localized,
                             title: "hero.notificationSettings.title".localized,
@@ -37,143 +39,21 @@ struct NotificationSettingsView: View {
                             chips: ["hero.notificationSettings.chip.0".localized, "hero.notificationSettings.chip.1".localized, "hero.notificationSettings.chip.2".localized, "hero.notificationSettings.chip.3".localized]
                         )
 
-                        CardView {
-                            VStack(alignment: .leading, spacing: 12) {
-                                Text("ui.notificationSettings.0".localized)
-                                    .font(.headline)
-                                Text("ui.notificationSettings.1".localized)
-                                    .font(.caption)
-                                    .foregroundStyle(Color.textSecondary)
-                            }
-                        }
+                        permissionBanner
+                        dailyInsightsGroup
+                        celestialEventsGroup
+                        personalRemindersGroup
+                        advancedTransitGroup
 
-                        PremiumSectionHeader(
-                title: "section.notificationSettings.0.title".localized,
-                subtitle: "section.notificationSettings.0.subtitle".localized
-            )
-                        
-                        Toggle("ui.notificationSettings.10".localized, isOn: $notifyDailyReading)
-                            .tint(.purple)
-                            .onChange(of: notifyDailyReading) { _, newValue in
-                                Task { await handleDailyReadingToggle(newValue) }
-                            }
-                        DatePicker("Daily Time", selection: $dailyTime, displayedComponents: .hourAndMinute)
-                            .onChange(of: dailyTime) { _, _ in
-                                Task { await rescheduleDailyReading() }
-                            }
-                        
-                        Toggle("ui.notificationSettings.11".localized, isOn: $notifyMoonEvents)
-                            .tint(.indigo)
-                            .onChange(of: notifyMoonEvents) { _, newValue in
-                                Task { await handleMoonEventsToggle(newValue) }
-                            }
-                        
-                        Toggle("ui.notificationSettings.12".localized, isOn: $notifyHabitReminder)
-                            .tint(.green)
-                            .onChange(of: notifyHabitReminder) { _, newValue in
-                                Task { await handleHabitToggle(newValue) }
-                            }
-                        DatePicker("Habit Time", selection: $habitTime, displayedComponents: .hourAndMinute)
-                            .onChange(of: habitTime) { _, _ in
-                                Task { await rescheduleHabitReminder() }
-                            }
-                        
-                        Toggle("ui.notificationSettings.13".localized, isOn: $notifyTransitAlert)
-                            .tint(.pink)
-                            .onChange(of: notifyTransitAlert) { _, newValue in
-                                Task { await handleTransitToggle(newValue) }
-                            }
-                        DatePicker("Transit Time", selection: $transitTime, displayedComponents: .hourAndMinute)
-                            .onChange(of: transitTime) { _, _ in
-                                Task { await rescheduleTransitAlert() }
-                            }
-                        
-                        Toggle("ui.notificationSettings.14".localized, isOn: $notifyTimingAlert)
-                            .tint(.orange)
-                            .onChange(of: notifyTimingAlert) { _, newValue in
-                                Task { await handleTimingToggle(newValue) }
-                            }
-                        DatePicker("Timing Time", selection: $timingTime, displayedComponents: .hourAndMinute)
-                            .onChange(of: timingTime) { _, _ in
-                                Task { await rescheduleTimingReminder() }
-                            }
-                        
-                        Divider().opacity(0.3)
-
-                        // MARK: - Proactive Transit Alerts (PredictiveScanner → Push)
-                        Text("ui.notificationSettings.2".localized)
-                            .font(.system(.caption, design: .monospaced)).fontWeight(.bold)
-                            .foregroundStyle(.white.opacity(0.5))
-                            .frame(maxWidth: .infinity, alignment: .leading)
-
-                        Toggle("ui.notificationSettings.15".localized, isOn: $proactiveTransitAlerts)
-                            .tint(.red)
-                            .onChange(of: proactiveTransitAlerts) { _, newValue in
-                                Task {
-                                    if newValue {
-                                        await TransitNotificationScheduler.shared.scanAndSchedule()
-                                    } else {
-                                        await TransitNotificationScheduler.shared.clearAll()
-                                    }
-                                }
-                            }
-
-                        if proactiveTransitAlerts {
-                            Toggle("ui.notificationSettings.16".localized, isOn: $proactiveTransitMajorOnly)
-                                .tint(.orange)
-                                .onChange(of: proactiveTransitMajorOnly) { _, _ in
-                                    Task {
-                                        await TransitNotificationScheduler.shared.clearAll()
-                                        await TransitNotificationScheduler.shared.scanAndSchedule()
-                                    }
-                                }
-                            Text("ui.notificationSettings.3".localized)
-                                .font(.caption)
-                                .foregroundStyle(.white.opacity(0.4))
-                        }
-
-                        Divider().opacity(0.3)
-                        
-                        Toggle("ui.notificationSettings.17".localized, isOn: $mercuryRetrogradeAlerts)
-                            .tint(.pink)
-                            .onChange(of: mercuryRetrogradeAlerts) { _, _ in
-                                Task { await updateAlertPreferences() }
-                            }
-                        Picker("ui.notificationSettings.18".localized, selection: $alertFrequency) {
-                            Text("ui.notificationSettings.4".localized).tag("every_retrograde")
-                            Text("ui.notificationSettings.5".localized).tag("weekly_digest")
-                            Text("ui.notificationSettings.6".localized).tag("once_per_year")
-                            Text("ui.notificationSettings.7".localized).tag("none")
-                        }
-                        .onChange(of: alertFrequency) { _, _ in
-                            Task { await updateAlertPreferences() }
-                        }
-                        
                         if let statusText {
-                            Text(statusText)
-                                .font(.caption)
-                                .foregroundStyle(Color.textSecondary)
+                            PremiumStatusBanner(
+                                title: "settings.notifications.status.title".localized,
+                                message: statusText,
+                                tone: .info
+                            )
                         }
-                        
-                        NavigationLink {
-                            HabitsView()
-                        } label: {
-                            CardView {
-                                HStack {
-                                    VStack(alignment: .leading, spacing: 4) {
-                                        Text("ui.notificationSettings.8".localized)
-                                            .font(.headline)
-                                        Text("ui.notificationSettings.9".localized)
-                                            .font(.caption)
-                                            .foregroundStyle(Color.textSecondary)
-                                    }
-                                    Spacer()
-                                    Image(systemName: "chevron.right")
-                                        .foregroundStyle(Color.textSecondary)
-                                }
-                            }
-                        }
-                        .buttonStyle(ScaleButtonStyle())
+
+                        habitsLink
                     }
                     .padding()
                     .readableContainer()
@@ -187,13 +67,280 @@ struct NotificationSettingsView: View {
             }
         }
     }
+
+    private var permissionBanner: some View {
+        PremiumStatusBanner(
+            title: permissionTitle,
+            message: permissionMessage,
+            tone: permissionTone,
+            actionTitle: authorizationStatus == .denied ? "settings.notifications.openIOSSettings".localized : nil,
+            action: authorizationStatus == .denied ? { openAppSettings() } : nil
+        )
+    }
+
+    private var dailyInsightsGroup: some View {
+        PremiumSettingsGroup(
+            title: "settings.notifications.daily.title".localized,
+            subtitle: "settings.notifications.daily.subtitle".localized,
+            icon: "sun.max.fill",
+            accent: .accentPrimary
+        ) {
+            PremiumToggleRow(
+                title: "ui.notificationSettings.10".localized,
+                subtitle: "settings.notifications.dailyReading.detail".localized,
+                icon: "sparkles.rectangle.stack.fill",
+                accent: .accentPrimary,
+                isOn: $notifyDailyReading
+            )
+            .onChange(of: notifyDailyReading) { _, newValue in
+                Task { await handleDailyReadingToggle(newValue) }
+            }
+
+            if notifyDailyReading {
+                PremiumDivider()
+                NotificationTimeRow(
+                    title: "settings.notifications.dailyReading.time".localized,
+                    date: $dailyTime,
+                    accent: .accentPrimary
+                ) {
+                    Task { await rescheduleDailyReading() }
+                }
+            }
+        }
+    }
+
+    private var celestialEventsGroup: some View {
+        PremiumSettingsGroup(
+            title: "settings.notifications.celestial.title".localized,
+            subtitle: "settings.notifications.celestial.subtitle".localized,
+            icon: "moon.stars.fill",
+            accent: .indigo
+        ) {
+            PremiumToggleRow(
+                title: "ui.notificationSettings.11".localized,
+                subtitle: "settings.notifications.moon.detail".localized,
+                icon: "moon.fill",
+                accent: .indigo,
+                isOn: $notifyMoonEvents
+            )
+            .onChange(of: notifyMoonEvents) { _, newValue in
+                Task { await handleMoonEventsToggle(newValue) }
+            }
+
+            PremiumDivider()
+
+            PremiumToggleRow(
+                title: "ui.notificationSettings.13".localized,
+                subtitle: "settings.notifications.transit.detail".localized,
+                icon: "sparkle.magnifyingglass",
+                accent: .pink,
+                isOn: $notifyTransitAlert
+            )
+            .onChange(of: notifyTransitAlert) { _, newValue in
+                Task { await handleTransitToggle(newValue) }
+            }
+
+            if notifyTransitAlert {
+                NotificationTimeRow(
+                    title: "settings.notifications.transit.time".localized,
+                    date: $transitTime,
+                    accent: .pink
+                ) {
+                    Task { await rescheduleTransitAlert() }
+                }
+            }
+
+            PremiumDivider()
+
+            PremiumToggleRow(
+                title: "ui.notificationSettings.17".localized,
+                subtitle: "settings.notifications.retrograde.detail".localized,
+                icon: "arrow.triangle.2.circlepath.circle.fill",
+                accent: .accentSecondary,
+                isOn: $mercuryRetrogradeAlerts
+            )
+            .onChange(of: mercuryRetrogradeAlerts) { _, _ in
+                Task { await updateAlertPreferences() }
+            }
+
+            if mercuryRetrogradeAlerts {
+                Picker("ui.notificationSettings.18".localized, selection: $alertFrequency) {
+                    Text("ui.notificationSettings.4".localized).tag("every_retrograde")
+                    Text("ui.notificationSettings.5".localized).tag("weekly_digest")
+                    Text("ui.notificationSettings.6".localized).tag("once_per_year")
+                    Text("ui.notificationSettings.7".localized).tag("none")
+                }
+                .pickerStyle(.menu)
+                .tint(.accentSecondary)
+                .onChange(of: alertFrequency) { _, _ in
+                    Task { await updateAlertPreferences() }
+                }
+            }
+        }
+    }
+
+    private var personalRemindersGroup: some View {
+        PremiumSettingsGroup(
+            title: "settings.notifications.personal.title".localized,
+            subtitle: "settings.notifications.personal.subtitle".localized,
+            icon: "person.crop.circle.badge.clock",
+            accent: .positiveGreen
+        ) {
+            PremiumToggleRow(
+                title: "ui.notificationSettings.12".localized,
+                subtitle: "settings.notifications.habit.detail".localized,
+                icon: "checkmark.circle.fill",
+                accent: .positiveGreen,
+                isOn: $notifyHabitReminder
+            )
+            .onChange(of: notifyHabitReminder) { _, newValue in
+                Task { await handleHabitToggle(newValue) }
+            }
+
+            if notifyHabitReminder {
+                NotificationTimeRow(
+                    title: "settings.notifications.habit.time".localized,
+                    date: $habitTime,
+                    accent: .positiveGreen
+                ) {
+                    Task { await rescheduleHabitReminder() }
+                }
+            }
+
+            PremiumDivider()
+
+            PremiumToggleRow(
+                title: "ui.notificationSettings.14".localized,
+                subtitle: "settings.notifications.timing.detail".localized,
+                icon: "clock.badge.checkmark.fill",
+                accent: .warningOrange,
+                isOn: $notifyTimingAlert
+            )
+            .onChange(of: notifyTimingAlert) { _, newValue in
+                Task { await handleTimingToggle(newValue) }
+            }
+
+            if notifyTimingAlert {
+                NotificationTimeRow(
+                    title: "settings.notifications.timing.time".localized,
+                    date: $timingTime,
+                    accent: .warningOrange
+                ) {
+                    Task { await rescheduleTimingReminder() }
+                }
+            }
+        }
+    }
+
+    private var advancedTransitGroup: some View {
+        PremiumSettingsGroup(
+            title: "settings.notifications.advanced.title".localized,
+            subtitle: "settings.notifications.advanced.subtitle".localized,
+            icon: "antenna.radiowaves.left.and.right",
+            accent: .negativeRed
+        ) {
+            PremiumToggleRow(
+                title: "ui.notificationSettings.15".localized,
+                subtitle: "ui.notificationSettings.3".localized,
+                icon: "waveform.path.ecg",
+                accent: .negativeRed,
+                isOn: $proactiveTransitAlerts
+            )
+            .onChange(of: proactiveTransitAlerts) { _, newValue in
+                Task {
+                    if newValue {
+                        await TransitNotificationScheduler.shared.scanAndSchedule()
+                    } else {
+                        await TransitNotificationScheduler.shared.clearAll()
+                    }
+                }
+            }
+
+            if proactiveTransitAlerts {
+                PremiumDivider()
+                PremiumToggleRow(
+                    title: "ui.notificationSettings.16".localized,
+                    subtitle: "settings.notifications.majorOnly.detail".localized,
+                    icon: "scope",
+                    accent: .warningOrange,
+                    isOn: $proactiveTransitMajorOnly
+                )
+                .onChange(of: proactiveTransitMajorOnly) { _, _ in
+                    Task {
+                        await TransitNotificationScheduler.shared.clearAll()
+                        await TransitNotificationScheduler.shared.scanAndSchedule()
+                    }
+                }
+            }
+        }
+    }
+
+    private var habitsLink: some View {
+        NavigationLink {
+            HabitsView()
+        } label: {
+            PremiumActionCard(
+                title: "ui.notificationSettings.8".localized,
+                subtitle: "ui.notificationSettings.9".localized,
+                icon: "checkmark.circle.fill",
+                label: "settings.notifications.related".localized,
+                accent: .positiveGreen
+            )
+        }
+        .buttonStyle(ScaleButtonStyle())
+    }
+
+    private var permissionTitle: String {
+        switch authorizationStatus {
+        case .authorized, .provisional, .ephemeral:
+            return "settings.notifications.permission.ready".localized
+        case .denied:
+            return "settings.notifications.permission.denied".localized
+        case .notDetermined:
+            return "settings.notifications.permission.notDetermined".localized
+        @unknown default:
+            return "settings.notifications.permission.unknown".localized
+        }
+    }
+
+    private var permissionMessage: String {
+        switch authorizationStatus {
+        case .authorized, .provisional, .ephemeral:
+            return "settings.notifications.permission.ready.body".localized
+        case .denied:
+            return "settings.notifications.permission.denied.body".localized
+        case .notDetermined:
+            return "settings.notifications.permission.notDetermined.body".localized
+        @unknown default:
+            return "settings.notifications.permission.unknown.body".localized
+        }
+    }
+
+    private var permissionTone: PremiumStatusTone {
+        switch authorizationStatus {
+        case .authorized, .provisional, .ephemeral:
+            return .success
+        case .denied:
+            return .warning
+        case .notDetermined:
+            return .info
+        @unknown default:
+            return .info
+        }
+    }
     
     @MainActor
     private func initializePermissionStatus() async {
         let status = await NotificationService.shared.checkPermissionStatus()
+        authorizationStatus = status
         if status == .denied {
-            statusText = "Notifications are disabled in iOS Settings."
+            statusText = "settings.notifications.disabledStatus".localized
         }
+    }
+
+    private func openAppSettings() {
+        guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
+        UIApplication.shared.open(url)
     }
     
     private func handleDailyReadingToggle(_ enabled: Bool) async {
@@ -312,11 +459,15 @@ struct NotificationSettingsView: View {
     
     private func requestPermissionIfNeeded() async -> Bool {
         let status = await NotificationService.shared.checkPermissionStatus()
+        await MainActor.run { authorizationStatus = status }
         if status == .notDetermined {
-            return await NotificationService.shared.requestPermission()
+            let granted = await NotificationService.shared.requestPermission()
+            let updatedStatus = await NotificationService.shared.checkPermissionStatus()
+            await MainActor.run { authorizationStatus = updatedStatus }
+            return granted
         }
         if status == .denied {
-            await MainActor.run { statusText = "Enable notifications in iOS Settings." }
+            await MainActor.run { statusText = "settings.notifications.enableInSettings".localized }
             return false
         }
         return true
@@ -380,6 +531,33 @@ struct UpcomingMoonEvent: Codable, Identifiable {
     let phase: String
     let type: String
     let description: String
+}
+
+private struct NotificationTimeRow: View {
+    let title: String
+    @Binding var date: Date
+    let accent: Color
+    let onChange: () -> Void
+
+    var body: some View {
+        DatePicker(title, selection: $date, displayedComponents: .hourAndMinute)
+            .font(.subheadline.weight(.semibold))
+            .foregroundStyle(Color.textPrimary)
+            .tint(accent)
+            .padding(.horizontal, Space.sm)
+            .padding(.vertical, Space.xs)
+            .background(
+                RoundedRectangle(cornerRadius: Radius.sm)
+                    .fill(accent.opacity(0.10))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: Radius.sm)
+                            .stroke(accent.opacity(0.22), lineWidth: Stroke.hairline)
+                    )
+            )
+            .onChange(of: date) { _, _ in
+                onChange()
+            }
+    }
 }
 
 #Preview {

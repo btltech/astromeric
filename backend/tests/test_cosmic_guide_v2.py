@@ -18,6 +18,7 @@ def test_cosmic_guidance_accepts_ios_body_contract(monkeypatch):
 
     resp = client.post(
         "/v2/cosmic-guide/guidance",
+        headers={"X-Client-Platform": "ios"},
         json={
             "topic": "career",
             "context": "Launch planning",
@@ -45,6 +46,7 @@ def test_cosmic_interpret_accepts_ios_body_contract(monkeypatch):
 
     resp = client.post(
         "/v2/cosmic-guide/interpret",
+        headers={"X-Client-Platform": "ios"},
         json={
             "chart_data": "Sun in Gemini, Moon in Pisces",
             "reading_data": "Luck score 75",

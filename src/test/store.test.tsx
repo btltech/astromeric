@@ -1,10 +1,45 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 
 // ============================================
 // useStore Tests
 // ============================================
-import { useStore } from '../store/useStore';
+
+function createStorageMock() {
+  const storage = new Map<string, string>();
+  return {
+    getItem: (key: string) => storage.get(key) ?? null,
+    setItem: (key: string, value: string) => {
+      storage.set(key, value);
+    },
+    removeItem: (key: string) => {
+      storage.delete(key);
+    },
+    clear: () => {
+      storage.clear();
+    },
+  };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let useStore: any;
+
+beforeEach(async () => {
+  vi.resetModules();
+
+  Object.defineProperty(window, 'localStorage', {
+    value: createStorageMock(),
+    configurable: true,
+  });
+
+  Object.defineProperty(window, 'sessionStorage', {
+    value: createStorageMock(),
+    configurable: true,
+  });
+
+  const storeModule = await import('../store/useStore');
+  useStore = storeModule.useStore;
+});
 
 describe('useStore', () => {
   beforeEach(() => {
@@ -133,7 +168,7 @@ describe('useStore', () => {
 
     // Then clear
     act(() => {
-      result.current.clearAuth();
+      result.current.logout();
     });
 
     expect(result.current.token).toBeNull();

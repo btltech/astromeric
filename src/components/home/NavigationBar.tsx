@@ -92,9 +92,10 @@ export function NavigationBar() {
               <NavLink
                 key={link.to}
                 to={link.to}
-                end={link.end}
+                end={'end' in link ? link.end : undefined}
                 className={({ isActive }) => {
-                  const active = isActive || (link.to === '/charts' && location.pathname === '/experience');
+                  const active =
+                    isActive || (link.to === '/charts' && location.pathname === '/experience');
                   return active ? 'topbar__link topbar__link--active' : 'topbar__link';
                 }}
               >
@@ -109,14 +110,16 @@ export function NavigationBar() {
                 key={link.to}
                 to={link.to}
                 className={({ isActive }) =>
-                  isActive ? 'topbar__utility-link topbar__utility-link--active' : 'topbar__utility-link'
+                  isActive
+                    ? 'topbar__utility-link topbar__utility-link--active'
+                    : 'topbar__utility-link'
                 }
               >
                 {link.label}
               </NavLink>
             ))}
-            <button 
-              className="topbar__theme-toggle" 
+            <button
+              className="topbar__theme-toggle"
               onClick={toggleTheme}
               aria-label="Toggle theme"
             >
@@ -131,14 +134,16 @@ export function NavigationBar() {
               key={link.to}
               to={link.to}
               className={({ isActive }) =>
-                isActive ? 'topbar__utility-link topbar__utility-link--active' : 'topbar__utility-link'
+                isActive
+                  ? 'topbar__utility-link topbar__utility-link--active'
+                  : 'topbar__utility-link'
               }
             >
               {link.label}
             </NavLink>
           ))}
-          <button 
-            className="topbar__theme-toggle-icon" 
+          <button
+            className="topbar__theme-toggle-icon"
             onClick={toggleTheme}
             aria-label="Toggle theme"
             title="Toggle theme"

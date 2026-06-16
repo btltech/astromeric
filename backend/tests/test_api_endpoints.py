@@ -2,6 +2,7 @@ import warnings
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 
+import pytest
 from starlette.testclient import TestClient
 
 from backend.app.main import app
@@ -131,7 +132,15 @@ def test_morning_brief_uses_profile_local_hour_for_greeting(monkeypatch):
     assert body["data"]["greeting"].startswith("Good evening")
 
 
-def test_daily_forecast_tone_changes_narrative_style():
+def test_daily_forecast_tone_changes_narrative_style(monkeypatch):
+    from backend.app.engine import fusion
+
+    monkeypatch.setattr(
+        fusion,
+        "fuse_prediction",
+        lambda **kwargs: {"tldr": None, "tracks": {}, "active_transits": []},
+    )
+
     payload = {
         "profile": {
             "name": "Tone Test",
@@ -158,6 +167,52 @@ def test_daily_forecast_tone_changes_narrative_style():
     assert practical_summary.startswith("Bottom line:")
     assert mystical_summary.startswith("The stars gather around this theme:")
     assert practical_summary != mystical_summary
+
+
+@pytest.mark.parametrize("scope", ["daily", "weekly", "monthly"])
+def test_forecast_endpoints_preserve_missing_birth_time_validation(scope):
+    payload = {
+        "profile": {
+            "name": "Missing Time",
+            "date_of_birth": "1990-01-01",
+            "time_of_birth": None,
+            "latitude": 40.7128,
+            "longitude": -74.006,
+            "timezone": "America/New_York",
+        },
+        "scope": scope,
+        "include_details": True,
+    }
+
+    response = client.post(f"/v2/forecasts/{scope}", json=payload)
+
+    assert response.status_code == 422
+    body = response.json()
+    assert body["detail"]["code"] == "MISSING_TIME_OF_BIRTH"
+    assert "Birth time is required" in body["detail"]["message"]
+
+
+@pytest.mark.parametrize("scope", ["daily", "weekly", "monthly"])
+def test_forecast_endpoints_preserve_location_validation(scope):
+    payload = {
+        "profile": {
+            "name": "Missing Location",
+            "date_of_birth": "1990-01-01",
+            "time_of_birth": "12:00:00",
+            "latitude": None,
+            "longitude": None,
+            "timezone": None,
+        },
+        "scope": scope,
+        "include_details": True,
+    }
+
+    response = client.post(f"/v2/forecasts/{scope}", json=payload)
+
+    assert response.status_code == 400
+    body = response.json()
+    assert body["detail"]["code"] == "INVALID_COORDINATES"
+    assert "latitude, longitude, and timezone" in body["detail"]["message"]
 
 
 def test_natal_and_compatibility_endpoints():

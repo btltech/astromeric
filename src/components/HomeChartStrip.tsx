@@ -39,15 +39,17 @@ function formatAspectType(type: string) {
 }
 
 function getStrongestAspect(natalProfile: LiveNatalProfile | null) {
-  return [...(natalProfile?.chart.aspects ?? [])].sort((left, right) => {
-    const strengthDelta = (right.strength ?? 0) - (left.strength ?? 0);
+  return (
+    [...(natalProfile?.chart.aspects ?? [])].sort((left, right) => {
+      const strengthDelta = (right.strength ?? 0) - (left.strength ?? 0);
 
-    if (strengthDelta !== 0) {
-      return strengthDelta;
-    }
+      if (strengthDelta !== 0) {
+        return strengthDelta;
+      }
 
-    return left.orb - right.orb;
-  })[0] ?? null;
+      return left.orb - right.orb;
+    })[0] ?? null
+  );
 }
 
 export function HomeChartStrip() {
@@ -103,10 +105,12 @@ export function HomeChartStrip() {
   const liveLeadDetail = error
     ? error
     : strongestAspect
-      ? `Strongest aspect: ${strongestAspect.planet_a} ${formatAspectType(strongestAspect.type)} ${strongestAspect.planet_b}`
-      : loading
-        ? 'Loading chart details...'
-        : 'Your core astrological influences will appear here once your profile is analyzed.';
+    ? `Strongest aspect: ${strongestAspect.planet_a} ${formatAspectType(strongestAspect.type)} ${
+        strongestAspect.planet_b
+      }`
+    : loading
+    ? 'Loading chart details...'
+    : 'Your core astrological influences will appear here once your profile is analyzed.';
 
   const cards = [
     {
@@ -116,23 +120,39 @@ export function HomeChartStrip() {
     },
     {
       label: 'Solar focus',
-      value: sunPlacement ? `${sunPlacement.sign} Sun` : loading ? 'Loading Sun' : 'Sun unavailable',
+      value: sunPlacement
+        ? `${sunPlacement.sign} Sun`
+        : loading
+        ? 'Loading Sun'
+        : 'Sun unavailable',
       detail: sunPlacement
-        ? `House ${sunPlacement.house} · ${sunPlacement.retrograde ? 'Retrograde signal' : 'Direct signal'}`
+        ? `House ${sunPlacement.house} · ${
+            sunPlacement.retrograde ? 'Retrograde signal' : 'Direct signal'
+          }`
         : 'The live natal feed will set the lead solar placement here.',
     },
     {
       label: 'Lunar tone',
-      value: moonPlacement ? `${moonPlacement.sign} Moon` : loading ? 'Loading Moon' : 'Moon unavailable',
+      value: moonPlacement
+        ? `${moonPlacement.sign} Moon`
+        : loading
+        ? 'Loading Moon'
+        : 'Moon unavailable',
       detail: moonPlacement
         ? `House ${moonPlacement.house} · Emotional timing from the live chart feed.`
         : 'The live natal feed will set the Moon placement here.',
     },
     {
       label: 'Rising edge',
-      value: risingSign ? `${risingSign} rising` : loading ? 'Loading rising sign' : 'Rising sign unavailable',
+      value: risingSign
+        ? `${risingSign} rising`
+        : loading
+        ? 'Loading rising sign'
+        : 'Rising sign unavailable',
       detail: risingSign
-        ? `${requestProfile.location?.timezone ?? 'UTC'} · First-house entry point from the natal chart.`
+        ? `${
+            requestProfile.location?.timezone ?? 'UTC'
+          } · First-house entry point from the natal chart.`
         : 'The first-house cusp will appear here when the chart payload resolves.',
     },
   ];

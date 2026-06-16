@@ -284,7 +284,7 @@ describe('ErrorBoundary', () => {
 // ============================================
 // Toast System Tests
 // ============================================
-import { ToastContainer } from '../components/Toast';
+import { ToastContainer, type ToastItem } from '../components/Toast';
 
 describe('Toast System', () => {
   beforeEach(() => {

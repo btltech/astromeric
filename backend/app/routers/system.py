@@ -74,22 +74,33 @@ async def health_check(request: Request) -> ApiResponse[HealthStatus]:
             request_id=request_id,
         )
 
+        # Report the real chart-calculation backend state instead of a constant.
+        from ..chart_service import ephemeris_status
+
+        ephe = ephemeris_status()
+        ephemeris_component = "degraded" if ephe["degraded"] else "operational"
+        overall_status = "degraded" if ephe["degraded"] else "healthy"
+
         health = HealthStatus(
-            status="healthy",
+            status=overall_status,
             timestamp=datetime.now(timezone.utc),
             version="3.3.0",
             components={
                 "api": "operational",
                 "database": "operational",
                 "cache": "operational",
-                "ephemeris": "operational",
+                "ephemeris": ephemeris_component,
             },
         )
 
         return ApiResponse(
             status=ResponseStatus.SUCCESS,
             data=health,
-            message="System is healthy",
+            message=(
+                "System is healthy"
+                if overall_status == "healthy"
+                else "System degraded: chart engine running on stub (no real ephemeris)"
+            ),
             request_id=request_id,
         )
     except Exception as e:

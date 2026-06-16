@@ -9,7 +9,7 @@ private final class NonFocusableSKView: SKView {
     // Returning an empty array prevents the UIFocus engine from logging
     // "caching for linear focus movement is limited" for this purely
     // decorative SpriteKit view.
-    override func focusItemsInRect(_ rect: CGRect) -> [UIFocusItem] { [] }
+    override func focusItems(in rect: CGRect) -> [any UIFocusItem] { [] }
 }
 
 struct CosmicBackgroundView: UIViewRepresentable {

@@ -10,7 +10,7 @@ from pydantic import BaseModel
 
 from ..engine.glossary import get_sign_info
 from ..exceptions import StructuredLogger
-from ..schemas import ApiResponse, PaginationParams, ResponseStatus
+from ..schemas import ApiResponse, ResponseStatus
 
 logger = StructuredLogger(__name__)
 router = APIRouter(prefix="/v2/learning", tags=["Learning"])
@@ -133,7 +133,8 @@ async def list_learning_modules(
     request: Request,
     category: Optional[str] = Query(None),
     difficulty: Optional[str] = Query(None),
-    params: PaginationParams = None,
+    page: int = Query(1, ge=1),
+    page_size: int = Query(50, ge=1, le=200),
 ) -> LegacyCompatiblePage[LearningModule]:
     """
     List available learning modules with pagination.
@@ -326,8 +327,6 @@ async def list_learning_modules(
             modules = [m for m in modules if m.difficulty == difficulty]
 
         # Pagination
-        page = params.page if params else 1
-        page_size = params.page_size if params else 50
         start_idx = (page - 1) * page_size
         paginated = modules[start_idx : start_idx + page_size]
 
@@ -376,11 +375,19 @@ async def get_learning_module(
         )
 
         # Reuse the same catalogue as list_learning_modules
-        all_modules_response = await list_learning_modules(request, category=None, difficulty=None, params=None)
+        all_modules_response = await list_learning_modules(
+            request, category=None, difficulty=None, page=1, page_size=200
+        )
         found = next((m for m in all_modules_response.items if m.id == module_id), None)
 
         if not found:
-            raise HTTPException(status_code=404, detail={"code": "NOT_FOUND", "message": f"Module {module_id} not found"})
+            raise HTTPException(
+                status_code=404,
+                detail={
+                    "code": "NOT_FOUND",
+                    "message": f"Module {module_id} not found",
+                },
+            )
 
         return ApiResponse(
             status=ResponseStatus.SUCCESS,
@@ -496,21 +503,147 @@ async def list_glossary(
             category=category,
         )
 
-        # Mock glossary data
+        # Glossary data
         entries = [
             GlossaryEntry(
                 term="Aspect",
-                definition="Angular relationship between two planets",
+                definition="The angular relationship between two planets and the tension or harmony it creates.",
                 category="astrology",
-                usage_example="A 60-degree aspect is called a sextile",
-                related_terms=["conjunction", "opposition", "trine"],
+                usage_example="A trine usually reads as easier flow between two planetary functions.",
+                related_terms=["conjunction", "trine", "opposition"],
             ),
             GlossaryEntry(
                 term="House",
-                definition="One of 12 divisions of the natal chart",
+                definition="One of the twelve life areas used to place planetary experience into context.",
                 category="astrology",
-                usage_example="The 7th house rules relationships",
+                usage_example="The seventh house tends to frame partnerships, contracts, and one-to-one dynamics.",
                 related_terms=["cusp", "ruler"],
+            ),
+            GlossaryEntry(
+                term="Conjunction",
+                definition="Two planets at approximately the same degree, intensifying or blending their energies.",
+                category="astrology",
+                usage_example="A Sun-Mars conjunction can amplify drive and assertiveness.",
+                related_terms=["aspect", "orb", "opposition"],
+            ),
+            GlossaryEntry(
+                term="Trine",
+                definition="A 120-degree aspect between planets associated with natural ease and flow.",
+                category="astrology",
+                usage_example="Venus trine Jupiter can show natural luck in relationships or finances.",
+                related_terms=["aspect", "sextile", "conjunction"],
+            ),
+            GlossaryEntry(
+                term="Opposition",
+                definition="A 180-degree aspect between planets, representing tension or the need for balance.",
+                category="astrology",
+                usage_example="Sun opposite Moon often shows an inner tension between identity and emotional needs.",
+                related_terms=["aspect", "conjunction", "trine"],
+            ),
+            GlossaryEntry(
+                term="Retrograde",
+                definition="The apparent backward motion of a planet as seen from Earth, often slowing or internalizing that planet's themes.",
+                category="astrology",
+                usage_example="Mercury retrograde is associated with communication delays and revisiting old decisions.",
+                related_terms=["transit", "direct", "station"],
+            ),
+            GlossaryEntry(
+                term="Rising Sign",
+                definition="The zodiac sign on the eastern horizon at birth, used to frame how life arrives and how a person presents.",
+                category="zodiac",
+                usage_example="The Rising sign often shapes the first impression before the Sun sign becomes visible.",
+                related_terms=["ascendant", "houses"],
+            ),
+            GlossaryEntry(
+                term="Ascendant",
+                definition="Another name for the Rising sign — the zodiac degree on the eastern horizon at the moment of birth.",
+                category="zodiac",
+                usage_example="An Aries Ascendant often projects confidence and directness regardless of the Sun sign.",
+                related_terms=["rising sign", "first house"],
+            ),
+            GlossaryEntry(
+                term="Sun Sign",
+                definition="The zodiac sign the Sun occupied at birth, representing core identity and ego.",
+                category="zodiac",
+                usage_example="A Scorpio Sun tends to pursue depth and transformation as a life theme.",
+                related_terms=["moon sign", "rising sign", "natal chart"],
+            ),
+            GlossaryEntry(
+                term="Moon Sign",
+                definition="The zodiac sign the Moon occupied at birth, representing emotional nature and instinctive responses.",
+                category="zodiac",
+                usage_example="A Cancer Moon often prioritizes security and close emotional bonds.",
+                related_terms=["sun sign", "rising sign", "emotions"],
+            ),
+            GlossaryEntry(
+                term="Natal Chart",
+                definition="A snapshot of the sky at the moment of birth, used to map planetary placements, houses, and aspects.",
+                category="astrology",
+                usage_example="Reading a natal chart starts with the Sun, Moon, and Rising as the primary three signals.",
+                related_terms=["birth chart", "houses", "planets"],
+            ),
+            GlossaryEntry(
+                term="Transit",
+                definition="The current movement of a planet through the sky and its relationship to a natal chart.",
+                category="astrology",
+                usage_example="Saturn transiting the 10th house often triggers career restructuring or accountability.",
+                related_terms=["progression", "retrograde", "natal chart"],
+            ),
+            GlossaryEntry(
+                term="Life Path",
+                definition="The core numerology number derived from the birth date that frames long-arc direction.",
+                category="numerology",
+                usage_example="A Life Path 6 often emphasizes care, responsibility, and relational duty.",
+                related_terms=["destiny number", "personal year"],
+            ),
+            GlossaryEntry(
+                term="Personal Year",
+                definition="A numerology cycle that describes the main annual timing theme a person is moving through.",
+                category="numerology",
+                usage_example="A Personal Year 9 often brings completion, closure, or necessary release.",
+                related_terms=["life path", "cycles"],
+            ),
+            GlossaryEntry(
+                term="Expression Number",
+                definition="A numerology number derived from the full birth name, showing natural talents and how someone expresses themselves.",
+                category="numerology",
+                usage_example="An Expression 3 often indicates a gift for communication, creativity, or performance.",
+                related_terms=["life path", "soul urge"],
+            ),
+            GlossaryEntry(
+                term="Soul Urge",
+                definition="A numerology number based on the vowels in the birth name, representing inner motivation and desire.",
+                category="numerology",
+                usage_example="A Soul Urge 7 often craves quiet, depth, and time to think without distraction.",
+                related_terms=["expression number", "life path"],
+            ),
+            GlossaryEntry(
+                term="Element",
+                definition="One of four categories — Fire, Earth, Air, Water — grouping zodiac signs by temperament and operating style.",
+                category="elements",
+                usage_example="Fire signs tend to act quickly, Earth signs prefer to test before committing.",
+                related_terms=["modality", "polarity", "zodiac"],
+            ),
+            GlossaryEntry(
+                term="Modality",
+                definition="One of three zodiac groupings — Cardinal, Fixed, Mutable — describing how a sign initiates, maintains, or adapts.",
+                category="elements",
+                usage_example="Fixed signs like Taurus and Scorpio tend to hold course even under pressure.",
+                related_terms=["element", "polarity"],
+            ),
+            GlossaryEntry(
+                term="Synastry",
+                definition="The comparison of two natal charts to assess relationship dynamics and compatibility.",
+                category="astrology",
+                usage_example="Strong Venus-Mars contacts in synastry are often associated with physical attraction.",
+                related_terms=["composite chart", "compatibility", "aspect"],
+            ),
+            GlossaryEntry(
+                term="Orb",
+                definition="The margin of degrees allowed when measuring an aspect — wider orbs are considered weaker.",
+                category="astrology",
+                usage_example="A 10-degree orb for a conjunction would still count the aspect, but with less intensity.",
+                related_terms=["aspect", "conjunction", "trine"],
             ),
         ]
 

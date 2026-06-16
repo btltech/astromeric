@@ -25,12 +25,13 @@ class TestNumerologyExtended:
         # c2 = |3-1| = 2
         # c3 = |0-2| = 2
         challenges = calculate_challenges("1990-03-21")
-        assert len(challenges) == 3
+        assert len(challenges) == 4
         assert challenges[0]["label"] == "First Challenge"
-        assert challenges[0]["description"] == "Early life lesson"
+        assert "Early life lesson" in challenges[0]["description"]
         assert challenges[0]["number"] == 0
         assert challenges[1]["number"] == 2
         assert challenges[2]["number"] == 2
+        assert challenges[3]["number"] == 2
 
     def test_calculate_pinnacles(self):
         # 1990-03-21

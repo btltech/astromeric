@@ -150,10 +150,22 @@ actor APIClient {
         let urlString = (Bundle.main.object(forInfoDictionaryKey: "API_BASE_URL") as? String)
             ?? fallback.absoluteString
 
-        guard let url = URL(string: urlString),
-              let scheme = url.scheme,
-              scheme == "https" || scheme == "http" else {
+        guard let url = URL(string: urlString), let scheme = url.scheme?.lowercased() else {
             DebugLog.error("Invalid API_BASE_URL: \(urlString). Falling back to \(fallback.absoluteString)")
+            baseURL = fallback
+            return
+        }
+
+        // Production must use https. http is permitted only in DEBUG so developers
+        // can point at a local backend; release builds reject it outright.
+        #if DEBUG
+        let schemeAllowed = scheme == "https" || scheme == "http"
+        #else
+        let schemeAllowed = scheme == "https"
+        #endif
+
+        guard schemeAllowed else {
+            DebugLog.error("Rejecting non-https API_BASE_URL: \(urlString). Falling back to \(fallback.absoluteString)")
             baseURL = fallback
             return
         }

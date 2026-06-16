@@ -27,7 +27,9 @@ export function CosmicGuideChat({ sunSign, moonSign, risingSign }: Props) {
     {
       id: 'welcome',
       role: 'assistant',
-      content: `Hi${sunSign ? `, I can see you're a ${sunSign}` : ''}. Ask me anything about your reading — love, career, timing, or what to expect next.`,
+      content: `Hi${
+        sunSign ? `, I can see you're a ${sunSign}` : ''
+      }. Ask me anything about your reading — love, career, timing, or what to expect next.`,
       timestamp: new Date(),
     },
   ]);
@@ -132,9 +134,7 @@ export function CosmicGuideChat({ sunSign, moonSign, risingSign }: Props) {
         <span className="guide-avatar">🔮</span>
         <div className="guide-info">
           <h3 className="guide-name">Your Guide</h3>
-          <span className="guide-status">
-            {loading ? 'Thinking...' : 'Online • Ready to help'}
-          </span>
+          <span className="guide-status">{loading ? 'Thinking...' : 'Online • Ready to help'}</span>
         </div>
       </div>
 

@@ -25,7 +25,6 @@ export function useProfiles() {
   const {
     profiles,
     selectedProfileId,
-    setProfiles,
     setSelectedProfileId,
     addProfile,
     sessionProfile,
@@ -53,7 +52,9 @@ export function useProfiles() {
     const hasSelectedProfile =
       typeof state.selectedProfileId === 'number' &&
       mergedProfiles.some((profile) => profile.id === state.selectedProfileId);
-    const nextSelectedProfileId = hasSelectedProfile ? state.selectedProfileId : mergedProfiles[0]?.id ?? null;
+    const nextSelectedProfileId = hasSelectedProfile
+      ? state.selectedProfileId
+      : mergedProfiles[0]?.id ?? null;
 
     if (nextSelectedProfileId !== state.selectedProfileId) {
       state.setSelectedProfileId(nextSelectedProfileId);
@@ -62,42 +63,45 @@ export function useProfiles() {
     return mergedProfiles;
   }, []);
 
-  const fetchProfiles = useCallback(async ({ force = false }: { force?: boolean } = {}) => {
-    if (!force && inflightFetchRef.current) {
-      return inflightFetchRef.current;
-    }
-
-    const fetchId = ++latestFetchIdRef.current;
-
-    const request = (async () => {
-      const currentToken = useStore.getState().token;
-      if (!currentToken) {
-        return useStore.getState().profiles.filter((profile) => profile.id < 0);
+  const fetchProfiles = useCallback(
+    async ({ force = false }: { force?: boolean } = {}) => {
+      if (!force && inflightFetchRef.current) {
+        return inflightFetchRef.current;
       }
 
-      const res = await apiFetch<ApiResponse<SavedProfile[]>>('/v2/profiles/', {
-        headers: {
-          Authorization: `Bearer ${currentToken}`,
-        },
-      });
+      const fetchId = ++latestFetchIdRef.current;
 
-      if (fetchId !== latestFetchIdRef.current) {
-        return useStore.getState().profiles;
+      const request = (async () => {
+        const currentToken = useStore.getState().token;
+        if (!currentToken) {
+          return useStore.getState().profiles.filter((profile) => profile.id < 0);
+        }
+
+        const res = await apiFetch<ApiResponse<SavedProfile[]>>('/v2/profiles/', {
+          headers: {
+            Authorization: `Bearer ${currentToken}`,
+          },
+        });
+
+        if (fetchId !== latestFetchIdRef.current) {
+          return useStore.getState().profiles;
+        }
+
+        return syncProfilesFromBackend(res.data || []);
+      })();
+
+      inflightFetchRef.current = request;
+
+      try {
+        return await request;
+      } finally {
+        if (inflightFetchRef.current === request) {
+          inflightFetchRef.current = null;
+        }
       }
-
-      return syncProfilesFromBackend(res.data || []);
-    })();
-
-    inflightFetchRef.current = request;
-
-    try {
-      return await request;
-    } finally {
-      if (inflightFetchRef.current === request) {
-        inflightFetchRef.current = null;
-      }
-    }
-  }, [syncProfilesFromBackend]);
+    },
+    [syncProfilesFromBackend]
+  );
 
   // Auto-fetch saved profiles from backend when token is available
   useEffect(() => {
@@ -108,8 +112,7 @@ export function useProfiles() {
       return;
     }
 
-    fetchProfiles()
-      .catch((err) => console.error('Failed to auto-fetch profiles:', err));
+    fetchProfiles().catch((err) => console.error('Failed to auto-fetch profiles:', err));
   }, [fetchProfiles, token]);
 
   const suppressNextAutoFetch = useCallback(() => {

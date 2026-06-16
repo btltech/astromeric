@@ -6,6 +6,7 @@ import {
   type ProfilePayload,
 } from '../api/client';
 import { DocumentMeta } from '../components/DocumentMeta';
+import { getRouteMeta } from '../seo/routeMeta';
 import { useActiveProfile } from '../hooks';
 import type { SavedProfile } from '../types';
 import './ProductDesk.css';
@@ -146,16 +147,16 @@ export function NumerologyDeskView() {
   return (
     <div className="product-desk">
       <DocumentMeta
-        title="AstroNumeric — Numerology Desk"
-        description="Your core numbers, personal cycles, lucky days, and long-range arc."
+        title={getRouteMeta('/numerology').title}
+        description={getRouteMeta('/numerology').description}
       />
 
       <section className="product-desk__hero">
         <span className="product-desk__eyebrow">Numerology desk</span>
         <h1>Numbers, cycles, and timing — in one place.</h1>
         <p>
-          Core numbers, live personal cycles, lucky days, and your long-range arc — all on a
-          single focused desk.
+          Core numbers, live personal cycles, lucky days, and your long-range arc — all on a single
+          focused desk.
         </p>
         <div className="product-desk__chips">
           <span className="product-desk__chip">Core numbers</span>
@@ -188,7 +189,11 @@ export function NumerologyDeskView() {
             <div className="product-desk__stat">
               <span className="product-desk__label">Desk state</span>
               <span className="product-desk__value">
-                {loading ? 'Loading live numerology' : error ? 'Feed delayed' : 'Live numerology ready'}
+                {loading
+                  ? 'Loading live numerology'
+                  : error
+                  ? 'Feed delayed'
+                  : 'Live numerology ready'}
               </span>
             </div>
           </div>
@@ -310,27 +315,33 @@ export function NumerologyDeskView() {
         <article className="product-desk__panel product-desk__panel--wide">
           <h2>Long-range arc</h2>
           <ul className="product-desk__list">
-            {(numerologyProfile?.pinnacles.length ? numerologyProfile.pinnacles : []).map((item, index) => (
-              <li key={`p-${item.number}-${index}`} className="product-desk__list-item">
-                <div>
-                  <strong>{formatArcLabel('Pinnacle', index, item.ages)}</strong>
-                  <span className="product-desk__meta">{item.meaning}</span>
-                </div>
-                <span className="product-desk__badge">{item.number}</span>
-              </li>
-            ))}
-            {(numerologyProfile?.challenges.length ? numerologyProfile.challenges : []).map((item, index) => (
-              <li key={`c-${item.number}-${index}`} className="product-desk__list-item">
-                <div>
-                  <strong>{formatArcLabel('Challenge', index, item.ages)}</strong>
-                  <span className="product-desk__meta">{item.meaning}</span>
-                </div>
-                <span className="product-desk__badge">{item.number}</span>
-              </li>
-            ))}
+            {(numerologyProfile?.pinnacles.length ? numerologyProfile.pinnacles : []).map(
+              (item, index) => (
+                <li key={`p-${item.number}-${index}`} className="product-desk__list-item">
+                  <div>
+                    <strong>{formatArcLabel('Pinnacle', index, item.ages)}</strong>
+                    <span className="product-desk__meta">{item.meaning}</span>
+                  </div>
+                  <span className="product-desk__badge">{item.number}</span>
+                </li>
+              )
+            )}
+            {(numerologyProfile?.challenges.length ? numerologyProfile.challenges : []).map(
+              (item, index) => (
+                <li key={`c-${item.number}-${index}`} className="product-desk__list-item">
+                  <div>
+                    <strong>{formatArcLabel('Challenge', index, item.ages)}</strong>
+                    <span className="product-desk__meta">{item.meaning}</span>
+                  </div>
+                  <span className="product-desk__badge">{item.number}</span>
+                </li>
+              )
+            )}
           </ul>
           {!numerologyProfile && !loading && (
-            <p className="product-desk__note">Long-range numerology arc data is unavailable right now.</p>
+            <p className="product-desk__note">
+              Long-range numerology arc data is unavailable right now.
+            </p>
           )}
         </article>
 

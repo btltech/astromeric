@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 
 import { DailyFeaturesCard } from '../components/DailyFeaturesCard';
 import { DocumentMeta } from '../components/DocumentMeta';
+import { getRouteMeta } from '../seo/routeMeta';
 import { MoonPhaseCard } from '../components/MoonPhaseCard';
 import { OracleYesNo } from '../components/OracleYesNo';
 import { TarotCard } from '../components/TarotCard';
@@ -39,8 +40,8 @@ export function CosmicToolsView() {
   const locationPrecision = selectedProfile?.place_of_birth
     ? 'Birth place locked'
     : selectedProfile?.timezone
-      ? 'Timezone only'
-      : 'Location missing';
+    ? 'Timezone only'
+    : 'Location missing';
   const planningNote = selectedProfile
     ? selectedProfile.place_of_birth && selectedProfile.time_of_birth
       ? 'Timing windows can lean on both birth time and location, so the planning lane is running with the strongest profile context available on the web right now.'
@@ -50,16 +51,16 @@ export function CosmicToolsView() {
   return (
     <div className="product-desk cosmic-tools-view">
       <DocumentMeta
-        title="AstroNumeric — Tools Desk"
-        description="Timing, tarot, daily signal, oracle, and planning tools in one place."
+        title={getRouteMeta('/tools').title}
+        description={getRouteMeta('/tools').description}
       />
 
       <section className="product-desk__hero">
         <span className="product-desk__eyebrow">Tools desk</span>
         <h1>Cosmic tools, all in one place.</h1>
         <p>
-          Timing windows, tarot, daily signal cards, oracle guidance, and follow-up
-          interpretation — the fast-use tools in one desk.
+          Timing windows, tarot, daily signal cards, oracle guidance, and follow-up interpretation —
+          the fast-use tools in one desk.
         </p>
         <div className="product-desk__chips">
           <span className="product-desk__chip">Timing windows</span>
@@ -113,7 +114,10 @@ export function CosmicToolsView() {
             </a>
             <Link to="/charts" className="product-desk__linkcard">
               <strong>Chart follow-through</strong>
-              <span>Move into charts when a tool exposes a pattern worth unpacking in natal or numerology detail.</span>
+              <span>
+                Move into charts when a tool exposes a pattern worth unpacking in natal or
+                numerology detail.
+              </span>
             </Link>
           </div>
         </article>
@@ -153,7 +157,8 @@ export function CosmicToolsView() {
           <span className="product-desk__eyebrow">Timing &amp; planning</span>
           <h2>Calculated windows, not just symbolic pulls.</h2>
           <p>
-            Live sky scoring and planning posture, so you can move from a question to a better-timed decision.
+            Live sky scoring and planning posture, so you can move from a question to a better-timed
+            decision.
           </p>
         </article>
 
@@ -184,8 +189,6 @@ export function CosmicToolsView() {
             </Link>
           </div>
         </article>
-
-
       </section>
     </div>
   );

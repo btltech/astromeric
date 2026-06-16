@@ -8,6 +8,10 @@ actor EphemerisEngine {
     static let shared = EphemerisEngine()
 
     private var isInitialized = false
+    /// True once the bundled Swiss Ephemeris data files have been located. When
+    /// false, SEFLG_SWIEPH calculations will fail (the engine never fabricates
+    /// data), so callers/diagnostics can detect a broken install.
+    private(set) var ephemerisDataAvailable = false
     private nonisolated static let requiredEphemerisFiles = [
         "seas_18.se1",
         "semo_18.se1",
@@ -86,13 +90,26 @@ actor EphemerisEngine {
 
         if let ephemerisDirectory = Self.resolveEphemerisDirectory() {
             swe_set_ephe_path(ephemerisDirectory.path)
+            ephemerisDataAvailable = true
             DebugLog.trace("[Ephemeris] Using data path: \(ephemerisDirectory.path)")
         } else if let resourcePath = Bundle.main.resourcePath {
-            // Best-effort fallback so the engine still attempts bundled resources.
+            // Required .se1 files were not found at any known location. Swiss
+            // Ephemeris (SEFLG_SWIEPH) will error rather than fabricate data, so we
+            // surface this loudly (release-visible) instead of failing silently.
             swe_set_ephe_path(resourcePath)
-            DebugLog.trace("[Ephemeris] Falling back to Bundle.main.resourcePath: \(resourcePath)")
+            ephemerisDataAvailable = false
+            DebugLog.error("[Ephemeris] Required data files \(Self.requiredEphemerisFiles) not found; calculations will fail. Fallback path: \(resourcePath)")
+            PrivacyFilteredCrashReporter.shared.recordNonFatal(
+                EphemerisError.dataFilesMissing,
+                context: ["requiredFiles": Self.requiredEphemerisFiles.joined(separator: ",")]
+            )
         } else {
-            DebugLog.log("[Ephemeris] No ephemeris resource path found")
+            ephemerisDataAvailable = false
+            DebugLog.error("[Ephemeris] No ephemeris resource path found; calculations will fail.")
+            PrivacyFilteredCrashReporter.shared.recordNonFatal(
+                EphemerisError.dataFilesMissing,
+                context: [:]
+            )
         }
 
         isInitialized = true
@@ -966,6 +983,7 @@ enum EphemerisError: LocalizedError {
     case missingTimezone
     case invalidDate
     case calculationFailed(String)
+    case dataFilesMissing
 
     var errorDescription: String? {
         switch self {
@@ -973,6 +991,7 @@ enum EphemerisError: LocalizedError {
         case .missingTimezone: return "Timezone is required for chart calculation."
         case .invalidDate: return "Could not parse birth date."
         case .calculationFailed(let msg): return "Ephemeris calculation failed: \(msg)"
+        case .dataFilesMissing: return "Swiss Ephemeris data files could not be located in the app bundle."
         }
     }
 }

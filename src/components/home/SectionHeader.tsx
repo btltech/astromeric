@@ -7,12 +7,7 @@ type SectionHeaderProps = {
   align?: 'left' | 'center';
 };
 
-export function SectionHeader({
-  eyebrow,
-  title,
-  description,
-  align = 'left',
-}: SectionHeaderProps) {
+export function SectionHeader({ eyebrow, title, description, align = 'left' }: SectionHeaderProps) {
   return (
     <header className={`section-header section-header--${align}`}>
       <span className="section-header__eyebrow">{eyebrow}</span>

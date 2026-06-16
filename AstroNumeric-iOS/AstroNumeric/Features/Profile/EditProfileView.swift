@@ -7,6 +7,8 @@ struct EditProfileView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(AppStore.self) private var store
     @State private var viewModel: EditProfileVM
+    @State private var showUnlocks = false
+    @State private var isDateUnlocked = false
     
     /// Initialize with existing profile to edit, or nil to create new
     init(profile: Profile? = nil) {
@@ -20,25 +22,13 @@ struct EditProfileView: View {
                     .ignoresSafeArea()
                 
                 ScrollView {
-                    VStack(spacing: 24) {
-                        // Header
+                    VStack(spacing: Space.md) {
                         headerSection
-
                         unlocksSection
-                        
-                        // Name field
                         nameSection
-                        
-                        // Birth date
                         birthDateSection
-                        
-                        // Birth time
                         birthTimeSection
-                        
-                        // Birth place
                         birthPlaceSection
-                        
-                        // Save button
                         saveButton
                     }
                     .padding()
@@ -65,8 +55,7 @@ struct EditProfileView: View {
     // MARK: - Header Section
     
     private var headerSection: some View {
-        VStack(spacing: 12) {
-            // Avatar
+        VStack(spacing: Space.sm) {
             ZStack {
                 Circle()
                     .fill(
@@ -93,22 +82,52 @@ struct EditProfileView: View {
 
     private var unlocksSection: some View {
         CardView {
-            VStack(alignment: .leading, spacing: 12) {
-                Text("ui.editProfile.0".localized)
-                    .font(.headline)
+            VStack(alignment: .leading, spacing: Space.sm) {
+                Button {
+                    withAnimation(.spring(response: 0.25, dampingFraction: 0.85)) {
+                        showUnlocks.toggle()
+                    }
+                } label: {
+                    HStack(spacing: Space.sm) {
+                        Image(systemName: "sparkles")
+                            .foregroundStyle(Color.accentPrimary)
+                            .frame(width: 30, height: 30)
+                            .background(Circle().fill(Color.accentPrimary.opacity(0.14)))
 
-                profileUnlockRow(icon: "sparkles.rectangle.stack.fill", title: "Full birth chart", detail: "Big Three, placements, aspects, points, and dignity context.")
-                profileUnlockRow(icon: "number.square.fill", title: "Flagship numerology", detail: "Life path, core numbers, cycles, pinnacles, and synthesis.")
-                profileUnlockRow(icon: "clock.badge.checkmark.fill", title: "Practical daily guidance", detail: "Forecasts, timing windows, moon context, and a year-ahead view.")
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("ui.editProfile.0".localized)
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(Color.textPrimary)
+                            Text("profile.edit.unlocks.summary".localized)
+                                .font(.caption)
+                                .foregroundStyle(Color.textSecondary)
+                        }
+
+                        Spacer()
+
+                        Image(systemName: showUnlocks ? "chevron.up" : "chevron.down")
+                            .font(.caption.weight(.bold))
+                            .foregroundStyle(Color.textSecondary)
+                    }
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+
+                if showUnlocks {
+                    PremiumDivider()
+                    profileUnlockRow(icon: "sparkles.rectangle.stack.fill", title: "profile.edit.unlocks.chart.title".localized, detail: "profile.edit.unlocks.chart.detail".localized)
+                    profileUnlockRow(icon: "number.square.fill", title: "profile.edit.unlocks.numerology.title".localized, detail: "profile.edit.unlocks.numerology.detail".localized)
+                    profileUnlockRow(icon: "clock.badge.checkmark.fill", title: "profile.edit.unlocks.guidance.title".localized, detail: "profile.edit.unlocks.guidance.detail".localized)
+                }
             }
         }
     }
 
     private func profileUnlockRow(icon: String, title: String, detail: String) -> some View {
-        HStack(alignment: .top, spacing: 12) {
+        HStack(alignment: .top, spacing: Space.sm) {
             Image(systemName: icon)
-                .foregroundStyle(.purple)
-                .frame(width: 20)
+                .foregroundStyle(Color.accentPrimary)
+                .frame(width: 24)
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                     .font(.subheadline.weight(.semibold))
@@ -122,39 +141,58 @@ struct EditProfileView: View {
     // MARK: - Name Section
     
     private var nameSection: some View {
-        CardView {
-            VStack(alignment: .leading, spacing: 12) {
-                Label("ui.editProfile.4".localized, systemImage: "person.fill")
-                    .font(.headline)
-                    .foregroundStyle(.purple)
-                
-                TextField("ui.editProfile.9".localized, text: $viewModel.name)
-                    .textFieldStyle(.plain)
-                    .padding(12)
-                    .background(.ultraThinMaterial)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
-                    .accessibilityLabel("Profile name")
-            }
+        PremiumSettingsGroup(
+            title: "ui.editProfile.4".localized,
+            subtitle: "profile.edit.name.subtitle".localized,
+            icon: "person.fill",
+            accent: .accentPrimary
+        ) {
+            profileTextField("ui.editProfile.9".localized, text: $viewModel.name, accessibilityLabel: "Profile name")
         }
     }
     
     // MARK: - Birth Date Section
     
     private var birthDateSection: some View {
-        CardView {
-            VStack(alignment: .leading, spacing: 12) {
-                Label("ui.editProfile.5".localized, systemImage: "calendar")
-                    .font(.headline)
-                    .foregroundStyle(.purple)
-                
+        PremiumSettingsGroup(
+            title: "ui.editProfile.5".localized,
+            subtitle: "profile.edit.birthDate.subtitle".localized,
+            icon: "calendar",
+            accent: .cosmicBlue
+        ) {
+            if store.hideSensitiveDetailsEnabled && viewModel.isEditing && !isDateUnlocked {
+                HStack {
+                    Text(PrivacyRedaction.maskedDate)
+                        .font(.body.monospaced())
+                        .foregroundStyle(Color.textSecondary)
+                    
+                    Spacer()
+                    
+                    Button {
+                        withAnimation {
+                            isDateUnlocked = true
+                        }
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "lock.fill")
+                            Text("Unlock")
+                        }
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Color.accentPrimary)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Unlock birth date picker")
+                }
+                .padding(.vertical, 4)
+            } else {
                 DatePicker(
-                    "Date of Birth",
+                    "form.dateOfBirth".localized,
                     selection: $viewModel.birthDate,
                     in: ...Date(),
                     displayedComponents: .date
                 )
-                .datePickerStyle(.graphical)
-                .tint(.purple)
+                .datePickerStyle(.compact)
+                .tint(.cosmicBlue)
             }
         }
     }
@@ -162,40 +200,34 @@ struct EditProfileView: View {
     // MARK: - Birth Time Section
     
     private var birthTimeSection: some View {
-        CardView {
-            VStack(alignment: .leading, spacing: 12) {
-                Label("ui.editProfile.6".localized, systemImage: "clock.fill")
-                    .font(.headline)
-                    .foregroundStyle(.purple)
-
-                // 3-option picker
-                VStack(spacing: 8) {
+        PremiumSettingsGroup(
+            title: "ui.editProfile.6".localized,
+            subtitle: "profile.edit.birthTime.subtitle".localized,
+            icon: "clock.fill",
+            accent: .warningOrange
+        ) {
+            VStack(alignment: .leading, spacing: Space.sm) {
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: Space.sm), count: 3), spacing: Space.sm) {
                     ForEach(TimeConfidence.allCases, id: \.self) { option in
-                        Button {
+                        TimeConfidenceChip(
+                            title: option.displayTitle,
+                            isSelected: viewModel.timeConfidence == option,
+                            accent: .warningOrange
+                        ) {
                             viewModel.timeConfidence = option
-                        } label: {
-                            HStack {
-                                Image(systemName: viewModel.timeConfidence == option
-                                      ? "tern.editProfile.2a".localized : "tern.editProfile.2b".localized)
-                                    .foregroundStyle(.purple)
-                                Text(option.displayTitle)
-                                    .font(.subheadline)
-                                    .foregroundStyle(Color.textPrimary)
-                                Spacer()
-                            }
                         }
-                        .buttonStyle(ScaleButtonStyle())
                     }
                 }
 
                 if viewModel.timeConfidence != .unknown {
+                    PremiumDivider()
                     DatePicker(
-                        "Time of Birth",
+                        "form.timeOfBirth".localized,
                         selection: $viewModel.birthTime,
                         displayedComponents: .hourAndMinute
                     )
-                    .datePickerStyle(.wheel)
-                    .labelsHidden()
+                    .datePickerStyle(.compact)
+                    .tint(.warningOrange)
 
                     if viewModel.timeConfidence == .approximate {
                         Label("ui.editProfile.7".localized, systemImage: "info.circle")
@@ -204,7 +236,7 @@ struct EditProfileView: View {
                     }
                 } else {
                     Text("ui.editProfile.1".localized)
-                        .font(.label)
+                        .font(.caption)
                         .foregroundStyle(Color.textSecondary)
                 }
             }
@@ -214,16 +246,20 @@ struct EditProfileView: View {
     // MARK: - Birth Place Section
     
     private var birthPlaceSection: some View {
-        CardView {
-            VStack(alignment: .leading, spacing: 12) {
+        PremiumSettingsGroup(
+            title: "ui.editProfile.8".localized,
+            subtitle: "profile.edit.birthPlace.subtitle".localized,
+            icon: "mappin.circle.fill",
+            accent: .accentSecondary
+        ) {
+            VStack(alignment: .leading, spacing: Space.sm) {
                 HStack {
-                    Label("ui.editProfile.8".localized, systemImage: "mappin.circle.fill")
-                        .font(.headline)
-                        .foregroundStyle(.purple)
-                    
+                    Text("profile.edit.birthPlace.current".localized)
+                        .font(.caption)
+                        .foregroundStyle(Color.textSecondary)
+
                     Spacer()
                     
-                    // Use current location button (for those born where they currently are)
                     Button {
                         viewModel.useCurrentLocation()
                     } label: {
@@ -237,22 +273,16 @@ struct EditProfileView: View {
                             Text("ui.editProfile.2".localized)
                                 .font(.label)
                         }
-                        .foregroundStyle(.purple)
+                        .foregroundStyle(Color.accentSecondary)
                     }
                     .disabled(viewModel.isUsingCurrentLocation)
                 }
                 
-                TextField("ui.editProfile.10".localized, text: $viewModel.placeQuery)
-                    .textFieldStyle(.plain)
-                    .padding(12)
-                    .background(.ultraThinMaterial)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
-                    .accessibilityLabel("Birth place")
+                profileTextField("ui.editProfile.10".localized, text: $viewModel.placeQuery, accessibilityLabel: "Birth place")
                     .onChange(of: viewModel.placeQuery) { _, newValue in
                         viewModel.searchPlaces(query: newValue)
                     }
                 
-                // Location suggestions
                 if viewModel.isSearchingPlaces || viewModel.isGeocodingPlace {
                     HStack {
                         ProgressView()
@@ -269,7 +299,7 @@ struct EditProfileView: View {
                             } label: {
                                 HStack {
                                     Image(systemName: "mappin")
-                                        .foregroundStyle(.purple)
+                                        .foregroundStyle(Color.accentSecondary)
                                     VStack(alignment: .leading, spacing: 2) {
                                         Text(completion.title)
                                             .font(.subheadline)
@@ -290,24 +320,17 @@ struct EditProfileView: View {
                             }
                         }
                     }
-                    .padding(.horizontal, 12)
-                    .background(.ultraThinMaterial)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .padding(.horizontal, Space.sm)
+                    .background(Color.surfaceBase)
+                    .clipShape(RoundedRectangle(cornerRadius: Radius.sm))
                 }
                 
-                // Selected location info
                 if viewModel.selectedPlace != nil {
-                    HStack {
-                        Image(systemName: "checkmark.circle.fill")
-                            .foregroundStyle(.green)
-                        Text("ui.editProfile.3".localized)
-                            .font(.label)
-                            .foregroundStyle(Color.textSecondary)
-                        Spacer()
-                        Text(viewModel.timezoneDisplay)
-                            .font(.label)
-                            .foregroundStyle(Color.textSecondary)
-                    }
+                    PremiumStatusBanner(
+                        title: "ui.editProfile.3".localized,
+                        message: viewModel.timezoneDisplay,
+                        tone: .success
+                    )
                 }
             }
         }
@@ -331,6 +354,53 @@ struct EditProfileView: View {
         .opacity(viewModel.isValid ? 1 : 0.6)
         .padding(.top)
         .accessibilityLabel(viewModel.isEditing ? "Save profile" : "Create profile")
+    }
+
+    private func profileTextField(_ placeholder: String, text: Binding<String>, accessibilityLabel: String) -> some View {
+        TextField(placeholder, text: text)
+            .textFieldStyle(.plain)
+            .padding(Space.sm)
+            .background(
+                RoundedRectangle(cornerRadius: Radius.sm)
+                    .fill(Color.surfaceBase)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: Radius.sm)
+                            .stroke(Color.borderSubtle, lineWidth: Stroke.hairline)
+                    )
+            )
+            .accessibilityLabel(accessibilityLabel)
+    }
+}
+
+private struct TimeConfidenceChip: View {
+    let title: String
+    let isSelected: Bool
+    let accent: Color
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 6) {
+                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                    .font(.subheadline.weight(.semibold))
+                Text(title)
+                    .font(.caption.weight(.semibold))
+                    .lineLimit(2)
+                    .multilineTextAlignment(.center)
+                    .minimumScaleFactor(0.8)
+            }
+            .frame(maxWidth: .infinity, minHeight: 64)
+            .foregroundStyle(isSelected ? accent : Color.textSecondary)
+            .background(
+                RoundedRectangle(cornerRadius: Radius.sm)
+                    .fill(isSelected ? accent.opacity(0.16) : Color.surfaceBase)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: Radius.sm)
+                            .stroke(isSelected ? accent.opacity(0.35) : Color.borderSubtle, lineWidth: Stroke.hairline)
+                    )
+            )
+        }
+        .buttonStyle(ScaleButtonStyle())
     }
 }
 

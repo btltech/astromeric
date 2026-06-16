@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { fetchYearAhead, type ProfilePayload } from '../api/client';
 import { DocumentMeta } from '../components/DocumentMeta';
+import { getRouteMeta } from '../seo/routeMeta';
 import { useActiveProfile } from '../hooks';
 import type { SavedProfile, YearAheadForecast, YearAheadMonthlyForecast } from '../types';
 import './ProductDesk.css';
@@ -35,7 +36,20 @@ function toProfilePayload(profile: SavedProfile | null): ProfilePayload {
   };
 }
 
-const MONTH_ABBR = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const MONTH_ABBR = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+];
 
 const ELEMENT_EMOJI: Record<string, string> = {
   Fire: '🔥',
@@ -110,14 +124,17 @@ export function YearAheadView() {
         const result = await fetchYearAhead(requestProfile, year);
         if (!cancelled) setForecast(result);
       } catch (err) {
-        if (!cancelled) setError(err instanceof Error ? err.message : 'Failed to load year-ahead forecast');
+        if (!cancelled)
+          setError(err instanceof Error ? err.message : 'Failed to load year-ahead forecast');
       } finally {
         if (!cancelled) setLoading(false);
       }
     }
 
     load();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [requestProfile, year]);
 
   const isPreview = !hasActiveProfile;
@@ -125,14 +142,16 @@ export function YearAheadView() {
   return (
     <>
       <DocumentMeta
-        title="Year Ahead Forecast — AstroNumeric"
-        description="Your personalised astrology and numerology forecast for the full year ahead."
+        title={getRouteMeta('/year-ahead').title}
+        description={getRouteMeta('/year-ahead').description}
       />
 
       <div className="product-desk">
         <header className="product-desk__header">
           <div className="product-desk__header-top">
-            <Link to="/" className="product-desk__back">← Home</Link>
+            <Link to="/" className="product-desk__back">
+              ← Home
+            </Link>
             {isPreview && (
               <Link to="/profile" className="product-desk__cta-link">
                 Add your profile for a personal reading →
@@ -183,7 +202,9 @@ export function YearAheadView() {
               </section>
 
               <section className="product-desk__panel ya-card">
-                <h3 className="ya-card__title">🌍 Universal Year {forecast.universal_year.number}</h3>
+                <h3 className="ya-card__title">
+                  🌍 Universal Year {forecast.universal_year.number}
+                </h3>
                 <p className="ya-card__text">{forecast.universal_year.theme}</p>
               </section>
             </div>

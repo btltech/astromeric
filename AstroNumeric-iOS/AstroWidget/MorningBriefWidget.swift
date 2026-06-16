@@ -92,7 +92,7 @@ struct MorningBriefSmallView: View {
                 if entry.personalDay > 0 {
                     Text("Day \(entry.personalDay)")
                         .font(.system(size: 9, weight: .bold, design: .monospaced))
-                        .foregroundStyle(.purple.opacity(0.9))
+                        .foregroundStyle(WidgetCosmicStyle.accent)
                 }
             }
 
@@ -120,11 +120,7 @@ struct MorningBriefSmallView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .padding(10)
         .containerBackground(for: .widget) {
-            LinearGradient(
-                colors: [Color(hue: 0.75, saturation: 0.6, brightness: 0.2), Color.black],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
+            WidgetCosmicBackground()
         }
     }
 }
@@ -148,7 +144,7 @@ struct MorningBriefMediumView: View {
                 if entry.personalDay > 0 {
                     Text("Personal Day \(entry.personalDay)")
                         .font(.system(size: 10, weight: .bold, design: .monospaced))
-                        .foregroundStyle(.purple.opacity(0.9))
+                        .foregroundStyle(WidgetCosmicStyle.accent)
                 }
             }
 
@@ -158,7 +154,7 @@ struct MorningBriefMediumView: View {
                     HStack(alignment: .top, spacing: 5) {
                         Text("•")
                             .font(.system(size: 12, weight: .bold))
-                            .foregroundStyle(.purple.opacity(0.8))
+                            .foregroundStyle(WidgetCosmicStyle.accent)
                         Text(bullet)
                             .font(.system(size: 12))
                             .foregroundStyle(.white.opacity(0.9))
@@ -183,12 +179,9 @@ struct MorningBriefMediumView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .padding(12)
         .containerBackground(for: .widget) {
-            LinearGradient(
-                colors: [Color(hue: 0.75, saturation: 0.6, brightness: 0.2), Color.black],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
+            WidgetCosmicBackground()
         }
     }
 }

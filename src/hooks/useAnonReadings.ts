@@ -7,7 +7,6 @@ import { useState, useEffect } from 'react';
 import {
   getAnonReadings,
   addAnonReading,
-  getAnonReadingCount,
   shouldShowUpsell,
   hasUpsellBeenShown,
   markUpsellShown,

@@ -23,7 +23,9 @@ describe('AstroNumeric critical route smoke', () => {
       method: 'GET',
       url: `${apiUrl}/health`,
       failOnStatusCode: false,
-    }).its('status').should('eq', 200);
+    })
+      .its('status')
+      .should('eq', 200);
   });
 
   beforeEach(() => {
@@ -46,8 +48,9 @@ describe('AstroNumeric critical route smoke', () => {
     visitRoute('/reading');
 
     cy.title().should('eq', 'AstroNumeric — Reading Desk');
-    cy.contains('The reading route is back as a real product flow: profile in, live guidance out.')
-      .should('be.visible');
+    cy.contains(
+      'The reading route is back as a real product flow: profile in, live guidance out.'
+    ).should('be.visible');
     cy.contains('Profile setup').should('be.visible');
     cy.contains('Railway backend').should('be.visible');
     cy.get("input[placeholder='you@example.com']").should('be.visible');
@@ -59,8 +62,9 @@ describe('AstroNumeric critical route smoke', () => {
     visitRoute('/numerology');
 
     cy.title().should('eq', 'AstroNumeric — Numerology Desk');
-    cy.contains('Give numerology its own route so timing and meaning stop hiding inside charts.')
-      .should('be.visible');
+    cy.contains(
+      'Give numerology its own route so timing and meaning stop hiding inside charts.'
+    ).should('be.visible');
     cy.contains('Current context').should('be.visible');
     cy.contains('Core numbers').should('be.visible');
   });
@@ -69,8 +73,9 @@ describe('AstroNumeric critical route smoke', () => {
     visitRoute('/relationships');
 
     cy.title().should('eq', 'AstroNumeric — Relationships Desk');
-    cy.contains('Turn compatibility into a place users can return to, not a one-off calculation.')
-      .should('be.visible');
+    cy.contains(
+      'Turn compatibility into a place users can return to, not a one-off calculation.'
+    ).should('be.visible');
     cy.contains('Current context').should('be.visible');
     cy.contains('How to use this suite').should('be.visible');
   });

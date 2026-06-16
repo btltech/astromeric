@@ -460,7 +460,6 @@ final class HomeVM {
         }
         return n
     }
-    
     static func makeDailyReadingSummary(from prediction: PredictionData) -> DailyReadingSummary {
         let headline = prediction.sections.first?.summary ?? "Your cosmic forecast is ready."
         let score = prediction.overallScore
@@ -475,11 +474,11 @@ final class HomeVM {
 
         return DailyReadingSummary(
             headline: headline,
-            tldr: nil,
+            tldr: prediction.tldr,
             overallEnergy: energy
         )
     }
-
+    
     static func habitSummary(from habits: [HabitResponse], timezoneID: String?) -> (completed: Int, total: Int) {
         let completed = habits.filter { habit in
             guard let lastCompleted = habit.summary.lastCompleted,

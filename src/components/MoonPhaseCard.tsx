@@ -63,7 +63,9 @@ export function MoonPhaseCard() {
       <div className="product-desk__stack">
         <div>
           <h2>Moon phase</h2>
-          <p className="product-desk__note">{error ?? 'Moon phase data is unavailable right now.'}</p>
+          <p className="product-desk__note">
+            {error ?? 'Moon phase data is unavailable right now.'}
+          </p>
         </div>
       </div>
     );
@@ -75,7 +77,9 @@ export function MoonPhaseCard() {
     <div className="product-desk__stack">
       <div>
         <h2>Moon phase</h2>
-        <p className="product-desk__note">Current lunar weather, phase strength, and the next notable handoff.</p>
+        <p className="product-desk__note">
+          Current lunar weather, phase strength, and the next notable handoff.
+        </p>
       </div>
 
       <div className="product-desk__stats">
@@ -95,7 +99,9 @@ export function MoonPhaseCard() {
 
       <p className="product-desk__note">
         {phase.days_until_next_phase > 0
-          ? `${phase.days_until_next_phase} day${phase.days_until_next_phase === 1 ? '' : 's'} until the next phase transition.`
+          ? `${phase.days_until_next_phase} day${
+              phase.days_until_next_phase === 1 ? '' : 's'
+            } until the next phase transition.`
           : 'A phase transition is imminent.'}
       </p>
 
@@ -105,7 +111,9 @@ export function MoonPhaseCard() {
             <li key={`${event.type}-${event.date}`} className="product-desk__list-item">
               <div>
                 <strong>{`${event.emoji} ${event.type}`}</strong>
-                <span className="product-desk__meta">{`${event.sign} · ${event.days_away} day${event.days_away === 1 ? '' : 's'} away`}</span>
+                <span className="product-desk__meta">{`${event.sign} · ${event.days_away} day${
+                  event.days_away === 1 ? '' : 's'
+                } away`}</span>
               </div>
             </li>
           ))}

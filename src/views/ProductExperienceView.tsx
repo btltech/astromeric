@@ -15,6 +15,7 @@ import {
 } from '../api/client';
 import { ChartWheel } from '../components/ChartWheel';
 import { DocumentMeta } from '../components/DocumentMeta';
+import { getRouteMeta } from '../seo/routeMeta';
 import { useActiveProfile } from '../hooks';
 import { useStore } from '../store/useStore';
 import type { SavedProfile } from '../types';
@@ -75,19 +76,12 @@ const previewProfile: SavedProfile = {
   house_system: 'Placidus',
 };
 
-const previewCompareProfile: SavedProfile = {
-  id: -2,
-  name: 'Noah Hart',
-  date_of_birth: '1992-04-05',
-  time_of_birth: '09:15',
-  place_of_birth: 'New York, USA',
-  latitude: 40.7128,
-  longitude: -74.006,
-  timezone: 'America/New_York',
-  house_system: 'Placidus',
-};
-
-const surfaceTags = ['Chart desk', 'Numerology desk', 'Compatibility board', 'Daily brief'] as const;
+const surfaceTags = [
+  'Chart desk',
+  'Numerology desk',
+  'Compatibility board',
+  'Daily brief',
+] as const;
 const featuredPlanetNames = ['Sun', 'Moon', 'Mercury'] as const;
 
 function toProfilePayload(profile: SavedProfile | null): ProfilePayload {
@@ -129,13 +123,17 @@ function getPlanetInsightText(planet: LiveChartPlanet) {
   const baseCopy: Record<string, string> = {
     Sun: 'Your core identity serves as the leading theme for your astrological makeup.',
     Moon: 'Your emotional tone shapes how you process underlying feelings and reactions.',
-    Mercury: 'Your communication and decision style is a practical, everyday reflection of your intellect.',
+    Mercury:
+      'Your communication and decision style is a practical, everyday reflection of your intellect.',
     Venus: 'Your relationship style defines your romantic and social connections in grounded ways.',
     Mars: 'Your action strategy is one of the clearest indicators of how you turn energy into motion.',
   };
 
-  const base = baseCopy[planet.name] ?? 'This placement serves as a clear, trustworthy signal in your chart.';
-  return planet.retrograde ? `${base} Retrograde motion adds a more internal and reflective edge.` : base;
+  const base =
+    baseCopy[planet.name] ?? 'This placement serves as a clear, trustworthy signal in your chart.';
+  return planet.retrograde
+    ? `${base} Retrograde motion adds a more internal and reflective edge.`
+    : base;
 }
 
 function toChartWheelData(natalProfile: LiveNatalProfile | null): ChartWheelData | null {
@@ -214,8 +212,12 @@ function buildChartInsights(natalProfile: LiveNatalProfile | null): ExperienceIn
 
   if (strongestAspect) {
     planetInsights.push({
-      label: `${strongestAspect.planet_a} ${formatAspectType(strongestAspect.type)} ${strongestAspect.planet_b}`,
-      text: `A tight ${strongestAspect.orb.toFixed(1)}° orb makes this one of the most prominent connections in your chart, offering clear and practical guidance.`,
+      label: `${strongestAspect.planet_a} ${formatAspectType(strongestAspect.type)} ${
+        strongestAspect.planet_b
+      }`,
+      text: `A tight ${strongestAspect.orb.toFixed(
+        1
+      )}° orb makes this one of the most prominent connections in your chart, offering clear and practical guidance.`,
     });
   }
 
@@ -227,7 +229,8 @@ function buildChartQualityStates(natalProfile: LiveNatalProfile | null): ChartQu
     return [
       {
         label: 'Chart feed unavailable',
-        message: 'Your chart data is not yet available, so the trust cues are waiting on fresh chart data.',
+        message:
+          'Your chart data is not yet available, so the trust cues are waiting on fresh chart data.',
         tone: 'warning',
       },
     ];
@@ -239,13 +242,15 @@ function buildChartQualityStates(natalProfile: LiveNatalProfile | null): ChartQu
   if (metadata.location_assumed) {
     states.push({
       label: 'Location missing',
-      message: 'Birth location is missing, so an estimated location is being used for your houses and rising sign.',
+      message:
+        'Birth location is missing, so an estimated location is being used for your houses and rising sign.',
       tone: 'warning',
     });
   } else if (metadata.birth_time_assumed) {
     states.push({
       label: 'Birth time estimated',
-      message: 'Rising sign and houses are approximate because the chart is using an assumed birth time for this profile.',
+      message:
+        'Rising sign and houses are approximate because the chart is using an assumed birth time for this profile.',
       tone: 'warning',
     });
   }
@@ -253,7 +258,8 @@ function buildChartQualityStates(natalProfile: LiveNatalProfile | null): ChartQu
   if (metadata.moon_sign_uncertain) {
     states.push({
       label: 'Moon may shift',
-      message: 'The Moon changed sign on this birth date, so the lunar reading can move with an exact birth time.',
+      message:
+        'The Moon changed sign on this birth date, so the lunar reading can move with an exact birth time.',
       tone: 'info',
     });
   }
@@ -261,7 +267,8 @@ function buildChartQualityStates(natalProfile: LiveNatalProfile | null): ChartQu
   if (states.length === 0) {
     states.push({
       label: 'Chart confidence',
-      message: 'Birth time and location are present, so the Big Three and houses are running on the live chart data.',
+      message:
+        'Birth time and location are present, so the Big Three and houses are running on the live chart data.',
       tone: 'stable',
     });
   }
@@ -299,8 +306,8 @@ function buildBigThreeSignals(natalProfile: LiveNatalProfile | null): BigThreeSi
         ? metadata?.location_assumed
           ? 'Estimated location in use'
           : metadata?.birth_time_assumed
-            ? 'Estimated from assumed time'
-            : 'Confirmed placement'
+          ? 'Estimated from assumed time'
+          : 'Confirmed placement'
         : 'Waiting for chart data',
       tone: risingSign
         ? metadata?.location_assumed || metadata?.birth_time_assumed
@@ -319,24 +326,30 @@ function buildHeroSignals(
 ): ExperienceSignal[] {
   const sunPlacement = natalProfile?.chart.planets.find((planet) => planet.name === 'Sun');
   const today = weeklyForecast[0];
-  const overallCompatibility = compatibilityResult ? Math.round(compatibilityResult.overall_score) : null;
+  const overallCompatibility = compatibilityResult
+    ? Math.round(compatibilityResult.overall_score)
+    : null;
 
   return [
     {
       label: 'Signal of the day',
       value: today ? `${today.icon} ${today.vibe}` : 'Loading daily timing',
-      note: today?.recommendation ?? "Your daily forecast will appear here once it is ready.",
+      note: today?.recommendation ?? 'Your daily forecast will appear here once it is ready.',
     },
     {
       label: 'Chart focus',
-      value: sunPlacement ? `${sunPlacement.sign} Sun · House ${sunPlacement.house}` : 'Waiting for chart data',
+      value: sunPlacement
+        ? `${sunPlacement.sign} Sun · House ${sunPlacement.house}`
+        : 'Waiting for chart data',
       note: sunPlacement
         ? 'Your specific astrological placements dictate the strongest core signals shown here.'
         : 'Your strongest personal chart placement will appear here.',
     },
     {
       label: 'Timing read',
-      value: numerologyProfile ? `Year ${numerologyProfile.personal_year.cycle_number}` : 'Numerology loading',
+      value: numerologyProfile
+        ? `Year ${numerologyProfile.personal_year.cycle_number}`
+        : 'Numerology loading',
       note:
         numerologyProfile?.personal_year.interpretation ??
         'Your live numerology cycle will provide the timing insight for this desk.',
@@ -355,17 +368,15 @@ function buildHeroSignals(
 }
 
 export function ProductExperienceView() {
-  const {
-    activeProfile,
-    activeProfileSourceLabel,
-    profiles,
-    selectedProfileId,
-    sessionProfile,
-  } = useActiveProfile();
-  const { compareProfileId, setSelectedProfileId, setCompareProfileId, setSessionProfile } = useStore();
+  const { activeProfile, activeProfileSourceLabel, profiles, selectedProfileId, sessionProfile } =
+    useActiveProfile();
+  const { compareProfileId, setSelectedProfileId, setCompareProfileId, setSessionProfile } =
+    useStore();
   const [natalProfile, setNatalProfile] = useState<LiveNatalProfile | null>(null);
   const [numerologyProfile, setNumerologyProfile] = useState<LiveNumerologyProfile | null>(null);
-  const [compatibilityResult, setCompatibilityResult] = useState<LiveCompatibilityResult | null>(null);
+  const [compatibilityResult, setCompatibilityResult] = useState<LiveCompatibilityResult | null>(
+    null
+  );
   const [weeklyForecast, setWeeklyForecast] = useState<ForecastDay[]>([]);
   const [loading, setLoading] = useState(true);
   const [issues, setIssues] = useState<string[]>([]);
@@ -378,7 +389,10 @@ export function ProductExperienceView() {
   }, [sessionProfile]);
 
   useEffect(() => {
-    if (selectedProfileId !== null && !profiles.some((profile) => profile.id === selectedProfileId)) {
+    if (
+      selectedProfileId !== null &&
+      !profiles.some((profile) => profile.id === selectedProfileId)
+    ) {
       setSelectedProfileId(null);
     }
   }, [profiles, selectedProfileId, setSelectedProfileId]);
@@ -418,12 +432,15 @@ export function ProductExperienceView() {
       setLoading(true);
       setIssues([]);
 
-      const [natalResult, numerologyResult, compatibilityFeed, forecastFeed] = await Promise.allSettled([
-        fetchNatalProfile(primaryPayload),
-        fetchNumerologyProfile(primaryPayload),
-        comparisonPayload ? fetchCompatibility(primaryPayload, comparisonPayload) : Promise.resolve(null),
-        fetchWeeklyForecast(primaryPayload),
-      ]);
+      const [natalResult, numerologyResult, compatibilityFeed, forecastFeed] =
+        await Promise.allSettled([
+          fetchNatalProfile(primaryPayload),
+          fetchNumerologyProfile(primaryPayload),
+          comparisonPayload
+            ? fetchCompatibility(primaryPayload, comparisonPayload)
+            : Promise.resolve(null),
+          fetchWeeklyForecast(primaryPayload),
+        ]);
 
       if (isCancelled) {
         return;
@@ -494,40 +511,43 @@ export function ProductExperienceView() {
   const lifePurposeLead = numerologyProfile?.life_path.life_purpose ?? null;
   const numerologyStrengths = numerologyProfile?.synthesis?.strengths.slice(0, 3) ?? [];
   const numerologyCurrentFocus =
-    numerologyProfile?.synthesis?.current_focus ?? numerologyProfile?.personal_year.interpretation ?? null;
+    numerologyProfile?.synthesis?.current_focus ??
+    numerologyProfile?.personal_year.interpretation ??
+    null;
   const numerologyGrowthEdge = numerologyProfile?.synthesis?.growth_edges[0] ?? null;
   const numerologyAffirmation = numerologyProfile?.synthesis?.affirmation ?? null;
   const topChartInsight = chartInsights[0] ?? null;
   const topCompatibilityDimension = compatibilityBreakdown[0] ?? null;
-  const bigThreeSummary = bigThreeSignals
-    .map((item) => `${item.label}: ${item.value}`)
-    .join(' · ');
+  const bigThreeSummary = bigThreeSignals.map((item) => `${item.label}: ${item.value}`).join(' · ');
   const primarySourceLabel = activeProfile ? activeProfileSourceLabel : 'Preview profile';
   const comparisonSourceLabel = comparisonProfile
     ? 'Selected compare profile'
     : availableComparisonProfiles.length > 0
-      ? 'Choose compare profile'
-      : 'No compare profile';
+    ? 'Choose compare profile'
+    : 'No compare profile';
   const qualityNote = natalProfile?.chart.metadata.location_assumed
     ? 'Birth location is missing, so the chart is using fallback coordinates.'
     : null;
-  const compatibilityPrompt = availableComparisonProfiles.length > 0
-    ? 'Choose a saved second profile to load real compatibility for this route.'
-    : 'Add a second profile in the reading desk to unlock live compatibility on this route.';
-  const compatibilitySetupHeadline = availableComparisonProfiles.length > 0
-    ? 'Select a saved partner to unlock the live pairing board.'
-    : 'Add a second profile to start compatibility.';
-  const compatibilitySetupSteps = availableComparisonProfiles.length > 0
-    ? [
-        'Choose the primary profile in the hero card if the wrong person is driving the route.',
-        'Use the Compare with selector in the partner card to choose a saved second profile.',
-        'The board will switch from setup state to live score, breakdown, and strengths as soon as the pair is set.',
-      ]
-    : [
-        'Create or save a second profile in the reading desk so this screen has a real partner to compare.',
-        'Keep the primary selector pointed at the person you want as Person A.',
-        'When another saved profile exists, the live pairing board unlocks automatically.',
-      ];
+  const compatibilityPrompt =
+    availableComparisonProfiles.length > 0
+      ? 'Choose a saved second profile to load real compatibility for this route.'
+      : 'Add a second profile in the reading desk to unlock live compatibility on this route.';
+  const compatibilitySetupHeadline =
+    availableComparisonProfiles.length > 0
+      ? 'Select a saved partner to unlock the live pairing board.'
+      : 'Add a second profile to start compatibility.';
+  const compatibilitySetupSteps =
+    availableComparisonProfiles.length > 0
+      ? [
+          'Choose the primary profile in the hero card if the wrong person is driving the route.',
+          'Use the Compare with selector in the partner card to choose a saved second profile.',
+          'The board will switch from setup state to live score, breakdown, and strengths as soon as the pair is set.',
+        ]
+      : [
+          'Create or save a second profile in the reading desk so this screen has a real partner to compare.',
+          'Keep the primary selector pointed at the person you want as Person A.',
+          'When another saved profile exists, the live pairing board unlocks automatically.',
+        ];
   const hasPrimarySelectorOptions = profiles.length > 0 || sessionPrimaryBackup.current !== null;
   const primaryPrompt = hasPrimarySelectorOptions
     ? 'Choose which profile should drive the live chart, numerology, and forecast desks.'
@@ -537,10 +557,10 @@ export function ProductExperienceView() {
       ? 'Loading chart feed'
       : 'Chart feed delayed'
     : natalProfile.chart.metadata.location_assumed
-      ? 'Approximate houses'
-      : natalProfile.chart.metadata.birth_time_assumed
-        ? 'Estimated rising sign'
-        : 'Chart confidence locked';
+    ? 'Approximate houses'
+    : natalProfile.chart.metadata.birth_time_assumed
+    ? 'Estimated rising sign'
+    : 'Chart confidence locked';
   const numerologyWorkflowStatus = !numerologyProfile
     ? loading
       ? 'Loading numerology'
@@ -551,10 +571,10 @@ export function ProductExperienceView() {
       ? 'Choose second profile'
       : 'Need another profile'
     : compatibilityResult
-      ? `${overallTone} · ${overallScore}%`
-      : loading
-        ? 'Loading pairing'
-        : 'Pairing delayed';
+    ? `${overallTone} · ${overallScore}%`
+    : loading
+    ? 'Loading pairing'
+    : 'Pairing delayed';
   const workflowLanes: WorkflowLane[] = [
     {
       href: '#chart-desk',
@@ -585,7 +605,8 @@ export function ProductExperienceView() {
       title: 'Compare two real profiles with follow-through',
       status: compatibilityWorkflowStatus,
       note: comparisonProfile
-        ? compatibilityResult?.summary ?? 'The paired board is waiting on the live compatibility response.'
+        ? compatibilityResult?.summary ??
+          'The paired board is waiting on the live compatibility response.'
         : compatibilityPrompt,
       action: 'Open compatibility board',
       tone: 'compatibility',
@@ -640,7 +661,9 @@ export function ProductExperienceView() {
         {
           label: 'Start with the split',
           detail: topCompatibilityDimension
-            ? `${formatDimensionLabel(topCompatibilityDimension.name)} currently leads the board at ${Math.round(topCompatibilityDimension.score)}%.`
+            ? `${formatDimensionLabel(
+                topCompatibilityDimension.name
+              )} currently leads the board at ${Math.round(topCompatibilityDimension.score)}%.`
             : 'The topic-by-topic breakdown will surface here once the pairing feed resolves.',
         },
         {
@@ -669,10 +692,10 @@ export function ProductExperienceView() {
   const primarySelectorValue = sessionProfile
     ? 'session'
     : activeProfile
-      ? String(activeProfile.id)
-      : sessionPrimaryBackup.current
-        ? 'session'
-        : '';
+    ? String(activeProfile.id)
+    : sessionPrimaryBackup.current
+    ? 'session'
+    : '';
 
   function handlePrimaryProfileChange(nextValue: string) {
     if (nextValue === 'session') {
@@ -691,8 +714,8 @@ export function ProductExperienceView() {
   return (
     <>
       <DocumentMeta
-        title="AstroNumeric — Charts Desk"
-        description="A live charts desk for natal chart, numerology, compatibility, and timing data built around the active profile."
+        title={getRouteMeta('/charts').title}
+        description={getRouteMeta('/charts').description}
       />
 
       <div className="experience-page">
@@ -706,8 +729,8 @@ export function ProductExperienceView() {
             <span className="experience-label">Charts desk</span>
             <h1>Your birth chart, numerology, and compatibility — in one place.</h1>
             <p>
-              Everything calculated from your active profile. Scroll to explore your natal chart, core numbers,
-              relationship compatibility, and more.
+              Everything calculated from your active profile. Scroll to explore your natal chart,
+              core numbers, relationship compatibility, and more.
             </p>
 
             <div className="experience-hero__actions">
@@ -717,7 +740,10 @@ export function ProductExperienceView() {
               <Link to="/numerology" className="experience-action experience-action--secondary">
                 Open numerology desk
               </Link>
-              <a href="#compatibility-board" className="experience-action experience-action--secondary">
+              <a
+                href="#compatibility-board"
+                className="experience-action experience-action--secondary"
+              >
                 Jump to compatibility
               </a>
             </div>
@@ -806,9 +832,7 @@ export function ProductExperienceView() {
                   <select
                     value={compareProfileId ?? ''}
                     onChange={(event) =>
-                      setCompareProfileId(
-                        event.target.value ? Number(event.target.value) : null
-                      )
+                      setCompareProfileId(event.target.value ? Number(event.target.value) : null)
                     }
                   >
                     <option value="">Choose a saved profile</option>
@@ -823,7 +847,9 @@ export function ProductExperienceView() {
                 <div className="experience-compare-selector experience-compare-selector--empty">
                   <span className="experience-compare-selector__label">Compare with</span>
                   <div className="experience-compare-selector__empty-state">
-                    <span>Use the reading desk to add another real profile for live compatibility.</span>
+                    <span>
+                      Use the reading desk to add another real profile for live compatibility.
+                    </span>
                     <Link to="/reading?compose=1" className="experience-inline-link">
                       Add second profile
                     </Link>
@@ -865,8 +891,14 @@ export function ProductExperienceView() {
         <section id="chart-desk" className="experience-section">
           <div className="experience-section__heading">
             <span className="experience-label">Chart desk</span>
-            <h2>The chart page becomes a signal board you can scan in seconds instead of a floating cosmic toy.</h2>
-            <p>The primary chart route should feel decisive, structured, and editorial before it feels mystical.</p>
+            <h2>
+              The chart page becomes a signal board you can scan in seconds instead of a floating
+              cosmic toy.
+            </h2>
+            <p>
+              The primary chart route should feel decisive, structured, and editorial before it
+              feels mystical.
+            </p>
           </div>
 
           <article className="experience-card experience-card--playbook">
@@ -889,7 +921,11 @@ export function ProductExperienceView() {
               <div className="experience-card__header">
                 <span>Birth chart desk</span>
                 <strong>
-                  {chartData ? 'Live natal signal map' : loading ? 'Loading natal data' : 'Natal feed unavailable'}
+                  {chartData
+                    ? 'Live natal signal map'
+                    : loading
+                    ? 'Loading natal data'
+                    : 'Natal feed unavailable'}
                 </strong>
               </div>
               <div className="experience-chart-wheel-wrap">
@@ -912,7 +948,10 @@ export function ProductExperienceView() {
 
               <div className="experience-quality-stack">
                 {chartQualityStates.map((item) => (
-                  <div key={item.label} className={`experience-quality-banner experience-quality-banner--${item.tone}`}>
+                  <div
+                    key={item.label}
+                    className={`experience-quality-banner experience-quality-banner--${item.tone}`}
+                  >
                     <span>{item.label}</span>
                     <p>{item.message}</p>
                   </div>
@@ -930,7 +969,10 @@ export function ProductExperienceView() {
 
               <div className="experience-big-three-grid">
                 {bigThreeSignals.map((item) => (
-                  <div key={item.label} className={`experience-big-three-card experience-big-three-card--${item.tone}`}>
+                  <div
+                    key={item.label}
+                    className={`experience-big-three-card experience-big-three-card--${item.tone}`}
+                  >
                     <span>{item.label}</span>
                     <strong>{item.value}</strong>
                     <p>{item.reliability}</p>
@@ -954,7 +996,10 @@ export function ProductExperienceView() {
           <div className="experience-section__heading">
             <span className="experience-label">Numerology desk</span>
             <h2>The numerology page can feel premium, structured, and genuinely useful.</h2>
-            <p>The live numerology feed now decides the numbers, timing, and long-range arc on this route.</p>
+            <p>
+              The live numerology feed now decides the numbers, timing, and long-range arc on this
+              route.
+            </p>
           </div>
 
           <article className="experience-card experience-card--playbook">
@@ -980,8 +1025,8 @@ export function ProductExperienceView() {
                   {numerologyProfile
                     ? `Life Path ${numerologyProfile.life_path.number}`
                     : loading
-                      ? 'Loading numerology'
-                      : 'Numerology unavailable'}
+                    ? 'Loading numerology'
+                    : 'Numerology unavailable'}
                 </strong>
               </div>
               <div className="experience-number-grid">
@@ -1065,8 +1110,13 @@ export function ProductExperienceView() {
                   </>
                 ) : (
                   <div className="experience-empty-state experience-empty-state--wide">
-                    <strong>{loading ? 'Loading long-range arc...' : 'Numerology arc unavailable'}</strong>
-                    <p>Pinnacles and challenges will render here when the live numerology response arrives.</p>
+                    <strong>
+                      {loading ? 'Loading long-range arc...' : 'Numerology arc unavailable'}
+                    </strong>
+                    <p>
+                      Pinnacles and challenges will render here when the live numerology response
+                      arrives.
+                    </p>
                   </div>
                 )}
               </div>
@@ -1079,8 +1129,8 @@ export function ProductExperienceView() {
                   {numerologyProfile
                     ? `Life Purpose ${numerologyProfile.life_path.number}`
                     : loading
-                      ? 'Loading synthesis'
-                      : 'Purpose + synthesis'}
+                    ? 'Loading synthesis'
+                    : 'Purpose + synthesis'}
                 </strong>
               </div>
 
@@ -1108,22 +1158,36 @@ export function ProductExperienceView() {
                   <div className="experience-numerology-brief-grid">
                     <div className="experience-numerology-brief-block">
                       <span>Current focus</span>
-                      <p>{numerologyCurrentFocus ?? 'The live synthesis will surface the current focus here.'}</p>
+                      <p>
+                        {numerologyCurrentFocus ??
+                          'The live synthesis will surface the current focus here.'}
+                      </p>
                     </div>
                     <div className="experience-numerology-brief-block">
                       <span>Growth edge</span>
-                      <p>{numerologyGrowthEdge ?? 'The first practical growth edge will appear here once synthesis resolves.'}</p>
+                      <p>
+                        {numerologyGrowthEdge ??
+                          'The first practical growth edge will appear here once synthesis resolves.'}
+                      </p>
                     </div>
                     <div className="experience-numerology-brief-block experience-numerology-brief-block--accent">
                       <span>Affirmation</span>
-                      <p>{numerologyAffirmation ?? 'The numerology affirmation will anchor this section once the live synthesis resolves.'}</p>
+                      <p>
+                        {numerologyAffirmation ??
+                          'The numerology affirmation will anchor this section once the live synthesis resolves.'}
+                      </p>
                     </div>
                   </div>
                 </>
               ) : (
                 <div className="experience-empty-state experience-empty-state--wide">
-                  <strong>{loading ? 'Loading purpose brief...' : 'Purpose brief unavailable'}</strong>
-                  <p>The iOS benchmark leads with synthesis and life purpose, so that summary card will render here once the live numerology response arrives.</p>
+                  <strong>
+                    {loading ? 'Loading purpose brief...' : 'Purpose brief unavailable'}
+                  </strong>
+                  <p>
+                    The iOS benchmark leads with synthesis and life purpose, so that summary card
+                    will render here once the live numerology response arrives.
+                  </p>
                 </div>
               )}
             </article>
@@ -1133,9 +1197,12 @@ export function ProductExperienceView() {
         <section id="compatibility-board" className="experience-section">
           <div className="experience-section__heading">
             <span className="experience-label">Compatibility board</span>
-            <h2>The compatibility page becomes editorial, comparative, and much easier to trust.</h2>
+            <h2>
+              The compatibility page becomes editorial, comparative, and much easier to trust.
+            </h2>
             <p>
-              This board is now calculated from the active profile and the current comparison partner instead of a canned match score.
+              This board is now calculated from the active profile and the current comparison
+              partner instead of a canned match score.
             </p>
           </div>
 
@@ -1205,9 +1272,14 @@ export function ProductExperienceView() {
                     ) : (
                       <div className="experience-empty-state experience-empty-state--wide">
                         <strong>
-                          {loading ? 'Loading compatibility breakdown...' : 'Compatibility breakdown unavailable'}
+                          {loading
+                            ? 'Loading compatibility breakdown...'
+                            : 'Compatibility breakdown unavailable'}
                         </strong>
-                        <p>The live dimension scores will render here when the pairing response arrives.</p>
+                        <p>
+                          The live dimension scores will render here when the pairing response
+                          arrives.
+                        </p>
                       </div>
                     )}
                   </div>
@@ -1222,10 +1294,9 @@ export function ProductExperienceView() {
                     <div>
                       <span className="experience-list-title">Strengths</span>
                       <ul>
-                        {(
-                          compatibilityResult?.strengths.length
-                            ? compatibilityResult.strengths
-                            : ['Live strengths will appear here once compatibility resolves.']
+                        {(compatibilityResult?.strengths.length
+                          ? compatibilityResult.strengths
+                          : ['Live strengths will appear here once compatibility resolves.']
                         ).map((item) => (
                           <li key={item}>{item}</li>
                         ))}
@@ -1234,12 +1305,13 @@ export function ProductExperienceView() {
                     <div>
                       <span className="experience-list-title">Watch outs</span>
                       <ul>
-                        {(
-                          compatibilityResult?.challenges.length
-                            ? compatibilityResult.challenges
-                            : compatibilityResult?.recommendations.length
-                              ? compatibilityResult.recommendations
-                              : ['Live compatibility guidance will appear here once the pairing resolves.']
+                        {(compatibilityResult?.challenges.length
+                          ? compatibilityResult.challenges
+                          : compatibilityResult?.recommendations.length
+                          ? compatibilityResult.recommendations
+                          : [
+                              'Live compatibility guidance will appear here once the pairing resolves.',
+                            ]
                         ).map((item) => (
                           <li key={item}>{item}</li>
                         ))}
@@ -1268,7 +1340,11 @@ export function ProductExperienceView() {
                   </div>
                   <div className="experience-compat-setup-block">
                     <span>Partner</span>
-                    <strong>{availableComparisonProfiles.length > 0 ? 'Saved profiles available' : 'No saved partner yet'}</strong>
+                    <strong>
+                      {availableComparisonProfiles.length > 0
+                        ? 'Saved profiles available'
+                        : 'No saved partner yet'}
+                    </strong>
                     <p>
                       {availableComparisonProfiles.length > 0
                         ? 'Use the Compare with selector in the hero to choose the second profile.'
@@ -1283,7 +1359,10 @@ export function ProductExperienceView() {
                   <div className="experience-compat-setup-block experience-compat-setup-block--accent">
                     <span>When ready</span>
                     <strong>Live score + breakdown</strong>
-                    <p>The board switches to score, topic breakdown, strengths, and watch-outs as soon as the pairing is set.</p>
+                    <p>
+                      The board switches to score, topic breakdown, strengths, and watch-outs as
+                      soon as the pairing is set.
+                    </p>
                   </div>
                 </div>
 

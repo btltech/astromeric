@@ -1,13 +1,14 @@
 import React from 'react';
 import { DocumentMeta } from '../components/DocumentMeta';
+import { getRouteMeta } from '../seo/routeMeta';
 import './CookiePolicy.css';
 
 export function CookiePolicy() {
   return (
     <>
       <DocumentMeta
-        title="Cookie Policy — AstroNumeric"
-        description="Understand how Astromeric uses cookies and tracking technologies."
+        title={getRouteMeta('/cookie-policy').title}
+        description={getRouteMeta('/cookie-policy').description}
         robots="index, follow"
       />
 

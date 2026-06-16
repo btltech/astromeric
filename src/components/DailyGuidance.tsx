@@ -130,9 +130,7 @@ function VocMoonCard({ voc }: { voc: VoidOfCourseMoon }) {
 
   return (
     <ContextCard icon="☽" title="Moon Energy Is Low" subtitle={timeInfo} severity="warning">
-      <p className="context-detail">
-        Not a good time to start new things or make big decisions.
-      </p>
+      <p className="context-detail">Not a good time to start new things or make big decisions.</p>
       <p className="context-advice">{voc.advice}</p>
     </ContextCard>
   );
@@ -247,7 +245,11 @@ export function DailyGuidance({ guidance, scope = 'daily' }: Props) {
         {embrace.colors.length > 0 && (
           <div className="color-palette">
             <span className="palette-label">
-              {scope === 'weekly' ? 'Best Colors This Week' : scope === 'monthly' ? 'Best Colors This Month' : 'Best Colors Today'}
+              {scope === 'weekly'
+                ? 'Best Colors This Week'
+                : scope === 'monthly'
+                ? 'Best Colors This Month'
+                : 'Best Colors Today'}
             </span>
             <div className="swatches">
               {embrace.colors.map((c, i) => {

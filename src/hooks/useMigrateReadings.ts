@@ -6,10 +6,7 @@
 import { useCallback } from 'react';
 import { apiFetch } from '../api/client';
 import { useStore } from '../store/useStore';
-import {
-  getReadingsForMigration,
-  clearReadingsAfterMigration,
-} from '../utils/anonReadingStorage';
+import { getReadingsForMigration, clearReadingsAfterMigration } from '../utils/anonReadingStorage';
 
 interface MigrateLocalDataResponse {
   status: 'success' | 'error';
@@ -35,16 +32,16 @@ export function useMigrateReadings() {
       const anonReadings = getReadingsForMigration();
       const localSavedProfiles = state.profiles.filter((profile) => profile.id < 0);
       const localProfiles = localSavedProfiles.map((profile) => ({
-          id: profile.id,
-          name: profile.name,
-          date_of_birth: profile.date_of_birth,
-          time_of_birth: profile.time_of_birth ?? undefined,
-          place_of_birth: profile.place_of_birth ?? undefined,
-          latitude: profile.latitude ?? undefined,
-          longitude: profile.longitude ?? undefined,
-          timezone: profile.timezone ?? undefined,
-          house_system: profile.house_system ?? undefined,
-        }));
+        id: profile.id,
+        name: profile.name,
+        date_of_birth: profile.date_of_birth,
+        time_of_birth: profile.time_of_birth ?? undefined,
+        place_of_birth: profile.place_of_birth ?? undefined,
+        latitude: profile.latitude ?? undefined,
+        longitude: profile.longitude ?? undefined,
+        timezone: profile.timezone ?? undefined,
+        house_system: profile.house_system ?? undefined,
+      }));
       const selectedLocalProfileId =
         typeof state.selectedProfileId === 'number' &&
         localProfiles.some((profile) => profile.id === state.selectedProfileId)
@@ -87,10 +84,12 @@ export function useMigrateReadings() {
             return [];
           }
 
-          return [{
-            ...profile,
-            id: migratedId,
-          }];
+          return [
+            {
+              ...profile,
+              id: migratedId,
+            },
+          ];
         });
         const promotedProfileIds = new Set(promotedLocalProfiles.map((profile) => profile.id));
         const retainedRemoteProfiles = latestState.profiles.filter(

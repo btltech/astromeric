@@ -1,6 +1,5 @@
 describe('Reading Desk Railway auth sync', () => {
-  const apiUrl =
-    Cypress.env('API_URL') || 'https://astromeric-backend-production.up.railway.app';
+  const apiUrl = Cypress.env('API_URL') || 'https://astromeric-backend-production.up.railway.app';
 
   const localProfile = {
     id: -777,
@@ -86,7 +85,9 @@ describe('Reading Desk Railway auth sync', () => {
       method: 'GET',
       url: `${apiUrl}/health`,
       failOnStatusCode: false,
-    }).its('status').should('eq', 200);
+    })
+      .its('status')
+      .should('eq', 200);
   });
 
   afterEach(() => {
@@ -120,7 +121,9 @@ describe('Reading Desk Railway auth sync', () => {
         'serviceWorker' in win.navigator
           ? win.navigator.serviceWorker
               .getRegistrations()
-              .then((registrations) => Promise.all(registrations.map((registration) => registration.unregister())))
+              .then((registrations) =>
+                Promise.all(registrations.map((registration) => registration.unregister()))
+              )
           : Promise.resolve([]);
       const clearCaches =
         'caches' in win
@@ -132,9 +135,9 @@ describe('Reading Desk Railway auth sync', () => {
 
     cy.reload(true);
 
-    cy.contains('1 local profiles and 1 local readings are currently waiting on this device.').should(
-      'be.visible'
-    );
+    cy.contains(
+      '1 local profiles and 1 local readings are currently waiting on this device.'
+    ).should('be.visible');
 
     cy.contains('.reading-account-form', 'Connect Railway once, then keep this desk portable.')
       .scrollIntoView()
@@ -162,8 +165,14 @@ describe('Reading Desk Railway auth sync', () => {
       'be.visible'
     );
 
-    cy.get('.reading-account-stat').eq(0).should('contain.text', '0').and('contain.text', 'already clear');
-    cy.get('.reading-account-stat').eq(1).should('contain.text', '0').and('contain.text', 'already clear');
+    cy.get('.reading-account-stat')
+      .eq(0)
+      .should('contain.text', '0')
+      .and('contain.text', 'already clear');
+    cy.get('.reading-account-stat')
+      .eq(1)
+      .should('contain.text', '0')
+      .and('contain.text', 'already clear');
 
     cy.window().should((win) => {
       const persisted = JSON.parse(win.localStorage.getItem('astro-storage') || '{}');

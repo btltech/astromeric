@@ -172,7 +172,7 @@ struct PlanetaryHourWidgetView: View {
                 .foregroundStyle(.white)
             Text(entry.hourEndDate, style: .relative)
                 .font(.caption2)
-                .foregroundStyle(.white.opacity(0.7))
+                .foregroundStyle(WidgetCosmicStyle.textMuted)
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -193,7 +193,7 @@ struct PlanetaryHourWidgetView: View {
                     .foregroundStyle(.white)
                 Text(entry.hourEndDate, style: .relative)
                     .font(.caption2)
-                    .foregroundStyle(.white.opacity(0.7))
+                    .foregroundStyle(WidgetCosmicStyle.textMuted)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 
@@ -244,10 +244,10 @@ struct PlanetaryHourWidgetView: View {
             case "Moon":    return [Color(white: 0.3), Color(white: 0.15)]
             case "Mars":    return [.red, Color(red: 0.5, green: 0, blue: 0)]
             case "Mercury": return [.teal, Color(red: 0, green: 0.3, blue: 0.4)]
-            case "Jupiter": return [.purple, .indigo]
+            case "Jupiter": return [WidgetCosmicStyle.accent, .indigo]
             case "Venus":   return [.pink, Color(red: 0.6, green: 0.2, blue: 0.4)]
             case "Saturn":  return [Color(white: 0.25), .black]
-            default:        return [Color(white: 0.2), .black]
+            default:        return [WidgetCosmicStyle.backgroundTop, WidgetCosmicStyle.backgroundBottom]
             }
         }()
         return LinearGradient(colors: colors, startPoint: .topLeading, endPoint: .bottomTrailing)

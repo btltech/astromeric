@@ -1,6 +1,9 @@
+import logging
 import os
 import uuid
 from datetime import datetime, timezone
+
+logger = logging.getLogger(__name__)
 
 from sqlalchemy import (
     Boolean,
@@ -201,8 +204,39 @@ class TransitSubscription(Base):
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 
-# Create tables
-Base.metadata.create_all(bind=engine)
+# Schema initialization.
+#
+# Production (Postgres) schema is owned by Alembic migrations, NOT by
+# create_all(). Running create_all() against production would let the live schema
+# silently drift from migration history. We therefore only auto-create tables for
+# SQLite (local dev / tests), or when DB_AUTO_CREATE is explicitly set.
+_IS_SQLITE = DATABASE_URL.startswith("sqlite")
+_DB_AUTO_CREATE = os.getenv("DB_AUTO_CREATE", "").strip().lower() in {
+    "1",
+    "true",
+    "yes",
+    "on",
+}
+
+
+def init_db_schema() -> None:
+    """Create tables for dev/SQLite; defer to Alembic for production Postgres."""
+    if _IS_SQLITE or _DB_AUTO_CREATE:
+        Base.metadata.create_all(bind=engine)
+        logger.info(
+            "Database schema ensured via create_all (sqlite=%s, auto_create=%s).",
+            _IS_SQLITE,
+            _DB_AUTO_CREATE,
+        )
+    else:
+        logger.info(
+            "Skipping create_all for non-SQLite database; "
+            "Alembic migrations are the source of truth. "
+            "Run `alembic upgrade head` to apply schema changes."
+        )
+
+
+init_db_schema()
 
 
 def _ensure_sqlite_schema() -> None:

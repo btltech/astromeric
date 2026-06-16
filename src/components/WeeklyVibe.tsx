@@ -162,7 +162,9 @@ export function WeeklyVibe({ profile, showShare = true }: Props) {
       <div className="weekly-vibe-header">
         <div className="weekly-vibe-heading">
           <span className="weekly-vibe-eyebrow">Live weekly desk</span>
-          <h3 id="weekly-vibe-title" className="weekly-vibe-title">Your week ahead</h3>
+          <h3 id="weekly-vibe-title" className="weekly-vibe-title">
+            Your week ahead
+          </h3>
           <p className="weekly-vibe-copy">{getWeeklySummary(forecast)}</p>
         </div>
         {showShare && (
@@ -197,7 +199,8 @@ export function WeeklyVibe({ profile, showShare = true }: Props) {
             {formatWeekday(lowestDay.date, 'long')} · {lowestDay.score}%
           </strong>
           <p>
-            {lowestDay.recommendation || `Keep ${formatWeekday(lowestDay.date, 'long')} for lighter commitments.`}
+            {lowestDay.recommendation ||
+              `Keep ${formatWeekday(lowestDay.date, 'long')} for lighter commitments.`}
           </p>
         </article>
 
@@ -240,7 +243,9 @@ export function WeeklyVibe({ profile, showShare = true }: Props) {
             return (
               <motion.div
                 key={day.date}
-                className={`vibe-day-card ${isToday ? 'today' : ''} ${isBest ? 'vibe-day-card--best' : ''} ${isWorst ? 'vibe-day-card--worst' : ''}`}
+                className={`vibe-day-card ${isToday ? 'today' : ''} ${
+                  isBest ? 'vibe-day-card--best' : ''
+                } ${isWorst ? 'vibe-day-card--worst' : ''}`}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.05 }}
@@ -284,7 +289,9 @@ export function WeeklyVibe({ profile, showShare = true }: Props) {
                 </div>
 
                 {day.recommendation && (
-                  <p className="vibe-recommendation">{summarizeRecommendation(day.recommendation)}</p>
+                  <p className="vibe-recommendation">
+                    {summarizeRecommendation(day.recommendation)}
+                  </p>
                 )}
               </motion.div>
             );
@@ -343,7 +350,10 @@ function buildWeeklyRhythm(days: ForecastDay[]) {
 }
 
 function summarizeRecommendation(recommendation: string) {
-  const firstSentence = recommendation.split('.').find((part) => part.trim().length > 0)?.trim();
+  const firstSentence = recommendation
+    .split('.')
+    .find((part) => part.trim().length > 0)
+    ?.trim();
 
   if (!firstSentence) {
     return recommendation;

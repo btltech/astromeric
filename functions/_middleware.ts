@@ -1,41 +1,68 @@
-export const onRequest = async (context) => {
-  const response = await context.next();
-  
-  // Only intercept HTML requests, ignore JS/CSS/Images
-  const contentType = response.headers.get("content-type");
-  if (contentType && contentType.includes("text/html")) {
-    const url = new URL(context.request.url);
-    
-    // Default Tags (Matches index.html)
-    let title = 'AstroNumeric | Daily Insight, Birth Chart & Numerology';
-    let description = 'AstroNumeric combines astrology, numerology, compatibility, and timing in one clear daily signal.';
+import routeMetaJson from '../src/seo/routeMeta.json';
 
-    // Dynamic Route Mappings
-    if (url.pathname.startsWith('/reading')) {
-      title = 'AstroNumeric — Reading Desk';
-      description = 'Review your personalized astrological and numerological profile analysis.';
-    } else if (url.pathname.startsWith('/numerology')) {
-      title = 'AstroNumeric — Numerology Desk';
-      description = 'Your core numbers, personal cycles, lucky days, and long-range arc.';
-    } else if (url.pathname.startsWith('/relationships')) {
-      title = 'AstroNumeric — Relationships Desk';
-      description = 'Understand the mechanics of your connections using chart and numerology compatibility.';
-    } else if (url.pathname.startsWith('/learn')) {
-      title = 'AstroNumeric — Learning Desk';
-      description = 'Explore astrology and numerology concepts in an easy to understand format.';
-    } else if (url.pathname.startsWith('/charts')) {
-      title = 'AstroNumeric — Cosmic Tools';
-      description = 'Calculate birth charts, daily features, and localized astrological timing.';
+const routeMeta = routeMetaJson as Record<string, { title: string; description: string }>;
+
+export const onRequest = async (context: { next: () => Promise<Response>; request: Request }) => {
+  const response = await context.next();
+
+  // Only intercept HTML requests, ignore JS/CSS/Images
+  const contentType = response.headers.get('content-type');
+  if (contentType && contentType.includes('text/html')) {
+    const url = new URL(context.request.url);
+    const pathname = url.pathname;
+
+    let matchedRoute = routeMeta['/'];
+
+    // Sort keys by length descending to match longest path prefix first (e.g. /privacy-policy before /)
+    const sortedRoutes = Object.keys(routeMeta).sort((a, b) => b.length - a.length);
+    for (const route of sortedRoutes) {
+      if (
+        pathname === route ||
+        pathname.startsWith(route + '/') ||
+        (route !== '/' && pathname.startsWith(route))
+      ) {
+        matchedRoute = routeMeta[route];
+        break;
+      }
     }
-    
-    // Edge-rewrite the HTML before sending to Twitter/Discord/iMessage
+
+    const title = matchedRoute.title;
+    const description = matchedRoute.description;
+
+    // Edge-rewrite the HTML before sending to Twitter/Discord/iMessage/crawlers
     return new HTMLRewriter()
-      .on('meta[property="og:title"]', { element(e) { e.setAttribute('content', title); } })
-      .on('meta[property="og:description"]', { element(e) { e.setAttribute('content', description); } })
-      .on('meta[name="description"]', { element(e) { e.setAttribute('content', description); } })
-      .on('title', { element(e) { e.setInnerContent(title); } })
+      .on('meta[property="og:title"]', {
+        element(e) {
+          e.setAttribute('content', title);
+        },
+      })
+      .on('meta[name="twitter:title"]', {
+        element(e) {
+          e.setAttribute('content', title);
+        },
+      })
+      .on('meta[property="og:description"]', {
+        element(e) {
+          e.setAttribute('content', description);
+        },
+      })
+      .on('meta[name="twitter:description"]', {
+        element(e) {
+          e.setAttribute('content', description);
+        },
+      })
+      .on('meta[name="description"]', {
+        element(e) {
+          e.setAttribute('content', description);
+        },
+      })
+      .on('title', {
+        element(e) {
+          e.setInnerContent(title);
+        },
+      })
       .transform(response);
   }
-  
+
   return response;
 };
