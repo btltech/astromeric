@@ -80,10 +80,18 @@ class RuleEngine:
         topic_scores = self._aggregate_scores(factors)
         return RuleResult(topic_scores=topic_scores, factors=factors)
 
-    def _natal_sign_factors(self, chart: Chart, query_type: str, lang: str = "en") -> List[Factor]:
+    def _natal_sign_factors(
+        self, chart: Chart, query_type: str, lang: str = "en"
+    ) -> List[Factor]:
         factors: List[Factor] = []
         for planet in chart.planets:
-            meaning = get_meaning_block(PLANET_SIGN_MEANINGS, planet.name, planet.sign, lang=lang, context="planet_sign")
+            meaning = get_meaning_block(
+                PLANET_SIGN_MEANINGS,
+                planet.name,
+                planet.sign,
+                lang=lang,
+                context="planet_sign",
+            )
             if meaning:
                 score = self._base_score(meaning.weights, query_type)
                 factors.append(
@@ -98,12 +106,18 @@ class RuleEngine:
                 )
         return factors
 
-    def _natal_house_factors(self, chart: Chart, query_type: str, lang: str = "en") -> List[Factor]:
+    def _natal_house_factors(
+        self, chart: Chart, query_type: str, lang: str = "en"
+    ) -> List[Factor]:
         factors: List[Factor] = []
         for planet in chart.planets:
             if planet.house:
                 meaning = get_meaning_block(
-                    PLANET_HOUSE_MEANINGS, planet.name, planet.house, lang=lang, context="planet_house"
+                    PLANET_HOUSE_MEANINGS,
+                    planet.name,
+                    planet.house,
+                    lang=lang,
+                    context="planet_house",
                 )
                 if meaning:
                     score = self._base_score(meaning.weights, query_type)
@@ -124,7 +138,9 @@ class RuleEngine:
     ) -> List[Factor]:
         factors: List[Factor] = []
         for asp in aspects:
-            meaning = get_meaning_block(ASPECT_MEANINGS, asp.aspect_type, lang=lang, context="aspect")
+            meaning = get_meaning_block(
+                ASPECT_MEANINGS, asp.aspect_type, lang=lang, context="aspect"
+            )
             if not meaning:
                 continue
             # Tight orb means stronger weight
@@ -155,7 +171,9 @@ class RuleEngine:
     def _numerology_factors(self, numerology: Dict, lang: str = "en") -> List[Factor]:
         factors: List[Factor] = []
         for key, data in numerology.items():
-            meaning = get_meaning_block(NUMEROLOGY_MEANINGS, key, lang=lang, context="numerology_type")
+            meaning = get_meaning_block(
+                NUMEROLOGY_MEANINGS, key, lang=lang, context="numerology_type"
+            )
             if not meaning:
                 continue
             number = data.get("number")
@@ -185,9 +203,24 @@ class RuleEngine:
         emphasis = {
             "natal_love": {"love": 1.3, "emotional": 1.1},
             "natal_career": {"career": 1.3, "general": 1.05},
-            "daily_forecast": {"general": 1.05, "love": 1.05, "career": 1.05, "emotional": 1.0},
-            "weekly_forecast": {"general": 1.1, "love": 1.08, "career": 1.12, "emotional": 1.05},
-            "monthly_forecast": {"general": 1.15, "career": 1.2, "love": 1.1, "emotional": 1.1},
+            "daily_forecast": {
+                "general": 1.05,
+                "love": 1.05,
+                "career": 1.05,
+                "emotional": 1.0,
+            },
+            "weekly_forecast": {
+                "general": 1.1,
+                "love": 1.08,
+                "career": 1.12,
+                "emotional": 1.05,
+            },
+            "monthly_forecast": {
+                "general": 1.15,
+                "career": 1.2,
+                "love": 1.1,
+                "emotional": 1.1,
+            },
             "compatibility_romantic": {"love": 1.35, "emotional": 1.1},
             "compatibility_business": {"career": 1.3, "general": 1.1},
         }

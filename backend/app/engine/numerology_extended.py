@@ -291,26 +291,59 @@ def calculate_challenges(dob: str, lang: str = "en") -> List[Dict]:
     day_r = reduce_number(day, keep_master=False)
     year_r = reduce_number(year, keep_master=False)
 
-    c1 = abs(month_r - day_r)          # First Challenge  (early life)
-    c2 = abs(day_r - year_r)           # Second Challenge (middle life)
-    c3 = abs(c1 - c2)                  # Third Challenge  (main / lifelong)
-    c4 = abs(month_r - year_r)         # Fourth Challenge (lifetime undertone)
+    c1 = abs(month_r - day_r)  # First Challenge  (early life)
+    c2 = abs(day_r - year_r)  # Second Challenge (middle life)
+    c3 = abs(c1 - c2)  # Third Challenge  (main / lifelong)
+    c4 = abs(month_r - year_r)  # Fourth Challenge (lifetime undertone)
 
     # Localize labels and descriptions
     if lang == "en":
-        l1, d1 = "First Challenge", "Early life lesson — shapes youth and young adulthood."
+        l1, d1 = (
+            "First Challenge",
+            "Early life lesson — shapes youth and young adulthood.",
+        )
         l2, d2 = "Second Challenge", "Middle life lesson — shapes the mature years."
-        l3, d3 = "Main Challenge", "Lifelong lesson — the recurring theme across all phases."
-        l4, d4 = "Fourth Challenge", "Lifetime undertone — present at every stage of life."
+        l3, d3 = (
+            "Main Challenge",
+            "Lifelong lesson — the recurring theme across all phases.",
+        )
+        l4, d4 = (
+            "Fourth Challenge",
+            "Lifetime undertone — present at every stage of life.",
+        )
     else:
-        l1 = get_translation(lang, "numerology_challenges", "first_label") or "First Challenge"
-        d1 = get_translation(lang, "numerology_challenges", "first_desc") or "Early life lesson"
-        l2 = get_translation(lang, "numerology_challenges", "second_label") or "Second Challenge"
-        d2 = get_translation(lang, "numerology_challenges", "second_desc") or "Middle life lesson"
-        l3 = get_translation(lang, "numerology_challenges", "main_label") or "Main Challenge"
-        d3 = get_translation(lang, "numerology_challenges", "main_desc") or "Lifelong lesson"
-        l4 = get_translation(lang, "numerology_challenges", "fourth_label") or "Fourth Challenge"
-        d4 = get_translation(lang, "numerology_challenges", "fourth_desc") or "Lifetime undertone"
+        l1 = (
+            get_translation(lang, "numerology_challenges", "first_label")
+            or "First Challenge"
+        )
+        d1 = (
+            get_translation(lang, "numerology_challenges", "first_desc")
+            or "Early life lesson"
+        )
+        l2 = (
+            get_translation(lang, "numerology_challenges", "second_label")
+            or "Second Challenge"
+        )
+        d2 = (
+            get_translation(lang, "numerology_challenges", "second_desc")
+            or "Middle life lesson"
+        )
+        l3 = (
+            get_translation(lang, "numerology_challenges", "main_label")
+            or "Main Challenge"
+        )
+        d3 = (
+            get_translation(lang, "numerology_challenges", "main_desc")
+            or "Lifelong lesson"
+        )
+        l4 = (
+            get_translation(lang, "numerology_challenges", "fourth_label")
+            or "Fourth Challenge"
+        )
+        d4 = (
+            get_translation(lang, "numerology_challenges", "fourth_desc")
+            or "Lifetime undertone"
+        )
 
     return [
         {"index": 1, "number": c1, "label": l1, "description": d1},

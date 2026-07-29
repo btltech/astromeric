@@ -1,6 +1,7 @@
 """Glossary and learning content for astrology and numerology."""
 
 from typing import Dict, List
+
 from ..interpretation.translations import get_translation
 
 ZODIAC_GLOSSARY = {
@@ -210,16 +211,16 @@ def get_sign_info(sign: str, lang: str = "en") -> Dict:
     data = ZODIAC_GLOSSARY.get(sign, {}).copy()
     if not data:
         return {}
-        
+
     if lang != "en":
         desc_trans = get_translation(lang, f"glossary_zodiac_{sign.lower()}_desc")
         if desc_trans:
             data["description"] = desc_trans[0]
-            
+
         traits_trans = get_translation(lang, f"glossary_zodiac_{sign.lower()}_traits")
         if traits_trans:
             data["traits"] = traits_trans
-            
+
     return data
 
 
@@ -228,12 +229,14 @@ def get_number_explanation(number_type: str, lang: str = "en") -> Dict:
     data = NUMEROLOGY_GLOSSARY.get(number_type, {}).copy()
     if not data:
         return {}
-        
+
     if lang != "en":
-        meaning_trans = get_translation(lang, f"glossary_num_{number_type.lower()}_meaning")
+        meaning_trans = get_translation(
+            lang, f"glossary_num_{number_type.lower()}_meaning"
+        )
         if meaning_trans:
             data["meaning"] = meaning_trans[0]
-            
+
     return data
 
 
@@ -242,12 +245,12 @@ def get_master_number_info(number: int, lang: str = "en") -> Dict:
     data = MASTER_NUMBERS.get(number, {}).copy()
     if not data:
         return {}
-        
+
     if lang != "en":
         desc_trans = get_translation(lang, f"glossary_master_{number}_desc")
         if desc_trans:
             data["description"] = desc_trans[0]
-            
+
     return data
 
 
@@ -256,12 +259,12 @@ def get_element_info(element: str, lang: str = "en") -> Dict:
     data = ELEMENTS_GLOSSARY.get(element, {}).copy()
     if not data:
         return {}
-        
+
     if lang != "en":
         desc_trans = get_translation(lang, f"glossary_element_{element.lower()}_desc")
         if desc_trans:
             data["description"] = desc_trans[0]
-            
+
     return data
 
 

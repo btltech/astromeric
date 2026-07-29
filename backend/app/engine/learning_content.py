@@ -7,6 +7,7 @@ Expanded learning content: moon signs, rising signs, elements, retrogrades, and 
 from __future__ import annotations
 
 from typing import Dict, List
+
 from ..interpretation.translations import get_translation
 
 # ========== MOON SIGNS ==========
@@ -89,7 +90,12 @@ MOON_SIGNS = {
             "You feel most secure when you're receiving positive attention and can shine in some way. "
             "Being ignored or criticized cuts deeply. Your warmth is genuine and generous."
         ),
-        "needs": ["Recognition", "Appreciation", "Creative expression", "To feel special"],
+        "needs": [
+            "Recognition",
+            "Appreciation",
+            "Creative expression",
+            "To feel special",
+        ],
         "struggles": ["Criticism", "Being overlooked", "Sharing the spotlight"],
         "nurtures_self": "Through creative expression, romance, play, and positive feedback.",
         "in_relationships": "Loyal and generous but needs constant validation. Grand gestures.",
@@ -190,7 +196,11 @@ MOON_SIGNS = {
             "Conformity feels like emotional death. You need friends who accept your quirks."
         ),
         "needs": ["Freedom", "Authenticity", "Friendship", "Causes"],
-        "struggles": ["Emotional intimacy", "Conventional expectations", "Being ordinary"],
+        "struggles": [
+            "Emotional intimacy",
+            "Conventional expectations",
+            "Being ordinary",
+        ],
         "nurtures_self": "Through friendships, causes, innovation, and intellectual pursuits.",
         "in_relationships": "Loyal friend-lover but can seem detached or unpredictable.",
     },
@@ -205,7 +215,12 @@ MOON_SIGNS = {
             "You feel most secure when connected to something transcendent. Harsh reality can "
             "feel emotionally brutal. You may struggle to distinguish your feelings from others'."
         ),
-        "needs": ["Spiritual connection", "Escape", "Compassion", "Creative expression"],
+        "needs": [
+            "Spiritual connection",
+            "Escape",
+            "Compassion",
+            "Creative expression",
+        ],
         "struggles": ["Boundaries", "Reality", "Overwhelm", "Escapism"],
         "nurtures_self": "Through art, music, water, meditation, and spiritual practice.",
         "in_relationships": "Deeply compassionate and romantic but can be too self-sacrificing.",
@@ -378,7 +393,12 @@ ELEMENTS = {
         "balanced": "Warmth, confidence, creativity, leadership",
         "excessive": "Aggression, burnout, arrogance, impulsivity",
         "deficient": "Low energy, depression, timidity, lack of inspiration",
-        "activities": ["Exercise", "Competition", "Leadership roles", "Creative projects"],
+        "activities": [
+            "Exercise",
+            "Competition",
+            "Leadership roles",
+            "Creative projects",
+        ],
     },
     "Earth": {
         "signs": ["Taurus", "Virgo", "Capricorn"],
@@ -680,13 +700,16 @@ def get_moon_sign_lesson(sign: str, lang: str = "en") -> Dict:
     data = MOON_SIGNS.get(sign, MOON_SIGNS["Aries"]).copy()
     if lang != "en":
         title_trans = get_translation(lang, f"learn_moon_{sign.lower()}_title")
-        if title_trans: data["title"] = title_trans[0]
-        
+        if title_trans:
+            data["title"] = title_trans[0]
+
         short_trans = get_translation(lang, f"learn_moon_{sign.lower()}_short")
-        if short_trans: data["short_desc"] = short_trans[0]
-        
+        if short_trans:
+            data["short_desc"] = short_trans[0]
+
         full_trans = get_translation(lang, f"learn_moon_{sign.lower()}_full")
-        if full_trans: data["full_desc"] = full_trans[0]
+        if full_trans:
+            data["full_desc"] = full_trans[0]
     return data
 
 
@@ -695,10 +718,12 @@ def get_rising_sign_lesson(sign: str, lang: str = "en") -> Dict:
     data = RISING_SIGNS.get(sign, RISING_SIGNS["Aries"]).copy()
     if lang != "en":
         title_trans = get_translation(lang, f"learn_rising_{sign.lower()}_title")
-        if title_trans: data["title"] = title_trans[0]
-        
+        if title_trans:
+            data["title"] = title_trans[0]
+
         imp_trans = get_translation(lang, f"learn_rising_{sign.lower()}_impression")
-        if imp_trans: data["first_impression"] = imp_trans[0]
+        if imp_trans:
+            data["first_impression"] = imp_trans[0]
     return data
 
 
@@ -707,7 +732,8 @@ def get_element_lesson(element: str, lang: str = "en") -> Dict:
     data = ELEMENTS.get(element, ELEMENTS["Fire"]).copy()
     if lang != "en":
         desc_trans = get_translation(lang, f"learn_element_{element.lower()}_desc")
-        if desc_trans: data["description"] = desc_trans[0]
+        if desc_trans:
+            data["description"] = desc_trans[0]
     return data
 
 
@@ -716,7 +742,8 @@ def get_modality_lesson(modality: str, lang: str = "en") -> Dict:
     data = MODALITIES.get(modality, MODALITIES["Cardinal"]).copy()
     if lang != "en":
         desc_trans = get_translation(lang, f"learn_modality_{modality.lower()}_desc")
-        if desc_trans: data["description"] = desc_trans[0]
+        if desc_trans:
+            data["description"] = desc_trans[0]
     return data
 
 
@@ -725,7 +752,8 @@ def get_retrograde_guide(planet: str, lang: str = "en") -> Dict:
     data = RETROGRADE_GUIDE.get(planet, RETROGRADE_GUIDE["Mercury"]).copy()
     if lang != "en":
         means_trans = get_translation(lang, f"learn_retro_{planet.lower()}_means")
-        if means_trans: data["what_it_means"] = means_trans[0]
+        if means_trans:
+            data["what_it_means"] = means_trans[0]
     return data
 
 
@@ -734,10 +762,12 @@ def get_mini_course(course_id: str, lang: str = "en") -> Dict:
     data = MINI_COURSES.get(course_id, MINI_COURSES["read_your_chart"]).copy()
     if lang != "en":
         title_trans = get_translation(lang, f"learn_course_{course_id}_title")
-        if title_trans: data["title"] = title_trans[0]
-        
+        if title_trans:
+            data["title"] = title_trans[0]
+
         desc_trans = get_translation(lang, f"learn_course_{course_id}_desc")
-        if desc_trans: data["description"] = desc_trans[0]
+        if desc_trans:
+            data["description"] = desc_trans[0]
     return data
 
 
@@ -799,16 +829,19 @@ def get_learning_module(module_id: str, lang: str = "en") -> Dict:
         },
     }
     module = modules.get(module_id)
-    if not module: return None
-    
+    if not module:
+        return None
+
     module = module.copy()
     if lang != "en":
         title_trans = get_translation(lang, f"learn_module_{module_id}_title")
-        if title_trans: module["title"] = title_trans[0]
-        
+        if title_trans:
+            module["title"] = title_trans[0]
+
         desc_trans = get_translation(lang, f"learn_module_{module_id}_desc")
-        if desc_trans: module["description"] = desc_trans[0]
-        
+        if desc_trans:
+            module["description"] = desc_trans[0]
+
     return module
 
 
@@ -817,20 +850,26 @@ def get_lesson(course_id: str, lesson_number: int, lang: str = "en") -> Dict:
     course = get_mini_course(course_id, lang)
     if not course:
         return None
-    
+
     lessons = course.get("lessons", [])
     if lesson_number < 1 or lesson_number > len(lessons):
         return None
-    
+
     lesson = lessons[lesson_number - 1].copy()
-    
+
     if lang != "en":
-        l_title_trans = get_translation(lang, f"learn_lesson_{course_id}_{lesson_number}_title")
-        if l_title_trans: lesson["title"] = l_title_trans[0]
-        
-        l_content_trans = get_translation(lang, f"learn_lesson_{course_id}_{lesson_number}_content")
-        if l_content_trans: lesson["content"] = l_content_trans[0]
-    
+        l_title_trans = get_translation(
+            lang, f"learn_lesson_{course_id}_{lesson_number}_title"
+        )
+        if l_title_trans:
+            lesson["title"] = l_title_trans[0]
+
+        l_content_trans = get_translation(
+            lang, f"learn_lesson_{course_id}_{lesson_number}_content"
+        )
+        if l_content_trans:
+            lesson["content"] = l_content_trans[0]
+
     return {
         "course_id": course_id,
         "course_title": course["title"],
@@ -844,60 +883,82 @@ def search_learning_content(query: str, lang: str = "en") -> List[Dict]:
     """Search across all learning content."""
     results = []
     query_lower = query.lower()
-    
+
     # Search moon signs
     for sign, data in MOON_SIGNS.items():
-        if query_lower in sign.lower() or query_lower in data.get("short_desc", "").lower():
+        if (
+            query_lower in sign.lower()
+            or query_lower in data.get("short_desc", "").lower()
+        ):
             info = get_moon_sign_lesson(sign, lang)
-            results.append({
-                "type": "moon_sign",
-                "key": sign,
-                "title": info["title"],
-                "preview": info["short_desc"],
-            })
-    
+            results.append(
+                {
+                    "type": "moon_sign",
+                    "key": sign,
+                    "title": info["title"],
+                    "preview": info["short_desc"],
+                }
+            )
+
     # Search rising signs
     for sign, data in RISING_SIGNS.items():
-        if query_lower in sign.lower() or query_lower in data.get("first_impression", "").lower():
+        if (
+            query_lower in sign.lower()
+            or query_lower in data.get("first_impression", "").lower()
+        ):
             info = get_rising_sign_lesson(sign, lang)
-            results.append({
-                "type": "rising_sign",
-                "key": sign,
-                "title": info["title"],
-                "preview": info["first_impression"],
-            })
-    
+            results.append(
+                {
+                    "type": "rising_sign",
+                    "key": sign,
+                    "title": info["title"],
+                    "preview": info["first_impression"],
+                }
+            )
+
     # Search elements
     for element, data in ELEMENTS.items():
-        if query_lower in element.lower() or query_lower in data.get("description", "").lower():
+        if (
+            query_lower in element.lower()
+            or query_lower in data.get("description", "").lower()
+        ):
             info = get_element_lesson(element, lang)
-            results.append({
-                "type": "element",
-                "key": element,
-                "title": f"{element} Element",
-                "preview": ", ".join(data.get("keywords", [])),
-            })
-    
+            results.append(
+                {
+                    "type": "element",
+                    "key": element,
+                    "title": f"{element} Element",
+                    "preview": ", ".join(data.get("keywords", [])),
+                }
+            )
+
     # Search retrogrades
     for planet, data in RETROGRADE_GUIDE.items():
-        if query_lower in planet.lower() or query_lower in data.get("what_it_means", "").lower():
+        if (
+            query_lower in planet.lower()
+            or query_lower in data.get("what_it_means", "").lower()
+        ):
             info = get_retrograde_guide(planet, lang)
-            results.append({
-                "type": "retrograde",
-                "key": planet,
-                "title": f"{planet} Retrograde",
-                "preview": info.get("frequency", ""),
-            })
-    
+            results.append(
+                {
+                    "type": "retrograde",
+                    "key": planet,
+                    "title": f"{planet} Retrograde",
+                    "preview": info.get("frequency", ""),
+                }
+            )
+
     # Search courses
     for course_id, data in MINI_COURSES.items():
         if query_lower in data.get("title", "").lower():
             info = get_mini_course(course_id, lang)
-            results.append({
-                "type": "course",
-                "key": course_id,
-                "title": info["title"],
-                "preview": f"{len(data.get('lessons', []))} lessons",
-            })
-    
+            results.append(
+                {
+                    "type": "course",
+                    "key": course_id,
+                    "title": info["title"],
+                    "preview": f"{len(data.get('lessons', []))} lessons",
+                }
+            )
+
     return results[:10]  # Limit to 10 results

@@ -1,4 +1,5 @@
 from typing import Dict
+
 from app.interpretation.translations import get_translation
 
 from .constants import LETTER_VALUES, reduce_number
@@ -64,12 +65,12 @@ def calculate_life_path_number(dob: str) -> int:
     """
     parts = dob.split("-")
     year, month, day = int(parts[0]), int(parts[1]), int(parts[2])
-    
+
     # Reduce each component individually (standard Pythagorean method)
     month_reduced = reduce_number(month, keep_master=False)
     day_reduced = reduce_number(day, keep_master=False)
     year_reduced = reduce_number(year, keep_master=False)
-    
+
     # Sum the reduced components and reduce again (preserving master numbers)
     total = month_reduced + day_reduced + year_reduced
     return reduce_number(total, keep_master=True)
@@ -91,27 +92,24 @@ def get_life_path_data(number: int, lang: str = "en") -> Dict[str, any]:
             "advice": ["Seek guidance", "Explore possibilities"],
         },
     )
-    
+
     if lang == "en":
         return base_data
-        
+
     # Localize meaning
     meaning_key = f"numerology_life_path_{number}_meaning"
     meaning = get_translation(lang, "numerology_life_path", meaning_key)
     if not meaning:
         meaning = base_data["meaning"]
-        
+
     # Localize advice
     advice = []
     for i, item in enumerate(base_data["advice"]):
         advice_key = f"numerology_life_path_{number}_advice_{i}"
         translated_item = get_translation(lang, "numerology_life_path", advice_key)
         advice.append(translated_item if translated_item else item)
-        
-    return {
-        "meaning": meaning,
-        "advice": advice
-    }
+
+    return {"meaning": meaning, "advice": advice}
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -153,6 +151,7 @@ def calculate_name_number_chaldean(name: str) -> int:
 # ──────────────────────────────────────────────────────────────────────────────
 # UNIFIED DISPATCHER
 # ──────────────────────────────────────────────────────────────────────────────
+
 
 def calculate_core_numbers(
     dob: str,

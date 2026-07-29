@@ -6,6 +6,7 @@ Concise aspect meanings with topic weights.
 from __future__ import annotations
 
 from typing import Dict, Tuple
+
 from .translations import get_translation
 
 BASE_ASPECTS = {
@@ -191,14 +192,15 @@ PAIR_LIBRARY = [
     ),
 ]
 
-def get_aspect_meanings(lang: str = 'en') -> Dict[Tuple[str, str, str], Dict]:
+
+def get_aspect_meanings(lang: str = "en") -> Dict[Tuple[str, str, str], Dict]:
     """Build aspect meanings for a specific language."""
     meanings = {}
-    
+
     # Get translations
-    aspects_trans = get_translation(lang, 'aspects') if lang != 'en' else None
-    pairs_trans = get_translation(lang, 'aspect_pairs') if lang != 'en' else None
-    
+    aspects_trans = get_translation(lang, "aspects") if lang != "en" else None
+    pairs_trans = get_translation(lang, "aspect_pairs") if lang != "en" else None
+
     # 1. Add Base Aspects
     # Note: BASE_ASPECTS keys are single strings (aspect name), but ASPECT_MEANINGS expects tuples?
     # Wait, the original code does:
@@ -208,30 +210,31 @@ def get_aspect_meanings(lang: str = 'en') -> Dict[Tuple[str, str, str], Dict]:
     # The type hint says Dict[Tuple[str, str, str], Dict], but BASE_ASPECTS has str keys.
     # This implies the type hint might be slightly off or loose, or BASE_ASPECTS are used differently.
     # Let's preserve the behavior.
-    
+
     translated_base_aspects = {}
     for key, val in BASE_ASPECTS.items():
         new_val = val.copy()
         if aspects_trans and key in aspects_trans:
-            new_val['text'] = aspects_trans[key]
+            new_val["text"] = aspects_trans[key]
         translated_base_aspects[key] = new_val
-        
+
     meanings.update(translated_base_aspects)
-    
+
     # 2. Add Pair Library
     for (p1, p2, aspect), data in PAIR_LIBRARY:
         key = (p1, p2, aspect)
         new_data = data.copy()
-        
+
         # Construct lookup key for translation
         trans_key = f"{p1}_{p2}_{aspect}"
-        
+
         if pairs_trans and trans_key in pairs_trans:
-            new_data['text'] = pairs_trans[trans_key]
-            
+            new_data["text"] = pairs_trans[trans_key]
+
         meanings[key] = new_data
-        
+
     return meanings
 
+
 # Pre-build English meanings dict
-ASPECT_MEANINGS = get_aspect_meanings('en')
+ASPECT_MEANINGS = get_aspect_meanings("en")

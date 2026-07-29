@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import Dict, List
+
 from app.interpretation.translations import get_translation
 
 # Zodiac sign data with date ranges (month, day)
@@ -187,10 +188,10 @@ def get_element(sign: str) -> str:
 def get_sign_traits(sign: str, lang: str = "en") -> Dict[str, List[str]]:
     """Get trait pools for a sign."""
     base_traits = SIGN_TRAITS.get(sign, {"love": [], "money": [], "career": []})
-    
+
     if lang == "en":
         return base_traits
-        
+
     localized_traits = {}
     for category, traits in base_traits.items():
         localized_category_traits = []
@@ -198,11 +199,11 @@ def get_sign_traits(sign: str, lang: str = "en") -> Dict[str, List[str]]:
             # Key format: Aries_general_0
             key = f"{sign}_{category}_{i}"
             translated = get_translation(lang, "astrology_traits", key)
-            
+
             if translated:
                 localized_category_traits.append(translated)
             else:
                 localized_category_traits.append(trait)
         localized_traits[category] = localized_category_traits
-        
+
     return localized_traits

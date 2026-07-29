@@ -6,6 +6,7 @@ Concise planet-in-house meanings.
 from __future__ import annotations
 
 from typing import Dict
+
 from .translations import get_translation
 
 PLANET_THEMES = {
@@ -144,44 +145,44 @@ def _merge_weights(base: Dict[str, float], extra: Dict[str, float]) -> Dict[str,
     return weights
 
 
-def get_planet_house_meanings(lang: str = 'en') -> Dict[str, Dict[int, Dict]]:
+def get_planet_house_meanings(lang: str = "en") -> Dict[str, Dict[int, Dict]]:
     """Build planet house meanings for a specific language."""
     meanings = {}
-    
+
     # Get translations
-    ph_trans = get_translation(lang, 'planet_house') if lang != 'en' else None
-    p_keywords_trans = ph_trans.get('planet_keywords') if ph_trans else None
-    h_actions_trans = ph_trans.get('house_actions') if ph_trans else None
-    
+    ph_trans = get_translation(lang, "planet_house") if lang != "en" else None
+    p_keywords_trans = ph_trans.get("planet_keywords") if ph_trans else None
+    h_actions_trans = ph_trans.get("house_actions") if ph_trans else None
+
     for planet, pdata in PLANET_THEMES.items():
         meanings[planet] = {}
-        
+
         # Get planet keyword/focus
-        p_keyword = pdata['keyword']
-        p_focus = pdata['focus']
-        
+        p_keyword = pdata["keyword"]
+        p_focus = pdata["focus"]
+
         if p_keywords_trans and planet in p_keywords_trans:
-            p_keyword = p_keywords_trans[planet]['keyword']
-            p_focus = p_keywords_trans[planet]['focus']
-            
+            p_keyword = p_keywords_trans[planet]["keyword"]
+            p_focus = p_keywords_trans[planet]["focus"]
+
         for house, hdata in HOUSE_THEMES.items():
             # Get house area/action
-            h_area = hdata['area']
-            h_action = hdata['action']
-            
+            h_area = hdata["area"]
+            h_action = hdata["action"]
+
             if h_actions_trans and house in h_actions_trans:
-                h_area = h_actions_trans[house]['area']
-                h_action = h_actions_trans[house]['action']
-            
+                h_area = h_actions_trans[house]["area"]
+                h_action = h_actions_trans[house]["action"]
+
             # Construct text
             # "Keyword focused on area. Action."
             # Note: Grammar might vary.
-            if lang == 'en':
+            if lang == "en":
                 text = f"{p_keyword} focused on {h_area}. {h_action}."
             else:
                 # Simple construction for other languages
                 text = f"{p_keyword} ({p_focus}) - {h_area}. {h_action}."
-            
+
             tags = [p_focus, *hdata["tags"]]
             weights = _merge_weights(pdata["weights"], hdata["weights"])
             meanings[planet][house] = {
@@ -189,8 +190,9 @@ def get_planet_house_meanings(lang: str = 'en') -> Dict[str, Dict[int, Dict]]:
                 "tags": tags,
                 "weights": weights,
             }
-            
+
     return meanings
 
+
 # Pre-build English meanings dict
-PLANET_HOUSE_MEANINGS = get_planet_house_meanings('en')
+PLANET_HOUSE_MEANINGS = get_planet_house_meanings("en")

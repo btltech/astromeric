@@ -538,12 +538,12 @@ def build_lunar_return_chart(
 
     return_profile = {
         **profile,
-        "latitude": location_lat
-        if location_lat is not None
-        else profile.get("latitude", 0.0),
-        "longitude": location_lon
-        if location_lon is not None
-        else profile.get("longitude", 0.0),
+        "latitude": (
+            location_lat if location_lat is not None else profile.get("latitude", 0.0)
+        ),
+        "longitude": (
+            location_lon if location_lon is not None else profile.get("longitude", 0.0)
+        ),
         "timezone": ret_tz,
         "date_of_birth": return_local.strftime("%Y-%m-%d"),
         "time_of_birth": return_local.strftime("%H:%M"),
@@ -710,9 +710,9 @@ def _chart_with_flatlib(dt: datetime, profile: Dict, chart_type: str) -> Dict:
                     "sign": sign,
                     "degree": round(obj.signlon, 4),
                     "absolute_degree": round(obj.lon, 4),
-                    "ecliptic_latitude": round(float(obj.lat), 6)
-                    if hasattr(obj, "lat")
-                    else 0.0,
+                    "ecliptic_latitude": (
+                        round(float(obj.lat), 6) if hasattr(obj, "lat") else 0.0
+                    ),
                     "house": int(
                         chart.houses.getObjectHouse(obj).id.replace("House", "")
                     ),
@@ -751,9 +751,9 @@ def _chart_with_flatlib(dt: datetime, profile: Dict, chart_type: str) -> Dict:
                     "sign": obj.sign,
                     "degree": round(obj.signlon, 4),
                     "absolute_degree": round(obj.lon, 4),
-                    "ecliptic_latitude": round(float(obj.lat), 6)
-                    if hasattr(obj, "lat")
-                    else 0.0,
+                    "ecliptic_latitude": (
+                        round(float(obj.lat), 6) if hasattr(obj, "lat") else 0.0
+                    ),
                     "house": int(
                         chart.houses.getObjectHouse(obj).id.replace("House", "")
                     ),

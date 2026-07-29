@@ -1,7 +1,7 @@
 """
 year_ahead.py
 -------------
-Year-Ahead Forecast: Monthly breakdowns with Solar Return, eclipses, 
+Year-Ahead Forecast: Monthly breakdowns with Solar Return, eclipses,
 major transits, and personalized themes.
 """
 

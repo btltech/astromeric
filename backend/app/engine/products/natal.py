@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Dict, Optional
+
 from app.interpretation.translations import get_translation
 
 from ..charts.engine import ChartEngine
@@ -17,23 +18,25 @@ from .types import ProfileInput
 from .utils import build_chart_request
 
 
-def _section_from_result(title: str, result: RuleResult, limit: int = 5, lang: str = "en") -> Dict:
+def _section_from_result(
+    title: str, result: RuleResult, limit: int = 5, lang: str = "en"
+) -> Dict:
     ordered = sorted(result.factors, key=lambda f: f.score, reverse=True)[:limit]
     highlights = [
         f"{f.label}: {f.meaning.text if f.meaning else ''}".strip() for f in ordered
     ]
-    
+
     # Localize title
     title_key_map = {
         "General personality": "general",
         "Love & relationships": "love",
-        "Career & direction": "career"
+        "Career & direction": "career",
     }
     key = f"section_title_{title_key_map.get(title, 'general')}"
     localized_title = get_translation(lang, "natal_sections", key)
     if not localized_title:
         localized_title = title
-        
+
     return {
         "title": localized_title,
         "highlights": highlights,
@@ -48,15 +51,24 @@ def _build_numerology(profile: ProfileInput, lang: str = "en") -> Dict:
     soul = calculate_soul_urge_number(profile.name)
     personality = calculate_personality_number(profile.name)
     maturity = calculate_maturity_number(life_path, expression)
-    
+
     def get_label(key, default):
         return get_translation(lang, "numerology_labels", key) or default
 
     return {
-        "life_path": {"number": life_path, "label": get_label("life_path", "Life Path")},
-        "expression": {"number": expression, "label": get_label("expression", "Expression")},
+        "life_path": {
+            "number": life_path,
+            "label": get_label("life_path", "Life Path"),
+        },
+        "expression": {
+            "number": expression,
+            "label": get_label("expression", "Expression"),
+        },
         "soul_urge": {"number": soul, "label": get_label("soul_urge", "Soul Urge")},
-        "personality": {"number": personality, "label": get_label("personality", "Personality")},
+        "personality": {
+            "number": personality,
+            "label": get_label("personality", "Personality"),
+        },
         "maturity": {"number": maturity, "label": get_label("maturity", "Maturity")},
     }
 
@@ -75,12 +87,20 @@ def build_natal_profile(
     lang = profile.language
     numerology = _build_numerology(profile, lang=lang)
 
-    general = rule_engine.evaluate("natal_general", chart, numerology=numerology, lang=lang)
+    general = rule_engine.evaluate(
+        "natal_general", chart, numerology=numerology, lang=lang
+    )
     love = rule_engine.evaluate(
-        "natal_love", chart, numerology={"soul_urge": numerology["soul_urge"]}, lang=lang
+        "natal_love",
+        chart,
+        numerology={"soul_urge": numerology["soul_urge"]},
+        lang=lang,
     )
     career = rule_engine.evaluate(
-        "natal_career", chart, numerology={"expression": numerology["expression"]}, lang=lang
+        "natal_career",
+        chart,
+        numerology={"expression": numerology["expression"]},
+        lang=lang,
     )
 
     return {

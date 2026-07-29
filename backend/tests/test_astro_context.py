@@ -7,6 +7,7 @@ astrology-informed guidance functions.
 Run with:
     cd backend && python -m pytest tests/test_astro_context.py -v
 """
+
 from __future__ import annotations
 
 import os

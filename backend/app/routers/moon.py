@@ -35,6 +35,7 @@ def _profile_to_dict(payload: ProfilePayload) -> Dict:
 
 class MoonPhaseData(BaseModel):
     """Current moon phase information."""
+
     phase_name: str
     illumination: float
     phase_emoji: str
@@ -44,6 +45,7 @@ class MoonPhaseData(BaseModel):
 
 class MoonEvent(BaseModel):
     """Upcoming moon event."""
+
     date: str
     phase: str
     type: str
@@ -52,6 +54,7 @@ class MoonEvent(BaseModel):
 
 class MoonRitualData(BaseModel):
     """Moon ritual recommendations."""
+
     phase: Dict[str, Any]
     ritual: Dict[str, Any]
     crystals: List[str]
@@ -63,6 +66,7 @@ class MoonRitualData(BaseModel):
 
 class MoonRitualRequest(BaseModel):
     """Request for personalized moon ritual."""
+
     profile: Optional[ProfilePayload] = None
 
 
@@ -70,21 +74,18 @@ class MoonRitualRequest(BaseModel):
 async def current_moon_phase(request: Request):
     """
     Get current Moon phase information.
-    
+
     ## Response
     Returns phase name, illumination percentage, and days until next phase.
-    
+
     ## Use Cases
     - Display current moon status
     - Plan activities around lunar cycles
     - Track moon phases for rituals
     """
     phase_data = calculate_moon_phase()
-    
-    return ApiResponse(
-        status=ResponseStatus.SUCCESS,
-        data=phase_data
-    )
+
+    return ApiResponse(status=ResponseStatus.SUCCESS, data=phase_data)
 
 
 @router.get("/upcoming", response_model=ApiResponse[Dict[str, Any]])
@@ -94,18 +95,17 @@ async def upcoming_moon_events(
 ):
     """
     Get upcoming New and Full Moons.
-    
+
     ## Parameters
     - **days**: Number of days to look ahead (1-90)
-    
+
     ## Response
     Returns list of upcoming lunar events with dates and descriptions.
     """
     events = get_upcoming_moon_events(days)
-    
+
     return ApiResponse(
-        status=ResponseStatus.SUCCESS,
-        data={"events": events, "days_ahead": days}
+        status=ResponseStatus.SUCCESS, data={"events": events, "days_ahead": days}
     )
 
 
@@ -116,11 +116,11 @@ async def moon_ritual(
 ):
     """
     Get personalized Moon phase ritual recommendations.
-    
+
     ## Response
     Includes current phase, ritual activities, crystals, colors, and affirmations.
     If profile provided, adds personalized natal and numerology insights.
-    
+
     ## Use Cases
     - Moon ritual planning
     - Personalized spiritual guidance
@@ -139,8 +139,5 @@ async def moon_ritual(
         )
 
     ritual_data = get_moon_phase_summary(natal_chart, numerology)
-    
-    return ApiResponse(
-        status=ResponseStatus.SUCCESS,
-        data=ritual_data
-    )
+
+    return ApiResponse(status=ResponseStatus.SUCCESS, data=ritual_data)

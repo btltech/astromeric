@@ -29,6 +29,7 @@ def get_db():
 
 class CreateProfileRequest(BaseModel):
     """Request to create a new profile."""
+
     name: str = Field(..., min_length=1, max_length=100)
     date_of_birth: str = Field(..., pattern=r"\d{4}-\d{2}-\d{2}")
     time_of_birth: Optional[str] = None
@@ -42,6 +43,7 @@ class CreateProfileRequest(BaseModel):
 
 class UpdateProfileRequest(BaseModel):
     """Request to update a profile."""
+
     name: Optional[str] = Field(None, min_length=1, max_length=100)
     time_of_birth: Optional[str] = None
     time_confidence: Optional[str] = None  # exact / approximate / unknown
@@ -54,6 +56,7 @@ class UpdateProfileRequest(BaseModel):
 
 class ProfileResponse(BaseModel):
     """Profile data response."""
+
     id: int
     name: str
     date_of_birth: str
@@ -102,7 +105,7 @@ async def get_profiles(
 ):
     """
     Get all profiles for the authenticated user.
-    
+
     Returns empty list for unauthenticated users.
     """
     if current_user:
@@ -114,11 +117,8 @@ async def get_profiles(
         ]
     else:
         profiles = []
-    
-    return ApiResponse(
-        status=ResponseStatus.SUCCESS,
-        data=profiles
-    )
+
+    return ApiResponse(status=ResponseStatus.SUCCESS, data=profiles)
 
 
 @router.post("/", response_model=ApiResponse[Dict[str, Any]])
@@ -130,19 +130,20 @@ async def create_profile(
 ):
     """
     Create a new profile.
-    
+
     ## Authentication
     Requires valid JWT token.
     """
     # Validate inputs
     validate_name(req.name)
     validate_date_of_birth(req.date_of_birth)
-    
+
     profile = DBProfile(
         name=req.name,
         date_of_birth=req.date_of_birth,
         time_of_birth=req.time_of_birth,
-        time_confidence=req.time_confidence or ("exact" if req.time_of_birth else "unknown"),
+        time_confidence=req.time_confidence
+        or ("exact" if req.time_of_birth else "unknown"),
         place_of_birth=req.place_of_birth,
         latitude=req.latitude,
         longitude=req.longitude,
@@ -150,15 +151,12 @@ async def create_profile(
         house_system=req.house_system or "Placidus",
         user_id=current_user.id,
     )
-    
+
     db.add(profile)
     db.commit()
     db.refresh(profile)
-    
-    return ApiResponse(
-        status=ResponseStatus.SUCCESS,
-        data=_db_profile_to_dict(profile)
-    )
+
+    return ApiResponse(status=ResponseStatus.SUCCESS, data=_db_profile_to_dict(profile))
 
 
 @router.get("/{profile_id}", response_model=ApiResponse[Dict[str, Any]])
@@ -170,17 +168,16 @@ async def get_profile(
 ):
     """Get a specific profile by ID."""
     profile = db.query(DBProfile).filter(DBProfile.id == profile_id).first()
-    
+
     if not profile:
         raise HTTPException(status_code=404, detail="Profile not found")
-    
+
     if profile.user_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not authorized to view this profile")
-    
-    return ApiResponse(
-        status=ResponseStatus.SUCCESS,
-        data=_db_profile_to_dict(profile)
-    )
+        raise HTTPException(
+            status_code=403, detail="Not authorized to view this profile"
+        )
+
+    return ApiResponse(status=ResponseStatus.SUCCESS, data=_db_profile_to_dict(profile))
 
 
 @router.put("/{profile_id}", response_model=ApiResponse[Dict[str, Any]])
@@ -193,13 +190,15 @@ async def update_profile(
 ):
     """Update an existing profile."""
     profile = db.query(DBProfile).filter(DBProfile.id == profile_id).first()
-    
+
     if not profile:
         raise HTTPException(status_code=404, detail="Profile not found")
-    
+
     if profile.user_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not authorized to update this profile")
-    
+        raise HTTPException(
+            status_code=403, detail="Not authorized to update this profile"
+        )
+
     # Update fields if provided
     if req.name is not None:
         validate_name(req.name)
@@ -218,14 +217,11 @@ async def update_profile(
         profile.timezone = req.timezone
     if req.house_system is not None:
         profile.house_system = req.house_system
-    
+
     db.commit()
     db.refresh(profile)
-    
-    return ApiResponse(
-        status=ResponseStatus.SUCCESS,
-        data=_db_profile_to_dict(profile)
-    )
+
+    return ApiResponse(status=ResponseStatus.SUCCESS, data=_db_profile_to_dict(profile))
 
 
 @router.delete("/{profile_id}", response_model=ApiResponse[Dict[str, Any]])
@@ -237,17 +233,19 @@ async def delete_profile(
 ):
     """Delete a profile."""
     profile = db.query(DBProfile).filter(DBProfile.id == profile_id).first()
-    
+
     if not profile:
         raise HTTPException(status_code=404, detail="Profile not found")
-    
+
     if profile.user_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not authorized to delete this profile")
-    
+        raise HTTPException(
+            status_code=403, detail="Not authorized to delete this profile"
+        )
+
     db.delete(profile)
     db.commit()
-    
+
     return ApiResponse(
         status=ResponseStatus.SUCCESS,
-        data={"message": "Profile deleted", "id": profile_id}
+        data={"message": "Profile deleted", "id": profile_id},
     )

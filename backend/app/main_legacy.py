@@ -207,9 +207,9 @@ allow_origin_regex = os.getenv(
 
 api.add_middleware(
     CORSMiddleware,
-    allow_origins=allow_origins
-    if allow_origins
-    else ["*"],  # Use wildcard if no explicit origins
+    allow_origins=(
+        allow_origins if allow_origins else ["*"]
+    ),  # Use wildcard if no explicit origins
     allow_origin_regex=allow_origin_regex,
     allow_credentials=True,
     allow_methods=["*"],

@@ -55,4 +55,3 @@ jobs:
           npm run build
         env:
           VITE_API_URL: https://astromeric-backend-prod.railway.app
-

@@ -68,20 +68,22 @@ HOUSE_THEMES_DATA = {
     },
 }
 
-def get_house_themes(lang: str = 'en') -> dict:
+
+def get_house_themes(lang: str = "en") -> dict:
     """Build house themes for a specific language."""
     themes = {}
-    
+
     # Get translations
-    house_trans = get_translation(lang, 'house_themes') if lang != 'en' else None
-    
+    house_trans = get_translation(lang, "house_themes") if lang != "en" else None
+
     for house, data in HOUSE_THEMES_DATA.items():
         new_data = data.copy()
         if house_trans and house in house_trans:
-            new_data['text'] = house_trans[house]
+            new_data["text"] = house_trans[house]
         themes[house] = new_data
-        
+
     return themes
 
+
 # Pre-build English themes dict
-HOUSE_THEMES = get_house_themes('en')
+HOUSE_THEMES = get_house_themes("en")

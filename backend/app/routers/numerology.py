@@ -363,7 +363,9 @@ async def calculate_numerology_profile(
                 number=item.get("number", 0),
                 ages=item.get("period"),
                 meaning=item.get("short_meaning")
-                or f"{item.get('keyword', '')}: {item.get('description', '')}".strip(": "),
+                or f"{item.get('keyword', '')}: {item.get('description', '')}".strip(
+                    ": "
+                ),
             )
             for i, item in enumerate(numerology.get("pinnacles", []))
         ]
@@ -372,7 +374,9 @@ async def calculate_numerology_profile(
                 index=item.get("index", i + 1),
                 number=item.get("number", 0),
                 ages=item.get("label"),
-                meaning=f"{item.get('keyword', '')}: {item.get('description', '')}".strip(": "),
+                meaning=f"{item.get('keyword', '')}: {item.get('description', '')}".strip(
+                    ": "
+                ),
             )
             for i, item in enumerate(numerology.get("challenges", []))
         ]

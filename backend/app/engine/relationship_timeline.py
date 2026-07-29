@@ -7,6 +7,7 @@ Provides timeline analysis for relationships including:
 - Relationship phases and milestones
 - Synastry transit forecasting
 """
+
 from collections import defaultdict
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
@@ -725,9 +726,9 @@ def get_best_relationship_days(
                 "rating_emoji": analysis["rating_emoji"],
                 "is_today": i == 0,
                 "days_away": i,
-                "key_factor": analysis["factors"][0]["factor"]
-                if analysis["factors"]
-                else None,
+                "key_factor": (
+                    analysis["factors"][0]["factor"] if analysis["factors"] else None
+                ),
                 "warnings": analysis["warnings"],
             }
         )
@@ -800,11 +801,15 @@ def build_relationship_timeline(
         "period_outlook": (
             "Excellent period for love!"
             if avg_score >= 70
-            else "Good romantic potential ahead."
-            if avg_score >= 55
-            else "Mixed influences - choose timing carefully."
-            if avg_score >= 40
-            else "Challenging period - focus on self-love and reflection."
+            else (
+                "Good romantic potential ahead."
+                if avg_score >= 55
+                else (
+                    "Mixed influences - choose timing carefully."
+                    if avg_score >= 40
+                    else "Challenging period - focus on self-love and reflection."
+                )
+            )
         ),
         "best_upcoming_days": best_days,
         "events": events,

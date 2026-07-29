@@ -204,7 +204,9 @@ def _build_synthesis(
         )
     elif challenges:
         primary_challenge = challenges[0]
-        num_keyword = NUMBER_MEANINGS.get(primary_challenge.get("number", 0), {}).get("keyword", "")
+        num_keyword = NUMBER_MEANINGS.get(primary_challenge.get("number", 0), {}).get(
+            "keyword", ""
+        )
         keyword = primary_challenge.get("keyword") or num_keyword or "Challenge"
         description = _compact_text(
             primary_challenge.get(

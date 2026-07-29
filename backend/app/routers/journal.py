@@ -4,7 +4,6 @@ Reading journal, outcomes tracking, and accountability reports.
 """
 
 import json
-
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional
 
@@ -288,9 +287,9 @@ async def get_single_reading_journal(
             "content": content,
             "feedback": reading.feedback,
             "journal": reading.journal or "",
-            "created_at": reading.created_at.isoformat()
-            if reading.created_at
-            else None,
+            "created_at": (
+                reading.created_at.isoformat() if reading.created_at else None
+            ),
         },
     )
 

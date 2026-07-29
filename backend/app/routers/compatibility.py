@@ -147,9 +147,9 @@ async def calculate_romantic_compatibility(
             recommendations=compatibility.get("recommendations", [])[:3],
             generated_at=datetime.now(timezone.utc),
             confidence=data_conf.get("score") if isinstance(data_conf, dict) else None,
-            data_quality_note=data_conf.get("note")
-            if isinstance(data_conf, dict)
-            else None,
+            data_quality_note=(
+                data_conf.get("note") if isinstance(data_conf, dict) else None
+            ),
         )
 
         return ApiResponse(
@@ -274,9 +274,9 @@ async def calculate_friendship_compatibility(
             recommendations=compatibility.get("recommendations", [])[:3],
             generated_at=datetime.now(timezone.utc),
             confidence=data_conf.get("score") if isinstance(data_conf, dict) else None,
-            data_quality_note=data_conf.get("note")
-            if isinstance(data_conf, dict)
-            else None,
+            data_quality_note=(
+                data_conf.get("note") if isinstance(data_conf, dict) else None
+            ),
         )
 
         return ApiResponse(

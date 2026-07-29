@@ -28,6 +28,7 @@ def get_db():
 
 class SectionFeedbackRequest(BaseModel):
     """Request for section feedback."""
+
     scope: str
     section: str
     vote: str = Field(..., pattern=r"^(up|down)$")
@@ -43,26 +44,28 @@ async def submit_section_feedback(
 ):
     """
     Submit thumbs up/down feedback for a reading section.
-    
+
     ## Authentication
     Required when feedback is tied to a saved profile.
-    
+
     ## Vote Values
     - **up**: Positive feedback
     - **down**: Negative feedback
     """
     profile_id: Optional[int] = None
-    
+
     if req.profile_id is not None:
         if not current_user:
             raise HTTPException(status_code=401, detail="Authentication required")
-        
+
         profile = db.query(DBProfile).filter(DBProfile.id == req.profile_id).first()
         if not profile:
             raise HTTPException(status_code=404, detail="Profile not found")
         if profile.user_id != current_user.id:
-            raise HTTPException(status_code=403, detail="Not authorized to rate this profile")
-        
+            raise HTTPException(
+                status_code=403, detail="Not authorized to rate this profile"
+            )
+
         profile_id = profile.id
 
     feedback_row = SectionFeedback(
@@ -76,5 +79,5 @@ async def submit_section_feedback(
 
     return ApiResponse(
         status=ResponseStatus.SUCCESS,
-        data={"status": "ok", "message": "Feedback recorded"}
+        data={"status": "ok", "message": "Feedback recorded"},
     )

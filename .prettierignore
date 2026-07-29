@@ -1,0 +1,14 @@
+node_modules
+dist
+dist-ssr
+.cache
+.git
+backend/.venv
+backend/__pycache__
+*.db
+*.sqlite3
+AstroNumeric-iOS
+AstroNumeric-Android
+docs
+coverage
+*.log

@@ -816,9 +816,11 @@ def get_manifestation_prompt(
     return {
         "prompt": template.format(desire=desire),
         "focus": desire,
-        "practice": get_translation(lang, "manifestation_practice")[0]
-        if get_translation(lang, "manifestation_practice")
-        else "Write this 3 times in present tense, feeling it as already true.",
+        "practice": (
+            get_translation(lang, "manifestation_practice")[0]
+            if get_translation(lang, "manifestation_practice")
+            else "Write this 3 times in present tense, feeling it as already true."
+        ),
         "visualization": (
             get_translation(lang, "manifestation_viz")[0]
             if get_translation(lang, "manifestation_viz")
@@ -1689,9 +1691,9 @@ def get_mood_forecast(sun_sign: str, moon_sign: Optional[str] = None) -> Dict:
     weights = {
         "energetic": 1.5 if element in ["Fire", "Air"] else 0.8,
         "reflective": 1.2 if personal_day in [7, 9] else 0.6,
-        "social": 1.5
-        if element in ["Air", "Fire"] or personal_day in [2, 3, 6]
-        else 0.7,
+        "social": (
+            1.5 if element in ["Air", "Fire"] or personal_day in [2, 3, 6] else 0.7
+        ),
         "creative": 1.3 if personal_day in [3, 5] else 0.6,
         "grounded": 1.5 if element == "Earth" or personal_day in [4, 8] else 0.7,
         "transformative": 1.2 if element == "Water" or personal_day == 9 else 0.5,

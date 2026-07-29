@@ -1,7 +1,7 @@
 """
 guidance.py
 -----------
-Daily actionable guidance engine: Avoid/Embrace activities, Power Hours, 
+Daily actionable guidance engine: Avoid/Embrace activities, Power Hours,
 Retrograde Alerts, Void-of-Course Moon tracking.
 """
 
@@ -115,11 +115,11 @@ def get_daily_guidance(
         },
         "retrogrades": retrograde_warnings,
         "void_of_course_moon": voc_moon,
-        "current_planetary_hour": _get_current_hour_info(
-            latitude, longitude, timezone, lang
-        )
-        if latitude and longitude
-        else None,
+        "current_planetary_hour": (
+            _get_current_hour_info(latitude, longitude, timezone, lang)
+            if latitude and longitude
+            else None
+        ),
     }
 
 
@@ -421,9 +421,11 @@ def _get_current_hour_info(
         else (
             "Good time for important actions"
             if suggestion_key == "favorable"
-            else "Better for discipline and physical work"
-            if suggestion_key == "challenging"
-            else "Proceed with awareness"
+            else (
+                "Better for discipline and physical work"
+                if suggestion_key == "challenging"
+                else "Proceed with awareness"
+            )
         )
     )
 

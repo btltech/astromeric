@@ -4,6 +4,7 @@ Habit Tracker with Lunar Cycles Engine
 Track habits aligned with moon phases for optimal timing and success.
 Supports habit creation, logging, and lunar-aware analytics.
 """
+
 from collections import defaultdict
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Literal
@@ -804,11 +805,11 @@ def get_lunar_cycle_report(
             "total_habits": len(habits),
             "total_completions": total_completions,
             "average_completion_rate": round(avg_rate, 1),
-            "best_performing_habit": max(
-                habit_reports, key=lambda x: x["completion_rate"]
-            )["name"]
-            if habit_reports
-            else None,
+            "best_performing_habit": (
+                max(habit_reports, key=lambda x: x["completion_rate"])["name"]
+                if habit_reports
+                else None
+            ),
         },
         "habits": habit_reports,
         "phase_distribution": dict(phase_totals),
