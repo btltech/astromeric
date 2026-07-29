@@ -61,6 +61,16 @@ export const onRequest = async (context: { next: () => Promise<Response>; reques
           e.setInnerContent(title);
         },
       })
+      .on('link[rel="canonical"]', {
+        element(e) {
+          e.setAttribute('href', `https://astronumeric.com${pathname}`);
+        },
+      })
+      .on('meta[property="og:url"]', {
+        element(e) {
+          e.setAttribute('content', `https://astronumeric.com${pathname}`);
+        },
+      })
       .transform(response);
   }
 

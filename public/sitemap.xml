@@ -37,6 +37,12 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://astronumeric.com/year-ahead</loc>
+    <lastmod>2026-06-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://astronumeric.com/learn</loc>
     <lastmod>2026-05-10</lastmod>
     <changefreq>monthly</changefreq>
