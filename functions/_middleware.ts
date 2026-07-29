@@ -5,12 +5,22 @@ const routeMeta = routeMetaJson as Record<string, { title: string; description: 
 export const onRequest = async (context: { next: () => Promise<Response>; request: Request }) => {
   const response = await context.next();
 
-  // Only intercept HTML requests, ignore JS/CSS/Images
+  // Only intercept HTML requests, ignore XML/JS/CSS/Images/Sitemaps
+  const url = new URL(context.request.url);
+  const pathname = url.pathname;
+
+  if (
+    pathname.endsWith('.xml') ||
+    pathname.endsWith('.txt') ||
+    pathname.endsWith('.json') ||
+    pathname.endsWith('.js') ||
+    pathname.endsWith('.css')
+  ) {
+    return response;
+  }
+
   const contentType = response.headers.get('content-type');
   if (contentType && contentType.includes('text/html')) {
-    const url = new URL(context.request.url);
-    const pathname = url.pathname;
-
     let matchedRoute = routeMeta['/'];
 
     // Sort keys by length descending to match longest path prefix first (e.g. /privacy-policy before /)
