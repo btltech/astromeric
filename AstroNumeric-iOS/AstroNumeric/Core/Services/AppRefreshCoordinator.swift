@@ -32,10 +32,6 @@ actor AppRefreshCoordinator {
         await notifications.clearBadge()
 
         await withTaskGroup(of: Void.self) { group in
-            group.addTask {
-                await BiometricLogger.shared.logToday(profile: profile)
-            }
-
             group.addTask { [widgets] in
                 if let lat = profile?.latitude, let lon = profile?.longitude {
                     await widgets.updatePlanetaryHours(latitude: lat, longitude: lon)

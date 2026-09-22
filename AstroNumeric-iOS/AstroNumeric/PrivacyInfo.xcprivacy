@@ -6,14 +6,24 @@
     <false/>
     <key>NSPrivacyTrackingDomains</key>
     <array/>
+    <!-- The app has no accounts and uploads no device identifier, so nothing below can be
+         tied to an identity: every entry is collected but not linked.
+         Not declared, because nothing is retained beyond serving the request:
+         - Name: sent with chart requests, never stored (the response cache is keyed by a
+           hash of birth details and holds no name).
+         - Other User Content: Cosmic Guide and journal text is answered from our own
+           servers and is not stored or sent to any third-party AI provider.
+         - Device ID: the APNs token stays on the device; all notifications are local.
+         - Diagnostics/Usage: no analytics or crash-reporting SDK ships in the app. -->
     <key>NSPrivacyCollectedDataTypes</key>
     <array>
-        <!-- Name (for profile) -->
+        <!-- Precise Location: the birthplace latitude/longitude the user enters, held in the
+             backend's short-lived chart cache. -->
         <dict>
             <key>NSPrivacyCollectedDataType</key>
-            <string>NSPrivacyCollectedDataTypeName</string>
+            <string>NSPrivacyCollectedDataTypePreciseLocation</string>
             <key>NSPrivacyCollectedDataTypeLinked</key>
-            <true/>
+            <false/>
             <key>NSPrivacyCollectedDataTypeTracking</key>
             <false/>
             <key>NSPrivacyCollectedDataTypePurposes</key>
@@ -21,12 +31,29 @@
                 <string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
             </array>
         </dict>
-        <!-- Precise Location (birthplace latitude/longitude provided by user) -->
+        <!-- Other Data Types: birth date, birth time and timezone, held in the same cache;
+             with calendar context on, the day and time of day of upcoming events
+             (never titles or details). -->
         <dict>
             <key>NSPrivacyCollectedDataType</key>
-            <string>NSPrivacyCollectedDataTypePreciseLocation</string>
+            <string>NSPrivacyCollectedDataTypeOtherDataTypes</string>
             <key>NSPrivacyCollectedDataTypeLinked</key>
-            <true/>
+            <false/>
+            <key>NSPrivacyCollectedDataTypeTracking</key>
+            <false/>
+            <key>NSPrivacyCollectedDataTypePurposes</key>
+            <array>
+                <string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+            </array>
+        </dict>
+        <!-- Contacts: friend and partner profiles added for compatibility / Cosmic Circle
+             (names, relationship type, birth details) are stored by the backend under a
+             random per-install key that identifies no one. -->
+        <dict>
+            <key>NSPrivacyCollectedDataType</key>
+            <string>NSPrivacyCollectedDataTypeContacts</string>
+            <key>NSPrivacyCollectedDataTypeLinked</key>
+            <false/>
             <key>NSPrivacyCollectedDataTypeTracking</key>
             <false/>
             <key>NSPrivacyCollectedDataTypePurposes</key>
@@ -37,13 +64,15 @@
     </array>
     <key>NSPrivacyAccessedAPITypes</key>
     <array>
-        <!-- UserDefaults -->
+        <!-- UserDefaults: the app's own defaults (CA92.1) and the shared App Group
+             "group.com.astromeric.shared" used with the widget (1C8F.1). -->
         <dict>
             <key>NSPrivacyAccessedAPIType</key>
             <string>NSPrivacyAccessedAPICategoryUserDefaults</string>
             <key>NSPrivacyAccessedAPITypeReasons</key>
             <array>
                 <string>CA92.1</string>
+                <string>1C8F.1</string>
             </array>
         </dict>
         <!-- File timestamps: ResponseCache reads/writes modification dates of its

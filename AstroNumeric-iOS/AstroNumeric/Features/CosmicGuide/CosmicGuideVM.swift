@@ -10,7 +10,6 @@ final class CosmicGuideVM {
     private enum DefaultsKey {
         static let tone = "guide_tone"
         static let calendarContextEnabled = "guide_calendar_context_enabled"
-        static let biometricContextEnabled = "guide_biometric_context_enabled"
     }
 
     // MARK: - State
@@ -42,14 +41,6 @@ final class CosmicGuideVM {
     /// Loading state for calendar consent changes.
     var isUpdatingCalendarContext = false
 
-    /// Whether the guide may use optional HealthKit biometric context.
-    var isBiometricContextEnabled: Bool {
-        get { UserDefaults.standard.bool(forKey: DefaultsKey.biometricContextEnabled) }
-        set { UserDefaults.standard.set(newValue, forKey: DefaultsKey.biometricContextEnabled) }
-    }
-
-    /// Loading state for biometric consent changes.
-    var isUpdatingBiometricContext = false
 
     // MARK: - Dependencies
 
@@ -121,14 +112,6 @@ final class CosmicGuideVM {
         HapticManager.notification(.success)
     }
 
-    @MainActor
-    func setBiometricContextEnabled(_ enabled: Bool) async {
-        error = nil
-        isUpdatingBiometricContext = true
-        defer { isUpdatingBiometricContext = false }
-        isBiometricContextEnabled = enabled
-        HapticManager.notification(enabled ? .success : .warning)
-    }
 
     // MARK: - Private
 
@@ -359,12 +342,6 @@ final class CosmicGuideVM {
                 DebugLog.log("System prompt: solar return failed — \(error)")
             }
 
-            // Biometrics from HealthKit
-            let snapshot = await HealthKitBridge.shared.collectTodaySnapshot()
-            if snapshot.hasData {
-                sections.append("TODAY'S BIOMETRICS:\n\(snapshot.promptDescription)")
-            }
-
             // Journal RAG — retrieve past entries relevant to user's question
             if let query = userQuery,
                let journalContext = await JournalEmbedder.shared.contextBlock(for: query, profileId: profile.id) {
@@ -395,13 +372,6 @@ final class CosmicGuideVM {
                 sections.append(socialWeather)
             }
 
-            // Bio-Cosmic Correlator — statistical correlations
-            if let correlations = await BioCosmicCorrelator.shared.contextBlock() {
-                sections.append(correlations)
-            }
-
-            // Trigger daily biometric logging silently
-            Task { await BiometricLogger.shared.logToday(profile: profile) }
         }
 
         // Rules
@@ -410,16 +380,14 @@ final class CosmicGuideVM {
         - Always reference specific planets, signs, houses, and aspects from the user's chart.
         - Use proper astrological terminology but explain it when the user seems new.
         - When discussing timing, reference actual transits to natal placements.
-        - If biometric data is available, correlate it with current transits (e.g. low HRV during Mars square, poor sleep during full moon).
         - If journal entries are provided, reference the user's own past reflections when relevant — remind them what they wrote.
         - If secondary progressions are provided, use them to explain multi-year life themes and psychological evolution.
         - If calendar events are provided, proactively warn about cosmic weather for upcoming meetings and events.
         - If future transits are provided, use exact dates to answer timing questions — never guess dates.
         - If social weather is provided, warn about interpersonal dynamics with specific contacts.
-        - If bio-cosmic correlations are provided, use them as biological evidence — cite the r-value and sample size.
         - Be conversational, not robotic. Use emojis sparingly.
         - Do not provide medical, legal, financial, or emergency instructions. For high-stakes topics, offer reflective context and recommend qualified support.
-        - Do not frame astrology, numerology, biometrics, or journal recall as proof of future events.
+        - Do not frame astrology, numerology, or journal recall as proof of future events.
         - If asked about compatibility, use synastry principles with the user's natal chart.
         - Keep responses concise but substantive. Aim for 2-4 paragraphs max.
         """)

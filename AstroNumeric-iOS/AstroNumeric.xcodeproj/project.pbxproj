@@ -26,7 +26,6 @@
 		206EA878C478236E420C2F73 /* UserGuideView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6342FCFC5194926EF7D0DA16 /* UserGuideView.swift */; };
 		228CB3E046462C27CC22D3B6 /* LearnView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0350F7601CFB0098D186F23F /* LearnView.swift */; };
 		235A62C881E428B75761DBF4 /* SectionGridView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1016A7A99EC9807521544C6 /* SectionGridView.swift */; };
-		260A412DC6BA6B3D6B383D05 /* BioCosmicCorrelator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E4A2DBC5E602ED826763E51 /* BioCosmicCorrelator.swift */; };
 		26FC3A2A76850362EB6DC66D /* sepl_18.se1 in Resources */ = {isa = PBXBuildFile; fileRef = EC876BA87201DE6B442247AF /* sepl_18.se1 */; };
 		28270A017AAF854F534BBB82 /* AppServiceProtocols.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82C1E30A8854AFBF7FBFCBC6 /* AppServiceProtocols.swift */; };
 		28BAA1CB39A3199F5FA287D5 /* EmbeddedChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF461FD43C0597316AECCA62 /* EmbeddedChartView.swift */; };
@@ -45,7 +44,6 @@
 		3ACBAFED70EB25D8EC60AACF /* LocalDomainDatabase.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0B59F90AD27736DE6051671 /* LocalDomainDatabase.swift */; };
 		3B74770456AF6646B616D2A0 /* LearningModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = D367FF1FE2F8BD446D9241F0 /* LearningModels.swift */; };
 		3BDA521AEAEA2C8170CA9E0C /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD8C24D5B5A1BD21D212DD41 /* ContentView.swift */; };
-		3D1CDE6CFCDFC6EA73A86AC6 /* BiometricLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8B1B3DD7A96F884BE3F4352 /* BiometricLogger.swift */; };
 		3D4B84E9875677262DB004D3 /* ProgressionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06F99CB072F98E4A203CD1C9 /* ProgressionsView.swift */; };
 		3F7A3C2A89B51DBEF11EB945 /* RelationshipsVM.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DFAAAA009F004A6EFBA7565 /* RelationshipsVM.swift */; };
 		3FF0CAE32A812DA8D118F486 /* FriendsOwnerKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECFD378D7260DE839928BAB9 /* FriendsOwnerKey.swift */; };
@@ -93,7 +91,6 @@
 		8971D5B727867353F0058FBE /* LegalConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9790CEC1B3433061ECF1DE2D /* LegalConfig.swift */; };
 		899D065F80AF64FD2C7F289E /* BirthstoneGuidanceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FC932E54EA0DFCBDFEDD20D /* BirthstoneGuidanceView.swift */; };
 		8A18EAE64D4BEEF85B8606AC /* ChartsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 475327C5824A0A7A4FB0442E /* ChartsView.swift */; };
-		8A2B179992E7A03B620ABDF5 /* HealthKitBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 150930888F6D562A6E7FE10A /* HealthKitBridge.swift */; };
 		8A411BA992A01A7F1A2D93EC /* CompatibilityVM.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7A196AB65E31671F7973A84 /* CompatibilityVM.swift */; };
 		8B4576B8D00A40B826869164 /* NumerologyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1A2C7279CECC1F644B50748 /* NumerologyView.swift */; };
 		9157BFF2930C5C1F8A5A2B66 /* Color+Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2D87E82F540D74879B740C7 /* Color+Theme.swift */; };
@@ -171,6 +168,7 @@
 		FC6D71259E457503D85E4CE1 /* VoiceRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 532DAFEB1BAE9F95E5CE5766 /* VoiceRecorder.swift */; };
 		FD1C5FE63B7B50A8C8D799B0 /* TemporalMatrixView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7FBED050F7756051300A343C /* TemporalMatrixView.swift */; };
 		FD5F871B49AC1FA6453030C2 /* CosmicGuideView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1FA3CC4323AE868414CB3E10 /* CosmicGuideView.swift */; };
+		D2C5F2C347E3370599E26B07 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = B2B7EFB13F97A46382113ED0 /* PrivacyInfo.xcprivacy */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -229,7 +227,6 @@
 		10EC38AE733A85894FA849FC /* ResponseCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResponseCache.swift; sourceTree = "<group>"; };
 		13BE0211C558394004950A10 /* LearningProgressManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LearningProgressManager.swift; sourceTree = "<group>"; };
 		14E73AE50849E9AF48A01820 /* seleapsec.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = seleapsec.txt; sourceTree = "<group>"; };
-		150930888F6D562A6E7FE10A /* HealthKitBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthKitBridge.swift; sourceTree = "<group>"; };
 		1954D3D0C299B11DE2180998 /* AstroNumeric-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "AstroNumeric-Bridging-Header.h"; sourceTree = "<group>"; };
 		1A6C96BB6FFA164F2DB55BB5 /* LearningProgressManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LearningProgressManagerTests.swift; sourceTree = "<group>"; };
 		1AFB08F7A1C4D336602A82CD /* DesignTokens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignTokens.swift; sourceTree = "<group>"; };
@@ -275,7 +272,6 @@
 		4A4D43B139C5DDBCE3E31A1E /* Profile+Astrology.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Profile+Astrology.swift"; sourceTree = "<group>"; };
 		4B0BCA509A3FA1EEA8F1E3AC /* swedll.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = swedll.h; sourceTree = "<group>"; };
 		4B4D5C13360879DCC6E7E0DB /* swehel.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = swehel.c; sourceTree = "<group>"; };
-		4E4A2DBC5E602ED826763E51 /* BioCosmicCorrelator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BioCosmicCorrelator.swift; sourceTree = "<group>"; };
 		4E71C45975682851279603BE /* AstroWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = AstroWidget.entitlements; sourceTree = "<group>"; };
 		4E9D054B7FE838E85A1BB2D6 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		4EFBBDEBEA008FAB6EF4BFF4 /* semo_18.se1 */ = {isa = PBXFileReference; lastKnownFileType = file; path = semo_18.se1; sourceTree = "<group>"; };
@@ -361,7 +357,6 @@
 		FB54BCB593DFFE035385B8BE /* AIAccessCodeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIAccessCodeTests.swift; sourceTree = "<group>"; };
 		C70157E2D9A9A4CEB63A829E /* PrivacyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivacyView.swift; sourceTree = "<group>"; };
 		C8AD691BAF0CCBB659C876FB /* JournalEmbedder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JournalEmbedder.swift; sourceTree = "<group>"; };
-		C8B1B3DD7A96F884BE3F4352 /* BiometricLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BiometricLogger.swift; sourceTree = "<group>"; };
 		CB48F8A9C06B2AA97A675C59 /* PrivacyFilteredCrashReporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivacyFilteredCrashReporter.swift; sourceTree = "<group>"; };
 		CD8C24D5B5A1BD21D212DD41 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		CE02DF21D4A741B9A910BF78 /* PremiumHeroBlock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PremiumHeroBlock.swift; sourceTree = "<group>"; };
@@ -399,6 +394,7 @@
 		F959CA7F381C942022B8AA66 /* CoreModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreModels.swift; sourceTree = "<group>"; };
 		FB5A3BFC50283DC804AB81B2 /* AffirmationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AffirmationView.swift; sourceTree = "<group>"; };
 		FE0463C05FB09223C5C58961 /* swephlib.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = swephlib.h; sourceTree = "<group>"; };
+		B2B7EFB13F97A46382113ED0 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -614,6 +610,7 @@
 				A5AE7ACED1B7513142018098 /* MoonPhaseWidget.swift */,
 				0F7849558EF475BFD90EB816 /* MorningBriefWidget.swift */,
 				EE3FCCDD5D8704AAD6253666 /* PlanetaryHourWidget.swift */,
+				B2B7EFB13F97A46382113ED0 /* PrivacyInfo.xcprivacy */,
 				3EB7DB45F5AEE2CBD9F04381 /* WidgetCosmicStyle.swift */,
 			);
 			path = AstroWidget;
@@ -890,11 +887,8 @@
 			children = (
 				F2A977B6DB688BD2E59E54C8 /* swisseph */,
 				922B91C9657313D453B099A3 /* AdvancedEphemeris.swift */,
-				4E4A2DBC5E602ED826763E51 /* BioCosmicCorrelator.swift */,
-				C8B1B3DD7A96F884BE3F4352 /* BiometricLogger.swift */,
 				D4C5DCB730F089FCA4CBCE83 /* CalendarOracle.swift */,
 				835D7DE2284BACD9D1903BB8 /* EphemerisEngine.swift */,
-				150930888F6D562A6E7FE10A /* HealthKitBridge.swift */,
 				30AE39C3DCD7BEF793176B5C /* PredictiveScanner.swift */,
 				41EFFB8D89AB9E55D335D203 /* SynastryRadar.swift */,
 				932EF7E45FAB8BF4B75E8FE8 /* TimingEngine.swift */,
@@ -1029,6 +1023,7 @@
 			buildConfigurationList = 19C2F7F14C63DDB0819E98FD /* Build configuration list for PBXNativeTarget "AstroWidget" */;
 			buildPhases = (
 				3B583910A7ACCE6FA8DD1662 /* Sources */,
+				786B09ECD0CFC79DC4CFB1F6 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -1124,6 +1119,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		786B09ECD0CFC79DC4CFB1F6 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D2C5F2C347E3370599E26B07 /* PrivacyInfo.xcprivacy in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -1182,8 +1185,6 @@
 				138C4BC3B24BD068C2F6560B /* AppStore.swift in Sources */,
 				E4A4E2F8CBA1424FC3F5DDC7 /* AstroNumericApp.swift in Sources */,
 				40B34CF2511E1BF34503F299 /* AstroRepositories.swift in Sources */,
-				260A412DC6BA6B3D6B383D05 /* BioCosmicCorrelator.swift in Sources */,
-				3D1CDE6CFCDFC6EA73A86AC6 /* BiometricLogger.swift in Sources */,
 				899D065F80AF64FD2C7F289E /* BirthstoneGuidanceView.swift in Sources */,
 				B519F623EF801281BD28346B /* CachePrewarmScheduler.swift in Sources */,
 				5DD1364240CE10B5CE7C4E70 /* CalendarOracle.swift in Sources */,
@@ -1225,7 +1226,6 @@
 				E8F0E44A787B81CB044DB856 /* GradientButton.swift in Sources */,
 				43EFE5E22772D923A238C4B5 /* HabitsVM.swift in Sources */,
 				A86A924615A75B4810CEBD4F /* HabitsView.swift in Sources */,
-				8A2B179992E7A03B620ABDF5 /* HealthKitBridge.swift in Sources */,
 				F1D76A6869C99BEAD52AC422 /* HelpView.swift in Sources */,
 				4F00D46A256A26417BB9F0A8 /* HomeVM.swift in Sources */,
 				422FCE98BB0E2ED2541AD0DC /* HomeView.swift in Sources */,
@@ -1406,7 +1406,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 5;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 8L5LTN9LMB;
 				ENABLE_NS_ASSERTIONS = NO;
@@ -1427,7 +1427,7 @@
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 1.0.1;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1490,7 +1490,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 5;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = 8L5LTN9LMB;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -1517,7 +1517,7 @@
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 1.0.1;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;

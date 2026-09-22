@@ -2,7 +2,6 @@
 // Profile management and settings
 
 import SwiftUI
-import HealthKit
 import UIKit
 import UserNotifications
 
@@ -908,18 +907,6 @@ private struct ProfileDiagnosticsView: View {
                                 Text(String(format: "fmt.profile.0".localized, "\(cacheMemCount)", "\(cacheDiskCount)"))
                                     .font(.caption.monospaced())
                                     .foregroundStyle(.orange)
-                            }
-
-                            HStack {
-                                Circle()
-                                    .fill(HKHealthStore.isHealthDataAvailable() ? .green : .red)
-                                    .frame(width: 8, height: 8)
-                                Text("ui.profile.31".localized)
-                                    .font(.subheadline)
-                                Spacer()
-                                Text(HKHealthStore.isHealthDataAvailable() ? "tern.profile.3a".localized : "tern.profile.3b".localized)
-                                    .font(.caption.monospaced())
-                                    .foregroundStyle(HKHealthStore.isHealthDataAvailable() ? .green : .red)
                             }
 
                             Divider()

@@ -5,7 +5,7 @@ import './PrivacyPolicy.css';
 
 export function PrivacyPolicy() {
   const currentYear = new Date().getFullYear();
-  const lastUpdated = '2026-02-04';
+  const lastUpdated = '2026-09-22';
 
   return (
     <>
@@ -73,17 +73,37 @@ export function PrivacyPolicy() {
               <li>
                 <strong>Profile information:</strong> Name, date of birth, and (if you provide it)
                 birth time and birthplace (including latitude/longitude and timezone). This is used
-                to generate charts, numerology, and readings.
+                to generate charts, numerology, and readings. In the iOS app, profiles are kept on
+                your device and birth details are sent to our servers only to calculate each result.
               </li>
               <li>
-                <strong>Account information (optional):</strong> If you create an account, we store
-                your email address and an internal user ID. Apple Sign‑In may provide your email
-                (sometimes via a private relay address).
+                <strong>Website account (optional):</strong> If you create an account on the
+                website, we store your email address, a hashed password, and an internal user ID,
+                along with the profiles and readings you save while signed in. The iOS app does not
+                use accounts.
               </li>
               <li>
-                <strong>Journal entries (optional):</strong> Notes you write in the journal feature
-                are stored on-device and may be stored on our servers if you are signed in and use
-                server-backed features.
+                <strong>Journal entries (optional):</strong> In the iOS app, journal entries are
+                stored on your device. On the website, entries you save while signed in are stored
+                on our servers.
+              </li>
+              <li>
+                <strong>Friends and partners:</strong> Profiles you add for other people (name,
+                relationship type, and birth details) for compatibility and Cosmic Circle features
+                are stored on our servers. Please only add people who are happy for you to do so.
+              </li>
+              <li>
+                <strong>Calendar (iOS, optional):</strong> If you allow calendar access, the app
+                reads upcoming events on your device. Event titles and details are never sent to us;
+                see Section 4 for what the Cosmic Guide receives.
+              </li>
+              <li>
+                <strong>Photos (iOS, optional):</strong> Add-only access, used only when you choose
+                to save a reading card to your photo library.
+              </li>
+              <li>
+                <strong>Health data:</strong> The iOS app does not access Apple Health (HealthKit)
+                data.
               </li>
               <li>
                 <strong>Communications:</strong> Messages, feedback, and support requests you send
@@ -125,10 +145,19 @@ export function PrivacyPolicy() {
           <section id="sharing">
             <h2>4. Sharing</h2>
             <p>
-              We do not sell your personal information. We may share information with service
-              providers that help us operate the app (for example hosting providers). When you use
-              AI explanations (if available), the content you request to explain may be processed by
-              an AI provider to generate a response.
+              We do not sell your personal information. We share information with service providers
+              that help us operate the service: Railway hosts our API and database, and Cloudflare
+              hosts the website.
+            </p>
+            <p>
+              <strong>Cosmic Guide (iOS app):</strong> When you ask the Cosmic Guide a question, the
+              app sends your question, your recent chat messages, your profile name and birth
+              details (masked if you turn on Hide Sensitive Details), your chart positions, excerpts
+              of up to three matching journal entries, the names and relationship types of friends
+              you have saved, and, if you turn on calendar context, the day and time of day of
+              upcoming events (never their titles or details). Our server writes the answer itself:
+              Cosmic Guide requests are not passed to a third-party AI provider, and we do not store
+              the conversations. The same applies to the website.
             </p>
           </section>
 
@@ -182,11 +211,14 @@ export function PrivacyPolicy() {
           <section id="retention">
             <h2>7. Retention &amp; Deletion</h2>
             <p>
-              We keep server-stored data for as long as your account is active or as needed to
-              provide services. You can delete your account from within the iOS app (Profile →
-              Account → Delete Account) which removes your server account and associated
-              profiles/readings. Data stored locally on your device (like local profiles and journal
-              entries) can be removed by deleting those items in-app or uninstalling the app.
+              We keep server-stored data (website accounts and the profiles, readings, and journal
+              entries saved to them; friend and partner profiles; and push notification tokens)
+              until you ask us to delete it or, for accounts, until the account is deleted. To
+              delete a website account or any server-stored data, email{' '}
+              <a href="mailto:privacy@astromeric.app">privacy@astromeric.app</a> and we will delete
+              it within 30 days. We do not keep Cosmic Guide conversations. Data stored on your
+              device (such as iOS profiles and journal entries) can be removed by deleting those
+              items in the app or uninstalling the app.
             </p>
           </section>
 

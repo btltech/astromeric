@@ -24,19 +24,19 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.0</string>
+	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleVersion</key>
-	<string>1</string>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
-	<key>NSHealthShareUsageDescription</key>
-	<string>AstroNumeric reads health data (heart rate, sleep, steps) to correlate your biometrics with cosmic transits and provide personalized insights.</string>
-	<key>NSHealthUpdateUsageDescription</key>
-	<string>AstroNumeric only reads your Health data to compare it with cosmic cycles. It does not write anything to Health.</string>
+	<key>NSCalendarsFullAccessUsageDescription</key>
+	<string>AstroNumeric reads your upcoming calendar events to show how they line up with planetary timing. If you turn on calendar context in the Cosmic Guide, only the day and time of day of upcoming events are included in your question, never their titles or details.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>We need your location to determine your birthplace timezone.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>AstroNumeric uses your microphone to record voice journal entries using live speech-to-text transcription.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>AstroNumeric saves the reading cards you choose to your photo library.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
 	<string>AstroNumeric transcribes your voice journal entries into text using on-device speech recognition.</string>
 	<key>UIBackgroundModes</key>
