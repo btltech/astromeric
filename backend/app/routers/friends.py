@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -26,6 +27,27 @@ from ..schemas import ApiResponse, ProfilePayload, ResponseStatus
 
 logger = StructuredLogger(__name__)
 router = APIRouter(prefix="/v2/friends", tags=["Friends"])
+
+# Friend lists are keyed only by owner_id and these endpoints are unauthenticated,
+# so owner_id must be an unguessable per-install secret. Short or numeric values
+# (e.g. local profile ids "-1", "-2") are shared by many devices and would expose
+# every user's friends to each other, so they are rejected.
+_OWNER_KEY_RE = re.compile(
+    r"^(?:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
+    r"|[0-9a-fA-F]{32,64})$"
+)
+
+
+def _require_owner_key(owner_id: str) -> None:
+    if not _OWNER_KEY_RE.match(owner_id or ""):
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "code": "FRIENDS_OWNER_KEY_REQUIRED",
+                "message": "Friend sync isn't available in this version of the app. "
+                "Please update to continue.",
+            },
+        )
 
 
 # Legacy JSON store used by older Railway deployments. Keep a read-only import
@@ -160,6 +182,7 @@ def _friend_row_to_profile(friend: Friend) -> FriendProfile:
 
 
 def _friend_profile_to_row(owner_id: str, friend: FriendProfile) -> Friend:
+    _require_owner_key(owner_id)
     return Friend(
         owner_id=owner_id,
         friend_id=friend.id,
@@ -177,6 +200,7 @@ def _friend_profile_to_row(owner_id: str, friend: FriendProfile) -> Friend:
 
 
 def _migrate_legacy_friends(db: Session, owner_id: str) -> None:
+    _require_owner_key(owner_id)
     legacy_store = _load_legacy_store()
     legacy_friends = legacy_store.get(owner_id, [])
     if not legacy_friends:
@@ -212,6 +236,7 @@ def _migrate_legacy_friends(db: Session, owner_id: str) -> None:
 
 
 def _owner_friends_query(db: Session, owner_id: str):
+    _require_owner_key(owner_id)
     return (
         db.query(Friend)
         .filter(Friend.owner_id == owner_id)
@@ -225,6 +250,7 @@ def _get_owner_friends(db: Session, owner_id: str) -> List[Friend]:
 
 
 def _get_friend(db: Session, owner_id: str, friend_id: str) -> Optional[Friend]:
+    _require_owner_key(owner_id)
     _migrate_legacy_friends(db, owner_id)
     return (
         db.query(Friend)
@@ -240,6 +266,7 @@ async def add_friend(
     db: Session = Depends(get_db),
 ) -> ApiResponse[FriendProfile]:
     request_id = request.state.request_id
+    _require_owner_key(body.owner_id)
     try:
         _migrate_legacy_friends(db, body.owner_id)
 
@@ -300,6 +327,7 @@ async def list_friends(
     db: Session = Depends(get_db),
 ) -> ApiResponse[List[FriendProfile]]:
     request_id = request.state.request_id
+    _require_owner_key(owner_id)
     friends = _get_owner_friends(db, owner_id)
     return ApiResponse(
         status=ResponseStatus.SUCCESS,
@@ -317,6 +345,7 @@ async def remove_friend(
     db: Session = Depends(get_db),
 ) -> ApiResponse[Dict]:
     request_id = request.state.request_id
+    _require_owner_key(owner_id)
     friend = _get_friend(db, owner_id, friend_id)
     if friend is None:
         return ApiResponse(
@@ -343,6 +372,7 @@ async def compare_with_friend(
     db: Session = Depends(get_db),
 ) -> ApiResponse[FriendCompatibilitySummary]:
     request_id = request.state.request_id
+    _require_owner_key(body.owner_id)
     try:
         friend = _get_friend(db, body.owner_id, body.friend_id)
         if not friend:
@@ -410,6 +440,7 @@ async def compare_all_friends(
     db: Session = Depends(get_db),
 ) -> ApiResponse[List[FriendCompatibilitySummary]]:
     request_id = request.state.request_id
+    _require_owner_key(body.owner_id)
     try:
         friends = _get_owner_friends(db, body.owner_id)
         if not friends:
