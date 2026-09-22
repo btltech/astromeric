@@ -90,6 +90,7 @@ struct ChartsView: View {
                         }
                     }
                     .disabled(store.activeProfile == nil || isExporting)
+                    .accessibilityLabel("a11y.exportChart".localized)
                 }
             }
         }

@@ -31,6 +31,11 @@ struct LoadingOverlay: View {
                     .fill(.ultraThinMaterial)
             )
         }
+        // Announce the wait itself: the spinner's own glyph used to be the only
+        // thing VoiceOver could read here.
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(message ?? "a11y.loading".localized)
+        .accessibilityAddTraits(.updatesFrequently)
     }
 }
 
@@ -59,6 +64,7 @@ struct CosmicSpinner: View {
             Text("🌙")
                 .font(.title)
                 .scaleEffect(scale)
+                .accessibilityHidden(true)
         }
         .onAppear {
             withAnimation(.linear(duration: 2).repeatForever(autoreverses: false)) {

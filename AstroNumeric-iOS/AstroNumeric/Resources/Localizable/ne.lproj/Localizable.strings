@@ -1159,3 +1159,14 @@
 "habits.create.subtitle" = "Name the habit, pick a category, and let lunar timing add context.";
 "habits.create.phaseMatch" = "This category matches the current lunar guidance.";
 "journal.loading.body" = "Loading saved readings and local drafts.";
+
+// MARK: - Accessibility
+"a11y.deleteRelationship" = "सम्बन्ध हटाउनुहोस्";
+"a11y.deleteRelationship.hint" = "यो सम्बन्ध स्थायी रूपमा हटाउँछ";
+"a11y.exportChart" = "चार्ट निर्यात गर्नुहोस्";
+"a11y.aboutNumber" = "तपाईंको %@ अङ्कबारे";
+"a11y.loading" = "लोड हुँदैछ";
+"a11y.avatarOption" = "अवतार %@";
+"a11y.openProfileTab.hint" = "जन्म विवरण थप्न प्रोफाइल ट्याब खोल्छ";
+"a11y.forecastYear" = "पूर्वानुमान वर्ष";
+"a11y.luckyNumber.hint" = "यो अङ्कको अर्थ देखाउँछ";

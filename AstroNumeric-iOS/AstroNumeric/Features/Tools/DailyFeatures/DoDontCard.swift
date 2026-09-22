@@ -144,10 +144,12 @@ struct DoDontCard: View {
                 .padding(.vertical, 8)
                 .background(isSelected ? Color.accentColor : Color.clear)
                 .foregroundStyle(isSelected ? .white : Color.textSecondary)
+                .frame(minHeight: 44)
                 .clipShape(Capsule())
                 .shadow(color: isSelected ? .black.opacity(0.2) : .clear, radius: 4, x: 0, y: 2)
         }
         .buttonStyle(ScaleButtonStyle())
+        .accessibilityAddTraits(isSelected ? [.isSelected] : [])
     }
 
     @ViewBuilder

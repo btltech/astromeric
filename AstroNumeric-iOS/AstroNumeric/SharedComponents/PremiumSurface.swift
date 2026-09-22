@@ -162,6 +162,7 @@ struct PremiumSectionHeader: View {
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(.primary)
                 .fixedSize(horizontal: false, vertical: true)
+                .accessibilityAddTraits(.isHeader)
             Text(subtitle)
                 .font(.caption)
                 .foregroundStyle(Color.textSecondary)

@@ -77,6 +77,7 @@ struct ReadingView: View {
                         PremiumFilterChip(title: scope.displayName, isSelected: vm.selectedScope == scope)
                     }
                     .buttonStyle(ScaleButtonStyle())
+                    .accessibilityAddTraits(vm.selectedScope == scope ? [.isSelected] : [])
                 }
             }
         }
@@ -93,6 +94,8 @@ struct ReadingView: View {
             showsChevron: false
         )
         .padding(.horizontal, Space.sm)
+        .accessibilityAddTraits(.isButton)
+        .accessibilityHint("a11y.openProfileTab.hint".localized)
         .onTapGesture {
             NotificationCenter.default.post(
                 name: .navigateToTab,

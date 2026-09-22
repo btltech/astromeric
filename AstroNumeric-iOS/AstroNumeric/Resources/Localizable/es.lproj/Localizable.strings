@@ -1162,3 +1162,14 @@
 "habits.create.subtitle" = "Name the habit, pick a category, and let lunar timing add context.";
 "habits.create.phaseMatch" = "This category matches the current lunar guidance.";
 "journal.loading.body" = "Loading saved readings and local drafts.";
+
+// MARK: - Accessibility
+"a11y.deleteRelationship" = "Eliminar relación";
+"a11y.deleteRelationship.hint" = "Elimina esta relación de forma permanente";
+"a11y.exportChart" = "Exportar carta";
+"a11y.aboutNumber" = "Sobre tu número %@";
+"a11y.loading" = "Cargando";
+"a11y.avatarOption" = "Avatar %@";
+"a11y.openProfileTab.hint" = "Abre la pestaña Perfil para añadir tus datos de nacimiento";
+"a11y.forecastYear" = "Año del pronóstico";
+"a11y.luckyNumber.hint" = "Muestra el significado de este número";

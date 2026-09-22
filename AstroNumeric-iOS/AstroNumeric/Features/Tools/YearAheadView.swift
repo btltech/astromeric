@@ -294,6 +294,8 @@ struct YearAheadView: View {
                     } label: {
                         Text(String(selectedYear))
                     }
+                    .accessibilityLabel("a11y.forecastYear".localized)
+                    .accessibilityValue(String(selectedYear))
                 }
             }
             .task(id: "\(store.activeProfile?.id ?? 0)-\(selectedYear)") {

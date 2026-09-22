@@ -189,6 +189,7 @@ struct TemporalMatrixView: View {
             HStack(spacing: 8) {
                 Text("↳")
                     .foregroundStyle(Color.textSecondary)
+                    .accessibilityHidden(true)
                 
                 cosmicBadge(
                     icon: planetSymbol(event.planetaryHour),
@@ -212,6 +213,7 @@ struct TemporalMatrixView: View {
                 HStack(spacing: 4) {
                     Text("↳")
                         .foregroundStyle(Color.textSecondary)
+                        .accessibilityHidden(true)
                     Text(event.keyTransits.prefix(2).joined(separator: " • "))
                         .font(.system(.caption2, design: .monospaced))
                         .foregroundStyle(.cyan.opacity(0.7))

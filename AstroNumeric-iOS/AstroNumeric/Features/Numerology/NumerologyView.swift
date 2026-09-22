@@ -397,6 +397,8 @@ struct NumerologyView: View {
                             }
                             HapticManager.impact(.light)
                         }
+                        .accessibilityAddTraits(.isButton)
+                        .accessibilityHint("a11y.luckyNumber.hint".localized)
                     }
                 }
                 
@@ -773,6 +775,8 @@ struct NumberCardView: View {
                             .font(.caption)
                             .foregroundStyle(Color.textSecondary)
                     }
+                    .buttonStyle(AccessibleButtonStyle())
+                    .accessibilityLabel("a11y.aboutNumber".localized(title))
                 }
             }
         }

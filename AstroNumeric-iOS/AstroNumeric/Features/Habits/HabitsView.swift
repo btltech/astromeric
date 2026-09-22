@@ -582,6 +582,8 @@ struct HabitRow: View {
             .onTapGesture {
                 onToggle()
             }
+            .accessibilityAddTraits(.isButton)
+            .accessibilityAction(named: Text("common.delete".localized)) { onDelete() }
             .offset(x: offset)
             .gesture(
                 DragGesture()

@@ -474,6 +474,7 @@ struct CategoryChip: View {
             .foregroundStyle(isSelected ? .white : .primary)
         }
         .buttonStyle(ScaleButtonStyle())
+        .accessibilityAddTraits(isSelected ? [.isSelected] : [])
     }
 }
 
@@ -698,15 +699,6 @@ struct SuggestedHabitRow: View {
             }
             
             Spacer()
-            
-            Button {
-                // Add habit
-            } label: {
-                Image(systemName: "plus.circle.fill")
-                    .font(.title2)
-                    .foregroundStyle(.purple)
-            }
-            .buttonStyle(AccessibleButtonStyle())
         }
         .padding()
         .background(

@@ -188,6 +188,7 @@ struct RelationshipsView: View {
             )
             .foregroundStyle(isSelected ? .white : .secondary)
         }
+        .accessibilityAddTraits(isSelected ? [.isSelected] : [])
     }
     
     // MARK: - Relationships List
@@ -405,6 +406,8 @@ struct RelationshipDetailSheet: View {
                     } label: {
                         Image(systemName: "trash")
                     }
+                    .accessibilityLabel("a11y.deleteRelationship".localized)
+                    .accessibilityHint("a11y.deleteRelationship.hint".localized)
                 }
             }
         }
