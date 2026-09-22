@@ -31,17 +31,17 @@ railway up
 
 Set these in Railway dashboard:
 
-| Variable             | Value                                                      | Required                    |
-| -------------------- | ---------------------------------------------------------- | --------------------------- | -------- |
-| `ALLOW_ORIGINS`      | `https://your-frontend.vercel.app,https://your-domain.com` | Recommended                 |
-| `ALLOW_ORIGIN_REGEX` | `https?://(.\*\\.astronumeric\\.pages\\.dev                | your-domain\\.com)(:\\d+)?` | Optional |
-| `JWT_SECRET_KEY`     | `openssl rand -hex 32`                                     | Yes                         |
-| `REDIS_URL`          | Redis connection URL                                       | Optional (for caching)      |
-| `FUSION_CACHE_TTL`   | `3600`                                                     | Optional                    |
-| `LOG_LEVEL`          | `info`                                                     | Optional                    |
-| `EPHEMERIS_PATH`     | `/app/ephemeris`                                           | Automatic                   |
-| `FIREBASE_PROJECT_ID` | `astromeric-260422-f3f5`                                  | Required for Android FCM    |
-| `FIREBASE_SERVICE_ACCOUNT_JSON` | Minified Firebase Admin service account JSON   | Required for Android FCM    |
+| Variable                        | Value                                                      | Required                    |
+| ------------------------------- | ---------------------------------------------------------- | --------------------------- | -------- |
+| `ALLOW_ORIGINS`                 | `https://your-frontend.vercel.app,https://your-domain.com` | Recommended                 |
+| `ALLOW_ORIGIN_REGEX`            | `https?://(.\*\\.astronumeric\\.pages\\.dev                | your-domain\\.com)(:\\d+)?` | Optional |
+| `JWT_SECRET_KEY`                | `openssl rand -hex 32`                                     | Yes                         |
+| `REDIS_URL`                     | Redis connection URL                                       | Optional (for caching)      |
+| `FUSION_CACHE_TTL`              | `3600`                                                     | Optional                    |
+| `LOG_LEVEL`                     | `info`                                                     | Optional                    |
+| `EPHEMERIS_PATH`                | `/app/ephemeris`                                           | Automatic                   |
+| `FIREBASE_PROJECT_ID`           | `astromeric-260422-f3f5`                                   | Required for Android FCM    |
+| `FIREBASE_SERVICE_ACCOUNT_JSON` | Minified Firebase Admin service account JSON               | Required for Android FCM    |
 
 Note: The backend will fail to start on Railway if `JWT_SECRET_KEY` is not set, to prevent deploying with an insecure default secret.
 

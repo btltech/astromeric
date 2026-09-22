@@ -105,7 +105,12 @@
   position: absolute;
   inset: 0 0 auto;
   height: 1px;
-  background: linear-gradient(90deg, rgba(72, 195, 255, 0), rgba(72, 195, 255, 0.34), rgba(255, 167, 92, 0));
+  background: linear-gradient(
+    90deg,
+    rgba(72, 195, 255, 0),
+    rgba(72, 195, 255, 0.34),
+    rgba(255, 167, 92, 0)
+  );
 }
 
 .live-desk__lead-card,
@@ -115,8 +120,7 @@
 }
 
 .live-desk__lead-card {
-  background:
-    radial-gradient(circle at 100% 0%, rgba(72, 195, 255, 0.12), transparent 34%),
+  background: radial-gradient(circle at 100% 0%, rgba(72, 195, 255, 0.12), transparent 34%),
     linear-gradient(180deg, rgba(18, 27, 40, 0.98), rgba(8, 13, 21, 0.96));
 }
 

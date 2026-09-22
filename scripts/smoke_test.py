@@ -11,6 +11,7 @@ USAGE
   python3 scripts/smoke_test.py --include-ai          # also test Gemini-backed
   python3 scripts/smoke_test.py --include-mutating     # also create+delete a profile
   python3 scripts/smoke_test.py --base-url http://localhost:8000
+  python3 scripts/smoke_test.py --client-platform web  # web tier (3 req/day!)
   API_BASE_URL=https://... python3 scripts/smoke_test.py
 
 EXIT CODE
@@ -110,6 +111,24 @@ def natal_not_degraded(payload):
     return True, ""
 
 
+def validate_zodiac_leo(payload):
+    """Zodiac glossary should return the Leo entry."""
+    if not isinstance(payload, dict):
+        return False, "not a JSON object"
+    data = payload.get("data")
+    if isinstance(data, dict) and data.get("sign") == "Leo":
+        return True, ""
+    return False, f"unexpected shape: keys={list(payload)[:6]}"
+
+
+def validate_vapid_key(payload):
+    """The VAPID endpoint returns a bare {"public_key": ...} object."""
+    if isinstance(payload, dict) and "public_key" in payload:
+        return True, ""
+    keys = list(payload)[:6] if isinstance(payload, dict) else type(payload).__name__
+    return False, f"unexpected shape: {keys}"
+
+
 # ---- Check catalog ----------------------------------------------------------
 
 
@@ -175,7 +194,7 @@ def build_checks():
             "GET",
             "/v2/learning/zodiac/leo",
             group="read",
-            validate=ok_success,
+            validate=validate_zodiac_leo,
         ),
         Check(
             "relationships events",
@@ -199,9 +218,9 @@ def build_checks():
             validate=ok_success,
         ),
         Check(
-            "relationships best-days/aries",
+            "relationships best-days/Aries",
             "GET",
-            "/v2/relationships/best-days/aries",
+            "/v2/relationships/best-days/Aries",
             group="read",
             validate=ok_success,
         ),
@@ -217,7 +236,7 @@ def build_checks():
             "GET",
             "/v2/alerts/vapid-key",
             group="read",
-            validate=ok_success,
+            validate=validate_vapid_key,
         ),
         Check("profiles list", "GET", "/v2/profiles/", group="read"),
         Check(
@@ -367,10 +386,20 @@ def build_checks():
 # ---- HTTP -------------------------------------------------------------------
 
 
+# Which client the smoke test identifies as (X-Client-Platform). The backend rate
+# limits by client: native apps get 60/min, while requests without the header
+# (the website) share a 3-per-day tier, so a full run is only possible as an app
+# client. Web-specific behaviour (that tier, the non-AI fallbacks) is therefore
+# NOT covered unless you pass --client-platform web.
+CLIENT_PLATFORM = "ios"
+
+
 def request(base_url, check, timeout):
     url = base_url.rstrip("/") + check.path
     data = None
     headers = {"Accept": "application/json"}
+    if CLIENT_PLATFORM != "web":
+        headers["X-Client-Platform"] = CLIENT_PLATFORM
     if check.body is not None:
         data = json.dumps(check.body).encode("utf-8")
         headers["Content-Type"] = "application/json"
@@ -402,6 +431,7 @@ def run(base_url, groups, timeout):
     checks = [c for c in build_checks() if c.group in groups]
     results = {"pass": 0, "fail": 0}
     print(f"\nAstroNumeric API smoke test → {base_url}")
+    print(f"Client platform: {CLIENT_PLATFORM}")
     print(f"Groups: {', '.join(sorted(groups))}\n" + "-" * 72)
     for c in checks:
         status, payload, ms, err = request(base_url, c, timeout)
@@ -472,7 +502,16 @@ def main():
         "--include-mutating", action="store_true", help="create+delete a profile"
     )
     ap.add_argument("--timeout", type=float, default=30.0)
+    ap.add_argument(
+        "--client-platform",
+        choices=("ios", "android", "web"),
+        default="ios",
+        help="X-Client-Platform to send ('web' sends none; web is limited to 3 requests/day)",
+    )
     args = ap.parse_args()
+
+    global CLIENT_PLATFORM
+    CLIENT_PLATFORM = args.client_platform
 
     groups = {"read", "compute"}
     if args.include_ai:

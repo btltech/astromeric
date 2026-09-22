@@ -59,4 +59,3 @@ This checklist tracks the work needed to make the iOS app feel competitive with 
   - Notifications.
   - Privacy mode.
   - Support email link.
-

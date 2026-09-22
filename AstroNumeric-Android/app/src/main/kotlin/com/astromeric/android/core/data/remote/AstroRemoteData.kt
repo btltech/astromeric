@@ -11,6 +11,16 @@ import com.astromeric.android.core.model.AuthRequestData
 import com.astromeric.android.core.model.AuthSessionData
 import com.astromeric.android.core.model.ChartData
 import com.astromeric.android.core.model.CompositeChartData
+import com.astromeric.android.core.model.DeclinationsData
+import com.astromeric.android.core.model.DeclinationsRequestData
+import com.astromeric.android.core.model.FixedStarConjunction
+import com.astromeric.android.core.model.FixedStarPlanetInput
+import com.astromeric.android.core.model.FixedStarsRequestData
+import com.astromeric.android.core.model.LunarReturnChartRequest
+import com.astromeric.android.core.model.ProfectionsData
+import com.astromeric.android.core.model.ProfectionsRequestData
+import com.astromeric.android.core.model.RelocationChartRequest
+import com.astromeric.android.core.model.SolarArcChartRequest
 import com.astromeric.android.core.model.CompatibilityMode
 import com.astromeric.android.core.model.CompatibilityPairRequest
 import com.astromeric.android.core.model.CompatibilityReportData
@@ -393,6 +403,36 @@ interface AstroApiService {
     suspend fun fetchCompositeChart(
         @Body request: CompatibilityPairRequest,
     ): V2ApiResponse<CompositeChartData>
+
+    @POST("v2/charts/solar-arc")
+    suspend fun fetchSolarArcChart(
+        @Body request: SolarArcChartRequest,
+    ): V2ApiResponse<ChartData>
+
+    @POST("v2/charts/relocation")
+    suspend fun fetchRelocationChart(
+        @Body request: RelocationChartRequest,
+    ): V2ApiResponse<ChartData>
+
+    @POST("v2/charts/lunar-return")
+    suspend fun fetchLunarReturnChart(
+        @Body request: LunarReturnChartRequest,
+    ): V2ApiResponse<ChartData>
+
+    @POST("v2/charts/profections")
+    suspend fun fetchProfections(
+        @Body request: ProfectionsRequestData,
+    ): V2ApiResponse<ProfectionsData>
+
+    @POST("v2/charts/declinations")
+    suspend fun fetchDeclinations(
+        @Body request: DeclinationsRequestData,
+    ): V2ApiResponse<DeclinationsData>
+
+    @POST("v2/charts/fixed-stars")
+    suspend fun fetchFixedStars(
+        @Body request: FixedStarsRequestData,
+    ): V2ApiResponse<List<FixedStarConjunction>>
 
     @POST("v2/numerology/profile")
     suspend fun fetchNumerologyProfile(
@@ -848,6 +888,72 @@ class AstroRemoteDataSource(
     ): Result<CompositeChartData> =
         runCatching {
             apiService.fetchCompositeChart(personA.toCompatibilityRequest(personB)).data
+        }
+
+    suspend fun fetchSolarArcChart(
+        profile: AppProfile,
+        targetDate: String? = null,
+    ): Result<ChartData> =
+        runCatching {
+            apiService.fetchSolarArcChart(
+                SolarArcChartRequest(profile = profile.toPayload(), targetDate = targetDate),
+            ).data
+        }
+
+    suspend fun fetchRelocationChart(
+        profile: AppProfile,
+        newLatitude: Double,
+        newLongitude: Double,
+        newTimezone: String? = null,
+    ): Result<ChartData> =
+        runCatching {
+            apiService.fetchRelocationChart(
+                RelocationChartRequest(
+                    profile = profile.toPayload(),
+                    newLatitude = newLatitude,
+                    newLongitude = newLongitude,
+                    newTimezone = newTimezone,
+                ),
+            ).data
+        }
+
+    suspend fun fetchLunarReturnChart(
+        profile: AppProfile,
+        targetDate: String? = null,
+    ): Result<ChartData> =
+        runCatching {
+            apiService.fetchLunarReturnChart(
+                LunarReturnChartRequest(profile = profile.toPayload(), targetDate = targetDate),
+            ).data
+        }
+
+    suspend fun fetchProfections(
+        profile: AppProfile,
+        refDate: String? = null,
+    ): Result<ProfectionsData> =
+        runCatching {
+            apiService.fetchProfections(
+                ProfectionsRequestData(profile = profile.toPayload(), refDate = refDate),
+            ).data
+        }
+
+    suspend fun fetchDeclinations(
+        profile: AppProfile,
+    ): Result<DeclinationsData> =
+        runCatching {
+            apiService.fetchDeclinations(
+                DeclinationsRequestData(profile = profile.toPayload()),
+            ).data
+        }
+
+    suspend fun fetchFixedStars(
+        planets: List<FixedStarPlanetInput>,
+        orb: Double = 1.0,
+    ): Result<List<FixedStarConjunction>> =
+        runCatching {
+            apiService.fetchFixedStars(
+                FixedStarsRequestData(planets = planets, orb = orb),
+            ).data
         }
 
     suspend fun fetchNumerology(

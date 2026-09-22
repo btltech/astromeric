@@ -54,19 +54,6 @@ struct LearningModule: Codable, Identifiable {
     }
 }
 
-struct PaginatedLearningModules: Codable {
-    let data: [LearningModule]
-    let page: Int
-    let pageSize: Int
-    let total: Int
-    let pages: Int
-    
-    enum CodingKeys: String, CodingKey {
-        case data, page, total, pages
-        case pageSize = "page_size"
-    }
-}
-
 // MARK: - Zodiac Guidance
 
 struct ZodiacGuidanceResult: Codable {

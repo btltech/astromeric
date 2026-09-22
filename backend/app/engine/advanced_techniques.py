@@ -17,20 +17,35 @@ from typing import Dict, List, Optional
 # PROFECTIONS
 # ---------------------------------------------------------------------------
 
-# Traditional whole-sign house rulers (used for profection lord)
-_HOUSE_RULERS = {
-    1: "Mars",  # Aries
-    2: "Venus",  # Taurus
-    3: "Mercury",  # Gemini
-    4: "Moon",  # Cancer
-    5: "Sun",  # Leo
-    6: "Mercury",  # Virgo
-    7: "Venus",  # Libra
-    8: "Mars",  # Scorpio  (traditional)
-    9: "Jupiter",  # Sagittarius
-    10: "Saturn",  # Capricorn
-    11: "Saturn",  # Aquarius (traditional)
-    12: "Jupiter",  # Pisces   (traditional)
+_ZODIAC_SIGNS = [
+    "Aries",
+    "Taurus",
+    "Gemini",
+    "Cancer",
+    "Leo",
+    "Virgo",
+    "Libra",
+    "Scorpio",
+    "Sagittarius",
+    "Capricorn",
+    "Aquarius",
+    "Pisces",
+]
+
+# Traditional sign rulers (used for the profection lord)
+_SIGN_RULERS = {
+    "Aries": "Mars",
+    "Taurus": "Venus",
+    "Gemini": "Mercury",
+    "Cancer": "Moon",
+    "Leo": "Sun",
+    "Virgo": "Mercury",
+    "Libra": "Venus",
+    "Scorpio": "Mars",  # traditional
+    "Sagittarius": "Jupiter",
+    "Capricorn": "Saturn",
+    "Aquarius": "Saturn",  # traditional
+    "Pisces": "Jupiter",  # traditional
 }
 
 _HOUSE_FOCUS = {
@@ -59,28 +74,41 @@ _LORD_KEYWORDS = {
 }
 
 
-def calculate_profections(dob: str, ref_date: Optional[str] = None) -> Dict:
+def _birthday_in_year(dob_date: date, year: int) -> date:
+    """dob_date moved to `year`; a 29 February birthday falls on 28 February in common years."""
+    try:
+        return dob_date.replace(year=year)
+    except ValueError:
+        return dob_date.replace(year=year, day=28)
+
+
+def calculate_profections(
+    dob: str,
+    ref_date: Optional[str] = None,
+    ascendant_sign: Optional[str] = None,
+) -> Dict:
     """
-    Annual and Monthly Profections.
+    Annual and Monthly Profections (whole-sign).
 
     Every year of life advances the active house by 1 (Ascendant = House 1 at birth).
     Monthly sub-division further advances by 1 house per month.
 
-    Returns the active annual house, its traditional lord, the monthly sub-lord,
-    and thematic interpretations for the year.
+    The Time Lord is the traditional ruler of the profected *sign*, counted from the
+    natal Ascendant sign. Without an Ascendant (no birth time/place) the lords are
+    unknown and returned as empty strings.
     """
     dob_date = datetime.fromisoformat(dob).date()
     ref = datetime.fromisoformat(ref_date).date() if ref_date else date.today()
 
+    this_year_bday = _birthday_in_year(dob_date, ref.year)
+    had_birthday = ref >= this_year_bday
+
     # Full years elapsed since last birthday
-    age = (ref.year - dob_date.year) - (
-        1 if (ref.month, ref.day) < (dob_date.month, dob_date.day) else 0
-    )
+    age = (ref.year - dob_date.year) - (0 if had_birthday else 1)
 
     # How many months into the current profected year
-    last_bday = dob_date.replace(
-        year=ref.year
-        - (1 if (ref.month, ref.day) < (dob_date.month, dob_date.day) else 0)
+    last_bday = (
+        this_year_bday if had_birthday else _birthday_in_year(dob_date, ref.year - 1)
     )
     months_elapsed = (ref.year - last_bday.year) * 12 + (ref.month - last_bday.month)
     if ref.day < last_bday.day:
@@ -90,23 +118,44 @@ def calculate_profections(dob: str, ref_date: Optional[str] = None) -> Dict:
     annual_house = (age % 12) + 1
     monthly_house = ((annual_house - 1 + months_elapsed) % 12) + 1
 
-    annual_lord = _HOUSE_RULERS[annual_house]
-    monthly_lord = _HOUSE_RULERS[monthly_house]
+    if ascendant_sign in _ZODIAC_SIGNS:
+        asc_index = _ZODIAC_SIGNS.index(ascendant_sign)
+        annual_sign = _ZODIAC_SIGNS[(asc_index + annual_house - 1) % 12]
+        monthly_sign = _ZODIAC_SIGNS[(asc_index + monthly_house - 1) % 12]
+        annual_lord = _SIGN_RULERS[annual_sign]
+        monthly_lord = _SIGN_RULERS[monthly_sign]
+    else:
+        annual_sign = monthly_sign = None
+        annual_lord = monthly_lord = ""
+
+    if annual_lord:
+        lord_sentence = (
+            f"{annual_sign} is the profected sign, so {annual_lord} becomes the Time "
+            f"Lord for the year, bringing themes of "
+            f"{_LORD_KEYWORDS.get(annual_lord, 'change')}. "
+        )
+    else:
+        lord_sentence = (
+            "The Time Lord depends on your Ascendant; add a birth time and place to "
+            "see it. "
+        )
 
     return {
         "age": age,
+        "ascendant_sign": ascendant_sign if annual_lord else None,
         "annual_house": annual_house,
+        "annual_sign": annual_sign,
         "annual_lord": annual_lord,
         "annual_focus": _HOUSE_FOCUS[annual_house],
         "annual_lord_themes": _LORD_KEYWORDS.get(annual_lord, ""),
         "monthly_house": monthly_house,
+        "monthly_sign": monthly_sign,
         "monthly_lord": monthly_lord,
         "monthly_focus": _HOUSE_FOCUS[monthly_house],
         "months_into_year": months_elapsed + 1,
         "interpretation": (
             f"Year {age + 1} activates House {annual_house}: {_HOUSE_FOCUS[annual_house]}. "
-            f"{annual_lord} becomes the Time Lord for the year, bringing themes of "
-            f"{_LORD_KEYWORDS.get(annual_lord, 'change')}. "
+            f"{lord_sentence}"
             f"This month (month {months_elapsed + 1}) sub-activates House {monthly_house}: "
             f"{_HOUSE_FOCUS[monthly_house]}."
         ),

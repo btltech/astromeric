@@ -27,7 +27,12 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        consumeLaunchRoute(intent?.getStringExtra(MorningBriefWidgetProvider.LaunchRouteExtra))
+        // Only honour the shortcut/widget route on a fresh launch. On recreation
+        // (rotation, theme change, process restore) the intent still carries the
+        // extra, and replaying it would yank the user off the restored screen.
+        if (savedInstanceState == null) {
+            consumeLaunchRoute(intent?.getStringExtra(MorningBriefWidgetProvider.LaunchRouteExtra))
+        }
 
         val appContainer = (application as AstroNumericApplication).appContainer
 
@@ -42,6 +47,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onNewIntent(intent: android.content.Intent) {
         super.onNewIntent(intent)
+        setIntent(intent)
         consumeLaunchRoute(intent.getStringExtra(MorningBriefWidgetProvider.LaunchRouteExtra))
     }
 

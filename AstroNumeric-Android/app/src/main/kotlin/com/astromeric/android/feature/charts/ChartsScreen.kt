@@ -92,6 +92,12 @@ fun ChartsScreen(
     onOpenProgressions: () -> Unit,
     onOpenSynastry: () -> Unit,
     onOpenComposite: () -> Unit,
+    onOpenSolarArc: () -> Unit = {},
+    onOpenLunarReturn: () -> Unit = {},
+    onOpenRelocation: () -> Unit = {},
+    onOpenProfections: () -> Unit = {},
+    onOpenDeclinations: () -> Unit = {},
+    onOpenFixedStars: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -237,6 +243,12 @@ fun ChartsScreen(
                 onOpenProgressions = onOpenProgressions,
                 onOpenSynastry = onOpenSynastry,
                 onOpenComposite = onOpenComposite,
+                onOpenSolarArc = onOpenSolarArc,
+                onOpenLunarReturn = onOpenLunarReturn,
+                onOpenRelocation = onOpenRelocation,
+                onOpenProfections = onOpenProfections,
+                onOpenDeclinations = onOpenDeclinations,
+                onOpenFixedStars = onOpenFixedStars,
             )
         }
     }
@@ -355,11 +367,15 @@ internal fun StudioActionCard(
 fun StatusCard(
     message: String,
     isError: Boolean,
+    actionLabel: String? = null,
+    onAction: (() -> Unit)? = null,
 ) {
     PremiumStatusCard(
         title = if (isError) stringResource(R.string.charts_status_unavailable) else stringResource(R.string.charts_status_normal),
         message = message,
         isError = isError,
+        actionLabel = actionLabel,
+        onAction = onAction,
     )
 }
 

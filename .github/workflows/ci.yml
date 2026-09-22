@@ -26,7 +26,9 @@ jobs:
       - name: Lint code (ruff/black)
         run: |
           pip install --upgrade pip
-          pip install ruff black
+          # black is pinned to the version in .pre-commit-config.yaml so CI and the
+          # commit hook agree; newer black releases restyle unchanged files.
+          pip install ruff black==23.9.1
           ruff check backend/app backend/tests
           black --check backend/app backend/tests
       - name: Run backend tests

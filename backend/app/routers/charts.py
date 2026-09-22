@@ -8,7 +8,7 @@ import traceback
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException, Request
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from ..cache import cached_build_chart
 from ..chart_service import (
@@ -430,8 +430,8 @@ class SolarArcRequest(BaseModel):
 
 class RelocationRequest(BaseModel):
     profile: ProfilePayload
-    new_latitude: float
-    new_longitude: float
+    new_latitude: float = Field(..., ge=-90, le=90)
+    new_longitude: float = Field(..., ge=-180, le=180)
     new_timezone: Optional[str] = None
 
 
@@ -565,10 +565,26 @@ async def get_profections(
     from ..engine.advanced_techniques import calculate_profections
 
     profile = _profile_to_dict(req.profile)
+    # The Time Lord is counted from the natal Ascendant, which needs a real birth
+    # time and place. Without them the lords are left blank rather than guessed.
+    ascendant_sign = None
+    if (
+        req.profile.time_of_birth
+        and profile.get("latitude") is not None
+        and profile.get("longitude") is not None
+        and profile.get("timezone")
+    ):
+        try:
+            natal = build_natal_chart(profile)
+            if not natal.get("metadata", {}).get("degraded"):
+                ascendant_sign = (natal.get("ascendant") or {}).get("sign")
+        except Exception:
+            ascendant_sign = None
     try:
         result = calculate_profections(
             dob=profile["date_of_birth"],
             ref_date=req.ref_date,
+            ascendant_sign=ascendant_sign,
         )
     except Exception as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc

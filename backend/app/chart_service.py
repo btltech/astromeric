@@ -385,7 +385,6 @@ def build_solar_arc_chart(profile: Dict, target_date: Optional[str] = None) -> D
         else datetime.now().date()
     )
     age_years = (ref_date - dob).days / 365.25
-    progressed_day = dob + timedelta(days=age_years)
 
     natal = build_natal_chart(profile)
     natal_sun = next((p for p in natal["planets"] if p["name"] == "Sun"), None)
@@ -393,13 +392,18 @@ def build_solar_arc_chart(profile: Dict, target_date: Optional[str] = None) -> D
         raise ValueError("Could not compute natal Sun position")
     natal_sun_lon = natal_sun["absolute_degree"]
 
-    prog_profile = dict(profile)
-    prog_profile["date_of_birth"] = progressed_day.isoformat()
-    prog_dt = _parse_datetime(
-        prog_profile["date_of_birth"],
-        prog_profile.get("time_of_birth"),
-        prog_profile.get("timezone", "UTC"),
+    # Day-for-a-year: the progressed moment is the birth moment plus one day per
+    # year of age. Keep the fractional day (adding it to a `date` would truncate
+    # it and make the arc advance only once per year).
+    birth_dt = _parse_datetime(
+        profile["date_of_birth"],
+        profile.get("time_of_birth"),
+        profile.get("timezone", "UTC"),
     )
+    prog_dt = birth_dt + timedelta(days=age_years)
+    prog_profile = dict(profile)
+    prog_profile["date_of_birth"] = prog_dt.strftime("%Y-%m-%d")
+    prog_profile["time_of_birth"] = prog_dt.strftime("%H:%M")
     prog_chart = _build_chart(prog_dt, prog_profile, chart_type="progressed")
     prog_sun = next((p for p in prog_chart["planets"] if p["name"] == "Sun"), None)
     prog_sun_lon = (
@@ -410,16 +414,33 @@ def build_solar_arc_chart(profile: Dict, target_date: Optional[str] = None) -> D
     def _direct(lon: float) -> float:
         return round((lon + solar_arc) % 360, 4)
 
-    directed_planets = [
-        {
-            **p,
-            "absolute_degree": _direct(p["absolute_degree"]),
-            "sign": ZODIAC_SIGNS[int(_direct(p["absolute_degree"]) / 30) % 12],
-            "degree": round(_direct(p["absolute_degree"]) % 30, 4),
-            "natal_degree": p["absolute_degree"],
-        }
-        for p in natal["planets"]
+    natal_cusps = [
+        ZODIAC_SIGNS.index(h["sign"]) * 30 + float(h.get("degree") or 0.0)
+        for h in sorted(natal.get("houses", []), key=lambda h: h.get("house", 0))
+        if h.get("sign") in ZODIAC_SIGNS
     ]
+
+    def _directed_planet(p: Dict) -> Dict:
+        lon = _direct(p["absolute_degree"])
+        sign = ZODIAC_SIGNS[int(lon / 30) % 12]
+        return {
+            **p,
+            "absolute_degree": lon,
+            "sign": sign,
+            "degree": round(lon % 30, 4),
+            "natal_degree": p["absolute_degree"],
+            # House, dignity and motion must describe the directed position, not
+            # the natal one copied from `p`. Directions have no retrograde motion.
+            "house": (
+                _get_house_for_longitude(lon, natal_cusps)
+                if len(natal_cusps) == 12
+                else None
+            ),
+            "dignity": _get_dignity(p["name"], sign),
+            "retrograde": False,
+        }
+
+    directed_planets = [_directed_planet(p) for p in natal["planets"]]
     directed_points = [
         {
             **p,
@@ -430,17 +451,19 @@ def build_solar_arc_chart(profile: Dict, target_date: Optional[str] = None) -> D
         for p in natal.get("points", [])
     ]
 
-    # Cross-aspects: directed planets (sources) vs natal planets (as angle targets)
-    cross_aspects = _compute_aspects(
-        [
-            {"name": p["name"] + " (d)", "absolute_degree": p["absolute_degree"]}
-            for p in directed_planets
-        ],
-        angles=[
-            {"name": p["name"], "absolute_degree": p["absolute_degree"]}
-            for p in natal["planets"]
-        ],
-    )
+    # Cross-aspects only: directed planets vs natal planets. Directed-to-directed
+    # pairs are omitted because every body moves by the same arc, so they would
+    # just repeat the natal aspects. Tightest contacts first.
+    cross_aspects = []
+    for d in directed_planets:
+        for n in natal["planets"]:
+            aspect = _check_aspect_pair(
+                {"name": d["name"] + " (d)", "absolute_degree": d["absolute_degree"]},
+                {"name": n["name"], "absolute_degree": n["absolute_degree"]},
+            )
+            if aspect:
+                cross_aspects.append(aspect)
+    cross_aspects.sort(key=lambda a: a["orb"])
 
     return {
         "metadata": {
@@ -520,18 +543,29 @@ def build_lunar_return_chart(
         raise ValueError("Could not compute natal Moon position")
     natal_moon_lon = natal_moon["absolute_degree"]
 
-    ref = datetime.fromisoformat(target_date) if target_date else datetime.now()
+    # target_date may be a date ("2026-09-22", read as 00:00 UTC) or a full ISO
+    # instant with an offset ("2026-09-22T17:30:00-07:00"); search from that instant.
+    ref = (
+        datetime.fromisoformat(target_date.replace("Z", "+00:00"))
+        if target_date
+        else datetime.now(tz=timezone.utc)
+    )
+    if ref.tzinfo is None:
+        ref = ref.replace(tzinfo=timezone.utc)
+    ref = ref.astimezone(timezone.utc)
 
     if HAS_SWISSEPH:
         return_jd = _find_lunar_return_jd(natal_moon_lon, ref)
         return_utc = _jd_to_utc_datetime(return_jd)
     else:
         # Fallback: estimate using mean Moon motion (27.321-day synodic month)
-        days_since_2000 = (ref.replace(tzinfo=None) - datetime(2000, 1, 1, 12)).days
+        days_since_2000 = (
+            ref.replace(tzinfo=None) - datetime(2000, 1, 1, 12)
+        ).total_seconds() / 86400.0
         mean_moon_lon = (218.3165 + days_since_2000 * (360.0 / 27.321661)) % 360.0
         diff = (natal_moon_lon - mean_moon_lon) % 360.0
         days_to = diff / (360.0 / 27.321661)
-        return_utc = datetime.now(tz=timezone.utc) + timedelta(days=days_to)
+        return_utc = ref + timedelta(days=days_to)
 
     ret_tz = location_tz or profile.get("timezone", "UTC")
     return_local = return_utc.astimezone(_tzinfo_from_name(ret_tz))
@@ -563,12 +597,14 @@ def build_lunar_return_chart(
 def _find_lunar_return_jd(natal_moon_lon: float, start_dt: datetime) -> float:
     """Julian Date of the next lunar return after start_dt via Newton-Raphson iteration."""
     MEAN_MOON_SPEED = 13.176  # degrees per day
-    dt_naive = start_dt.replace(tzinfo=None) if start_dt.tzinfo else start_dt
+    if start_dt.tzinfo:
+        start_dt = start_dt.astimezone(timezone.utc)
+    dt_naive = start_dt.replace(tzinfo=None)
     jd = swe.julday(
         dt_naive.year,
         dt_naive.month,
         dt_naive.day,
-        dt_naive.hour + dt_naive.minute / 60.0,
+        dt_naive.hour + dt_naive.minute / 60.0 + dt_naive.second / 3600.0,
     )
     res, _ = swe.calc_ut(jd, 1)  # Moon
     diff = (natal_moon_lon - res[0] % 360.0) % 360.0

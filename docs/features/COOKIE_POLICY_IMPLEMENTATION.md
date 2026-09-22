@@ -117,13 +117,12 @@ if (localStorage.getItem('cookie-consent')) {
 
 **Key Classes**:
 
-```css
+```text
 .cookie-consent-overlay      /* Backdrop with blur */
-/* Backdrop with blur */
 .cookie-consent-modal        /* Modal container */
 .cookie-section              /* Individual cookie category */
 .cookie-toggle               /* Checkbox + label */
-.cookie-actions; /* Action buttons */
+.cookie-actions              /* Action buttons */
 ```
 
 **Accessibility Features**:
@@ -138,14 +137,13 @@ if (localStorage.getItem('cookie-consent')) {
 
 **Key Classes**:
 
-```css
+```text
 .privacy-policy-container    /* Page container */
-/* Page container */
 .policy-header               /* Title section */
 .policy-toc                  /* Table of contents */
 .policy-content              /* Main content area */
 .cookie-table                /* Data tables */
-.policy-footer; /* Footer section */
+.policy-footer               /* Footer section */
 ```
 
 **Features**:

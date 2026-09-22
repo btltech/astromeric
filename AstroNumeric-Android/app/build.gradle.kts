@@ -7,6 +7,7 @@ plugins {
 
 if (file("google-services.json").exists()) {
     apply(plugin = "com.google.gms.google-services")
+    apply(plugin = "com.google.firebase.crashlytics")
 }
 
 android {
@@ -17,8 +18,8 @@ android {
         applicationId = "com.astromeric.android"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = 2
+        versionName = "1.0.0"
 
         externalNativeBuild {
             cmake {
@@ -84,6 +85,8 @@ dependencies {
     androidTestImplementation(composeBom)
     implementation(firebaseBom)
 
+    testImplementation("junit:junit:4.13.2")
+
     implementation("androidx.core:core-ktx:1.15.0")
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("androidx.activity:activity-compose:1.10.1")
@@ -115,5 +118,6 @@ dependencies {
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
     implementation("com.google.code.gson:gson:2.11.0")
     implementation("com.google.firebase:firebase-messaging-ktx")
+    implementation("com.google.firebase:firebase-crashlytics-ktx")
     implementation("com.android.billingclient:billing-ktx:7.1.1")
 }
