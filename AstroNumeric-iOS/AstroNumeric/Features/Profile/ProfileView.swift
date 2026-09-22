@@ -606,6 +606,9 @@ private struct ProfileSettingsView: View {
 
 private struct ProfileSupportCenterView: View {
     @Environment(AppStore.self) private var store
+    /// Seven taps on the version line open the owner-only AI access sheet.
+    @State private var versionTapCount = 0
+    @State private var showAIAccessSheet = false
 
     var body: some View {
         ZStack {
@@ -729,6 +732,13 @@ private struct ProfileSupportCenterView: View {
                         Text(appVersionText)
                             .font(.meta)
                             .foregroundStyle(Color.textSecondary)
+                            .onTapGesture {
+                                versionTapCount += 1
+                                if versionTapCount >= 7 {
+                                    versionTapCount = 0
+                                    showAIAccessSheet = true
+                                }
+                            }
                     }
                 }
                 .padding()
@@ -737,6 +747,10 @@ private struct ProfileSupportCenterView: View {
         }
         .navigationTitle("Support")
         .navigationBarTitleDisplayMode(.inline)
+        .sheet(isPresented: $showAIAccessSheet) {
+            AIAccessCodeView()
+        }
+        .onDisappear { versionTapCount = 0 }
     }
 
     @ViewBuilder

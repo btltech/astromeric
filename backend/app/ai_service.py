@@ -2,12 +2,32 @@
 
 from __future__ import annotations
 
+import hmac
 import os
 from typing import Any, List, Optional
 
 from fastapi import Request
 
 from .interpretation import rank_interpretation_signals, select_practical_tip
+
+
+def _get_ai_access_code() -> str | None:
+    code = os.getenv("AI_ACCESS_CODE", "").strip()
+    return code or None
+
+
+def has_ai_access(request: Request) -> bool:
+    """Return True only for callers holding the private AI access code.
+
+    Gemini runs on an unpaid key whose prompts Google may use to improve its
+    products, so it is reserved for the owner's own device: the code is typed in
+    once there and is never shipped in the app. Every other caller falls back to
+    the built-in responses, and their questions and chart data never leave us.
+    """
+    expected = _get_ai_access_code()
+    if not expected:
+        return False
+    return hmac.compare_digest(request.headers.get("x-ai-access", ""), expected)
 
 
 def is_native_ios(request: Request) -> bool:

@@ -13,6 +13,11 @@ from backend.app.routers import friends as friends_router
 warnings.filterwarnings("ignore", message="The 'app' shortcut is now deprecated")
 client = TestClient(app)
 
+# Friend owner keys must be unguessable per-install secrets (UUID / 32+ hex).
+OWNER_A = "3f2b8c1e-7d4a-4e5b-9c6d-0a1b2c3d4e5f"
+OWNER_B = "9a8b7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d"
+OWNER_C = "c0ffee00c0ffee00c0ffee00c0ffee00"
+
 
 @pytest.fixture(autouse=True)
 def isolated_friends_db(monkeypatch, tmp_path):
@@ -36,7 +41,7 @@ def isolated_friends_db(monkeypatch, tmp_path):
 
 def test_compare_all_friends_uses_owner_profile_and_owner_id(isolated_friends_db):
     friend_payload = {
-        "owner_id": "-1",
+        "owner_id": OWNER_A,
         "friend": {
             "id": "friend-1",
             "name": "Test Partner",
@@ -49,12 +54,12 @@ def test_compare_all_friends_uses_owner_profile_and_owner_id(isolated_friends_db
     assert add_resp.status_code == 200
 
     with isolated_friends_db() as db:
-        rows = db.query(Friend).filter(Friend.owner_id == "-1").all()
+        rows = db.query(Friend).filter(Friend.owner_id == OWNER_A).all()
         assert len(rows) == 1
         assert rows[0].friend_id == "friend-1"
 
     compare_all_payload = {
-        "owner_id": "-1",
+        "owner_id": OWNER_A,
         "owner_profile": {
             "name": "Test User",
             "date_of_birth": "1990-06-15",
@@ -76,7 +81,7 @@ def test_compare_all_friends_uses_owner_profile_and_owner_id(isolated_friends_db
 
 def test_compare_with_friend_migrates_legacy_store(isolated_friends_db):
     legacy_store = {
-        "-2": [
+        OWNER_B: [
             {
                 "id": "friend-2",
                 "name": "Stored Friend",
@@ -88,7 +93,7 @@ def test_compare_with_friend_migrates_legacy_store(isolated_friends_db):
     friends_router._STORE_PATH.write_text(json.dumps(legacy_store))
 
     compare_payload = {
-        "owner_id": "-2",
+        "owner_id": OWNER_B,
         "friend_id": "friend-2",
         "relationship_type": "friendship",
         "owner_profile": {
@@ -110,7 +115,7 @@ def test_compare_with_friend_migrates_legacy_store(isolated_friends_db):
     with isolated_friends_db() as db:
         row = (
             db.query(Friend)
-            .filter(Friend.owner_id == "-2", Friend.friend_id == "friend-2")
+            .filter(Friend.owner_id == OWNER_B, Friend.friend_id == "friend-2")
             .first()
         )
         assert row is not None
@@ -118,7 +123,7 @@ def test_compare_with_friend_migrates_legacy_store(isolated_friends_db):
 
 def test_add_friend_logs_do_not_include_raw_name(caplog):
     payload = {
-        "owner_id": "privacy-owner",
+        "owner_id": OWNER_C,
         "friend": {
             "id": "friend-privacy",
             "name": "Privacy Test Friend",
@@ -133,3 +138,92 @@ def test_add_friend_logs_do_not_include_raw_name(caplog):
     assert response.status_code == 200
     assert "Privacy Test Friend" not in caplog.text
     assert "Friend added" in caplog.text
+
+
+GUESSABLE_OWNERS = ["-1", "-2", "0", "1", "42", "privacy-owner", "", "abc123"]
+
+
+@pytest.mark.parametrize("owner", [o for o in GUESSABLE_OWNERS if o])
+def test_list_rejects_guessable_owner_ids(owner):
+    resp = client.get(f"/v2/friends/list/{owner}")
+    assert resp.status_code == 403
+    assert resp.json()["detail"]["code"] == "FRIENDS_OWNER_KEY_REQUIRED"
+
+
+@pytest.mark.parametrize("owner", GUESSABLE_OWNERS)
+def test_add_rejects_guessable_owner_ids_and_stores_nothing(owner, isolated_friends_db):
+    resp = client.post(
+        "/v2/friends/add",
+        json={
+            "owner_id": owner,
+            "friend": {"id": "f-1", "name": "Someone", "date_of_birth": "1990-01-01"},
+        },
+    )
+    assert resp.status_code == 403
+    with isolated_friends_db() as db:
+        assert db.query(Friend).count() == 0
+
+
+def test_remove_compare_and_compare_all_reject_guessable_owner_ids():
+    assert client.delete("/v2/friends/remove/-1/f-1").status_code == 403
+    assert (
+        client.post(
+            "/v2/friends/compare",
+            json={
+                "owner_id": "-1",
+                "friend_id": "f-1",
+                "owner_profile": {"name": "Me", "date_of_birth": "1990-01-01"},
+            },
+        ).status_code
+        == 403
+    )
+    resp = client.post(
+        "/v2/friends/compare-all",
+        json={
+            "owner_id": "-1",
+            "owner_profile": {"name": "Me", "date_of_birth": "1990-01-01"},
+        },
+    )
+    assert resp.status_code == 403
+
+
+def test_existing_rows_under_shared_owner_ids_are_unreachable(isolated_friends_db):
+    """Rows written before containment under a shared id (e.g. "-1") stay stored
+    but can no longer be read through the API."""
+    with isolated_friends_db() as db:
+        db.add(
+            Friend(
+                owner_id="-1",
+                friend_id="legacy-friend",
+                name="Another user's friend",
+                date_of_birth="1970-01-01",
+            )
+        )
+        db.commit()
+    assert client.get("/v2/friends/list/-1").status_code == 403
+
+
+def test_owner_keys_are_isolated():
+    for owner, name in ((OWNER_A, "Friend of A"), (OWNER_B, "Friend of B")):
+        assert (
+            client.post(
+                "/v2/friends/add",
+                json={
+                    "owner_id": owner,
+                    "friend": {
+                        "id": "same-id",
+                        "name": name,
+                        "date_of_birth": "1990-01-01",
+                    },
+                },
+            ).status_code
+            == 200
+        )
+    names_a = [
+        f["name"] for f in client.get(f"/v2/friends/list/{OWNER_A}").json()["data"]
+    ]
+    names_b = [
+        f["name"] for f in client.get(f"/v2/friends/list/{OWNER_B}").json()["data"]
+    ]
+    assert names_a == ["Friend of A"]
+    assert names_b == ["Friend of B"]

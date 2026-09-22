@@ -255,8 +255,8 @@ async def ask_cosmic_guide(
 
     api_key = _get_api_key()
 
-    # Short-circuit to fallback when the caller explicitly disables AI
-    # (e.g. requests from the web frontend — Gemini is reserved for the native iOS app)
+    # Short-circuit to fallback when the caller has no AI access
+    # (see ai_service.has_ai_access — Gemini is reserved for the owner's own device)
     if not use_ai:
         topic = _detect_topic(question)
         fallback_key = f"guide_fallback_{topic}"
@@ -273,7 +273,7 @@ async def ask_cosmic_guide(
         return {
             "response": response,
             "provider": "fallback",
-            "reason": "web_client",
+            "reason": "ai_not_enabled",
             "topic_detected": topic,
         }
 
