@@ -124,7 +124,6 @@ struct CosmicGuideView: View {
 
             VStack(spacing: 12) {
                 calendarConsentCard
-                biometricConsentCard
             }
         }
         .padding(.top, 40)
@@ -200,20 +199,6 @@ struct CosmicGuideView: View {
             .accessibilityValue(vm.isCalendarContextEnabled ? "tern.cosmicGuide.1a".localized : "tern.cosmicGuide.1b".localized)
             .accessibilityHint("Turns calendar context on or off for Cosmic Guide")
 
-            Button {
-                Task {
-                    await vm.setBiometricContextEnabled(!vm.isBiometricContextEnabled)
-                }
-            } label: {
-                Image(systemName: vm.isBiometricContextEnabled ? "tern.cosmicGuide.2a".localized : "tern.cosmicGuide.2b".localized)
-                    .font(.title3)
-                    .foregroundStyle(vm.isBiometricContextEnabled ? .pink : .white.opacity(0.7))
-            }
-            .buttonStyle(AccessibleButtonStyle())
-            .disabled(vm.isUpdatingBiometricContext)
-            .accessibilityLabel("Biometric-aware guidance")
-            .accessibilityValue(vm.isBiometricContextEnabled ? "tern.cosmicGuide.3a".localized : "tern.cosmicGuide.3b".localized)
-            .accessibilityHint("Turns optional Health data context on or off for Cosmic Guide")
             
             TextField("ui.cosmicGuide.6".localized, text: $vm.inputText, axis: .vertical)
                 .textFieldStyle(.plain)
@@ -279,42 +264,6 @@ struct CosmicGuideView: View {
                 Text("ui.cosmicGuide.2".localized)
                     .font(.caption2)
                     .foregroundStyle(.green.opacity(0.9))
-            }
-        }
-        }
-    }
-
-    private var biometricConsentCard: some View {
-        CardView {
-            VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .top, spacing: 12) {
-                Image(systemName: vm.isBiometricContextEnabled ? "tern.cosmicGuide.6a".localized : "tern.cosmicGuide.6b".localized)
-                    .foregroundStyle(vm.isBiometricContextEnabled ? .pink : .red)
-                    .font(.headline)
-
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("ui.cosmicGuide.3".localized)
-                        .font(.subheadline.bold())
-                    Text("ui.cosmicGuide.4".localized)
-                        .font(.caption)
-                        .foregroundStyle(Color.textSecondary)
-                }
-
-                Spacer()
-
-                Button(vm.isBiometricContextEnabled ? "tern.cosmicGuide.7a".localized : "tern.cosmicGuide.7b".localized) {
-                    Task {
-                        await vm.setBiometricContextEnabled(!vm.isBiometricContextEnabled)
-                    }
-                }
-                .tint(vm.isBiometricContextEnabled ? .pink : .red)
-                .disabled(vm.isUpdatingBiometricContext)
-            }
-
-            if vm.isBiometricContextEnabled {
-                Text("ui.cosmicGuide.5".localized)
-                    .font(.caption2)
-                    .foregroundStyle(.pink.opacity(0.9))
             }
         }
         }

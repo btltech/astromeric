@@ -582,9 +582,6 @@
 "ui.cosmicGuide.0" = "Calendar-Aware Guidance";
 "ui.cosmicGuide.1" = "Optional. The guide can use a redacted summary of upcoming events. Titles and exact times are not sent.";
 "ui.cosmicGuide.2" = "Calendar context is enabled for Cosmic Guide.";
-"ui.cosmicGuide.3" = "Biometric-Aware Guidance";
-"ui.cosmicGuide.4" = "Optional. Cosmic Guide can use read-only HealthKit context such as sleep, heart rate, steps, and mindfulness data when you explicitly enable it.";
-"ui.cosmicGuide.5" = "Biometric context is enabled for Cosmic Guide.";
 "ui.cosmicGuide.6" = "Ask the cosmic guide...";
 "ui.dailyFeatures.0" = "Daily Luck Score";
 "ui.dailyFeatures.1" = "Unavailable right now";
@@ -779,7 +776,6 @@
 "ui.profile.29" = "ONLINE";
 "ui.profile.3" = "Profiles";
 "ui.profile.30" = "ResponseCache";
-"ui.profile.31" = "HealthKit";
 "ui.profile.32" = "Build";
 "ui.profile.33" = "Edit";
 "ui.profile.34" = "Delete";
@@ -951,18 +947,10 @@
 "tern.cosmicGuide.0b" = "calendar.badge.plus";
 "tern.cosmicGuide.1a" = "On";
 "tern.cosmicGuide.1b" = "Off";
-"tern.cosmicGuide.2a" = "heart.text.square.fill";
-"tern.cosmicGuide.2b" = "heart.text.square";
-"tern.cosmicGuide.3a" = "On";
-"tern.cosmicGuide.3b" = "Off";
 "tern.cosmicGuide.4a" = "calendar.badge.checkmark";
 "tern.cosmicGuide.4b" = "calendar.badge.plus";
 "tern.cosmicGuide.5a" = "On";
 "tern.cosmicGuide.5b" = "Off";
-"tern.cosmicGuide.6a" = "heart.text.square.fill";
-"tern.cosmicGuide.6b" = "heart.text.square";
-"tern.cosmicGuide.7a" = "On";
-"tern.cosmicGuide.7b" = "Off";
 "tern.cosmicGuideVM.0a" = "The user entered an approximate time. Their Rising sign and houses may be close but are not confirmed — treat them as estimates, not facts.";
 "tern.cosmicGuideVM.0b" = "The user's birth time is unknown. Their Rising sign and houses were calculated using noon as a default and could be significantly different from their actual chart.";
 "tern.dailyFeatures.0a" = "Copied!";
@@ -1035,8 +1023,6 @@
 "tern.profile.1b" = "Double tap to reveal your birth date";
 "tern.profile.2a" = "On";
 "tern.profile.2b" = "Off";
-"tern.profile.3a" = "AVAILABLE";
-"tern.profile.3b" = "UNAVAILABLE";
 "tern.profile.4a" = "REGISTERED";
 "tern.profile.4b" = "MISSING";
 "tern.profile.5a" = "ENABLED / UNSCHEDULED";

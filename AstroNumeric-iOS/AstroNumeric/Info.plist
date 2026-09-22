@@ -30,11 +30,7 @@
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>NSCalendarsFullAccessUsageDescription</key>
-	<string>AstroNumeric reads your upcoming calendar events to show how they line up with planetary timing. When you ask the Cosmic Guide a question, upcoming event titles may be included to personalise its answer.</string>
-	<key>NSHealthShareUsageDescription</key>
-	<string>AstroNumeric reads health data (heart rate, sleep, steps) to correlate your biometrics with cosmic transits and provide personalized insights.</string>
-	<key>NSHealthUpdateUsageDescription</key>
-	<string>AstroNumeric only reads your Health data to compare it with cosmic cycles. It does not write anything to Health.</string>
+	<string>AstroNumeric reads your upcoming calendar events to show how they line up with planetary timing. If you turn on calendar context in the Cosmic Guide, only the day and time of day of upcoming events are included in your question, never their titles or details.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>We need your location to determine your birthplace timezone.</string>
 	<key>NSMicrophoneUsageDescription</key>
