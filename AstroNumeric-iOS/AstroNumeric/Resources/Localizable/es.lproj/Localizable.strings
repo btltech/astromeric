@@ -1162,3 +1162,11 @@
 "habits.create.subtitle" = "Name the habit, pick a category, and let lunar timing add context.";
 "habits.create.phaseMatch" = "This category matches the current lunar guidance.";
 "journal.loading.body" = "Loading saved readings and local drafts.";
+
+// MARK: - UI labels and Home fallbacks
+"label.startHere" = "Empieza aquí";
+"label.advanced" = "Avanzado";
+"label.recommended" = "Recomendado";
+"home.reading.unavailable.headline" = "La lectura de hoy no se cargó";
+"home.reading.unavailable.tldr" = "Desliza hacia abajo para actualizar o inténtalo de nuevo cuando vuelvas a tener conexión.";
+"home.reading.unavailable.energy" = "No disponible";

@@ -1159,3 +1159,11 @@
 "habits.create.subtitle" = "Name the habit, pick a category, and let lunar timing add context.";
 "habits.create.phaseMatch" = "This category matches the current lunar guidance.";
 "journal.loading.body" = "Loading saved readings and local drafts.";
+
+// MARK: - UI labels and Home fallbacks
+"label.startHere" = "यहाँबाट सुरु गर्नुहोस्";
+"label.advanced" = "उन्नत";
+"label.recommended" = "सिफारिस गरिएको";
+"home.reading.unavailable.headline" = "आजको पठन लोड भएन";
+"home.reading.unavailable.tldr" = "रिफ्रेस गर्न तल तान्नुहोस्, वा इन्टरनेट फर्केपछि फेरि प्रयास गर्नुहोस्।";
+"home.reading.unavailable.energy" = "अनुपलब्ध";
