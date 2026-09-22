@@ -1159,3 +1159,11 @@
 "habits.create.subtitle" = "Name the habit, pick a category, and let lunar timing add context.";
 "habits.create.phaseMatch" = "This category matches the current lunar guidance.";
 "journal.loading.body" = "Loading saved readings and local drafts.";
+
+// MARK: - UI labels and Home fallbacks
+"label.startHere" = "Începe aici";
+"label.advanced" = "Avansat";
+"label.recommended" = "Recomandat";
+"home.reading.unavailable.headline" = "Citirea de azi nu s-a încărcat";
+"home.reading.unavailable.tldr" = "Trage în jos pentru reîmprospătare sau încearcă din nou când ai conexiune.";
+"home.reading.unavailable.energy" = "Indisponibil";
