@@ -1,6 +1,7 @@
 package com.astromeric.android.core.ephemeris
 
 import android.content.Context
+import com.astromeric.android.app.CrashReporter
 import com.astromeric.android.core.model.AppProfile
 import com.astromeric.android.core.model.ChartData
 import com.astromeric.android.core.model.ExactTransitAspectData
@@ -13,6 +14,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.io.IOException
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -99,10 +101,26 @@ class LocalSwissEphemerisEngine private constructor(
             RequiredEphemerisFiles.forEach { fileName ->
                 val targetFile = File(targetDirectory, fileName)
                 if (!targetFile.exists() || targetFile.length() == 0L) {
-                    appContext.assets.open("ephemeris/$fileName").use { input ->
-                        targetFile.outputStream().use { output ->
-                            input.copyTo(output)
+                    // Copy to a temp file and rename it into place, so an interrupted copy
+                    // (disk full, process killed) never leaves a truncated .se1 that the
+                    // check above would then trust on every later launch.
+                    val tempFile = File(targetDirectory, "$fileName.tmp")
+                    try {
+                        appContext.assets.open("ephemeris/$fileName").use { input ->
+                            tempFile.outputStream().use { output ->
+                                input.copyTo(output)
+                            }
                         }
+                        if (!tempFile.renameTo(targetFile)) {
+                            throw IOException("Could not move ephemeris file into place: $fileName")
+                        }
+                    } catch (io: Exception) {
+                        tempFile.delete()
+                        // The engine never fabricates positions; if a required Swiss
+                        // Ephemeris data file can't be installed, report it so a broken
+                        // install is observable, then rethrow (callers return failure).
+                        CrashReporter.recordNonFatal(io, mapOf("ephemeris_file" to fileName))
+                        throw io
                     }
                 }
             }

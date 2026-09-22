@@ -19,6 +19,12 @@ import com.astromeric.android.feature.charts.ChartsScreen
 import com.astromeric.android.feature.charts.CompositeChartScreen
 import com.astromeric.android.feature.charts.ProgressionsScreen
 import com.astromeric.android.feature.charts.SynastryChartScreen
+import com.astromeric.android.feature.charts.SolarArcChartScreen
+import com.astromeric.android.feature.charts.LunarReturnChartScreen
+import com.astromeric.android.feature.charts.RelocationChartScreen
+import com.astromeric.android.feature.charts.ProfectionsScreen
+import com.astromeric.android.feature.charts.DeclinationsScreen
+import com.astromeric.android.feature.charts.FixedStarsScreen
 import com.astromeric.android.feature.profile.HelpFaqScreen
 import com.astromeric.android.feature.profile.NotificationSettingsScreen
 import com.astromeric.android.feature.profile.PrivacyScreen
@@ -57,6 +63,12 @@ internal fun NavGraphBuilder.chartsGraph(
                 onOpenProgressions = { navController.navigateSingleTop(ProgressionsRoute) },
                 onOpenSynastry = { navController.navigateSingleTop(SynastryRoute) },
                 onOpenComposite = { navController.navigateSingleTop(CompositeRoute) },
+                onOpenSolarArc = { navController.navigateSingleTop(SolarArcRoute) },
+                onOpenLunarReturn = { navController.navigateSingleTop(LunarReturnRoute) },
+                onOpenRelocation = { navController.navigateSingleTop(RelocationRoute) },
+                onOpenProfections = { navController.navigateSingleTop(ProfectionsRoute) },
+                onOpenDeclinations = { navController.navigateSingleTop(DeclinationsRoute) },
+                onOpenFixedStars = { navController.navigateSingleTop(FixedStarsRoute) },
             )
         }
         composable(BirthChartDetailRoute) {
@@ -95,6 +107,48 @@ internal fun NavGraphBuilder.chartsGraph(
         composable(CompositeRoute) {
             CompositeChartScreen(
                 profiles = profiles,
+                selectedProfile = selectedProfile,
+                remoteDataSource = remoteDataSource,
+                onBackToCharts = { navController.popBackStack() },
+            )
+        }
+        composable(SolarArcRoute) {
+            SolarArcChartScreen(
+                selectedProfile = selectedProfile,
+                remoteDataSource = remoteDataSource,
+                onBackToCharts = { navController.popBackStack() },
+            )
+        }
+        composable(LunarReturnRoute) {
+            LunarReturnChartScreen(
+                selectedProfile = selectedProfile,
+                remoteDataSource = remoteDataSource,
+                onBackToCharts = { navController.popBackStack() },
+            )
+        }
+        composable(RelocationRoute) {
+            RelocationChartScreen(
+                selectedProfile = selectedProfile,
+                remoteDataSource = remoteDataSource,
+                onBackToCharts = { navController.popBackStack() },
+            )
+        }
+        composable(ProfectionsRoute) {
+            ProfectionsScreen(
+                selectedProfile = selectedProfile,
+                remoteDataSource = remoteDataSource,
+                onBackToCharts = { navController.popBackStack() },
+            )
+        }
+        composable(DeclinationsRoute) {
+            DeclinationsScreen(
+                selectedProfile = selectedProfile,
+                remoteDataSource = remoteDataSource,
+                onBackToCharts = { navController.popBackStack() },
+            )
+        }
+        composable(FixedStarsRoute) {
+            FixedStarsScreen(
                 selectedProfile = selectedProfile,
                 remoteDataSource = remoteDataSource,
                 onBackToCharts = { navController.popBackStack() },

@@ -2,6 +2,7 @@ package com.astromeric.android.app
 
 import android.app.Application
 import androidx.room.Room
+import com.astromeric.android.BuildConfig
 import com.astromeric.android.core.data.billing.SubscriptionRepository
 import com.astromeric.android.core.localization.AppLanguageManager
 import com.astromeric.android.core.data.local.AstroDatabase
@@ -20,6 +21,7 @@ class AstroNumericApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        CrashReporter.init(enabled = !BuildConfig.DEBUG)
         AppLanguageManager.applySavedLanguage(appContainer.preferencesStore)
         AstroNotificationService(this).createNotificationChannels()
         AstroBackgroundScheduler.schedulePeriodicRefresh(this)

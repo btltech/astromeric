@@ -305,6 +305,12 @@ internal fun AdvancedChartsTab(
     onOpenProgressions: () -> Unit,
     onOpenSynastry: () -> Unit,
     onOpenComposite: () -> Unit,
+    onOpenSolarArc: () -> Unit = {},
+    onOpenLunarReturn: () -> Unit = {},
+    onOpenRelocation: () -> Unit = {},
+    onOpenProfections: () -> Unit = {},
+    onOpenDeclinations: () -> Unit = {},
+    onOpenFixedStars: () -> Unit = {},
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         StudioSectionCard(
@@ -361,6 +367,53 @@ internal fun AdvancedChartsTab(
                 selectedProfile?.canRequestNatalChart != true -> stringResource(R.string.charts_finish_primary_profile_birth_details)
                 else -> null
             },
+        )
+
+        StudioActionCard(
+            title = stringResource(R.string.charts_solar_arc_title),
+            subtitle = stringResource(R.string.charts_solar_arc_card_subtitle),
+            buttonLabel = stringResource(R.string.charts_action_open_solar_arc),
+            onClick = onOpenSolarArc,
+            enabled = selectedProfile?.canRequestNatalChart == true,
+        )
+
+        StudioActionCard(
+            title = stringResource(R.string.charts_lunar_return_title),
+            subtitle = stringResource(R.string.charts_lunar_return_card_subtitle),
+            buttonLabel = stringResource(R.string.charts_action_open_lunar_return),
+            onClick = onOpenLunarReturn,
+            enabled = selectedProfile?.canRequestNatalChart == true,
+        )
+
+        StudioActionCard(
+            title = stringResource(R.string.charts_relocation_title),
+            subtitle = stringResource(R.string.charts_relocation_card_subtitle),
+            buttonLabel = stringResource(R.string.charts_action_open_relocation),
+            onClick = onOpenRelocation,
+            enabled = selectedProfile?.canRequestNatalChart == true,
+        )
+
+        StudioActionCard(
+            title = stringResource(R.string.charts_profections_title),
+            subtitle = stringResource(R.string.charts_profections_card_subtitle),
+            buttonLabel = stringResource(R.string.charts_action_open_profections),
+            onClick = onOpenProfections,
+        )
+
+        StudioActionCard(
+            title = stringResource(R.string.charts_declinations_title),
+            subtitle = stringResource(R.string.charts_declinations_card_subtitle),
+            buttonLabel = stringResource(R.string.charts_action_open_declinations),
+            onClick = onOpenDeclinations,
+            enabled = selectedProfile?.canRequestNatalChart == true,
+        )
+
+        StudioActionCard(
+            title = stringResource(R.string.charts_fixed_stars_title),
+            subtitle = stringResource(R.string.charts_fixed_stars_card_subtitle),
+            buttonLabel = stringResource(R.string.charts_action_open_fixed_stars),
+            onClick = onOpenFixedStars,
+            enabled = selectedProfile?.canRequestNatalChart == true,
         )
     }
 }

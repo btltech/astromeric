@@ -1,5 +1,11 @@
 <resources>
     <string name="app_name">AstroNumeric</string>
+    <string name="shortcut_reading_short">Reading</string>
+    <string name="shortcut_reading_long">Today\'s reading</string>
+    <string name="shortcut_numerology_short">Numerology</string>
+    <string name="shortcut_numerology_long">Your numerology</string>
+    <string name="shortcut_compatibility_short">Compatibility</string>
+    <string name="shortcut_compatibility_long">Check compatibility</string>
     <string name="widget_morning_brief_header">Morning Brief</string>
     <string name="widget_morning_brief_description">Compact widget with your latest cosmic morning brief.</string>
     <string name="widget_personal_day_fallback">Today</string>
@@ -1588,4 +1594,93 @@
     <string name="premium_active_title">Premium is active</string>
     <string name="premium_active_body">All premium features are unlocked on this device. Manage your subscription in Google Play.</string>
     <string name="profile_hub_cta_premium">Get Premium</string>
+    <!-- Advanced charts: solar arc, lunar return, relocation, profections, declinations, fixed stars -->
+    <string name="charts_adv_load_error">Could not load this chart.</string>
+    <string name="charts_adv_select_profile">Select a profile to view this chart.</string>
+    <string name="charts_adv_select_profile_first">Select a profile first.</string>
+    <string name="charts_adv_require_location_timezone">This chart needs a birth location and timezone.</string>
+    <string name="charts_adv_planets_title">Planets</string>
+    <string name="charts_adv_planets_subtitle">Positions for this chart.</string>
+    <string name="charts_adv_aspects_title">Aspects</string>
+    <string name="charts_adv_aspects_subtitle">Key angular relationships.</string>
+    <string name="charts_adv_approximated">This chart can\'t be calculated accurately for these birth details or this location, so it isn\'t shown.</string>
+    <string name="charts_adv_approximated_with_note">This chart can\'t be calculated accurately for these birth details or this location (%1$s), so it isn\'t shown.</string>
+
+    <string name="charts_solar_arc_title">Solar Arc Directions</string>
+    <string name="charts_solar_arc_section_title">Directed chart</string>
+    <string name="charts_solar_arc_section_subtitle">Each planet advanced by the solar arc to today.</string>
+    <string name="charts_solar_arc_loading">Calculating solar arc directions…</string>
+    <string name="charts_solar_arc_aspects_subtitle">Directed planets to natal planets, tightest first.</string>
+    <string name="charts_solar_arc_summary">Solar arc of %1$.2f°.</string>
+    <string name="charts_solar_arc_summary_as_of">Solar arc of %1$.2f° as of %2$s.</string>
+
+    <string name="charts_lunar_return_title">Lunar Return</string>
+    <string name="charts_lunar_return_section_title">Next lunar return</string>
+    <string name="charts_lunar_return_section_subtitle">Cast for the next time the Moon returns to its natal longitude.</string>
+    <string name="charts_lunar_return_loading">Finding your lunar return…</string>
+    <string name="charts_lunar_return_summary">Moon returns on %1$s.</string>
+
+    <string name="charts_profections_title">Annual Profections</string>
+    <string name="charts_profections_loading">Calculating profections…</string>
+    <string name="charts_profections_load_error">Could not load profections.</string>
+    <string name="charts_profections_year_title">Year %1$d · House %2$d</string>
+    <string name="charts_profections_year_title_with_sign">Year %1$d · House %2$d · %3$s</string>
+    <string name="charts_profections_time_lord">Time Lord: %1$s</string>
+    <string name="charts_profections_time_lord_missing">Add a birth time and place to see your Time Lord.</string>
+    <string name="charts_profections_focus">Focus: %1$s</string>
+    <string name="charts_profections_themes">Themes: %1$s</string>
+    <string name="charts_profections_month_title">This month · House %1$d</string>
+    <string name="charts_profections_month_title_with_sign">This month · House %1$d · %2$s</string>
+    <string name="charts_profections_month_subtitle">Month %1$d</string>
+    <string name="charts_profections_month_subtitle_with_lord">Month %1$d · Lord %2$s</string>
+    <string name="charts_profections_interpretation_title">Interpretation</string>
+    <string name="charts_profections_interpretation_subtitle">What this timing emphasizes.</string>
+
+    <string name="charts_declinations_title">Declinations</string>
+    <string name="charts_declinations_loading">Calculating declinations…</string>
+    <string name="charts_declinations_load_error">Could not load declinations.</string>
+    <string name="charts_declinations_section_title">Declinations</string>
+    <string name="charts_declinations_section_subtitle">Degrees north/south of the equator.</string>
+    <string name="charts_declinations_row">%1$s: %2$.2f°</string>
+    <string name="charts_declinations_row_out_of_bounds">%1$s: %2$.2f° · out of bounds</string>
+    <string name="charts_declinations_parallels_title">Parallels</string>
+    <string name="charts_declinations_parallels_subtitle">Same-declination relationships.</string>
+    <string name="charts_declinations_parallel_row">%1$s %2$s %3$s (orb %4$.2f°)</string>
+
+    <string name="charts_fixed_stars_title">Fixed Stars</string>
+    <string name="charts_fixed_stars_loading">Scanning fixed-star conjunctions…</string>
+    <string name="charts_fixed_stars_load_error">Could not load fixed stars.</string>
+    <string name="charts_fixed_stars_empty">No fixed-star conjunctions within orb.</string>
+    <string name="charts_fixed_stars_section_title">Conjunctions</string>
+    <string name="charts_fixed_stars_section_subtitle">Planets aligned with major fixed stars.</string>
+    <string name="charts_fixed_stars_row">%1$s ☌ %2$s (%3$s, orb %4$.2f°)</string>
+
+    <string name="charts_relocation_title">Relocation Chart</string>
+    <string name="charts_relocation_section_title">New location</string>
+    <string name="charts_relocation_section_subtitle">Same birth moment, recalculated for new coordinates.</string>
+    <string name="charts_relocation_latitude_label">Latitude (e.g. 40.71)</string>
+    <string name="charts_relocation_longitude_label">Longitude (e.g. -74.01)</string>
+    <string name="charts_relocation_action_calculate">Calculate relocation</string>
+    <string name="charts_relocation_calculating">Calculating…</string>
+    <string name="charts_relocation_loading">Recalculating houses for the new location…</string>
+    <string name="charts_relocation_load_error">Could not load the relocation chart.</string>
+    <string name="charts_relocation_invalid_coordinates">Enter a latitude between -90 and 90 and a longitude between -180 and 180.</string>
+    <string name="charts_relocation_houses_title">Relocated houses</string>
+    <string name="charts_relocation_houses_subtitle">House cusps for the new location.</string>
+    <string name="charts_relocation_planets_subtitle">Same positions; houses shift for the new place.</string>
+    <string name="charts_relocation_angle_aspects_title">Aspects to the angles</string>
+    <string name="charts_relocation_angle_aspects_subtitle">Planets contacting the relocated Ascendant and Midheaven.</string>
+
+    <string name="charts_solar_arc_card_subtitle">Advance every planet by the solar arc to today.</string>
+    <string name="charts_action_open_solar_arc">Open solar arc</string>
+    <string name="charts_lunar_return_card_subtitle">Your next Moon-return chart.</string>
+    <string name="charts_action_open_lunar_return">Open lunar return</string>
+    <string name="charts_relocation_card_subtitle">Recalculate houses for a new place.</string>
+    <string name="charts_action_open_relocation">Open relocation</string>
+    <string name="charts_profections_card_subtitle">Hellenistic time-lord for the year.</string>
+    <string name="charts_action_open_profections">Open profections</string>
+    <string name="charts_declinations_card_subtitle">Parallels and out-of-bounds planets.</string>
+    <string name="charts_action_open_declinations">Open declinations</string>
+    <string name="charts_fixed_stars_card_subtitle">Conjunctions with major fixed stars.</string>
+    <string name="charts_action_open_fixed_stars">Open fixed stars</string>
 </resources>

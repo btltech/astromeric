@@ -16,6 +16,98 @@ data class ProgressedChartRequestData(
     val targetDate: String? = null,
 )
 
+// ---------------------------------------------------------------------------
+// Advanced charts (iOS parity): solar arc, relocation, lunar return,
+// profections, declinations, fixed stars. Shapes mirror backend
+// backend/app/routers/charts.py exactly.
+// ---------------------------------------------------------------------------
+
+data class SolarArcChartRequest(
+    @SerializedName("profile") val profile: ProfilePayload,
+    @SerializedName("target_date") val targetDate: String? = null,
+)
+
+data class RelocationChartRequest(
+    @SerializedName("profile") val profile: ProfilePayload,
+    @SerializedName("new_latitude") val newLatitude: Double,
+    @SerializedName("new_longitude") val newLongitude: Double,
+    @SerializedName("new_timezone") val newTimezone: String? = null,
+)
+
+data class LunarReturnChartRequest(
+    @SerializedName("profile") val profile: ProfilePayload,
+    @SerializedName("target_date") val targetDate: String? = null,
+    @SerializedName("location_lat") val locationLat: Double? = null,
+    @SerializedName("location_lon") val locationLon: Double? = null,
+    @SerializedName("location_tz") val locationTz: String? = null,
+)
+
+data class ProfectionsRequestData(
+    @SerializedName("profile") val profile: ProfilePayload,
+    @SerializedName("ref_date") val refDate: String? = null,
+)
+
+data class DeclinationsRequestData(
+    @SerializedName("profile") val profile: ProfilePayload,
+)
+
+data class FixedStarPlanetInput(
+    @SerializedName("name") val name: String,
+    @SerializedName("absolute_degree") val absoluteDegree: Double,
+)
+
+data class FixedStarsRequestData(
+    @SerializedName("planets") val planets: List<FixedStarPlanetInput>,
+    @SerializedName("orb") val orb: Double? = 1.0,
+)
+
+data class ProfectionsData(
+    @SerializedName("age") val age: Int = 0,
+    @SerializedName("ascendant_sign") val ascendantSign: String? = null,
+    @SerializedName("annual_house") val annualHouse: Int = 0,
+    @SerializedName("annual_sign") val annualSign: String? = null,
+    @SerializedName("annual_lord") val annualLord: String? = null,
+    @SerializedName("annual_focus") val annualFocus: String = "",
+    @SerializedName("annual_lord_themes") val annualLordThemes: String = "",
+    @SerializedName("monthly_house") val monthlyHouse: Int = 0,
+    @SerializedName("monthly_sign") val monthlySign: String? = null,
+    @SerializedName("monthly_lord") val monthlyLord: String? = null,
+    @SerializedName("monthly_focus") val monthlyFocus: String = "",
+    @SerializedName("months_into_year") val monthsIntoYear: Int = 0,
+    @SerializedName("interpretation") val interpretation: String = "",
+)
+
+data class DeclinationEntry(
+    @SerializedName("name") val name: String = "",
+    @SerializedName("longitude") val longitude: Double = 0.0,
+    @SerializedName("latitude") val latitude: Double = 0.0,
+    @SerializedName("declination") val declination: Double = 0.0,
+    @SerializedName("out_of_bounds") val outOfBounds: Boolean = false,
+)
+
+data class DeclinationParallel(
+    @SerializedName("planet_a") val planetA: String = "",
+    @SerializedName("planet_b") val planetB: String = "",
+    @SerializedName("type") val type: String = "",
+    @SerializedName("orb") val orb: Double = 0.0,
+    @SerializedName("strength") val strength: Double = 0.0,
+)
+
+data class DeclinationsData(
+    @SerializedName("declinations") val declinations: List<DeclinationEntry> = emptyList(),
+    @SerializedName("parallels") val parallels: List<DeclinationParallel> = emptyList(),
+    @SerializedName("note") val note: String? = null,
+)
+
+data class FixedStarConjunction(
+    @SerializedName("planet") val planet: String = "",
+    @SerializedName("star") val star: String = "",
+    @SerializedName("orb") val orb: Double = 0.0,
+    @SerializedName("nature") val nature: String = "",
+    @SerializedName("keywords") val keywords: String = "",
+    @SerializedName("interpretation") val interpretation: String = "",
+)
+
 data class PlanetPlacement(
     @SerializedName("name")
     val name: String,
@@ -89,7 +181,26 @@ data class ChartMetadata(
     val timezone: String? = null,
     @SerializedName("house_system")
     val houseSystem: String? = null,
-)
+    // "flatlib" for real ephemeris data; "stub" / "polar-fallback" mean the positions
+    // are approximated and must not be shown as a real chart.
+    @SerializedName("provider")
+    val provider: String? = null,
+    @SerializedName("degraded")
+    val degraded: Boolean? = null,
+    @SerializedName("note")
+    val note: String? = null,
+    // Solar arc
+    @SerializedName("solar_arc_degrees")
+    val solarArcDegrees: Double? = null,
+    @SerializedName("directed_to")
+    val directedTo: String? = null,
+    // Lunar return
+    @SerializedName("return_datetime_local")
+    val returnDatetimeLocal: String? = null,
+) {
+    val isApproximated: Boolean
+        get() = degraded == true || provider == "stub" || provider == "polar-fallback"
+}
 
 data class ChartData(
     @SerializedName("planets")

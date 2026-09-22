@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Static home-screen / long-press app shortcuts. Each launches MainActivity with
+  the existing `launch_route` extra, which AstroShell consumes to deep-link to the
+  matching screen (mirrors the iOS Siri App Intents).
+-->
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="reading"
+        android:enabled="true"
+        android:shortcutShortLabel="@string/shortcut_reading_short"
+        android:shortcutLongLabel="@string/shortcut_reading_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.astromeric.android"
+            android:targetClass="com.astromeric.android.app.MainActivity">
+            <extra
+                android:name="launch_route"
+                android:value="reading" />
+        </intent>
+    </shortcut>
+
+    <shortcut
+        android:shortcutId="numerology"
+        android:enabled="true"
+        android:shortcutShortLabel="@string/shortcut_numerology_short"
+        android:shortcutLongLabel="@string/shortcut_numerology_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.astromeric.android"
+            android:targetClass="com.astromeric.android.app.MainActivity">
+            <extra
+                android:name="launch_route"
+                android:value="numerology" />
+        </intent>
+    </shortcut>
+
+    <shortcut
+        android:shortcutId="compatibility"
+        android:enabled="true"
+        android:shortcutShortLabel="@string/shortcut_compatibility_short"
+        android:shortcutLongLabel="@string/shortcut_compatibility_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.astromeric.android"
+            android:targetClass="com.astromeric.android.app.MainActivity">
+            <extra
+                android:name="launch_route"
+                android:value="compatibility" />
+        </intent>
+    </shortcut>
+</shortcuts>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Enforce HTTPS-only networking (defense in depth; targetSdk 35 already defaults
+  to no cleartext). The app talks only to the production backend over TLS.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">astronumeric.com</domain>
+        <domain includeSubdomains="true">astromeric.com</domain>
+        <domain includeSubdomains="true">up.railway.app</domain>
+    </domain-config>
+</network-security-config>
