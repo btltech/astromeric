@@ -299,12 +299,14 @@ struct AddFriendSheet: View {
                 Section("ui.friends.14".localized) {
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack {
-                            ForEach(emojis, id: \.self) { e in
+                            ForEach(Array(emojis.enumerated()), id: \.element) { index, e in
                                 Button(e) { avatarEmoji = e }
                                     .font(.title)
                                     .padding(6)
                                     .background(avatarEmoji == e ? Color.accentColor.opacity(0.2) : Color.clear)
                                     .clipShape(Circle())
+                                    .accessibilityLabel("a11y.avatarOption".localized("\(index + 1)"))
+                                    .accessibilityAddTraits(avatarEmoji == e ? [.isSelected] : [])
                             }
                         }
                     }

@@ -235,6 +235,8 @@ struct DailyFeaturesView: View {
                                 tappedLuckyNumber = (tappedLuckyNumber == number) ? nil : number
                             }
                         }
+                        .accessibilityAddTraits(.isButton)
+                        .accessibilityHint("a11y.luckyNumber.hint".localized)
                     }
                 }
 

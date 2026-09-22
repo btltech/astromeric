@@ -1176,3 +1176,14 @@
 "firstrun.proof.timing.title" = "Sincronizare zilnică practică";
 "firstrun.proof.timing.detail" = "Ziua personală, contextul lunar, prognoze și ferestre de planificare.";
 "firstrun.createProfile" = "Creează profil";
+
+// MARK: - Accessibility
+"a11y.deleteRelationship" = "Șterge relația";
+"a11y.deleteRelationship.hint" = "Elimină definitiv această relație";
+"a11y.exportChart" = "Exportă harta";
+"a11y.aboutNumber" = "Despre numărul tău %@";
+"a11y.loading" = "Se încarcă";
+"a11y.avatarOption" = "Avatar %@";
+"a11y.openProfileTab.hint" = "Deschide fila Profil pentru a adăuga datele nașterii";
+"a11y.forecastYear" = "Anul prognozei";
+"a11y.luckyNumber.hint" = "Arată ce înseamnă acest număr";
