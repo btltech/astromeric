@@ -72,7 +72,10 @@ def test_ai_explain_uses_deterministic_provider_for_daily_scope():
         app.dependency_overrides.clear()
 
 
-def test_ai_explain_passes_simple_language_to_gemini_for_non_deterministic_scope():
+def test_ai_explain_passes_simple_language_to_gemini_for_non_deterministic_scope(
+    monkeypatch,
+):
+    monkeypatch.setenv("AI_ACCESS_CODE", "owner-code")
     app.dependency_overrides[get_current_user] = _paid_user
     try:
         with patch(
@@ -81,7 +84,7 @@ def test_ai_explain_passes_simple_language_to_gemini_for_non_deterministic_scope
         ) as mocked_explain:
             response = client.post(
                 "/v2/ai/explain",
-                headers={"X-Client-Platform": "ios"},
+                headers={"X-Client-Platform": "ios", "X-AI-Access": "owner-code"},
                 json={
                     "scope": "compatibility",
                     "headline": "Overall Energy 7.8/10",

@@ -98,6 +98,9 @@
 		9157BFF2930C5C1F8A5A2B66 /* Color+Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2D87E82F540D74879B740C7 /* Color+Theme.swift */; };
 		95F6A61618FE8439653D393B /* RelationshipsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EFA41050FA4DAF6C3B2E8E5B /* RelationshipsView.swift */; };
 		9BE00806DD441EFDAEF2970D /* CosmicIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A79E6CEBCCAC1564483C0DF /* CosmicIntents.swift */; };
+		73D3C3555AB8657A7168C83D /* AIAccessCode.swift in Sources */ = {isa = PBXBuildFile; fileRef = B97AC2717418568979F543F2 /* AIAccessCode.swift */; };
+		0089F4CB1E2B19DCC4AC9F22 /* AIAccessCodeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99CFD1016D70D234F65B83DC /* AIAccessCodeView.swift */; };
+		6EB5DAD1605AF868AC268EB4 /* AIAccessCodeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB54BCB593DFFE035385B8BE /* AIAccessCodeTests.swift */; };
 		9C04B03F4D04AC3028CA8BCC /* PrivacyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C70157E2D9A9A4CEB63A829E /* PrivacyView.swift */; };
 		9CE4F5ACE574A7F85679A7F7 /* TimingEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 932EF7E45FAB8BF4B75E8FE8 /* TimingEngine.swift */; };
 		9DF10A7325B36AFC9DC4E9FC /* ShareCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F4B3F3163BF5048DF81ED65 /* ShareCardView.swift */; };
@@ -350,6 +353,9 @@
 		C1016A7A99EC9807521544C6 /* SectionGridView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SectionGridView.swift; sourceTree = "<group>"; };
 		C2D87E82F540D74879B740C7 /* Color+Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+Theme.swift"; sourceTree = "<group>"; };
 		C5DF664A877B4C3D75695624 /* DataQualityEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataQualityEngine.swift; sourceTree = "<group>"; };
+		B97AC2717418568979F543F2 /* AIAccessCode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIAccessCode.swift; sourceTree = "<group>"; };
+		99CFD1016D70D234F65B83DC /* AIAccessCodeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIAccessCodeView.swift; sourceTree = "<group>"; };
+		FB54BCB593DFFE035385B8BE /* AIAccessCodeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIAccessCodeTests.swift; sourceTree = "<group>"; };
 		C70157E2D9A9A4CEB63A829E /* PrivacyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivacyView.swift; sourceTree = "<group>"; };
 		C8AD691BAF0CCBB659C876FB /* JournalEmbedder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JournalEmbedder.swift; sourceTree = "<group>"; };
 		C8B1B3DD7A96F884BE3F4352 /* BiometricLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BiometricLogger.swift; sourceTree = "<group>"; };
@@ -560,6 +566,7 @@
 		641D273201464717B2E02906 /* Utilities */ = {
 			isa = PBXGroup;
 			children = (
+				B97AC2717418568979F543F2 /* AIAccessCode.swift */,
 				A2BEB15995D8256A028857A3 /* AccessibilityHelpers.swift */,
 				B9F598B86C523C91F89F98BB /* DebugLog.swift */,
 				821039B0B46F06E026A0EF33 /* PrivacyRedaction.swift */,
@@ -695,6 +702,7 @@
 		859B4A6EE273B35E3AEF194C /* AstroNumericTests */ = {
 			isa = PBXGroup;
 			children = (
+				FB54BCB593DFFE035385B8BE /* AIAccessCodeTests.swift */,
 				8CE125FE7FAF1229A10C3A24 /* AstroNumericTests.swift */,
 				9EE460EB01AD0CCF82D41DB4 /* EphemerisEngineTests.swift */,
 				0D92986A4EC55C9E9E1126BD /* JournalVMTests.swift */,
@@ -706,6 +714,7 @@
 		8D8FFF4DF8AA8422DA3621D3 /* Profile */ = {
 			isa = PBXGroup;
 			children = (
+				99CFD1016D70D234F65B83DC /* AIAccessCodeView.swift */,
 				DDFAE36C5BEF50DE52375F71 /* EditProfileView.swift */,
 				E34DD16546BC583E0F7DBA8D /* EditProfileVM.swift */,
 				814DE77E259EFAA027C72FBE /* HelpView.swift */,
@@ -1138,6 +1147,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6EB5DAD1605AF868AC268EB4 /* AIAccessCodeTests.swift in Sources */,
 				D8785524E2AEF0EB069D6093 /* AstroNumericTests.swift in Sources */,
 				F24B4D849566A2389CE75BF5 /* EphemerisEngineTests.swift in Sources */,
 				35FAA85888C1BFC2BE7542E7 /* JournalVMTests.swift in Sources */,
@@ -1149,6 +1159,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				73D3C3555AB8657A7168C83D /* AIAccessCode.swift in Sources */,
+				0089F4CB1E2B19DCC4AC9F22 /* AIAccessCodeView.swift in Sources */,
 				732F64F69BD4F655EA116D23 /* AIModels.swift in Sources */,
 				3A02EA2859BF557C7E285C2B /* APIClient.swift in Sources */,
 				6F81A7EABDEDFD2F80C2044E /* AccessibilityHelpers.swift in Sources */,
