@@ -34,8 +34,9 @@
                 <string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
             </array>
         </dict>
-        <!-- Other User Content: journal entries (/v2/journal/entry) and Cosmic Guide messages, which may
-             include journal excerpts and upcoming calendar event titles -->
+        <!-- Other User Content: Cosmic Guide messages and recent chat history, plus excerpts of
+             matching journal entries included in guide requests. Processed by Google Gemini to
+             generate the answer; not stored by our backend. -->
         <dict>
             <key>NSPrivacyCollectedDataType</key>
             <string>NSPrivacyCollectedDataTypeOtherUserContent</string>
@@ -48,11 +49,12 @@
                 <string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
             </array>
         </dict>
-        <!-- Health: today's biometrics are added to Cosmic Guide requests only when the user enables
-             biometric context in the guide (opt-in) -->
+        <!-- Other Data Types: birth date, birth time and timezone sent with profiles and Cosmic Guide
+             requests; with calendar context on, the day and time of day of upcoming events
+             (never titles or details). -->
         <dict>
             <key>NSPrivacyCollectedDataType</key>
-            <string>NSPrivacyCollectedDataTypeHealth</string>
+            <string>NSPrivacyCollectedDataTypeOtherDataTypes</string>
             <key>NSPrivacyCollectedDataTypeLinked</key>
             <true/>
             <key>NSPrivacyCollectedDataTypeTracking</key>
@@ -62,10 +64,12 @@
                 <string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
             </array>
         </dict>
-        <!-- Other Data Types: birth date, birth time and timezone sent with profiles for chart calculation -->
+        <!-- Contacts: friend and partner profiles added for compatibility / Cosmic Circle (names,
+             relationship type, birth details) are stored by the backend, and friends' names and
+             relationship types are included in Cosmic Guide requests. -->
         <dict>
             <key>NSPrivacyCollectedDataType</key>
-            <string>NSPrivacyCollectedDataTypeOtherDataTypes</string>
+            <string>NSPrivacyCollectedDataTypeContacts</string>
             <key>NSPrivacyCollectedDataTypeLinked</key>
             <true/>
             <key>NSPrivacyCollectedDataTypeTracking</key>

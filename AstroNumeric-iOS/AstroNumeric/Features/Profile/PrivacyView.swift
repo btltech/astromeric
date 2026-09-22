@@ -75,8 +75,8 @@ struct PrivacyView: View {
             bullets: [
                 "We do not embed ad-tech or cross-app tracking SDKs in the iOS app.",
                 "We do not sell or rent your profile data to advertisers.",
-                "We do not pull your contacts, photos, or calendars unless you explicitly use a feature that asks for that permission.",
-                "We do not write data into HealthKit.",
+                "We do not read your contacts or your photo library. The app only adds an image to Photos when you choose Save Image, and only reads your calendar if you allow it.",
+                "The app does not access Apple Health (HealthKit) data.",
             ]
         ),
         PrivacySectionData(
@@ -85,7 +85,7 @@ struct PrivacyView: View {
             title: "How Data Is Stored",
             bullets: [
                 "In the current personal-mode build, profiles, app preferences, local relationship history, habits, and most journal entries are stored on-device using app storage such as UserDefaults and local files.",
-                "A local journal semantic index is stored on-device to support on-device recall inside Cosmic Guide.",
+                "A journal search index is stored on-device. When you ask the Cosmic Guide a question, excerpts of up to three matching entries (up to 300 characters each) are included in that request.",
                 "Widget data is copied into the app group container so the widget extension can read it.",
                 "Response caches are stored locally on your device and expire after their configured TTL.",
                 "Widget and notification freshness data is kept on-device so the app can refresh context without adding analytics tracking.",
@@ -97,7 +97,8 @@ struct PrivacyView: View {
             iconColor: .pink,
             title: "Network Requests And Backend Use",
             bullets: [
-                "Some features send profile data to the AstroMeric backend when you request server-backed forecasts, AI guidance, compatibility, friend sync, widget brief refresh, or notification registration.",
+                "Forecasts, charts, compatibility, and widget briefs send the birth details needed for each calculation to the AstroMeric backend. Your profiles themselves are kept on your device.",
+                "Cosmic Guide sends your question, recent chat messages, your profile name and birth details (masked when Hide Sensitive Details is on), your chart, excerpts of matching journal entries, saved friends' names and relationship types, and, if you turn on calendar context, the day and time of day of upcoming events (never titles or details). Our backend forwards this to Google's Gemini API to write the answer and does not store it.",
                 "Production API traffic uses HTTPS.",
                 "Friend records added in Cosmic Circle are stored by the backend so they can be retrieved later.",
                 "The app currently does not include a dedicated third-party crash-reporting or analytics SDK such as Firebase or Mixpanel.",
@@ -110,8 +111,8 @@ struct PrivacyView: View {
             bullets: [
                 "Notifications: if you allow notifications, the app may register a push token with the backend.",
                 "Location: you can enter a place manually or ask the app to use current location to fill birth-place details.",
-                "Calendar: calendar access is opt-in and only used by calendar-aware guidance features.",
-                "HealthKit: biometric-aware guidance is opt-in and only requests read access when you enable that context inside Cosmic Guide. You can deny or revoke that permission in iOS Settings at any time.",
+                "Calendar: opt-in. Temporal Matrix reads upcoming events on your device. Cosmic Guide receives only the day and time of day of events, and only if you turn on calendar context.",
+                "Photos: add-only access, used when you choose Save Image on a reading card.",
                 "Microphone and Speech Recognition: only used when you record a voice journal entry.",
             ]
         ),
@@ -122,7 +123,7 @@ struct PrivacyView: View {
             bullets: [
                 "Hide Sensitive Details masks names, birth details, share cards, and some cached labels in the UI.",
                 "Hide Sensitive Details is a display and sharing redaction layer. It does not pause network-backed features, disable widgets, or create a separate local-only mode.",
-                "Chart, forecast, compatibility, widget brief, and AI features can still use the birth date, birth time, coordinates, and timezone needed to calculate accurate results.",
+                "Chart, forecast, compatibility, and widget brief features still send the birth date, birth time, coordinates, and timezone needed to calculate accurate results. In Cosmic Guide requests your name and birth date, time, and place are masked, but chart positions are still sent.",
                 "Backup exports can still contain full birth details so the profile can be restored later, even when privacy mode is enabled.",
                 "Plain-text copy and some share surfaces are redacted when privacy mode is on.",
             ]
