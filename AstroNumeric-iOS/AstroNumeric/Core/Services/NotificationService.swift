@@ -305,22 +305,14 @@ actor NotificationService {
     
     // MARK: - Token Registration
     
-    /// Handle device token registration
+    /// Handle device token registration.
+    ///
+    /// The token stays on the device: every notification this app shows is
+    /// scheduled locally, so uploading it would hand the backend a device-level
+    /// identifier it has no use for.
     func registerDeviceToken(_ tokenData: Data) async {
         let token = tokenData.map { String(format: "%02.2hhx", $0) }.joined()
-        
-        // Store token locally
         UserDefaults.standard.set(token, forKey: "apns_device_token")
-        
-        // Upload to backend for push notifications
-        do {
-            let _: V2ApiResponse<EmptyResponse> = try await APIClient.shared.fetch(
-                .registerDeviceToken(token)
-            )
-            DebugLog.log("Device token registered with backend")
-        } catch {
-            DebugLog.log("Failed to register device token: \(error)")
-        }
     }
     
     // MARK: - Pending Notifications
@@ -340,25 +332,4 @@ actor NotificationService {
     func removeAllPendingNotifications() async {
         UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
     }
-}
-
-// MARK: - Empty Response for API
-
-struct EmptyResponse: Codable {}
-
-// MARK: - Endpoint Extension
-
-extension Endpoint {
-    static func registerDeviceToken(_ token: String) -> Endpoint {
-        Endpoint(
-            path: "/v2/notifications/register",
-            method: .POST,
-            body: DeviceTokenRequest(token: token, platform: "ios")
-        )
-    }
-}
-
-struct DeviceTokenRequest: Encodable {
-    let token: String
-    let platform: String
 }
