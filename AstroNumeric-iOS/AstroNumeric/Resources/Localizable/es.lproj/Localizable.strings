@@ -1162,3 +1162,12 @@
 "habits.create.subtitle" = "Name the habit, pick a category, and let lunar timing add context.";
 "habits.create.phaseMatch" = "This category matches the current lunar guidance.";
 "journal.loading.body" = "Loading saved readings and local drafts.";
+
+// MARK: - First run
+"firstrun.proof.local.title" = "Local por defecto";
+"firstrun.proof.local.detail" = "Tu perfil empieza en este dispositivo.";
+"firstrun.proof.chart.title" = "Carta y numerología juntas";
+"firstrun.proof.chart.detail" = "Una carta natal completa más los patrones numéricos que dan forma a tu vida.";
+"firstrun.proof.timing.title" = "Sincronización diaria práctica";
+"firstrun.proof.timing.detail" = "Día personal, contexto lunar, pronósticos y ventanas de planificación.";
+"firstrun.createProfile" = "Crear perfil";

@@ -1163,3 +1163,12 @@
 "habits.create.subtitle" = "Name the habit, pick a category, and let lunar timing add context.";
 "habits.create.phaseMatch" = "This category matches the current lunar guidance.";
 "journal.loading.body" = "Loading saved readings and local drafts.";
+
+// MARK: - First run
+"firstrun.proof.local.title" = "Local-first by default";
+"firstrun.proof.local.detail" = "Your profile starts on this device.";
+"firstrun.proof.chart.title" = "Chart and numerology together";
+"firstrun.proof.chart.detail" = "A full natal map plus the number patterns shaping your life.";
+"firstrun.proof.timing.title" = "Practical daily timing";
+"firstrun.proof.timing.detail" = "Personal day, moon context, forecasts, and planning windows.";
+"firstrun.createProfile" = "Create Profile";

@@ -1159,3 +1159,12 @@
 "habits.create.subtitle" = "Name the habit, pick a category, and let lunar timing add context.";
 "habits.create.phaseMatch" = "This category matches the current lunar guidance.";
 "journal.loading.body" = "Loading saved readings and local drafts.";
+
+// MARK: - First run
+"firstrun.proof.local.title" = "पूर्वनिर्धारित रूपमा लोकल";
+"firstrun.proof.local.detail" = "तपाईंको प्रोफाइल यही यन्त्रबाट सुरु हुन्छ।";
+"firstrun.proof.chart.title" = "चार्ट र अङ्कशास्त्र सँगै";
+"firstrun.proof.chart.detail" = "पूर्ण जन्म चार्टसँगै तपाईंको जीवन बनाउने अङ्क ढाँचाहरू।";
+"firstrun.proof.timing.title" = "व्यावहारिक दैनिक समय";
+"firstrun.proof.timing.detail" = "व्यक्तिगत दिन, चन्द्र सन्दर्भ, पूर्वानुमान र योजना समय।";
+"firstrun.createProfile" = "प्रोफाइल बनाउनुहोस्";

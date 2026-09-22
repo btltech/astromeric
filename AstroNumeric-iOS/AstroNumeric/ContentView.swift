@@ -372,12 +372,15 @@ private struct FirstRunProfilePromptView: View {
             Color.black.opacity(0.72)
                 .ignoresSafeArea()
 
-            VStack(spacing: 24) {
-                header
-                proofPoints
-                actions
+            ScrollView {
+                VStack(spacing: 24) {
+                    header
+                    proofPoints
+                    actions
+                }
+                .padding(24)
             }
-            .padding(24)
+            .scrollBounceBehavior(.basedOnSize)
             .frame(maxWidth: 420)
             .background(
                 RoundedRectangle(cornerRadius: 28)
@@ -428,27 +431,27 @@ private struct FirstRunProfilePromptView: View {
         VStack(spacing: 10) {
             FirstRunProofRow(
                 icon: "lock.shield.fill",
-                title: "Local-first by default",
-                detail: "Your profile starts on this device."
+                title: "firstrun.proof.local.title".localized,
+                detail: "firstrun.proof.local.detail".localized
             )
 
             FirstRunProofRow(
                 icon: "circle.grid.cross.fill",
-                title: "Chart and numerology together",
-                detail: "A full natal map plus the number patterns shaping your life."
+                title: "firstrun.proof.chart.title".localized,
+                detail: "firstrun.proof.chart.detail".localized
             )
 
             FirstRunProofRow(
                 icon: "clock.badge.checkmark.fill",
-                title: "Practical daily timing",
-                detail: "Personal day, moon context, forecasts, and planning windows."
+                title: "firstrun.proof.timing.title".localized,
+                detail: "firstrun.proof.timing.detail".localized
             )
         }
     }
 
     private var actions: some View {
         VStack(spacing: 12) {
-            GradientButton("Create Profile", icon: "person.crop.circle.badge.plus") {
+            GradientButton("firstrun.createProfile".localized, icon: "person.crop.circle.badge.plus") {
                 onCreateProfile()
             }
             .accessibilityHint("Opens the birth details form")
@@ -512,12 +515,15 @@ private struct FirstRunProfileCompleteView: View {
             Color.black.opacity(0.72)
                 .ignoresSafeArea()
 
-            VStack(spacing: 22) {
-                header
-                signalGrid
-                actions
+            ScrollView {
+                VStack(spacing: 22) {
+                    header
+                    signalGrid
+                    actions
+                }
+                .padding(24)
             }
-            .padding(24)
+            .scrollBounceBehavior(.basedOnSize)
             .frame(maxWidth: 430)
             .background(
                 RoundedRectangle(cornerRadius: 24)

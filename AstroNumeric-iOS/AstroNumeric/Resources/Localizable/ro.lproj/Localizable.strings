@@ -1159,3 +1159,12 @@
 "habits.create.subtitle" = "Name the habit, pick a category, and let lunar timing add context.";
 "habits.create.phaseMatch" = "This category matches the current lunar guidance.";
 "journal.loading.body" = "Loading saved readings and local drafts.";
+
+// MARK: - First run
+"firstrun.proof.local.title" = "Local, în mod implicit";
+"firstrun.proof.local.detail" = "Profilul tău începe pe acest dispozitiv.";
+"firstrun.proof.chart.title" = "Hartă și numerologie împreună";
+"firstrun.proof.chart.detail" = "O hartă natală completă plus tiparele numerice care îți modelează viața.";
+"firstrun.proof.timing.title" = "Sincronizare zilnică practică";
+"firstrun.proof.timing.detail" = "Ziua personală, contextul lunar, prognoze și ferestre de planificare.";
+"firstrun.createProfile" = "Creează profil";
