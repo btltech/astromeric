@@ -10,6 +10,7 @@ client = TestClient(app)
 
 
 def test_cosmic_guidance_accepts_ios_body_contract(monkeypatch):
+    monkeypatch.setenv("AI_ACCESS_CODE", "owner-code")
     monkeypatch.setattr(
         cosmic_guide_router,
         "explain_with_gemini",
@@ -18,7 +19,7 @@ def test_cosmic_guidance_accepts_ios_body_contract(monkeypatch):
 
     resp = client.post(
         "/v2/cosmic-guide/guidance",
-        headers={"X-Client-Platform": "ios"},
+        headers={"X-Client-Platform": "ios", "X-AI-Access": "owner-code"},
         json={
             "topic": "career",
             "context": "Launch planning",
@@ -38,6 +39,7 @@ def test_cosmic_guidance_accepts_ios_body_contract(monkeypatch):
 
 
 def test_cosmic_interpret_accepts_ios_body_contract(monkeypatch):
+    monkeypatch.setenv("AI_ACCESS_CODE", "owner-code")
     monkeypatch.setattr(
         cosmic_guide_router,
         "explain_with_gemini",
@@ -46,7 +48,7 @@ def test_cosmic_interpret_accepts_ios_body_contract(monkeypatch):
 
     resp = client.post(
         "/v2/cosmic-guide/interpret",
-        headers={"X-Client-Platform": "ios"},
+        headers={"X-Client-Platform": "ios", "X-AI-Access": "owner-code"},
         json={
             "chart_data": "Sun in Gemini, Moon in Pisces",
             "reading_data": "Luck score 75",
