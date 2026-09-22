@@ -48,6 +48,7 @@
 		3D1CDE6CFCDFC6EA73A86AC6 /* BiometricLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8B1B3DD7A96F884BE3F4352 /* BiometricLogger.swift */; };
 		3D4B84E9875677262DB004D3 /* ProgressionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06F99CB072F98E4A203CD1C9 /* ProgressionsView.swift */; };
 		3F7A3C2A89B51DBEF11EB945 /* RelationshipsVM.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DFAAAA009F004A6EFBA7565 /* RelationshipsVM.swift */; };
+		3FF0CAE32A812DA8D118F486 /* FriendsOwnerKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECFD378D7260DE839928BAB9 /* FriendsOwnerKey.swift */; };
 		409733BCB4191533CC53A7FB /* swehel.c in Sources */ = {isa = PBXBuildFile; fileRef = 4B4D5C13360879DCC6E7E0DB /* swehel.c */; settings = {COMPILER_FLAGS = "-w"; }; };
 		40B34CF2511E1BF34503F299 /* AstroRepositories.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44AF3AE88117A8A079CA06E2 /* AstroRepositories.swift */; };
 		422FCE98BB0E2ED2541AD0DC /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21BC13513E2DCCD00572995E /* HomeView.swift */; };
@@ -113,6 +114,7 @@
 		B16A1D37EB71031BADF7215F /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 3061133121CB1FF71A8259C5 /* Localizable.strings */; };
 		B47DCA37173C23BA68B4D80F /* RetryPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E89EB87FD0969B23D1BDA04 /* RetryPolicy.swift */; };
 		B519F623EF801281BD28346B /* CachePrewarmScheduler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59CD924F04731CC58944AB19 /* CachePrewarmScheduler.swift */; };
+		B5B58F89676812FF86F86D07 /* FriendsOwnerKeyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25B27620C59408EEB09B1B5D /* FriendsOwnerKeyTests.swift */; };
 		B62898709FB70B62B6235D20 /* ToolModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D61DFE7DEFECFD4E82BECFF /* ToolModels.swift */; };
 		B64B6C4EC3E6D95F4CD9855B /* DoDontCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = B294406A85E6EAF03994AFC2 /* DoDontCard.swift */; };
 		B7106D078A9A1793CCC71104 /* LearnVM.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84191312FEBFC44CD5BD3F01 /* LearnVM.swift */; };
@@ -241,6 +243,7 @@
 		2062AB2D1CF664F14995D5FE /* HomeVM.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeVM.swift; sourceTree = "<group>"; };
 		206DBA57352B0D624E9B087F /* AdaptiveLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdaptiveLayout.swift; sourceTree = "<group>"; };
 		21BC13513E2DCCD00572995E /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+		25B27620C59408EEB09B1B5D /* FriendsOwnerKeyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FriendsOwnerKeyTests.swift; sourceTree = "<group>"; };
 		26E6AD5BE79AC068C2AE3165 /* swenut2000a.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = swenut2000a.h; sourceTree = "<group>"; };
 		27B802AB567FC6B8DCCF3BCE /* AstroNumericTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = AstroNumericTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		27FD1DC17E5975AB92C8F54E /* TLDRBoxView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TLDRBoxView.swift; sourceTree = "<group>"; };
@@ -375,6 +378,7 @@
 		E49BA5A6F95DF5D46131C6BD /* swecl.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = swecl.c; sourceTree = "<group>"; };
 		E79A811CE4CC1E439CB4402E /* JournalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JournalView.swift; sourceTree = "<group>"; };
 		E7E3C5236662033660D81B65 /* TransitNotificationScheduler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransitNotificationScheduler.swift; sourceTree = "<group>"; };
+		ECFD378D7260DE839928BAB9 /* FriendsOwnerKey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FriendsOwnerKey.swift; sourceTree = "<group>"; };
 		EC876BA87201DE6B442247AF /* sepl_18.se1 */ = {isa = PBXFileReference; lastKnownFileType = file; path = sepl_18.se1; sourceTree = "<group>"; };
 		ED1D490FC25EA77761D367B6 /* swemmoon.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = swemmoon.c; sourceTree = "<group>"; };
 		EE3FCCDD5D8704AAD6253666 /* PlanetaryHourWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanetaryHourWidget.swift; sourceTree = "<group>"; };
@@ -569,6 +573,7 @@
 				B97AC2717418568979F543F2 /* AIAccessCode.swift */,
 				A2BEB15995D8256A028857A3 /* AccessibilityHelpers.swift */,
 				B9F598B86C523C91F89F98BB /* DebugLog.swift */,
+				ECFD378D7260DE839928BAB9 /* FriendsOwnerKey.swift */,
 				821039B0B46F06E026A0EF33 /* PrivacyRedaction.swift */,
 			);
 			path = Utilities;
@@ -705,6 +710,7 @@
 				FB54BCB593DFFE035385B8BE /* AIAccessCodeTests.swift */,
 				8CE125FE7FAF1229A10C3A24 /* AstroNumericTests.swift */,
 				9EE460EB01AD0CCF82D41DB4 /* EphemerisEngineTests.swift */,
+				25B27620C59408EEB09B1B5D /* FriendsOwnerKeyTests.swift */,
 				0D92986A4EC55C9E9E1126BD /* JournalVMTests.swift */,
 				1A6C96BB6FFA164F2DB55BB5 /* LearningProgressManagerTests.swift */,
 			);
@@ -1150,6 +1156,7 @@
 				6EB5DAD1605AF868AC268EB4 /* AIAccessCodeTests.swift in Sources */,
 				D8785524E2AEF0EB069D6093 /* AstroNumericTests.swift in Sources */,
 				F24B4D849566A2389CE75BF5 /* EphemerisEngineTests.swift in Sources */,
+				B5B58F89676812FF86F86D07 /* FriendsOwnerKeyTests.swift in Sources */,
 				35FAA85888C1BFC2BE7542E7 /* JournalVMTests.swift in Sources */,
 				ADFBAE983BCF9A875C518B2A /* LearningProgressManagerTests.swift in Sources */,
 			);
@@ -1212,6 +1219,7 @@
 				ECC5A35DAA33E4CD3FBF3E2E /* ErrorStateView.swift in Sources */,
 				B8EFDFB8243FF31B245979BB /* ExploreView.swift in Sources */,
 				F76BEAEFC06D8E148D45DBFE /* FloatingAIButton.swift in Sources */,
+				3FF0CAE32A812DA8D118F486 /* FriendsOwnerKey.swift in Sources */,
 				330273C5F350CC51482374DE /* FriendsView.swift in Sources */,
 				4C313DF88D6E4D834F2DC485 /* GlossaryView.swift in Sources */,
 				E8F0E44A787B81CB044DB856 /* GradientButton.swift in Sources */,

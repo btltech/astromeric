@@ -238,12 +238,13 @@ struct FriendsView: View {
     }
 
     private func loadFriends() async {
-        guard let profile = store.activeProfile else { return }
+        guard let profile = store.activeProfile,
+              let ownerId = FriendsOwnerKey.ownerId(forProfileId: profile.id) else { return }
         isLoading = true
         defer { isLoading = false }
         do {
             let response: V2ApiResponse<[FriendProfile]> = try await APIClient.shared.fetch(
-                .listFriends(ownerId: String(profile.id)),
+                .listFriends(ownerId: ownerId),
                 cachePolicy: .networkFirst
             )
             friends = response.data
@@ -252,11 +253,12 @@ struct FriendsView: View {
     }
 
     private func loadCompatibilities() async {
-        guard let p = store.activeProfile else { return }
+        guard let p = store.activeProfile,
+              let ownerId = FriendsOwnerKey.ownerId(forProfileId: p.id) else { return }
         let profile = toPayload(p)
         do {
             let response: V2ApiResponse<[FriendCompatibility]> = try await APIClient.shared.fetch(
-                .compareAllFriends(ownerId: String(p.id), profile: profile),
+                .compareAllFriends(ownerId: ownerId, profile: profile),
                 cachePolicy: .networkFirst
             )
             await MainActor.run { compatibilities = response.data }
@@ -329,10 +331,14 @@ struct AddFriendSheet: View {
             relationshipType: relationshipType
         )
         Task {
-            guard let p = store.activeProfile else { return }
+            guard let p = store.activeProfile,
+                  let ownerId = FriendsOwnerKey.ownerId(forProfileId: p.id) else {
+                await MainActor.run { isSaving = false }
+                return
+            }
             do {
                 let _: V2ApiResponse<FriendProfile> = try await APIClient.shared.fetch(
-                    .addFriend(ownerId: String(p.id), friend: friend),
+                    .addFriend(ownerId: ownerId, friend: friend),
                     cachePolicy: .networkOnly
                 )
                 await MainActor.run {
