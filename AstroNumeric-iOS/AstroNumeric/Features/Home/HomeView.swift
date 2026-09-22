@@ -57,6 +57,7 @@ struct HomeView: View {
                     }
                     .padding(.horizontal, hSizeClass == .regular ? 28 : Space.md)
                     .padding(.bottom, Space.xl)
+                    .floatingAIButtonClearance()
                     .readableContainer()
                 }
                 .refreshable {

@@ -47,6 +47,8 @@ final class EditProfileVM: NSObject {
     // MARK: - Location Search
     
     var placeSuggestions: [MKLocalSearchCompletion] = []
+    /// Matches from the CLGeocoder fallback, shown when the completer returns nothing.
+    var geocodedSuggestions: [PlaceSuggestion] = []
     var selectedPlace: PlaceSuggestion?
     var isSearchingPlaces: Bool = false
     var isGeocodingPlace: Bool = false
@@ -152,6 +154,7 @@ final class EditProfileVM: NSObject {
         searchDebounceTask?.cancel()
         
         guard query.count >= 2 else {
+            geocodedSuggestions = []
             placeSuggestions = []
             isSearchingPlaces = false
             return
@@ -164,6 +167,7 @@ final class EditProfileVM: NSObject {
         
         // Clear selection when user starts typing new query
         selectedPlace = nil
+        geocodedSuggestions = []
         isSearchingPlaces = true
         
         searchDebounceTask = Task {
@@ -196,30 +200,36 @@ final class EditProfileVM: NSObject {
         do {
             let placemarks = try await geocoder.geocodeAddressString(query)
             
+            let matches: [PlaceSuggestion] = placemarks.prefix(5).compactMap { placemark in
+                guard let location = placemark.location else { return nil }
+                let displayName = [
+                    placemark.locality,
+                    placemark.administrativeArea,
+                    placemark.country
+                ].compactMap { $0 }.joined(separator: ", ")
+
+                return PlaceSuggestion(
+                    id: UUID().uuidString,
+                    displayName: displayName.isEmpty ? query : displayName,
+                    latitude: location.coordinate.latitude,
+                    longitude: location.coordinate.longitude,
+                    timezone: placemark.timeZone?.identifier ?? TimeZone.current.identifier
+                )
+            }
+
             await MainActor.run {
                 isSearchingPlaces = false
-                
-                if let placemark = placemarks.first,
-                   let location = placemark.location {
-                    // Create a suggestion directly
-                    let displayName = [
-                        placemark.locality,
-                        placemark.administrativeArea,
-                        placemark.country
-                    ].compactMap { $0 }.joined(separator: ", ")
-                    
-                    let place = PlaceSuggestion(
-                        id: UUID().uuidString,
-                        displayName: displayName.isEmpty ? query : displayName,
-                        latitude: location.coordinate.latitude,
-                        longitude: location.coordinate.longitude,
-                        timezone: placemark.timeZone?.identifier ?? TimeZone.current.identifier
-                    )
-                    
-                    // Auto-select the geocoded result
+
+                // City names repeat across the world — "Lagos" is both Nigeria and
+                // Portugal — and the birthplace decides the coordinates and timezone
+                // the whole chart is built from. Only settle on a match when there
+                // is exactly one; otherwise let the person choose.
+                if matches.count == 1, let place = matches.first {
                     self.selectedPlace = place
                     self.placeQuery = place.displayName
                     HapticManager.notification(.success)
+                } else {
+                    self.geocodedSuggestions = matches
                 }
             }
         } catch {
@@ -231,8 +241,18 @@ final class EditProfileVM: NSObject {
     }
     
     /// Select a search completion and geocode it to get coordinates
+    /// Settle on one of the fallback geocoder's matches.
+    func selectGeocodedPlace(_ place: PlaceSuggestion) {
+        geocodedSuggestions = []
+        placeSuggestions = []
+        selectedPlace = place
+        placeQuery = place.displayName
+        HapticManager.notification(.success)
+    }
+
     func selectCompletion(_ completion: MKLocalSearchCompletion) {
         placeSuggestions = []
+        geocodedSuggestions = []
         isGeocodingPlace = true
         
         let displayName = [completion.title, completion.subtitle]

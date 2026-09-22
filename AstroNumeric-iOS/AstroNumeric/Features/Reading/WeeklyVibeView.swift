@@ -11,7 +11,11 @@ struct WeeklyVibeView: View {
     
     /// Show the share button
     var showShare: Bool = true
-    
+
+    /// Kept in step with VibeDayCard so the skeleton matches the loaded row.
+    @ScaledMetric(relativeTo: .caption) private var cardWidth: CGFloat = 70
+    @ScaledMetric(relativeTo: .caption) private var cardMinHeight: CGFloat = 110
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             // Header
@@ -92,7 +96,7 @@ struct WeeklyVibeView: View {
             ForEach(0..<7, id: \.self) { _ in
                 RoundedRectangle(cornerRadius: 16)
                     .fill(.ultraThinMaterial)
-                    .frame(width: 70, height: 100)
+                    .frame(width: cardWidth, height: cardMinHeight * 0.9)
                     .shimmer()
             }
         }
@@ -138,6 +142,10 @@ struct WeeklyVibeView: View {
 
 struct VibeDayCard: View {
     let day: ForecastDay
+    /// The card grows with the text inside it: a fixed height clipped the score
+    /// row at accessibility sizes.
+    @ScaledMetric(relativeTo: .caption) private var cardWidth: CGFloat = 70
+    @ScaledMetric(relativeTo: .caption) private var cardMinHeight: CGFloat = 110
     
     var body: some View {
         VStack(spacing: 8) {
@@ -171,6 +179,7 @@ struct VibeDayCard: View {
                     .font(.caption2)
                     .foregroundStyle(Color.textSecondary)
                     .lineLimit(1)
+                    .minimumScaleFactor(0.8)
                 
                 HStack(spacing: 4) {
                     Circle()
@@ -183,7 +192,8 @@ struct VibeDayCard: View {
                 }
             }
         }
-        .frame(width: 70, height: 110)
+        .frame(width: cardWidth)
+        .frame(minHeight: cardMinHeight)
         .padding(.vertical, 8)
         .background(
             RoundedRectangle(cornerRadius: Radius.md)

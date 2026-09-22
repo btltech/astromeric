@@ -323,6 +323,34 @@ struct EditProfileView: View {
                     .padding(.horizontal, Space.sm)
                     .background(Color.surfaceBase)
                     .clipShape(RoundedRectangle(cornerRadius: Radius.sm))
+                } else if !viewModel.geocodedSuggestions.isEmpty {
+                    // Several places share this name — the choice sets the
+                    // coordinates and timezone the chart is built from.
+                    VStack(spacing: 0) {
+                        ForEach(viewModel.geocodedSuggestions) { place in
+                            Button {
+                                viewModel.selectGeocodedPlace(place)
+                            } label: {
+                                HStack {
+                                    Image(systemName: "mappin")
+                                        .foregroundStyle(Color.accentSecondary)
+                                    Text(place.displayName)
+                                        .font(.subheadline)
+                                        .foregroundStyle(.primary)
+                                        .multilineTextAlignment(.leading)
+                                    Spacer()
+                                }
+                                .padding(.vertical, 10)
+                            }
+
+                            if place != viewModel.geocodedSuggestions.last {
+                                Divider()
+                            }
+                        }
+                    }
+                    .padding(.horizontal, Space.sm)
+                    .background(Color.surfaceBase)
+                    .clipShape(RoundedRectangle(cornerRadius: Radius.sm))
                 }
                 
                 if viewModel.selectedPlace != nil {

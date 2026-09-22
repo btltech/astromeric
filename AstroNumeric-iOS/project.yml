@@ -23,6 +23,7 @@ settings:
     INFOPLIST_KEY_CFBundleDisplayName: AstroNumeric
     INFOPLIST_KEY_LSApplicationCategoryType: 'public.app-category.lifestyle'
     INFOPLIST_KEY_UILaunchScreen_Generation: YES
+    INFOPLIST_KEY_UIUserInterfaceStyle: Dark
     INFOPLIST_KEY_UISupportedInterfaceOrientations: 'UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight'
     INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad: 'UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight'
     CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED: YES
