@@ -123,8 +123,9 @@ export function PrivacyPolicy() {
                 default.
               </li>
               <li>
-                <strong>Notifications (iOS):</strong> If you enable notifications, the app may
-                register an Apple Push Notification token with our backend to deliver alerts.
+                <strong>Notifications (iOS):</strong> Reminders are scheduled and shown by your
+                device. The Apple Push Notification token stays on the device and is never sent to
+                our backend.
               </li>
             </ul>
           </section>
@@ -212,9 +213,9 @@ export function PrivacyPolicy() {
             <h2>7. Retention &amp; Deletion</h2>
             <p>
               We keep server-stored data (website accounts and the profiles, readings, and journal
-              entries saved to them; friend and partner profiles; and push notification tokens)
-              until you ask us to delete it or, for accounts, until the account is deleted. To
-              delete a website account or any server-stored data, email{' '}
+              entries saved to them; and friend and partner profiles) until you ask us to delete it
+              or, for accounts, until the account is deleted. To delete a website account or any
+              server-stored data, email{' '}
               <a href="mailto:privacy@astromeric.app">privacy@astromeric.app</a> and we will delete
               it within 30 days. We do not keep Cosmic Guide conversations. Data stored on your
               device (such as iOS profiles and journal entries) can be removed by deleting those
