@@ -73,6 +73,7 @@ struct ChartsView: View {
                         .accessibilityLabel("section.charts.advanced.title".localized)
                     }
                     .padding()
+                    .floatingAIButtonClearance()
                     .readableContainer()
                 }
             }

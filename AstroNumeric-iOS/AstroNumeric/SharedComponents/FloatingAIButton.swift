@@ -45,6 +45,9 @@ struct FloatingAIButton: View {
                 .onChanged { _ in isPressed = true }
                 .onEnded   { _ in isPressed = false }
         )
+        // Positioned by the safeAreaInset in ContentView, so it only needs to sit
+        // at the trailing edge — no manual bottom offset to keep in sync with the
+        // tab bar height.
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
         .padding(.trailing, hSizeClass == .regular ? 28 : 16)
         .padding(.bottom, hSizeClass == .regular ? 24 : bottomPadding)
@@ -389,4 +392,24 @@ struct FloatingTypingIndicator: View {
         .padding()
         .background(Color.black)
         .environment(AppStore.shared)
+}
+
+// MARK: - Clearance for screens the button floats over
+
+private struct FloatingAIButtonClearance: ViewModifier {
+    /// Tracks the button's own scaled offset and height, so the space stays
+    /// correct at accessibility text sizes.
+    @ScaledMetric(relativeTo: .body) private var clearance: CGFloat = 148
+
+    func body(content: Content) -> some View {
+        content.padding(.bottom, clearance)
+    }
+}
+
+extension View {
+    /// Reserves room at the bottom of a scroll view for the floating AI button,
+    /// so its last row can always be scrolled clear of the button.
+    func floatingAIButtonClearance() -> some View {
+        modifier(FloatingAIButtonClearance())
+    }
 }

@@ -48,6 +48,7 @@ struct RelationshipsView: View {
                         relationshipsList
                     }
                     .padding()
+                    .floatingAIButtonClearance()
                     .readableContainer()
                 }
             }

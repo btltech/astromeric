@@ -203,6 +203,7 @@ struct ExploreView: View {
             }
         }
         .padding(.vertical)
+        .floatingAIButtonClearance()
     }
     
     // MARK: - Learn Content
@@ -280,6 +281,7 @@ struct ExploreView: View {
             .padding(.horizontal)
         }
         .padding(.vertical)
+        .floatingAIButtonClearance()
     }
     
     // MARK: - Habits Content
@@ -333,6 +335,7 @@ struct ExploreView: View {
             }
         }
         .padding(.vertical)
+        .floatingAIButtonClearance()
     }
     
     // MARK: - Relationships Content
@@ -444,6 +447,7 @@ struct ExploreView: View {
             }
         }
         .padding(.vertical)
+        .floatingAIButtonClearance()
     }
 }
 

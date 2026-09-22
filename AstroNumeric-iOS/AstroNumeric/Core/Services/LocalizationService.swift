@@ -85,7 +85,15 @@ final class LocalizationService {
         let result = bundle.localizedString(forKey: key, value: nil, table: nil)
         // If bundle lookup returns the key itself, try NSLocalizedString with main bundle
         if result == key {
-            return NSLocalizedString(key, bundle: .main, comment: comment)
+            let fallback = NSLocalizedString(key, bundle: .main, comment: comment)
+            #if DEBUG
+            // A missing key is drawn on screen verbatim — "label.startHere" shipped as
+            // a badge reading "LABEL.S-TARTHERE". Fail here rather than in the store.
+            if fallback == key, key.contains(".") {
+                assertionFailure("Missing localization for key '\(key)'")
+            }
+            #endif
+            return fallback
         }
         return result
     }

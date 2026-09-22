@@ -148,6 +148,7 @@ struct FriendsView: View {
                     }
                 }
                 .padding()
+                .floatingAIButtonClearance()
                 .readableContainer()
             }
         }

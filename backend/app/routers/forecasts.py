@@ -52,6 +52,9 @@ class ForecastData(BaseModel):
     generated_at: datetime
     tldr: Optional[str] = None
     active_transits: Optional[List[ActiveTransit]] = None
+    # True when no birth time was given and noon was assumed, so clients can
+    # mark the houses and timing windows as estimated (charts do the same).
+    birth_time_assumed: bool = False
 
 
 # ============================================================================
@@ -97,18 +100,6 @@ def _require_location(profile: ProfilePayload) -> None:
             raise InvalidCoordinatesError(
                 f"Invalid timezone '{profile.timezone}'. Use a valid IANA timezone (e.g., 'America/New_York')."
             )
-
-
-def _require_birth_time(profile: ProfilePayload) -> None:
-    if not profile.time_of_birth:
-        raise HTTPException(
-            status_code=422,
-            detail={
-                "code": "MISSING_TIME_OF_BIRTH",
-                "message": "Birth time is required for high-precision forecasts (HH:MM or HH:MM:SS).",
-                "field": "time_of_birth",
-            },
-        )
 
 
 def _raise_forecast_validation_error(error, request_id: str) -> None:
@@ -183,7 +174,6 @@ async def calculate_daily_forecast(
             )
 
         _validate_target_date(req.date)
-        _require_birth_time(req.profile)
         _require_location(req.profile)
 
         logger.info(
@@ -329,6 +319,7 @@ async def calculate_daily_forecast(
             generated_at=datetime.now(timezone.utc),
             tldr=fusion_tldr,
             active_transits=fusion_transits,
+            birth_time_assumed=not req.profile.time_of_birth,
         )
 
         return ApiResponse(
@@ -371,7 +362,6 @@ async def calculate_weekly_forecast(
             )
 
         _validate_target_date(req.date)
-        _require_birth_time(req.profile)
         _require_location(req.profile)
 
         logger.info(
@@ -433,6 +423,7 @@ async def calculate_weekly_forecast(
             sections=sections,
             overall_score=forecast.get("overall_score", 0.5),
             generated_at=datetime.now(timezone.utc),
+            birth_time_assumed=not req.profile.time_of_birth,
         )
 
         return ApiResponse(
@@ -475,7 +466,6 @@ async def calculate_monthly_forecast(
             )
 
         _validate_target_date(req.date)
-        _require_birth_time(req.profile)
         _require_location(req.profile)
 
         logger.info(
@@ -537,6 +527,7 @@ async def calculate_monthly_forecast(
             sections=sections,
             overall_score=forecast.get("overall_score", 0.5),
             generated_at=datetime.now(timezone.utc),
+            birth_time_assumed=not req.profile.time_of_birth,
         )
 
         return ApiResponse(

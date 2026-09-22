@@ -82,12 +82,14 @@ final class HomeVM {
             // Extract summary from prediction data
             dailyReading = Self.makeDailyReadingSummary(from: prediction)
         } catch {
-            // Preserve the raw error for troubleshooting.
+            // Preserve the raw error for troubleshooting, but never put it in the
+            // headline: that slot is the first thing anyone reads on opening the app,
+            // and a server validation string there reads like a broken app.
             errorMessage = "📡 Reading: \(error.localizedDescription)"
             dailyReading = DailyReadingSummary(
-                headline: "⚠️ \(error.localizedDescription)",
-                tldr: nil,
-                overallEnergy: "Unknown"
+                headline: "home.reading.unavailable.headline".localized,
+                tldr: "home.reading.unavailable.tldr".localized,
+                overallEnergy: "home.reading.unavailable.energy".localized
             )
         }
     }

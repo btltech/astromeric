@@ -68,7 +68,7 @@ struct ShareCardView: View {
                 }
             }
             .padding()
-            .background(Color(.systemBackground))
+            .background(Color.surfaceBase)
             
             shareCardFooter
         }
@@ -85,7 +85,7 @@ struct ShareCardGenerator {
     // Reading share card
     static func generateImage(for reading: PredictionData) -> UIImage? {
         let view = ShareCardView(reading: reading)
-        let renderer = ImageRenderer(content: view)
+        let renderer = ImageRenderer(content: view.environment(\.colorScheme, .dark))
         renderer.scale = 3.0 // High resolution
         return renderer.uiImage
     }
@@ -94,7 +94,7 @@ struct ShareCardGenerator {
     static func generateImage(for numerology: NumerologyData, profileName: String) -> UIImage? {
         let safeName = AppStore.shared.hideSensitiveDetailsEnabled ? PrivacyRedaction.privateProfile : profileName
         let view = NumerologyShareCard(data: numerology, profileName: safeName)
-        let renderer = ImageRenderer(content: view)
+        let renderer = ImageRenderer(content: view.environment(\.colorScheme, .dark))
         renderer.scale = 3.0
         return renderer.uiImage
     }
@@ -102,7 +102,7 @@ struct ShareCardGenerator {
     // Timing share card
     static func generateImage(for timing: TimingResult, activity: String) -> UIImage? {
         let view = TimingShareCard(data: timing, activity: activity)
-        let renderer = ImageRenderer(content: view)
+        let renderer = ImageRenderer(content: view.environment(\.colorScheme, .dark))
         renderer.scale = 3.0
         return renderer.uiImage
     }
@@ -111,7 +111,7 @@ struct ShareCardGenerator {
     static func generateImage(for chart: ChartData, profileName: String, birthTimeAssumed: Bool = false) -> UIImage? {
         let safeName = AppStore.shared.hideSensitiveDetailsEnabled ? PrivacyRedaction.privateProfile : profileName
         let view = ChartShareCard(data: chart, profileName: safeName, birthTimeAssumed: birthTimeAssumed)
-        let renderer = ImageRenderer(content: view)
+        let renderer = ImageRenderer(content: view.environment(\.colorScheme, .dark))
         renderer.scale = 3.0
         return renderer.uiImage
     }
@@ -166,7 +166,7 @@ struct NumerologyShareCard: View {
                 }
             }
             .padding()
-            .background(Color(.systemBackground))
+            .background(Color.surfaceBase)
             
             shareCardFooter
         }
@@ -211,7 +211,7 @@ struct TimingShareCard: View {
                 }
             }
             .padding()
-            .background(Color(.systemBackground))
+            .background(Color.surfaceBase)
             
             shareCardFooter
         }
@@ -263,7 +263,7 @@ struct ChartShareCard: View {
                 }
             }
             .padding()
-            .background(Color(.systemBackground))
+            .background(Color.surfaceBase)
 
             shareCardFooter
         }
@@ -334,7 +334,7 @@ private var shareCardFooter: some View {
     }
     .padding(.vertical, 8)
     .frame(maxWidth: .infinity)
-    .background(Color(.secondarySystemBackground))
+    .background(Color.surfaceElevated)
 }
 
 // MARK: - Enhanced Share Sheet

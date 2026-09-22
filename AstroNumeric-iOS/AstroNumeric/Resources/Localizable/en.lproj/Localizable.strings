@@ -1164,6 +1164,23 @@
 "habits.create.phaseMatch" = "This category matches the current lunar guidance.";
 "journal.loading.body" = "Loading saved readings and local drafts.";
 
+// MARK: - UI labels and Home fallbacks
+"label.startHere" = "Start here";
+"label.advanced" = "Advanced";
+"label.recommended" = "Recommended";
+"home.reading.unavailable.headline" = "Today's reading didn't load";
+"home.reading.unavailable.tldr" = "Pull down to refresh, or try again once you're back online.";
+"home.reading.unavailable.energy" = "Unavailable";
+
+// MARK: - First run
+"firstrun.proof.local.title" = "Local-first by default";
+"firstrun.proof.local.detail" = "Your profile starts on this device.";
+"firstrun.proof.chart.title" = "Chart and numerology together";
+"firstrun.proof.chart.detail" = "A full natal map plus the number patterns shaping your life.";
+"firstrun.proof.timing.title" = "Practical daily timing";
+"firstrun.proof.timing.detail" = "Personal day, moon context, forecasts, and planning windows.";
+"firstrun.createProfile" = "Create Profile";
+
 // MARK: - Accessibility
 "a11y.deleteRelationship" = "Delete relationship";
 "a11y.deleteRelationship.hint" = "Permanently removes this relationship";
