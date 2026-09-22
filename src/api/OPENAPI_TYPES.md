@@ -11,6 +11,7 @@ The `openapi-typescript` package is installed as a dev dependency.
 ### From Local Backend
 
 1. Start the backend server:
+
    ```bash
    cd backend
    source ../.venv/bin/activate
@@ -43,8 +44,10 @@ type ProfilePayload = components['schemas']['ProfilePayload'];
 
 // Access endpoint paths
 type DailyForecastEndpoint = paths['/v2/forecasts/daily'];
-type DailyForecastRequest = DailyForecastEndpoint['post']['requestBody']['content']['application/json'];
-type DailyForecastResponse = DailyForecastEndpoint['post']['responses']['200']['content']['application/json'];
+type DailyForecastRequest =
+  DailyForecastEndpoint['post']['requestBody']['content']['application/json'];
+type DailyForecastResponse =
+  DailyForecastEndpoint['post']['responses']['200']['content']['application/json'];
 ```
 
 ## Type-Safe API Client
@@ -70,6 +73,7 @@ const forecast = await api.forecasts.daily({ profile });
 ## Regenerating Types
 
 Run type generation whenever:
+
 - Backend API changes (new endpoints, modified schemas)
 - After pulling changes that affect the API
 - Before major releases to ensure frontend/backend sync
@@ -84,14 +88,18 @@ Run type generation whenever:
 ## Troubleshooting
 
 ### Types not updating
+
 Make sure the backend server is running and accessible at the expected URL.
 
 ### Schema changes not reflected
+
 Clear any caches and regenerate:
+
 ```bash
 rm src/api/generated.ts
 npm run generate:api
 ```
 
 ### Import errors
+
 Ensure your `tsconfig.json` includes the generated file's directory in `include`.

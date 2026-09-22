@@ -481,8 +481,7 @@
 
 .reading-hero-card {
   margin-bottom: 1rem;
-  background:
-    radial-gradient(circle at 100% 0%, rgba(65, 200, 255, 0.14), transparent 34%),
+  background: radial-gradient(circle at 100% 0%, rgba(65, 200, 255, 0.14), transparent 34%),
     linear-gradient(180deg, rgba(18, 28, 41, 0.96), rgba(8, 13, 21, 0.94));
 }
 
@@ -760,8 +759,7 @@ header {
 
 /* Modern web-shell example */
 .app-shell {
-  background:
-    radial-gradient(circle at 14% 0%, rgba(55, 173, 255, 0.16), transparent 30%),
+  background: radial-gradient(circle at 14% 0%, rgba(55, 173, 255, 0.16), transparent 30%),
     radial-gradient(circle at 86% 8%, rgba(255, 167, 92, 0.1), transparent 24%),
     linear-gradient(180deg, #061018 0%, #08121b 46%, #050c14 100%);
 }
@@ -772,8 +770,7 @@ header {
   inset: 0;
   pointer-events: none;
   z-index: 0;
-  background:
-    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+  background: linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
   background-size: 44px 44px;
   mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.35), transparent 78%);
@@ -785,8 +782,7 @@ header {
   inset: 0;
   pointer-events: none;
   z-index: 0;
-  background:
-    radial-gradient(circle at center, transparent 48%, rgba(2, 6, 11, 0.46) 100%),
+  background: radial-gradient(circle at center, transparent 48%, rgba(2, 6, 11, 0.46) 100%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.015), transparent 16%);
 }
 
@@ -904,10 +900,8 @@ header {
   background: rgba(12, 18, 28, 0.92);
   font-size: 0.9rem;
   font-weight: 600;
-  transition:
-    transform 180ms cubic-bezier(0.22, 1, 0.36, 1),
-    border-color 180ms cubic-bezier(0.22, 1, 0.36, 1),
-    color 180ms cubic-bezier(0.22, 1, 0.36, 1),
+  transition: transform 180ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 180ms cubic-bezier(0.22, 1, 0.36, 1), color 180ms cubic-bezier(0.22, 1, 0.36, 1),
     background 180ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
@@ -12761,34 +12755,34 @@ header {
     align-items: stretch;
     gap: 0.75rem;
   }
-  
+
   .logo {
     text-align: center;
     margin-bottom: 0;
   }
-  
+
   .header-actions {
     justify-content: center;
     order: 1;
     width: 100%;
   }
-  
+
   .user-bar {
     width: 100%;
     justify-content: space-between;
   }
-  
+
   .user-email {
     max-width: 200px;
     flex: 1;
   }
-  
+
   .nav-toggle {
     position: absolute;
     right: 1rem;
     top: 1rem;
   }
-  
+
   .main-nav {
     order: 2;
     width: 100%;
@@ -12801,12 +12795,12 @@ header {
     flex-wrap: wrap;
     gap: 0.5rem;
   }
-  
+
   .user-email {
     max-width: 140px;
     font-size: 0.75rem;
   }
-  
+
   .btn-logout {
     font-size: 0.7rem;
     padding: 0.3rem 0.6rem;
@@ -12837,7 +12831,9 @@ header {
   gap: 0.5rem;
   margin-bottom: 0.75rem;
 }
-.guidance-section-icon { font-size: 1.1rem; }
+.guidance-section-icon {
+  font-size: 1.1rem;
+}
 .guidance-section-label {
   font-size: 0.8rem;
   font-weight: 600;
@@ -12865,13 +12861,17 @@ header {
   padding: 0.25rem 0;
   text-align: left;
 }
-.guidance-why-toggle:hover { color: var(--primary); }
+.guidance-why-toggle:hover {
+  color: var(--primary);
+}
 .guidance-why-chevron {
   display: inline-block;
   transition: transform 0.2s;
   font-size: 1rem;
 }
-.guidance-why-chevron.open { transform: rotate(180deg); }
+.guidance-why-chevron.open {
+  transform: rotate(180deg);
+}
 
 /* CompatibilityCard — flat layout */
 .compat-outcome-banner {
@@ -12901,7 +12901,10 @@ header {
   background: rgba(0, 0, 0, 0.2);
   border-radius: 12px;
 }
-.compat-action-title { margin: 0 0 0.75rem; font-size: 0.95rem; }
+.compat-action-title {
+  margin: 0 0 0.75rem;
+  font-size: 0.95rem;
+}
 .compat-advice-text {
   color: var(--text);
   font-size: 0.95rem;
@@ -12926,10 +12929,20 @@ header {
   padding: 0.25rem 0;
   text-align: left;
 }
-.compat-details-toggle:hover { color: var(--primary); }
-.compat-toggle-chevron { display: inline-block; transition: transform 0.2s; }
-.compat-toggle-chevron.open { transform: rotate(180deg); }
-.compat-details-panel { margin-top: 1rem; padding-top: 0.75rem; }
+.compat-details-toggle:hover {
+  color: var(--primary);
+}
+.compat-toggle-chevron {
+  display: inline-block;
+  transition: transform 0.2s;
+}
+.compat-toggle-chevron.open {
+  transform: rotate(180deg);
+}
+.compat-details-panel {
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+}
 .score-display-compact {
   display: flex;
   flex-direction: column;
@@ -12937,8 +12950,15 @@ header {
   gap: 0.25rem;
   margin-bottom: 1rem;
 }
-.score-ring-small { position: relative; width: 80px; height: 80px; }
-.score-ring-small svg { width: 100%; height: 100%; }
+.score-ring-small {
+  position: relative;
+  width: 80px;
+  height: 80px;
+}
+.score-ring-small svg {
+  width: 100%;
+  height: 100%;
+}
 .score-value-small {
   position: absolute;
   top: 50%;
@@ -12947,7 +12967,11 @@ header {
   display: flex;
   align-items: baseline;
 }
-.score-detail-note { font-size: 0.75rem; color: var(--text-muted); margin: 0; }
+.score-detail-note {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin: 0;
+}
 
 /* ChartView — trait action line */
 .trait-action {
@@ -12989,17 +13013,35 @@ header {
   background: rgba(0, 0, 0, 0.15);
   border-radius: 10px;
 }
-.daily-meaning-emoji { font-size: 1.8rem; line-height: 1; }
-.daily-meaning-content { display: flex; flex-direction: column; gap: 0.15rem; }
+.daily-meaning-emoji {
+  font-size: 1.8rem;
+  line-height: 1;
+}
+.daily-meaning-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
 .daily-meaning-label {
   font-size: 0.72rem;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
-.daily-meaning-value { font-size: 1rem; font-weight: 600; color: var(--text); }
-.daily-meaning-note { font-size: 0.82rem; color: var(--text-muted); }
-.daily-action-row { display: flex; gap: 0.75rem; margin-bottom: 1rem; }
+.daily-meaning-value {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+}
+.daily-meaning-note {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+.daily-action-row {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
 .daily-action-item {
   flex: 1;
   display: flex;
@@ -13009,7 +13051,10 @@ header {
   background: rgba(0, 0, 0, 0.15);
   border-radius: 10px;
 }
-.daily-action-icon { font-size: 1.3rem; flex-shrink: 0; }
+.daily-action-icon {
+  font-size: 1.3rem;
+  flex-shrink: 0;
+}
 .daily-action-label {
   display: block;
   font-size: 0.72rem;
@@ -13017,8 +13062,18 @@ header {
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
-.daily-action-value { display: block; font-size: 0.95rem; font-weight: 600; color: var(--text); }
-.daily-action-note { display: block; font-size: 0.78rem; color: var(--text-muted); margin-top: 0.1rem; }
+.daily-action-value {
+  display: block;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text);
+}
+.daily-action-note {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-top: 0.1rem;
+}
 .daily-details-toggle-wrapper {
   margin-top: 1rem;
   border-top: 1px solid rgba(136, 192, 208, 0.15);
@@ -13037,10 +13092,19 @@ header {
   padding: 0.25rem 0;
   text-align: left;
 }
-.daily-details-toggle:hover { color: var(--primary); }
-.daily-details-chevron { display: inline-block; transition: transform 0.2s; }
-.daily-details-chevron.open { transform: rotate(180deg); }
-.features-grid--secondary { margin-top: 0.75rem; }
+.daily-details-toggle:hover {
+  color: var(--primary);
+}
+.daily-details-chevron {
+  display: inline-block;
+  transition: transform 0.2s;
+}
+.daily-details-chevron.open {
+  transform: rotate(180deg);
+}
+.features-grid--secondary {
+  margin-top: 0.75rem;
+}
 
 /* PASS 3 — Best/Worst day highlights & trait show-more */
 

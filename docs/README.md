@@ -47,19 +47,23 @@ docs/
 ## Quick Links
 
 ### Getting Started
+
 - [Main README](../README.md) - Project overview and quick start
 - [Quick Reference](QUICK_REFERENCE.md) - Common commands and patterns
 
 ### Deployment
+
 - [Deploy Guide](deployment/DEPLOY.md) - Deployment instructions
 - [Railway Setup](deployment/RAILWAY.md) - Railway-specific configuration
 - [Deployment Checklist](deployment/DEPLOYMENT_CHECKLIST.md) - Pre-deployment checks
 
 ### API Documentation
+
 - [API Docs](http://localhost:8000/docs) - OpenAPI/Swagger documentation (when running)
 - [API v2 Routers](implementation/V2_ROUTERS_COMPLETE.md) - V2 API router documentation
 
 ### Features
+
 - [Anonymous User Feature](features/ANON_USER_FEATURE.md) - Guest user support
 - [Cookie Policy](features/COOKIE_POLICY_SUMMARY.md) - Cookie and privacy handling
 - [Accessibility](features/ACCESSIBILITY_AUDIT.md) - Accessibility compliance
