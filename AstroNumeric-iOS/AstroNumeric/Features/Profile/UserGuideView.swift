@@ -183,7 +183,7 @@ struct UserGuideView: View {
                 GuideItem(heading: "Long press profiles",
                           body: "Long press any profile in the Profiles list to edit or delete it."),
                 GuideItem(heading: "Context-aware AI",
-                          body: "Cosmic Guide builds each response from your active profile and chart, excerpts from matching journal entries, and saved friends' names. If you turn on calendar context, it also includes when upcoming events happen (day and time of day only, never titles). This is sent to our server and processed by Google's Gemini AI to write the answer."),
+                          body: "Cosmic Guide builds each response from your active profile and chart, excerpts from matching journal entries, and saved friends' names. If you turn on calendar context, it also includes when upcoming events happen (day and time of day only, never titles). This is sent to our server, which writes the answer itself — it is not passed to a third-party AI provider."),
                 GuideItem(heading: "Hide Sensitive Details",
                           body: "Enable this in Profile when you want names and birth details masked across the UI and share surfaces. It is a display/privacy layer, not a separate local-only mode, and server-backed features still use the profile data required to compute results."),
                 GuideItem(heading: "Chaldean toggle",

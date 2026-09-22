@@ -155,10 +155,9 @@ export function PrivacyPolicy() {
               details (masked if you turn on Hide Sensitive Details), your chart positions, excerpts
               of up to three matching journal entries, the names and relationship types of friends
               you have saved, and, if you turn on calendar context, the day and time of day of
-              upcoming events (never their titles or details). Our server forwards this to
-              Google&apos;s Gemini API, which processes it to write the answer under Google&apos;s
-              API terms. We do not store Cosmic Guide conversations on our servers. The website does
-              not send Cosmic Guide questions to an AI provider.
+              upcoming events (never their titles or details). Our server writes the answer itself:
+              Cosmic Guide requests are not passed to a third-party AI provider, and we do not store
+              the conversations. The same applies to the website.
             </p>
           </section>
 

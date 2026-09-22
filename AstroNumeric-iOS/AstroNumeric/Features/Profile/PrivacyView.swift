@@ -65,7 +65,7 @@ struct PrivacyView: View {
                 "Birth profile data you type into the app, including name, date of birth, birth time, birthplace, and optional coordinates.",
                 "Friend or partner birth profiles that you add for compatibility and Cosmic Circle features.",
                 "Journal entries, outcome tracking, and optional voice-journal transcripts you create inside the app.",
-                "Notification preferences and, if registration succeeds, an Apple push token when you enable notifications.",
+                "Notification preferences. Reminders are scheduled on your device, and the Apple push token never leaves it.",
             ]
         ),
         PrivacySectionData(
@@ -98,7 +98,7 @@ struct PrivacyView: View {
             title: "Network Requests And Backend Use",
             bullets: [
                 "Forecasts, charts, compatibility, and widget briefs send the birth details needed for each calculation to the AstroMeric backend. Your profiles themselves are kept on your device.",
-                "Cosmic Guide sends your question, recent chat messages, your profile name and birth details (masked when Hide Sensitive Details is on), your chart, excerpts of matching journal entries, saved friends' names and relationship types, and, if you turn on calendar context, the day and time of day of upcoming events (never titles or details). Our backend forwards this to Google's Gemini API to write the answer and does not store it.",
+                "Cosmic Guide sends your question, recent chat messages, your profile name and birth details (masked when Hide Sensitive Details is on), your chart, excerpts of matching journal entries, saved friends' names and relationship types, and, if you turn on calendar context, the day and time of day of upcoming events (never titles or details). Our backend writes the answer itself and does not store the request or send it to a third-party AI provider.",
                 "Production API traffic uses HTTPS.",
                 "Friend records added in Cosmic Circle are stored by the backend so they can be retrieved later.",
                 "The app currently does not include a dedicated third-party crash-reporting or analytics SDK such as Firebase or Mixpanel.",
@@ -109,7 +109,7 @@ struct PrivacyView: View {
             iconColor: .yellow,
             title: "Permissions",
             bullets: [
-                "Notifications: if you allow notifications, the app may register a push token with the backend.",
+                "Notifications: reminders are scheduled and delivered by your device; no push token is sent to our backend.",
                 "Location: you can enter a place manually or ask the app to use current location to fill birth-place details.",
                 "Calendar: opt-in. Temporal Matrix reads upcoming events on your device. Cosmic Guide receives only the day and time of day of events, and only if you turn on calendar context.",
                 "Photos: add-only access, used when you choose Save Image on a reading card.",
@@ -135,7 +135,7 @@ struct PrivacyView: View {
             bullets: [
                 "You can remove a profile from the app from the Profile screen.",
                 "Because this build is local-first, the cleanest full device reset is removing the app and its data from your device.",
-                "If you want to ask about backend-held data such as push tokens or synced friend records, email privacy@astromeric.app.",
+                "If you want to ask about backend-held data such as synced friend records, email privacy@astromeric.app.",
                 "This screen describes the app's current behavior and may change as storage and sync features evolve.",
             ]
         ),
