@@ -20,6 +20,8 @@ struct Endpoint {
     let cacheTTL: TimeInterval
     /// Optional override for the cache key (e.g. to scope by month/year).
     let explicitCacheKey: String?
+    /// Extra request headers, for values that must not travel in the URL.
+    let headers: [String: String]
     
     init(
         path: String,
@@ -28,7 +30,8 @@ struct Endpoint {
         queryItems: [URLQueryItem] = [],
         isCacheable: Bool = false,
         cacheTTL: TimeInterval = 300, // 5 minutes default
-        cacheKey: String? = nil
+        cacheKey: String? = nil,
+        headers: [String: String] = [:]
     ) {
         self.path = path
         self.method = method
@@ -37,6 +40,7 @@ struct Endpoint {
         self.isCacheable = isCacheable
         self.cacheTTL = cacheTTL
         self.explicitCacheKey = cacheKey
+        self.headers = headers
     }
 }
 
@@ -104,31 +108,48 @@ extension Endpoint {
 // MARK: - Friends (Social Chart Comparison)
 
 extension Endpoint {
+    /// The owner key is a bearer secret for the whole friend list, so it is sent as a
+    /// header: URLs end up in access logs, proxy logs and crash reports.
+    static let ownerKeyHeader = "X-Owner-Key"
+
     static func listFriends(ownerId: String) -> Endpoint {
-        Endpoint(path: "/v2/friends/list/\(ownerId)", method: .GET, isCacheable: true, cacheTTL: 300)
+        Endpoint(
+            path: "/v2/friends/list",
+            method: .GET,
+            isCacheable: true,
+            cacheTTL: 300,
+            // The path no longer varies by owner, so scope the cache explicitly
+            // (the stored key is hashed).
+            cacheKey: "friends-list-\(ownerId)",
+            headers: [ownerKeyHeader: ownerId]
+        )
     }
 
     static func addFriend(ownerId: String, friend: FriendProfile) -> Endpoint {
         struct AddBody: Encodable {
-            let owner_id: String
             let friend: FriendProfile
         }
-        return Endpoint(path: "/v2/friends/add", method: .POST, body: AddBody(owner_id: ownerId, friend: friend))
+        return Endpoint(
+            path: "/v2/friends/add",
+            method: .POST,
+            body: AddBody(friend: friend),
+            headers: [ownerKeyHeader: ownerId]
+        )
     }
 
     static func compareAllFriends(ownerId: String, profile: ProfilePayload) -> Endpoint {
         struct CompareAllBody: Encodable {
-            let owner_id: String
             let owner_profile: ProfilePayload
         }
         let today = ISO8601DateFormatter().string(from: Date()).prefix(10)
         return Endpoint(
             path: "/v2/friends/compare-all",
             method: .POST,
-            body: CompareAllBody(owner_id: ownerId, owner_profile: profile),
+            body: CompareAllBody(owner_profile: profile),
             isCacheable: true,
             cacheTTL: 3600,
-            cacheKey: "friends-compare-\(ownerId)-\(profile.name)-\(profile.dateOfBirth)-\(today)"
+            cacheKey: "friends-compare-\(ownerId)-\(profile.name)-\(profile.dateOfBirth)-\(today)",
+            headers: [ownerKeyHeader: ownerId]
         )
     }
 }

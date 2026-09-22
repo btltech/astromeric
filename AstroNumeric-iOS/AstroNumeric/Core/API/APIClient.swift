@@ -116,6 +116,9 @@ actor APIClient {
         if let aiAccessCode = AIAccessCode.current() {
             request.setValue(aiAccessCode, forHTTPHeaderField: AIAccessCode.header)
         }
+        for (field, value) in endpoint.headers {
+            request.setValue(value, forHTTPHeaderField: field)
+        }
 
         // Local-first mode does not inject an auth token.
         

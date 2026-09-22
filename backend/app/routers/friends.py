@@ -15,7 +15,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from pydantic import BaseModel, Field
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -50,6 +50,17 @@ def _require_owner_key(owner_id: str) -> None:
         )
 
 
+def owner_key(x_owner_key: Optional[str] = Header(None)) -> str:
+    """The caller's owner key, taken from the X-Owner-Key header.
+
+    It is a secret, so it travels in a header rather than the URL: paths are
+    written to access logs, proxy logs and browser history, and a leaked key is
+    enough to read and change that install's friend list.
+    """
+    _require_owner_key(x_owner_key or "")
+    return x_owner_key or ""
+
+
 # Legacy JSON store used by older Railway deployments. Keep a read-only import
 # path so previously stored data can be pulled into the database on demand.
 _STORE_PATH = Path(os.getenv("FRIENDS_STORE_PATH", "/tmp/friends_store.json"))
@@ -80,19 +91,16 @@ class FriendProfile(BaseModel):
 
 
 class AddFriendRequest(BaseModel):
-    owner_id: str
     friend: FriendProfile
 
 
 class CompareRequest(BaseModel):
     owner_profile: ProfilePayload
     friend_id: str
-    owner_id: str
     relationship_type: str = "friendship"
 
 
 class CompareAllRequest(BaseModel):
-    owner_id: str
     owner_profile: ProfilePayload
 
 
@@ -263,14 +271,14 @@ def _get_friend(db: Session, owner_id: str, friend_id: str) -> Optional[Friend]:
 async def add_friend(
     request: Request,
     body: AddFriendRequest,
+    owner_id: str = Depends(owner_key),
     db: Session = Depends(get_db),
 ) -> ApiResponse[FriendProfile]:
     request_id = request.state.request_id
-    _require_owner_key(body.owner_id)
     try:
-        _migrate_legacy_friends(db, body.owner_id)
+        _migrate_legacy_friends(db, owner_id)
 
-        if _get_friend(db, body.owner_id, body.friend.id):
+        if _get_friend(db, owner_id, body.friend.id):
             raise HTTPException(
                 status_code=409,
                 detail={
@@ -279,7 +287,7 @@ async def add_friend(
                 },
             )
 
-        friend_row = _friend_profile_to_row(body.owner_id, body.friend)
+        friend_row = _friend_profile_to_row(owner_id, body.friend)
         db.add(friend_row)
         db.commit()
         db.refresh(friend_row)
@@ -287,7 +295,6 @@ async def add_friend(
         logger.info(
             "Friend added",
             request_id=request_id,
-            owner_id=body.owner_id,
             friend_id=friend_row.friend_id,
         )
         return ApiResponse(
@@ -320,14 +327,13 @@ async def add_friend(
         )
 
 
-@router.get("/list/{owner_id}", response_model=ApiResponse[List[FriendProfile]])
+@router.get("/list", response_model=ApiResponse[List[FriendProfile]])
 async def list_friends(
     request: Request,
-    owner_id: str,
+    owner_id: str = Depends(owner_key),
     db: Session = Depends(get_db),
 ) -> ApiResponse[List[FriendProfile]]:
     request_id = request.state.request_id
-    _require_owner_key(owner_id)
     friends = _get_owner_friends(db, owner_id)
     return ApiResponse(
         status=ResponseStatus.SUCCESS,
@@ -337,15 +343,14 @@ async def list_friends(
     )
 
 
-@router.delete("/remove/{owner_id}/{friend_id}", response_model=ApiResponse[Dict])
+@router.delete("/remove/{friend_id}", response_model=ApiResponse[Dict])
 async def remove_friend(
     request: Request,
-    owner_id: str,
     friend_id: str,
+    owner_id: str = Depends(owner_key),
     db: Session = Depends(get_db),
 ) -> ApiResponse[Dict]:
     request_id = request.state.request_id
-    _require_owner_key(owner_id)
     friend = _get_friend(db, owner_id, friend_id)
     if friend is None:
         return ApiResponse(
@@ -369,12 +374,12 @@ async def remove_friend(
 async def compare_with_friend(
     request: Request,
     body: CompareRequest,
+    owner_id: str = Depends(owner_key),
     db: Session = Depends(get_db),
 ) -> ApiResponse[FriendCompatibilitySummary]:
     request_id = request.state.request_id
-    _require_owner_key(body.owner_id)
     try:
-        friend = _get_friend(db, body.owner_id, body.friend_id)
+        friend = _get_friend(db, owner_id, body.friend_id)
         if not friend:
             raise HTTPException(
                 status_code=404,
@@ -437,12 +442,12 @@ async def compare_with_friend(
 async def compare_all_friends(
     request: Request,
     body: CompareAllRequest,
+    owner_id: str = Depends(owner_key),
     db: Session = Depends(get_db),
 ) -> ApiResponse[List[FriendCompatibilitySummary]]:
     request_id = request.state.request_id
-    _require_owner_key(body.owner_id)
     try:
-        friends = _get_owner_friends(db, body.owner_id)
+        friends = _get_owner_friends(db, owner_id)
         if not friends:
             return ApiResponse(
                 status=ResponseStatus.SUCCESS,

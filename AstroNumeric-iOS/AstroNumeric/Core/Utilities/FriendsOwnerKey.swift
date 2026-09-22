@@ -5,8 +5,8 @@ import CryptoKit
 import Foundation
 import Security
 
-/// The `/v2/friends/*` endpoints are keyed only by `owner_id`, so that id must be an
-/// unguessable secret. Local profile ids (-1, -2, ...) are the same on every device and
+/// The `/v2/friends/*` endpoints are keyed only by the owner key sent in the
+/// `X-Owner-Key` header, so that key must be an unguessable secret. Local profile ids (-1, -2, ...) are the same on every device and
 /// must never be sent.
 ///
 /// A random 256-bit install secret is created once and kept in the Keychain for this
