@@ -111,7 +111,12 @@ actor APIClient {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.setValue("ios", forHTTPHeaderField: "X-Client-Platform")
-        
+        // Only the owner's device carries this; without it the backend answers
+        // from its built-in responses and nothing reaches the AI provider.
+        if let aiAccessCode = AIAccessCode.current() {
+            request.setValue(aiAccessCode, forHTTPHeaderField: AIAccessCode.header)
+        }
+
         // Local-first mode does not inject an auth token.
         
         // Add body if present
