@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
-	<dict>
-		<key>API_BASE_URL</key>
-		<string>https://astromeric-backend-production.up.railway.app</string>
-		<key>BGTaskSchedulerPermittedIdentifiers</key>
-		<array>
-			<string>com.astromeric.app.transitScan</string>
-			<string>com.astromeric.app.cachePrewarm</string>
-		</array>
-		<key>CFBundleDevelopmentRegion</key>
-		<string>$(DEVELOPMENT_LANGUAGE)</string>
+<dict>
+	<key>API_BASE_URL</key>
+	<string>https://astromeric-backend-production.up.railway.app</string>
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>com.astromeric.app.transitScan</string>
+		<string>com.astromeric.app.cachePrewarm</string>
+	</array>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
 	<string>AstroNumeric</string>
 	<key>CFBundleExecutable</key>
@@ -31,6 +31,8 @@
 	<false/>
 	<key>NSHealthShareUsageDescription</key>
 	<string>AstroNumeric reads health data (heart rate, sleep, steps) to correlate your biometrics with cosmic transits and provide personalized insights.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>AstroNumeric only reads your Health data to compare it with cosmic cycles. It does not write anything to Health.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>We need your location to determine your birthplace timezone.</string>
 	<key>NSMicrophoneUsageDescription</key>

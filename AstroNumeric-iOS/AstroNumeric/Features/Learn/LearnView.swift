@@ -4,43 +4,31 @@
 import SwiftUI
 
 struct LearnView: View {
-    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @State private var viewModel = LearnVM()
     @State private var selectedModule: LearningModule?
     @State private var showGlossary = false
-    @State private var columnVisibility: NavigationSplitViewVisibility = .doubleColumn
 
     var body: some View {
-        NavigationSplitView(columnVisibility: $columnVisibility) {
-            sidebar
-                .navigationTitle("screen.learn".localized)
-                .navigationBarTitleDisplayMode(.inline)
-                .task { await viewModel.fetchModules() }
-                .navigationDestination(isPresented: Binding(
-                    get: { horizontalSizeClass == .compact && selectedModule != nil },
-                    set: { if !$0 { selectedModule = nil } }
-                )) {
-                    if let module = selectedModule {
-                        LessonDetailView(module: module)
-                    }
-                }
-                .sheet(isPresented: $showGlossary) {
-                    GlossaryView()
-                }
-        } detail: {
-            NavigationStack {
+        // LearnView is always pushed onto an existing NavigationStack (from
+        // Explore and Profile). It must NOT introduce its own NavigationSplitView
+        // — nesting one inside a pushed destination renders blank on iPhone and
+        // the screen never opens. Rely on the ambient stack and push lessons via
+        // navigationDestination(item:).
+        sidebar
+            .navigationTitle("screen.learn".localized)
+            .navigationBarTitleDisplayMode(.inline)
+            .task { await viewModel.fetchModules() }
+            .navigationDestination(isPresented: Binding(
+                get: { selectedModule != nil },
+                set: { if !$0 { selectedModule = nil } }
+            )) {
                 if let module = selectedModule {
                     LessonDetailView(module: module)
-                } else {
-                    ContentUnavailableView(
-                        "Pick a lesson",
-                        systemImage: "book",
-                        description: Text("ui.learn.0".localized)
-                    )
                 }
             }
-        }
-        .navigationSplitViewStyle(.balanced)
+            .sheet(isPresented: $showGlossary) {
+                GlossaryView()
+            }
     }
 
     private var sidebar: some View {
@@ -137,13 +125,7 @@ struct LearnView: View {
     
     private var lessonsSection: some View {
         Group {
-            if viewModel.isLoading && viewModel.modules.isEmpty {
-                VStack(spacing: 16) {
-                    ForEach(0..<3, id: \.self) { _ in
-                        SkeletonCard()
-                    }
-                }
-            } else if viewModel.modules.isEmpty {
+            if viewModel.modules.isEmpty {
                 CardView {
                     VStack(spacing: 12) {
                         Image(systemName: "book.closed")

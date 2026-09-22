@@ -529,15 +529,6 @@ extension Endpoint {
         Endpoint(path: "/v2/learning/modules", isCacheable: true, cacheTTL: 86400)
     }
     
-    static func learningModulesByCategory(_ category: String) -> Endpoint {
-        Endpoint(
-            path: "/v2/learning/modules",
-            queryItems: [URLQueryItem(name: "category", value: category)],
-            isCacheable: true,
-            cacheTTL: 86400
-        )
-    }
-    
     static func learningModule(id: String) -> Endpoint {
         Endpoint(path: "/v2/learning/module/\(id)", isCacheable: true, cacheTTL: 86400)
     }

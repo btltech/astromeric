@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 77;
+	objectVersion = 63;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -272,7 +272,7 @@
 		4E4A2DBC5E602ED826763E51 /* BioCosmicCorrelator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BioCosmicCorrelator.swift; sourceTree = "<group>"; };
 		4E71C45975682851279603BE /* AstroWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = AstroWidget.entitlements; sourceTree = "<group>"; };
 		4E9D054B7FE838E85A1BB2D6 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
-		4EFBBDEBEA008FAB6EF4BFF4 /* semo_18.se1 */ = {isa = PBXFileReference; path = semo_18.se1; sourceTree = "<group>"; };
+		4EFBBDEBEA008FAB6EF4BFF4 /* semo_18.se1 */ = {isa = PBXFileReference; lastKnownFileType = file; path = semo_18.se1; sourceTree = "<group>"; };
 		4EFC89FD15530AA6F24898D5 /* AppGroupStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppGroupStore.swift; sourceTree = "<group>"; };
 		515CA1CBB617C7A2867A15FF /* LessonDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LessonDetailView.swift; sourceTree = "<group>"; };
 		532DAFEB1BAE9F95E5CE5766 /* VoiceRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceRecorder.swift; sourceTree = "<group>"; };
@@ -310,7 +310,7 @@
 		8E38B18833AA7F6ADF937A1E /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/Localizable.strings; sourceTree = "<group>"; };
 		8E4631BBDE89B15DE73E71C4 /* swehouse.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = swehouse.h; sourceTree = "<group>"; };
 		8EA606A79473C7901379D0F3 /* AstroNumericApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AstroNumericApp.swift; sourceTree = "<group>"; };
-		9152839B6D7A7FEFB054B372 /* Products.storekit */ = {isa = PBXFileReference; path = Products.storekit; sourceTree = "<group>"; };
+		9152839B6D7A7FEFB054B372 /* Products.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = Products.storekit; sourceTree = "<group>"; };
 		922B91C9657313D453B099A3 /* AdvancedEphemeris.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdvancedEphemeris.swift; sourceTree = "<group>"; };
 		932EF7E45FAB8BF4B75E8FE8 /* TimingEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimingEngine.swift; sourceTree = "<group>"; };
 		95BEA9212C5BBE923902A47D /* TimingAdvisorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimingAdvisorView.swift; sourceTree = "<group>"; };
@@ -344,7 +344,7 @@
 		B9820D943E46088D1245283B /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
 		B9F598B86C523C91F89F98BB /* DebugLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugLog.swift; sourceTree = "<group>"; };
 		BA9A71ED1D0CB07E68F6A114 /* LocalizationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalizationService.swift; sourceTree = "<group>"; };
-		BC3590EA1EB79B35EE070950 /* seas_18.se1 */ = {isa = PBXFileReference; path = seas_18.se1; sourceTree = "<group>"; };
+		BC3590EA1EB79B35EE070950 /* seas_18.se1 */ = {isa = PBXFileReference; lastKnownFileType = file; path = seas_18.se1; sourceTree = "<group>"; };
 		BD8201AD3D54C5266BCDFFC4 /* sweodef.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = sweodef.h; sourceTree = "<group>"; };
 		BEBEA5BF67D0DDAFFB72535B /* LifePhaseCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LifePhaseCard.swift; sourceTree = "<group>"; };
 		C1016A7A99EC9807521544C6 /* SectionGridView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SectionGridView.swift; sourceTree = "<group>"; };
@@ -369,12 +369,12 @@
 		E49BA5A6F95DF5D46131C6BD /* swecl.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = swecl.c; sourceTree = "<group>"; };
 		E79A811CE4CC1E439CB4402E /* JournalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JournalView.swift; sourceTree = "<group>"; };
 		E7E3C5236662033660D81B65 /* TransitNotificationScheduler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransitNotificationScheduler.swift; sourceTree = "<group>"; };
-		EC876BA87201DE6B442247AF /* sepl_18.se1 */ = {isa = PBXFileReference; path = sepl_18.se1; sourceTree = "<group>"; };
+		EC876BA87201DE6B442247AF /* sepl_18.se1 */ = {isa = PBXFileReference; lastKnownFileType = file; path = sepl_18.se1; sourceTree = "<group>"; };
 		ED1D490FC25EA77761D367B6 /* swemmoon.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = swemmoon.c; sourceTree = "<group>"; };
 		EE3FCCDD5D8704AAD6253666 /* PlanetaryHourWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanetaryHourWidget.swift; sourceTree = "<group>"; };
 		EF461FD43C0597316AECCA62 /* EmbeddedChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmbeddedChartView.swift; sourceTree = "<group>"; };
 		EFA41050FA4DAF6C3B2E8E5B /* RelationshipsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RelationshipsView.swift; sourceTree = "<group>"; };
-		F09C2808FC34C2EFED35DA76 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		F09C2808FC34C2EFED35DA76 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		F0B59F90AD27736DE6051671 /* LocalDomainDatabase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalDomainDatabase.swift; sourceTree = "<group>"; };
 		F0FAE63C4C18810AF4A818B4 /* JournalModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JournalModels.swift; sourceTree = "<group>"; };
 		F1A2C7279CECC1F644B50748 /* NumerologyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NumerologyView.swift; sourceTree = "<group>"; };
@@ -1051,7 +1051,7 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
-				LastUpgradeCheck = 2620;
+				LastUpgradeCheck = 2640;
 				TargetAttributes = {
 					437379BECB75269795BC4905 = {
 						DevelopmentTeam = 8L5LTN9LMB;
@@ -1082,7 +1082,6 @@
 			);
 			mainGroup = 006E6CFEBC1E547D6C5C4917;
 			minimizedProjectReferenceProxies = 1;
-			preferredProjectObjectVersion = 77;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -1575,7 +1574,11 @@
 				DEVELOPMENT_TEAM = 8L5LTN9LMB;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = AstroWidget/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.astromeric.app.widget;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -1607,7 +1610,11 @@
 				DEVELOPMENT_TEAM = 8L5LTN9LMB;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = AstroWidget/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.astromeric.app.widget;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;

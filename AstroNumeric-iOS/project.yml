@@ -2,29 +2,29 @@ name: AstroNumeric
 options:
   bundleIdPrefix: com.astromeric
   deploymentTarget:
-    iOS: "17.0"
-  xcodeVersion: "15.0"
+    iOS: '17.0'
+  xcodeVersion: '15.0'
   generateEmptyDirectories: true
   groupSortPosition: top
   createIntermediateGroups: true
-  minimumXcodeGenVersion: "2.38.0"
+  minimumXcodeGenVersion: '2.38.0'
 
 attributes:
-  LastUpgradeCheck: "2620"
-  BuildIndependentTargetsInParallel: "YES"
+  LastUpgradeCheck: '2620'
+  BuildIndependentTargetsInParallel: 'YES'
 
 settings:
   base:
-    DEVELOPMENT_TEAM: "8L5LTN9LMB"
-    MARKETING_VERSION: "1.0.0"
-    CURRENT_PROJECT_VERSION: "4"
-    SWIFT_VERSION: "5.9"
+    DEVELOPMENT_TEAM: '8L5LTN9LMB'
+    MARKETING_VERSION: '1.0.0'
+    CURRENT_PROJECT_VERSION: '4'
+    SWIFT_VERSION: '5.9'
     GENERATE_INFOPLIST_FILE: YES
     INFOPLIST_KEY_CFBundleDisplayName: AstroNumeric
-    INFOPLIST_KEY_LSApplicationCategoryType: "public.app-category.lifestyle"
+    INFOPLIST_KEY_LSApplicationCategoryType: 'public.app-category.lifestyle'
     INFOPLIST_KEY_UILaunchScreen_Generation: YES
-    INFOPLIST_KEY_UISupportedInterfaceOrientations: "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
-    INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad: "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
+    INFOPLIST_KEY_UISupportedInterfaceOrientations: 'UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight'
+    INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad: 'UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight'
     CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED: YES
     ENABLE_USER_SCRIPT_SANDBOXING: YES
     STRING_CATALOG_GENERATE_SYMBOLS: YES
@@ -36,13 +36,13 @@ targets:
     sources:
       - path: Shared
         excludes:
-          - "**/.DS_Store"
+          - '**/.DS_Store'
       - path: AstroNumeric
         excludes:
-          - "**/.DS_Store"
-          - "EphemerisEngine/swisseph/**"
+          - '**/.DS_Store'
+          - 'EphemerisEngine/swisseph/**'
       - path: AstroNumeric/EphemerisEngine/swisseph
-        compilerFlags: "-w"
+        compilerFlags: '-w'
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.astromeric.app
@@ -56,17 +56,17 @@ targets:
         CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES: YES
       configs:
         Debug:
-          SWIFT_OPTIMIZATION_LEVEL: "-Onone"
-          DEBUG_INFORMATION_FORMAT: "dwarf-with-dsym"
+          SWIFT_OPTIMIZATION_LEVEL: '-Onone'
+          DEBUG_INFORMATION_FORMAT: 'dwarf-with-dsym'
           CODE_SIGN_ENTITLEMENTS: AstroNumeric/AstroNumericDebug.entitlements
         Release:
-          SWIFT_OPTIMIZATION_LEVEL: "-O"
-          DEBUG_INFORMATION_FORMAT: "dwarf-with-dsym"
+          SWIFT_OPTIMIZATION_LEVEL: '-O'
+          DEBUG_INFORMATION_FORMAT: 'dwarf-with-dsym'
     info:
       path: AstroNumeric/Info.plist
       properties:
-        API_BASE_URL: "https://astromeric-backend-production.up.railway.app"
-        WEBSITE_BASE_URL: "https://astronumeric.com"
+        API_BASE_URL: 'https://astromeric-backend-production.up.railway.app'
+        WEBSITE_BASE_URL: 'https://astronumeric.com'
         CFBundleDisplayName: AstroNumeric
         CFBundleName: AstroNumeric
         BGTaskSchedulerPermittedIdentifiers:
@@ -75,10 +75,11 @@ targets:
         UIBackgroundModes:
           - remote-notification
           - fetch
-        NSLocationWhenInUseUsageDescription: "We need your location to determine your birthplace timezone."
-        NSHealthShareUsageDescription: "AstroNumeric reads health data (heart rate, sleep, steps) to correlate your biometrics with cosmic transits and provide personalized insights."
-        NSMicrophoneUsageDescription: "AstroNumeric uses your microphone to record voice journal entries using live speech-to-text transcription."
-        NSSpeechRecognitionUsageDescription: "AstroNumeric transcribes your voice journal entries into text using on-device speech recognition."
+        NSLocationWhenInUseUsageDescription: 'We need your location to determine your birthplace timezone.'
+        NSHealthShareUsageDescription: 'AstroNumeric reads health data (heart rate, sleep, steps) to correlate your biometrics with cosmic transits and provide personalized insights.'
+        NSHealthUpdateUsageDescription: 'AstroNumeric only reads your Health data to compare it with cosmic cycles. It does not write anything to Health.'
+        NSMicrophoneUsageDescription: 'AstroNumeric uses your microphone to record voice journal entries using live speech-to-text transcription.'
+        NSSpeechRecognitionUsageDescription: 'AstroNumeric transcribes your voice journal entries into text using on-device speech recognition.'
         ITSAppUsesNonExemptEncryption: false
     entitlements:
       path: AstroNumeric/AstroNumeric.entitlements
@@ -96,20 +97,20 @@ targets:
     sources:
       - path: Shared
         excludes:
-          - "**/.DS_Store"
+          - '**/.DS_Store'
       - path: AstroWidget
         excludes:
-          - "**/.DS_Store"
+          - '**/.DS_Store'
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.astromeric.app.widget
-        DEVELOPMENT_TEAM: "8L5LTN9LMB"
+        DEVELOPMENT_TEAM: '8L5LTN9LMB'
         CODE_SIGN_ENTITLEMENTS: AstroWidget/AstroWidget.entitlements
         INFOPLIST_FILE: AstroWidget/Info.plist
-        SWIFT_VERSION: "5.9"
+        SWIFT_VERSION: '5.9'
         GENERATE_INFOPLIST_FILE: NO
         SKIP_INSTALL: YES
-        LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks"
+        LD_RUNPATH_SEARCH_PATHS: '$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks'
     entitlements:
       path: AstroWidget/AstroWidget.entitlements
       properties:
