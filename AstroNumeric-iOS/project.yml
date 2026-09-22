@@ -76,8 +76,10 @@ targets:
           - remote-notification
           - fetch
         NSLocationWhenInUseUsageDescription: 'We need your location to determine your birthplace timezone.'
+        NSCalendarsFullAccessUsageDescription: 'AstroNumeric reads your upcoming calendar events to show how they line up with planetary timing. When you ask the Cosmic Guide a question, upcoming event titles may be included to personalise its answer.'
         NSHealthShareUsageDescription: 'AstroNumeric reads health data (heart rate, sleep, steps) to correlate your biometrics with cosmic transits and provide personalized insights.'
         NSHealthUpdateUsageDescription: 'AstroNumeric only reads your Health data to compare it with cosmic cycles. It does not write anything to Health.'
+        NSPhotoLibraryAddUsageDescription: 'AstroNumeric saves the reading cards you choose to your photo library.'
         NSMicrophoneUsageDescription: 'AstroNumeric uses your microphone to record voice journal entries using live speech-to-text transcription.'
         NSSpeechRecognitionUsageDescription: 'AstroNumeric transcribes your voice journal entries into text using on-device speech recognition.'
         ITSAppUsesNonExemptEncryption: false

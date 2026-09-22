@@ -166,6 +166,7 @@
 		FC6D71259E457503D85E4CE1 /* VoiceRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 532DAFEB1BAE9F95E5CE5766 /* VoiceRecorder.swift */; };
 		FD1C5FE63B7B50A8C8D799B0 /* TemporalMatrixView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7FBED050F7756051300A343C /* TemporalMatrixView.swift */; };
 		FD5F871B49AC1FA6453030C2 /* CosmicGuideView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1FA3CC4323AE868414CB3E10 /* CosmicGuideView.swift */; };
+		D2C5F2C347E3370599E26B07 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = B2B7EFB13F97A46382113ED0 /* PrivacyInfo.xcprivacy */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -389,6 +390,7 @@
 		F959CA7F381C942022B8AA66 /* CoreModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreModels.swift; sourceTree = "<group>"; };
 		FB5A3BFC50283DC804AB81B2 /* AffirmationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AffirmationView.swift; sourceTree = "<group>"; };
 		FE0463C05FB09223C5C58961 /* swephlib.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = swephlib.h; sourceTree = "<group>"; };
+		B2B7EFB13F97A46382113ED0 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -602,6 +604,7 @@
 				A5AE7ACED1B7513142018098 /* MoonPhaseWidget.swift */,
 				0F7849558EF475BFD90EB816 /* MorningBriefWidget.swift */,
 				EE3FCCDD5D8704AAD6253666 /* PlanetaryHourWidget.swift */,
+				B2B7EFB13F97A46382113ED0 /* PrivacyInfo.xcprivacy */,
 				3EB7DB45F5AEE2CBD9F04381 /* WidgetCosmicStyle.swift */,
 			);
 			path = AstroWidget;
@@ -1014,6 +1017,7 @@
 			buildConfigurationList = 19C2F7F14C63DDB0819E98FD /* Build configuration list for PBXNativeTarget "AstroWidget" */;
 			buildPhases = (
 				3B583910A7ACCE6FA8DD1662 /* Sources */,
+				786B09ECD0CFC79DC4CFB1F6 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -1106,6 +1110,14 @@
 				0294D1CCDB97FA745915EF51 /* seleapsec.txt in Resources */,
 				83F059993470434A5B762D1B /* semo_18.se1 in Resources */,
 				26FC3A2A76850362EB6DC66D /* sepl_18.se1 in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		786B09ECD0CFC79DC4CFB1F6 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D2C5F2C347E3370599E26B07 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
