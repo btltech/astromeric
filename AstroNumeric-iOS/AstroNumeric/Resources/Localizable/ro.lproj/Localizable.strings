@@ -1160,6 +1160,14 @@
 "habits.create.phaseMatch" = "This category matches the current lunar guidance.";
 "journal.loading.body" = "Loading saved readings and local drafts.";
 
+// MARK: - UI labels and Home fallbacks
+"label.startHere" = "Începe aici";
+"label.advanced" = "Avansat";
+"label.recommended" = "Recomandat";
+"home.reading.unavailable.headline" = "Citirea de azi nu s-a încărcat";
+"home.reading.unavailable.tldr" = "Trage în jos pentru reîmprospătare sau încearcă din nou când ai conexiune.";
+"home.reading.unavailable.energy" = "Indisponibil";
+
 // MARK: - First run
 "firstrun.proof.local.title" = "Local, în mod implicit";
 "firstrun.proof.local.detail" = "Profilul tău începe pe acest dispozitiv.";

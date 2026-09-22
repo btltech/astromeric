@@ -1163,6 +1163,14 @@
 "habits.create.phaseMatch" = "This category matches the current lunar guidance.";
 "journal.loading.body" = "Loading saved readings and local drafts.";
 
+// MARK: - UI labels and Home fallbacks
+"label.startHere" = "Empieza aquí";
+"label.advanced" = "Avanzado";
+"label.recommended" = "Recomendado";
+"home.reading.unavailable.headline" = "La lectura de hoy no se cargó";
+"home.reading.unavailable.tldr" = "Desliza hacia abajo para actualizar o inténtalo de nuevo cuando vuelvas a tener conexión.";
+"home.reading.unavailable.energy" = "No disponible";
+
 // MARK: - First run
 "firstrun.proof.local.title" = "Local por defecto";
 "firstrun.proof.local.detail" = "Tu perfil empieza en este dispositivo.";

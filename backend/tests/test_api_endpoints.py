@@ -170,7 +170,9 @@ def test_daily_forecast_tone_changes_narrative_style(monkeypatch):
 
 
 @pytest.mark.parametrize("scope", ["daily", "weekly", "monthly"])
-def test_forecast_endpoints_preserve_missing_birth_time_validation(scope):
+def test_forecast_endpoints_work_without_a_birth_time(scope):
+    """The app offers "I don't know my birth time" and calculates from noon, so a
+    forecast must still be returned — flagged as assumed rather than refused."""
     payload = {
         "profile": {
             "name": "Missing Time",
@@ -186,10 +188,31 @@ def test_forecast_endpoints_preserve_missing_birth_time_validation(scope):
 
     response = client.post(f"/v2/forecasts/{scope}", json=payload)
 
-    assert response.status_code == 422
-    body = response.json()
-    assert body["detail"]["code"] == "MISSING_TIME_OF_BIRTH"
-    assert "Birth time is required" in body["detail"]["message"]
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert data["birth_time_assumed"] is True
+    assert data["sections"], "a forecast without a birth time still needs content"
+
+
+@pytest.mark.parametrize("scope", ["daily", "weekly", "monthly"])
+def test_forecast_with_a_birth_time_is_not_flagged_as_assumed(scope):
+    payload = {
+        "profile": {
+            "name": "Known Time",
+            "date_of_birth": "1990-01-01",
+            "time_of_birth": "14:30",
+            "latitude": 40.7128,
+            "longitude": -74.006,
+            "timezone": "America/New_York",
+        },
+        "scope": scope,
+        "include_details": True,
+    }
+
+    response = client.post(f"/v2/forecasts/{scope}", json=payload)
+
+    assert response.status_code == 200
+    assert response.json()["data"]["birth_time_assumed"] is False
 
 
 @pytest.mark.parametrize("scope", ["daily", "weekly", "monthly"])
