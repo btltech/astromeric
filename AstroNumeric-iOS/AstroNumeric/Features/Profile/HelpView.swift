@@ -130,7 +130,7 @@ struct HelpView: View {
                     .foregroundStyle(.white)
                     .clipShape(RoundedRectangle(cornerRadius: 12))
                 }
-                .accessibilityLabel("Email support at support@astromeric.app")
+                .accessibilityLabel("Email support at support@myrepairflow.com")
             }
         }
     }
@@ -138,12 +138,12 @@ struct HelpView: View {
     private var supportEmailURL: URL {
         var components = URLComponents()
         components.scheme = "mailto"
-        components.path = "support@astromeric.app"
+        components.path = "support@myrepairflow.com"
         components.queryItems = [
             URLQueryItem(name: "subject", value: "AstroNumeric iOS Support"),
             URLQueryItem(name: "body", value: supportEmailBody)
         ]
-        return components.url ?? URL(string: "mailto:support@astromeric.app")!
+        return components.url ?? URL(string: "mailto:support@myrepairflow.com")!
     }
 
     private var supportEmailBody: String {
@@ -182,7 +182,7 @@ struct HelpView: View {
             FAQItem(question: "How do I edit my birth details?",
                     answer: "Go to Profile, tap 'Edit' in the Birth Details card, make your changes, and tap Save. All your readings will automatically recalculate."),
             FAQItem(question: "How do I delete my data?",
-                    answer: "To remove a profile from the app, long press it in the Profiles list and tap Delete. In the current personal-mode build, most profile data lives on your device. If you want a broader reset, remove the app from your device. For backend-held data questions such as push tokens or synced friend records, email privacy@astromeric.app."),
+                    answer: "To remove a profile from the app, long press it in the Profiles list and tap Delete. In the current personal-mode build, most profile data lives on your device. If you want a broader reset, remove the app from your device. For backend-held data questions such as push tokens or synced friend records, email support@myrepairflow.com."),
             FAQItem(question: "What does 'Hide Sensitive Details' do?",
                     answer: "It masks names, birth details, share cards, and some local cache labels across the app. It does not remove the underlying birth data needed to calculate charts, and backup export files can still contain full details so they can be restored later."),
         ]),
@@ -224,11 +224,11 @@ struct HelpView: View {
         ]),
         FAQSection(title: "Troubleshooting", icon: "wrench.and.screwdriver.fill", iconColor: .red, items: [
             FAQItem(question: "The app shows 'Unable to load' errors.",
-                    answer: "Check your internet connection. If connected, the server may be temporarily down — try again in a minute. You can also pull down to retry. If the issue persists, email support@astromeric.app."),
+                    answer: "Check your internet connection. If connected, the server may be temporarily down — try again in a minute. You can also pull down to retry. If the issue persists, email support@myrepairflow.com."),
             FAQItem(question: "How do I clear the cache?",
                     answer: "Most local caches clear automatically after their TTL. There is no one-tap full cache wipe in the current build, so reinstalling the app is the cleanest way to clear local caches."),
             FAQItem(question: "The app crashed. How do I report it?",
-                    answer: "The app does not currently include a dedicated in-app crash reporting SDK. If it crashes, relaunch it and email support@astromeric.app with 'Crash Report' in the subject, your device model, iOS version, and the steps that led to the crash."),
+                    answer: "The app does not currently include a dedicated in-app crash reporting SDK. If it crashes, relaunch it and email support@myrepairflow.com with 'Crash Report' in the subject, your device model, iOS version, and the steps that led to the crash."),
             FAQItem(question: "Readings aren't updating.",
                     answer: "Try pulling down to refresh. If still stale, check your internet connection. Daily readings cache for 1 hour — if you've already fetched today's reading, you'll see it again until the hour expires or you force-refresh."),
         ]),

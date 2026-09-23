@@ -803,12 +803,12 @@ private struct ProfileSupportCenterView: View {
     private var supportEmailURL: URL {
         var components = URLComponents()
         components.scheme = "mailto"
-        components.path = "support@astromeric.app"
+        components.path = "support@myrepairflow.com"
         components.queryItems = [
             URLQueryItem(name: "subject", value: "AstroNumeric iOS Support"),
             URLQueryItem(name: "body", value: supportEmailBody)
         ]
-        return components.url ?? URL(string: "mailto:support@astromeric.app")!
+        return components.url ?? URL(string: "mailto:support@myrepairflow.com")!
     }
 
     private var supportEmailBody: String {

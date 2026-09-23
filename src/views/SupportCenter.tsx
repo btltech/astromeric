@@ -4,8 +4,8 @@ import { DocumentMeta } from '../components/DocumentMeta';
 import { getRouteMeta } from '../seo/routeMeta';
 import './PrivacyPolicy.css';
 
-const supportEmail = 'support@astromeric.app';
-const privacyEmail = 'privacy@astromeric.app';
+const supportEmail = 'support@myrepairflow.com';
+const privacyEmail = 'support@myrepairflow.com';
 
 export function SupportCenter() {
   const currentYear = new Date().getFullYear();

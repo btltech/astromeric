@@ -204,8 +204,8 @@ export function PrivacyPolicy() {
             <h3>6.3 How to Exercise Your Rights</h3>
             <p>
               To exercise any of these rights, please contact us at{' '}
-              <a href="mailto:privacy@astromeric.app">privacy@astromeric.app</a> with &quot;Privacy
-              Request&quot; in the subject line. We will respond within 30 days.
+              <a href="mailto:support@myrepairflow.com">support@myrepairflow.com</a> with
+              &quot;Privacy Request&quot; in the subject line. We will respond within 30 days.
             </p>
           </section>
 
@@ -216,10 +216,10 @@ export function PrivacyPolicy() {
               entries saved to them; and friend and partner profiles) until you ask us to delete it
               or, for accounts, until the account is deleted. To delete a website account or any
               server-stored data, email{' '}
-              <a href="mailto:privacy@astromeric.app">privacy@astromeric.app</a> and we will delete
-              it within 30 days. We do not keep Cosmic Guide conversations. Data stored on your
-              device (such as iOS profiles and journal entries) can be removed by deleting those
-              items in the app or uninstalling the app.
+              <a href="mailto:support@myrepairflow.com">support@myrepairflow.com</a> and we will
+              delete it within 30 days. We do not keep Cosmic Guide conversations. Data stored on
+              your device (such as iOS profiles and journal entries) can be removed by deleting
+              those items in the app or uninstalling the app.
             </p>
           </section>
 
@@ -231,7 +231,7 @@ export function PrivacyPolicy() {
             </p>
             <ul>
               <li>
-                Email: <a href="mailto:privacy@astromeric.app">privacy@astromeric.app</a>
+                Email: <a href="mailto:support@myrepairflow.com">support@myrepairflow.com</a>
               </li>
             </ul>
           </section>

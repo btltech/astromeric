@@ -60,7 +60,7 @@ export function TermsOfService() {
             <h2>5. Contact</h2>
             <p>
               Questions? Visit <Link to="/support">/support</Link> or email{' '}
-              <a href="mailto:privacy@astromeric.app">privacy@astromeric.app</a>.
+              <a href="mailto:support@myrepairflow.com">support@myrepairflow.com</a>.
             </p>
           </section>
 

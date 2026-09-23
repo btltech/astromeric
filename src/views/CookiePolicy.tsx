@@ -299,7 +299,7 @@ export function CookiePolicy() {
             <h2>Questions About Our Cookie Policy?</h2>
             <p>
               If you have questions or concerns about our use of cookies, please contact us at{' '}
-              <a href="mailto:privacy@astromeric.app">privacy@astromeric.app</a>.
+              <a href="mailto:support@myrepairflow.com">support@myrepairflow.com</a>.
             </p>
           </section>
 
