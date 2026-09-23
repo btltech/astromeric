@@ -47,7 +47,7 @@ struct PrivacyView: View {
                 Text("ui.privacy.0".localized)
                     .font(.subheadline)
                     .foregroundStyle(Color.textSecondary)
-                Link("privacy@astromeric.app", destination: URL(string: "mailto:privacy@astromeric.app")!)
+                Link("support@myrepairflow.com", destination: URL(string: "mailto:support@myrepairflow.com")!)
                     .font(.subheadline.bold())
                     .foregroundStyle(.purple)
             }
@@ -135,7 +135,7 @@ struct PrivacyView: View {
             bullets: [
                 "You can remove a profile from the app from the Profile screen.",
                 "Because this build is local-first, the cleanest full device reset is removing the app and its data from your device.",
-                "If you want to ask about backend-held data such as synced friend records, email privacy@astromeric.app.",
+                "If you want to ask about backend-held data such as synced friend records, email support@myrepairflow.com.",
                 "This screen describes the app's current behavior and may change as storage and sync features evolve.",
             ]
         ),
