@@ -57,3 +57,39 @@ jobs:
           npm run build
         env:
           VITE_API_URL: https://astromeric-backend-prod.railway.app
+
+  ios-localization:
+    # Cheap Linux check: a key the app cannot resolve is drawn on screen
+    # verbatim, so it must never reach main.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate iOS localization keys
+        run: python3 scripts/check_ios_localization.py
+
+  ios-tests:
+    # The iOS app is what ships, so it has to compile and pass its tests here,
+    # not only on a developer's machine.
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Show Xcode version
+        run: xcodebuild -version
+      - name: Pick an available iPhone simulator
+        id: sim
+        run: |
+          udid=$(xcrun simctl list devices available | grep -Eo '\(([0-9A-F-]{36})\)' | head -1 | tr -d '()')
+          if [ -z "$udid" ]; then echo "no simulator available"; exit 1; fi
+          echo "udid=$udid" >> "$GITHUB_OUTPUT"
+          echo "Using simulator $udid"
+      - name: Build and test iOS app
+        run: |
+          set -o pipefail
+          xcodebuild test \
+            -project AstroNumeric-iOS/AstroNumeric.xcodeproj \
+            -scheme AstroNumeric \
+            -destination "platform=iOS Simulator,id=${{ steps.sim.outputs.udid }}" \
+            -only-testing:AstroNumericTests \
+            CODE_SIGN_IDENTITY="-" \
+            CODE_SIGNING_REQUIRED=YES \
+            CODE_SIGNING_ALLOWED=YES

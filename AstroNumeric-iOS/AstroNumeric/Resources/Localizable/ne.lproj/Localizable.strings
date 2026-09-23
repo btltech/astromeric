@@ -1187,3 +1187,7 @@
 "a11y.openProfileTab.hint" = "जन्म विवरण थप्न प्रोफाइल ट्याब खोल्छ";
 "a11y.forecastYear" = "पूर्वानुमान वर्ष";
 "a11y.luckyNumber.hint" = "यो अङ्कको अर्थ देखाउँछ";
+"fmt.charts.3" = "जन्म: %1$@";
+"home.habits.empty" = "अहिलेसम्म कुनै बानी छैन — पहिलो थप्नुहोस्";
+"ai.insight.button" = "एआई अन्तर्दृष्टि";
+"ai.insight.hint" = "कस्मिक गाइड च्याट खोल्छ";

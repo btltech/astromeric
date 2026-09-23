@@ -1187,3 +1187,7 @@
 "a11y.openProfileTab.hint" = "Deschide fila Profil pentru a adăuga datele nașterii";
 "a11y.forecastYear" = "Anul prognozei";
 "a11y.luckyNumber.hint" = "Arată ce înseamnă acest număr";
+"fmt.charts.3" = "Născut: %1$@";
+"home.habits.empty" = "Niciun obicei — adaugă-l pe primul";
+"ai.insight.button" = "Perspectivă AI";
+"ai.insight.hint" = "Deschide chatul Ghidului Cosmic";

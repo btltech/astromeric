@@ -1191,3 +1191,7 @@
 "a11y.openProfileTab.hint" = "Opens the Profile tab to add your birth details";
 "a11y.forecastYear" = "Forecast year";
 "a11y.luckyNumber.hint" = "Shows what this number means";
+"fmt.charts.3" = "Born: %1$@";
+"home.habits.empty" = "No habits yet — add your first";
+"ai.insight.button" = "AI Insight";
+"ai.insight.hint" = "Opens the Cosmic Guide chat";

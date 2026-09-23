@@ -661,14 +661,15 @@ struct NumerologyView: View {
                 .font(.subheadline)
                 .foregroundStyle(Color.textSecondary)
                 .multilineTextAlignment(.center)
-            GradientButton("Create Profile", icon: "plus") {
+            GradientButton("firstrun.createProfile".localized, icon: "plus") {
                 NotificationCenter.default.post(
                     name: .navigateToTab,
                     object: nil,
                     userInfo: ["tab": 3]
                 )
             }
-            .frame(width: 200)
+            .frame(maxWidth: 280)
+            .padding(.horizontal)
         }
         .padding()
     }
