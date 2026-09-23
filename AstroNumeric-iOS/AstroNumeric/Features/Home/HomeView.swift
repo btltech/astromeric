@@ -403,16 +403,18 @@ struct HomeView: View {
                 HStack(spacing: Space.md) {
                     ZStack {
                         Circle()
-                            .fill(Color.green.opacity(0.18))
+                            .fill((vm.totalHabits == 0 ? Color.accentPrimary : Color.green).opacity(0.18))
                             .frame(width: 46, height: 46)
-                        Image(systemName: "checkmark.circle.fill")
+                        Image(systemName: vm.totalHabits == 0 ? "plus.circle.fill" : "checkmark.circle.fill")
                             .font(.title2)
-                            .foregroundStyle(.green)
+                            .foregroundStyle(vm.totalHabits == 0 ? Color.accentPrimary : .green)
                     }
                     VStack(alignment: .leading, spacing: 4) {
                         Text("ui.home.9".localized)
                             .font(.subheadline.weight(.semibold))
-                        Text(String(format: "fmt.home.0".localized, "\(vm.habitsCompletedToday)", "\(vm.totalHabits)"))
+                        Text(vm.totalHabits == 0
+                             ? "home.habits.empty".localized
+                             : String(format: "fmt.home.0".localized, "\(vm.habitsCompletedToday)", "\(vm.totalHabits)"))
                             .font(.caption)
                             .foregroundStyle(Color.textSecondary)
                     }
@@ -424,7 +426,9 @@ struct HomeView: View {
             }
         }
         .buttonStyle(ScaleButtonStyle())
-        .accessibilityLabel("Today's habits, \(vm.habitsCompletedToday) of \(vm.totalHabits) completed")
+        .accessibilityLabel(vm.totalHabits == 0
+                            ? "home.habits.empty".localized
+                            : "Today's habits, \(vm.habitsCompletedToday) of \(vm.totalHabits) completed")
         .accessibilityHint("Double tap to view your habits")
     }
 

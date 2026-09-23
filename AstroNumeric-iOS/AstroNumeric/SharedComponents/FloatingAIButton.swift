@@ -21,7 +21,7 @@ struct FloatingAIButton: View {
                 Image(systemName: "sparkles")
                     .font(.footnote.weight(.bold))
                     .symbolRenderingMode(.hierarchical)
-                Text("AI Insight")
+                Text("ai.insight.button".localized)
                     .font(.footnote.weight(.semibold))
             }
             .foregroundStyle(.white)
@@ -38,8 +38,8 @@ struct FloatingAIButton: View {
             .contentShape(Capsule())
         }
         .buttonStyle(AccessibleButtonStyle())
-        .accessibilityLabel("AI Insight")
-        .accessibilityHint("Opens the Cosmic Guide AI chat")
+        .accessibilityLabel("ai.insight.button".localized)
+        .accessibilityHint("ai.insight.hint".localized)
         .simultaneousGesture(
             DragGesture(minimumDistance: 0)
                 .onChanged { _ in isPressed = true }

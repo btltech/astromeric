@@ -370,7 +370,7 @@ struct ChartsProfileInfoCard: View {
                     Text(profile.displayName(hideSensitive: store.hideSensitiveDetailsEnabled, role: .activeUser))
                         .font(.subheadline.weight(.medium))
                     
-                    Text("ui.charts.13".localized)
+                    Text(String(format: "fmt.charts.3".localized, store.hideSensitiveDetailsEnabled ? PrivacyRedaction.hiddenValue : profile.dateOfBirth))
                         .font(.caption)
                         .foregroundStyle(Color.textSecondary)
                     

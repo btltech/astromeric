@@ -1187,3 +1187,7 @@
 "a11y.openProfileTab.hint" = "Ouvre l'onglet Profil pour ajouter vos données de naissance";
 "a11y.forecastYear" = "Année de prévision";
 "a11y.luckyNumber.hint" = "Affiche la signification de ce nombre";
+"fmt.charts.3" = "Naissance : %1$@";
+"home.habits.empty" = "Aucune habitude — ajoutez la première";
+"ai.insight.button" = "Aperçu IA";
+"ai.insight.hint" = "Ouvre le chat du Guide Cosmique";
