@@ -1,114 +1,108 @@
-# iOS monetisation plan
+# iOS monetisation — decision brief
 
-Planned work, to start **after 1.0.1 is approved**. Nothing here is implemented
-yet: `Products.storekit` is empty, and the app contains no StoreKit code.
+Work to start **after 1.0.1 is approved**. Nothing here is implemented:
+`Products.storekit` is empty and the app contains no StoreKit code.
 
-The one thing worth doing before approval is the paperwork in step 0, because it
-gates everything and is slow when it goes wrong.
+This is deliberately a decision brief, not an implementation plan. The commercial
+model is settled first; StoreKit code follows it.
 
 ---
 
-## 0. Before any code (yours, in App Store Connect)
+## Facts this decision rests on
 
-- [ ] **Paid Apps agreement** signed under Business → Agreements, Tax and Banking,
-      with bank and tax details complete. Until this is active, paid products
-      cannot be created, tested in sandbox, or sold. This is the usual reason a
-      monetisation push stalls.
-- [ ] Decide the price and period (see step 1).
+Checked in the code rather than assumed:
 
-## 1. Product decisions (yours)
+1. **Every chart on iOS is computed server-side.** The app calls
+   `/v2/charts/natal`, `/progressed`, `/composite` and `/synastry`. So chart
+   features carry a per-user server cost for as long as that user keeps using
+   them, even though the calculation itself is deterministic.
+2. **A Swiss Ephemeris engine already ships inside the app**
+   (`EphemerisEngine/`, with `swisseph`), but today it is used only for widgets,
+   the Oracle and local timing — not for the charts the user looks at.
+3. **The advanced techniques are not in the iOS app.** Solar arc directions,
+   lunar returns, profections and relocation exist in the backend and in the
+   Android client. iOS has no endpoints for them. Any plan that sells them on
+   iOS is selling something that must first be built there.
+4. **The AI path has a real marginal cost**, and is currently restricted to the
+   owner's device by access code (#7).
 
-Three decisions I cannot make for you.
+Fact 3 corrects an earlier recommendation of mine: I proposed the advanced
+techniques as the paid hook without checking that iOS actually has them.
 
-**a. What stays free.** My recommendation, based on what the app already does:
+## The decision: which model
 
-| Free | Paid |
-| --- | --- |
-| Natal chart and the big three | Weekly and monthly forecasts |
-| Core numbers, personal day | Cosmic Circle and compatibility reports |
-| One profile | Solar arcs, lunar returns, profections, relocation |
-| Daily reading, moon widget | Journal history and pattern analysis |
+| Model | Fits because | Costs you |
+| --- | --- | --- |
+| Subscription | Ongoing forecasts and AI have ongoing cost | Hardest sell; needs continuous perceived value; churn |
+| One-time Pro unlock | Simple, no subscription fatigue, easy to market | No recurring income against server costs that recur per user (fact 1) |
+| Hybrid: permanent unlock for calculation features, subscription for AI and continuously generated content | Maps price to actual marginal cost | More moving parts: two entitlement types, more states to test |
 
-The advanced techniques are the strongest paid hook: they are genuinely rare in
-consumer apps, expensive to build, and they are the same argument that answers
-guideline 4.3.
+The hybrid is the most honest fit for this app **if** the calculation side stops
+costing per use. The engine to do that is already in the bundle (fact 2): moving
+chart calculation on-device would make a lifetime unlock economically safe, work
+offline, and strengthen the privacy story, at the cost of a real piece of work to
+reach parity with the backend's output.
 
-**b. Price.** The category sits around £8–12/month with an annual discount.
-A reasonable start: **£4.99/month, £34.99/year** — undercutting the
-subscription-heavy competition while leaving room to raise later.
+Without that move, a lifetime unlock means selling perpetual access to a service
+that keeps costing you per user.
 
-**c. Free trial.** A 7-day introductory offer is standard and lifts conversion,
-at the cost of some churn. Recommended.
+## Settle before any StoreKit code
 
-## 2. App Store Connect setup
+- What stays free permanently.
+- What is unlocked once, and what — if anything — genuinely requires recurring
+  payment.
+- Price and currency, per product.
+- Introductory or trial behaviour, and what happens when a trial ends.
+- **Restore semantics**: what "restore" means for each entitlement type.
+- **Lapse behaviour**: when a subscription ends, what happens to content already
+  generated? Readings already saved? This needs an answer before the UI is built,
+  not after.
+- **Offline behaviour**: what a paying user sees with no network.
+- **Existing users**: everyone who installs 1.0.1 gets today's features free.
+  Decide whether they keep them, and say so in the App Store copy.
+- **Failure states**: purchase interrupted, refunded, family-shared, billing
+  retry, entitlement unavailable at launch.
 
-- Subscription group "AstroNumeric Premium" with monthly and annual products.
-- Localized display names and descriptions in all five languages.
-- A review screenshot of the paywall, which Apple requires for each product.
-- Mirror the same products into `Resources/StoreKit/Products.storekit` so the
-  app can be run and tested without the sandbox.
+## Then, implementation shape
 
-## 3. Client implementation
+- `StoreService` deriving entitlement from `Transaction.currentEntitlements` and
+  observing `Transaction.updates` — offline-capable and restores through the
+  Apple ID, which suits the app's no-accounts design.
+- A single `PremiumGate` modifier so the check exists in one place.
+- `PaywallView` with what Apple rejects for when missing: price and period on
+  screen, **Restore Purchases**, terms and privacy links, localized in all five
+  languages (the CI localization job enforces the last part).
+- `StoreKitTest` unit tests against the local configuration — purchase grants,
+  expiry revokes, restore re-grants, refund revokes, gate hides content — running
+  in the `ios-tests` CI job from #14.
 
-**`StoreService`** (new, `Core/Services`)
-- Load products with `Product.products(for:)`.
-- Purchase, and listen to `Transaction.updates` for renewals and refunds.
-- Derive entitlement from `Transaction.currentEntitlements` — this works
-  offline, survives reinstall, and restores through the Apple ID, which fits the
-  app's local-first, no-accounts design.
-- Expose `isSubscribed` as observable state for the UI.
+## Server-side entitlement (only if needed)
 
-**`PaywallView`** (new, `Features/Premium`)
-- Both products with prices from StoreKit, never hardcoded.
-- Apple requires on the same screen: price, period, what auto-renews, a
-  **Restore Purchases** button, and links to terms and the privacy policy.
-- Localized in all five languages; the localization CI job will enforce that.
+The paid API is public and unauthenticated. If that matters once there is
+something to protect, the anonymous per-install key from #6 can carry a signed
+transaction for the backend to verify against Apple's App Store Server API — no
+account, no personal data. **Privacy consequence:** storing a transaction id adds
+**Purchases** to the App Store privacy answers (collected, not linked), so the
+declarations and `privacy-security-audit.md` would need updating first.
 
-**Gating**
-- One `PremiumGate` modifier so the check is written once rather than per screen.
-- Applied to the paid features listed in step 1.
+## Commission
 
-## 4. Server-side entitlement (phase 2, optional)
+Apple's standard commission is 30%. The Small Business Program offers 15% for
+participants who **enrol and meet Apple's eligibility conditions**, which take
+account of the developer and associated accounts' proceeds. Whether this account
+qualifies is Apple's determination, not something inferable from this app.
 
-The forecasts a subscriber pays for are computed by our API, which is public. If
-that becomes worth protecting:
+## Sequencing
 
-- The app already holds an anonymous per-install key (`FriendsOwnerKey`, from
-  #6). Send the signed transaction (JWS) with that key; the backend verifies it
-  against Apple's App Store Server API and records an entitlement against the
-  key. No account, no personal data.
-- **Privacy consequence:** storing a transaction id makes **Purchases** a
-  collected data type — not linked, app functionality. The App Privacy answers
-  and `privacy-security-audit.md` would need updating before that ships.
+1. **Current release:** monetisation untouched. Finish review. Guideline 4.3(b)
+   names fortune-telling as a saturated category needing a meaningfully
+   different experience; adding a payment system now only widens what review can
+   pick at without helping that argument.
+2. **Next release:** monetisation as its own bounded project, with the
+   commercial model settled first.
 
-Phase 1 can ship without this. Client-side entitlement is normal for a
-local-first app, and the exposure is an unauthenticated API that is already
-public today.
-
-## 5. Tests
-
-- `StoreKitTest` unit tests against the local `.storekit` file: purchase grants
-  entitlement, expiry revokes it, restore re-grants, a refund revokes.
-- A gating test: the premium modifier hides content when `isSubscribed` is false.
-- These run in the `ios-tests` CI job added in #14, so the paywall cannot
-  silently break.
-
-## 6. Submission
-
-- Ship as **1.1**, after 1.0.1 is approved. Never in a first submission.
-- Review notes: how to reach the paywall, that sandbox purchases need no demo
-  account, and what free users still get.
-- Expect scrutiny of the paywall itself: Apple rejects unclear pricing, missing
-  restore buttons and missing terms links more often than it rejects the app.
-
-## Rough effort
-
-| Step | Effort |
-| --- | --- |
-| ASC setup and paperwork | yours, mostly waiting |
-| StoreService and entitlement | 1 day |
-| Paywall, localized | 1–2 days |
-| Gating and tests | 1 day |
-| Server verification (phase 2) | 2 days |
-
-About a week for phase 1, once the Paid Apps agreement is active.
+No effort estimate is given here on purpose. StoreKit 2 itself is small; the work
+is entitlement design, restore and lapse semantics, failure states, purchase UI,
+testing and App Store configuration. Estimating that before the model is decided
+is how purchase architecture ends up built around a commercial model that then
+changes.
