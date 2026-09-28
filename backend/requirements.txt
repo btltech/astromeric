@@ -8,7 +8,7 @@ python-jose[cryptography]==3.3.0
 argon2-cffi>=21.0.0
 flatlib==0.2.3
 pyswisseph>=2.0.0
-sqlalchemy>=2.0.0
+sqlalchemy>=2.0.0,<2.1  # 2.1 defaults postgresql:// to psycopg 3, which is not installed
 email-validator>=2.0.0
 # Starlette 0.27 TestClient still uses httpx's legacy `app=` shortcut.
 # httpx>=0.27 emits DeprecationWarnings for that shortcut.
