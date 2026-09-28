@@ -5,11 +5,21 @@ Ensures consistent structure across all endpoints.
 
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, Generic, List, Optional, TypeVar
+from typing import Annotated, Any, Dict, Generic, List, Optional, TypeVar
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, WrapSerializer
 
 T = TypeVar("T")
+
+
+def _whole_seconds(value: datetime, handler):
+    return handler(value.replace(microsecond=0))
+
+
+# A datetime serialized without fractional seconds. The iOS app decodes dates
+# with JSONDecoder's .iso8601 strategy, which rejects "…33.258095Z" on iOS 17
+# and 18, so any timestamp the app reads as a Date must use this type.
+Timestamp = Annotated[datetime, WrapSerializer(_whole_seconds)]
 
 
 # ============================================================================

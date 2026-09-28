@@ -459,19 +459,21 @@ def _aspect_meaning(
         "Pluto": "phoenix power",
     }
 
+    # (singular, plural) so the verb agrees with themes like "mystic waters".
     aspect_verbs = {
-        "trine": "dances effortlessly with",
-        "sextile": "opens doors to",
-        "conjunction": "fuses intensely with",
-        "square": "wrestles productively with",
-        "opposition": "mirrors and balances",
+        "trine": ("dances effortlessly with", "dance effortlessly with"),
+        "sextile": ("opens doors to", "open doors to"),
+        "conjunction": ("fuses intensely with", "fuse intensely with"),
+        "square": ("wrestles productively with", "wrestle productively with"),
+        "opposition": ("mirrors and balances", "mirror and balance"),
     }
+    plural_themes = {"emotional depths", "mystic waters"}
 
     theme_a = planet_themes.get(pa, pa)
     theme_b = planet_themes.get(pb, pb)
-    verb = aspect_verbs.get(aspect_type, "weaves into")
+    singular, plural = aspect_verbs.get(aspect_type, ("weaves into", "weave into"))
+    verb = plural if theme_a in plural_themes else singular
 
-    # Create dynamic text with correct grammar (plural subject)
     dynamic_text = f"Your {theme_a} {verb} your {theme_b}."
 
     return {

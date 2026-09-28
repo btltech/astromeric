@@ -350,6 +350,9 @@ def build_progressed_chart(profile: Dict, target_date: Optional[str] = None) -> 
     chart["metadata"]["progressed_date"] = progressed_date.isoformat()
     chart["metadata"]["natal_date"] = profile["date_of_birth"]
     chart["metadata"]["reference_date"] = ref_date.isoformat()
+    # The iOS Progressions screen requires target_date; without it the whole
+    # response fails to decode.
+    chart["metadata"]["target_date"] = ref_date.isoformat()
     chart["metadata"]["age_years"] = age_years
     return chart
 

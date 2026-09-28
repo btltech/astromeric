@@ -386,6 +386,12 @@ def estimate_moon_sign(date: datetime = None) -> str:
     return ZODIAC_ORDER[sign_index]
 
 
+_UPCOMING_EVENT_MEANING = {
+    "New Moon": "set intentions and start fresh.",
+    "Full Moon": "complete, release and celebrate.",
+}
+
+
 def get_upcoming_moon_events(days: int = 30) -> List[Dict]:
     """
     Get upcoming New and Full Moons for the next N days.
@@ -427,6 +433,14 @@ def get_upcoming_moon_events(days: int = 30) -> List[Dict]:
                 "days_away": round(days_to_full, 1),
                 "sign": estimate_moon_sign(full_moon_date),
             }
+        )
+
+    # The iOS app requires phase and description on every event.
+    for event in events:
+        event["phase"] = event["type"]
+        event["description"] = (
+            f"{event['type']} in {event['sign']}: "
+            f"{_UPCOMING_EVENT_MEANING[event['type']]}"
         )
 
     # Sort by days away
@@ -497,7 +511,8 @@ def get_personalized_ritual(
         "energy": phase_energy,
         "sign_focus": sign_focus_desc,
         "activities": phase_ritual["activities"][:4],
-        "avoid": phase_ritual["avoid"],
+        # One line of text: the iOS app decodes avoid as a String.
+        "avoid": ", ".join(phase_ritual["avoid"]),
         "element_boost": sign_element,
         "body_focus": sign_body,
         "crystals": phase_ritual["crystals"],
