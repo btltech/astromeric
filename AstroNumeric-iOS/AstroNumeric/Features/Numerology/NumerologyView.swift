@@ -58,7 +58,7 @@ struct NumerologyView: View {
                                     
                                     // Cycles
                                     if let cycles = data.cycles {
-                                        cyclesSection(cycles)
+                                        cyclesSection(cycles, dailyReading: data.dailyReading)
                                     }
 
                                     // AI Explain button — placed after cycles so user has full context first
@@ -470,7 +470,7 @@ struct NumerologyView: View {
         }
     }
     
-    private func cyclesSection(_ cycles: NumerologyCycles) -> some View {
+    private func cyclesSection(_ cycles: NumerologyCycles, dailyReading: DailyNumerologyReading?) -> some View {
         CardView {
             VStack(alignment: .leading, spacing: 12) {
                 Text("ui.numerology.11".localized)
@@ -493,8 +493,21 @@ struct NumerologyView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 10))
                 }
 
+                if let reading = dailyReading {
+                    // The full reading, unclipped; the row below then shows
+                    // only the number so the day isn't described twice.
+                    Text(reading.text)
+                        .font(.subheadline)
+                        .foregroundStyle(Color.textPrimary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
                 if let day = cycles.personalDay {
-                    CycleRow(label: "Personal Day", number: day.number, meaning: day.meaning)
+                    CycleRow(
+                        label: "Personal Day",
+                        number: day.number,
+                        meaning: dailyReading == nil ? day.meaning : nil
+                    )
                 }
                 if let month = cycles.personalMonth {
                     CycleRow(

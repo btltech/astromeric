@@ -10,6 +10,7 @@ from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
 from ..exceptions import InvalidDateError, StructuredLogger
+from ..interpretation.numerology_library import daily_reading
 from ..numerology_engine import build_numerology
 from ..schemas import (
     ApiResponse,
@@ -84,6 +85,15 @@ class NumerologySynthesis(BaseModel):
     dominant_numbers: List[NumerologyHighlight]
 
 
+class DailyReading(BaseModel):
+    """Today's written reading for the Personal Day in its Personal Month."""
+
+    text: str
+    lens: str
+    personal_day: int
+    personal_month: int
+
+
 class NumerologyData(BaseModel):
     """Full numerology analysis response."""
 
@@ -101,6 +111,9 @@ class NumerologyData(BaseModel):
     # itself (always Pythagorean, dropping master numbers), so it could show one
     # number beside the text for another.
     numerology_numbers: Dict[str, int] = {}
+    # A full passage, unlike the one-line personal_day insight. Separate so
+    # clients that clip that line (build 6 shows three lines) are unaffected.
+    daily_reading: Optional[DailyReading] = None
     pinnacles: List[PinnacleData] = []
     challenges: List[ChallengeData] = []
     karmic_debts: List[Dict] = []
@@ -294,10 +307,11 @@ async def calculate_numerology_profile(
         )
 
         # Calculate numerology
+        now = datetime.now(timezone.utc)
         numerology = build_numerology(
             req.profile.name,
             req.profile.date_of_birth,
-            datetime.now(timezone.utc),
+            now,
             method=req.method,
         )
 
@@ -431,6 +445,7 @@ async def calculate_numerology_profile(
                 life_path_num, current_month, current_year
             ),
             numerology_insights=insights,
+            daily_reading=daily_reading(personal_year_num, now.date()),
             numerology_numbers={
                 key: number
                 for key, number in insight_numbers.items()
