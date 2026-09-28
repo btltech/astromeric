@@ -97,6 +97,10 @@ class NumerologyData(BaseModel):
     lucky_numbers: List[int]
     auspicious_days: List[int]
     numerology_insights: Dict[str, str]
+    # The number each insight was written for. The app used to recompute these
+    # itself (always Pythagorean, dropping master numbers), so it could show one
+    # number beside the text for another.
+    numerology_numbers: Dict[str, int] = {}
     pinnacles: List[PinnacleData] = []
     challenges: List[ChallengeData] = []
     karmic_debts: List[Dict] = []
@@ -357,6 +361,12 @@ async def calculate_numerology_profile(
             "personal_month": personal_month_raw.get("meaning", ""),
             "personal_day": cycles.get("personal_day", {}).get("meaning", ""),
         }
+        insight_numbers = {
+            "soul_urge": soul_urge_raw.get("number"),
+            "personality": personality_raw.get("number"),
+            "personal_month": personal_month_num,
+            "personal_day": cycles.get("personal_day", {}).get("number"),
+        }
         pinnacles = [
             PinnacleData(
                 index=item.get("index", i + 1),
@@ -374,8 +384,16 @@ async def calculate_numerology_profile(
                 index=item.get("index", i + 1),
                 number=item.get("number", 0),
                 ages=item.get("label"),
-                meaning=f"{item.get('keyword', '')}: {item.get('description', '')}".strip(
-                    ": "
+                # What this number asks, then when in life it applies.
+                meaning=" ".join(
+                    part
+                    for part in (
+                        f"{item.get('keyword', '')}: {item.get('number_description', '')}".strip(
+                            ": "
+                        ),
+                        item.get("description", ""),
+                    )
+                    if part
                 ),
             )
             for i, item in enumerate(numerology.get("challenges", []))
@@ -413,6 +431,11 @@ async def calculate_numerology_profile(
                 life_path_num, current_month, current_year
             ),
             numerology_insights=insights,
+            numerology_numbers={
+                key: number
+                for key, number in insight_numbers.items()
+                if isinstance(number, int)
+            },
             pinnacles=pinnacles,
             challenges=challenges,
             karmic_debts=numerology.get("karmic_debts", []),

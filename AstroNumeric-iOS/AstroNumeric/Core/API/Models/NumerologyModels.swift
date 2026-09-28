@@ -84,6 +84,10 @@ struct NumerologyData: Codable {
     let luckyNumbers: [Int]?
     let auspiciousDays: [Int]?
     let numerologyInsights: [String: String]?
+    /// The number each insight was written for. Prefer these to the local
+    /// fallbacks below, which always use Pythagorean values and can differ
+    /// on master-number days, so the number shown matches its text.
+    let numerologyNumbers: [String: Int]?
     let pinnacles: [Pinnacle]?
     let challenges: [Challenge]?
     let karmicDebts: [KarmicDebt]?
@@ -101,6 +105,7 @@ struct NumerologyData: Codable {
         case luckyNumbers = "lucky_numbers"
         case auspiciousDays = "auspicious_days"
         case numerologyInsights = "numerology_insights"
+        case numerologyNumbers = "numerology_numbers"
         case pinnacles
         case challenges
         case karmicDebts = "karmic_debts"
@@ -118,11 +123,11 @@ struct NumerologyData: Codable {
         }
         
         let soulUrgeDetail: NumberDetail? = numerologyInsights?["soul_urge"].map {
-            NumberDetail(number: Self.soulUrgeNumber(for: profileName), meaning: $0, keywords: nil)
+            NumberDetail(number: numerologyNumbers?["soul_urge"] ?? Self.soulUrgeNumber(for: profileName), meaning: $0, keywords: nil)
         }
         
         let personalityDetail: NumberDetail? = numerologyInsights?["personality"].map {
-            NumberDetail(number: Self.personalityNumber(for: profileName), meaning: $0, keywords: nil)
+            NumberDetail(number: numerologyNumbers?["personality"] ?? Self.personalityNumber(for: profileName), meaning: $0, keywords: nil)
         }
         
         return CoreNumbers(
@@ -138,10 +143,10 @@ struct NumerologyData: Codable {
         guard let py = personalYear else { return nil }
 
         let personalMonthNumber = numerologyInsights?["personal_month"].map { _ in
-            Self.personalMonthNumber(personalYear: py.cycleNumber)
+            numerologyNumbers?["personal_month"] ?? Self.personalMonthNumber(personalYear: py.cycleNumber)
         }
         let personalDayNumber = numerologyInsights?["personal_day"].map { _ in
-            Self.personalDayNumber(personalMonth: personalMonthNumber ?? 0)
+            numerologyNumbers?["personal_day"] ?? Self.personalDayNumber(personalMonth: personalMonthNumber ?? 0)
         }
         
         let monthDetail: CycleDetail? = numerologyInsights?["personal_month"].map {
@@ -159,7 +164,7 @@ struct NumerologyData: Codable {
         )
     }
     
-    // MARK: - Local fallback calculations (match backend v2 rules)
+    // MARK: - Local fallbacks, for responses cached before numerology_numbers existed
 
     private static let pythagoreanLetterValues: [UInt32: Int] = [
         97: 1, 98: 2, 99: 3, 100: 4, 101: 5, 102: 6, 103: 7, 104: 8, 105: 9, // a-i
