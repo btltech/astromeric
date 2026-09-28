@@ -282,6 +282,48 @@ def calculate_pinnacles(dob: str, lang: str = "en") -> List[Dict]:
     ]
 
 
+# What each challenge number asks of you. A challenge is the difference of two
+# reduced birth-date parts, so it is always 0-8.
+CHALLENGE_MEANINGS = {
+    0: {
+        "keyword": "Choice",
+        "description": "Every lesson is open to you, so the work is choosing which one to take on instead of drifting between them.",
+    },
+    1: {
+        "keyword": "Self-reliance",
+        "description": "Learning to stand on your own and act on your own judgment, without either leaning on others or overpowering them.",
+    },
+    2: {
+        "keyword": "Sensitivity",
+        "description": "Learning to trust your own worth without needing constant reassurance, and to stop taking small slights to heart.",
+    },
+    3: {
+        "keyword": "Self-expression",
+        "description": "Learning to say what you think and create without fear of judgment, and to focus instead of scattering your gifts.",
+    },
+    4: {
+        "keyword": "Discipline",
+        "description": "Learning patience and steady effort, and building order without becoming rigid or resisting all change.",
+    },
+    5: {
+        "keyword": "Freedom",
+        "description": "Learning to use freedom well: welcoming change without restlessness, excess or running from commitment.",
+    },
+    6: {
+        "keyword": "Responsibility",
+        "description": "Learning to care for others without taking over their burdens, and to accept people as they are rather than as ideals.",
+    },
+    7: {
+        "keyword": "Faith",
+        "description": "Learning to trust yourself and others, and to let people in instead of retreating into doubt or isolation.",
+    },
+    8: {
+        "keyword": "Power and money",
+        "description": "Learning a balanced relationship with money, status and control, so that ambition serves your life rather than running it.",
+    },
+}
+
+
 def calculate_challenges(dob: str, lang: str = "en") -> List[Dict]:
     """Calculate the 4 Challenges (Pythagorean system)."""
     parts = dob.split("-")
@@ -346,10 +388,20 @@ def calculate_challenges(dob: str, lang: str = "en") -> List[Dict]:
         )
 
     return [
-        {"index": 1, "number": c1, "label": l1, "description": d1},
-        {"index": 2, "number": c2, "label": l2, "description": d2},
-        {"index": 3, "number": c3, "label": l3, "description": d3},
-        {"index": 4, "number": c4, "label": l4, "description": d4},
+        {
+            "index": index,
+            "number": number,
+            "label": label,
+            "description": description,
+            "keyword": CHALLENGE_MEANINGS[number]["keyword"],
+            "number_description": CHALLENGE_MEANINGS[number]["description"],
+        }
+        for index, number, label, description in (
+            (1, c1, l1, d1),
+            (2, c2, l2, d2),
+            (3, c3, l3, d3),
+            (4, c4, l4, d4),
+        )
     ]
 
 

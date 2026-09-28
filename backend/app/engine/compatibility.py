@@ -5,6 +5,7 @@ from typing import Dict, Optional
 
 from ..interpretation.translations import get_translation
 from .astrology import get_element, get_zodiac_sign
+from .constants import reduce_number
 from .moon_phases import estimate_moon_sign
 from .numerology import calculate_life_path_number
 from .numerology_extended import calculate_expression_number, calculate_soul_urge_number
@@ -344,9 +345,9 @@ def get_moon_sign_compat(dob1: str, dob2: str) -> Dict:
 
 def get_life_path_compat(lp1: int, lp2: int, lang: str = "en") -> Dict:
     """Get Life Path compatibility data."""
-    # Reduce master numbers for lookup
-    lp1_r = lp1 if lp1 <= 9 else (lp1 % 10 if lp1 not in [11, 22, 33] else lp1 - 10)
-    lp2_r = lp2 if lp2 <= 9 else (lp2 % 10 if lp2 not in [11, 22, 33] else lp2 - 10)
+    # Master numbers look up as their root: 11 -> 2, 22 -> 4, 33 -> 6.
+    lp1_r = reduce_number(lp1, keep_master=False)
+    lp2_r = reduce_number(lp2, keep_master=False)
 
     key = tuple(sorted([lp1_r, lp2_r]))
     if key[0] == key[1]:

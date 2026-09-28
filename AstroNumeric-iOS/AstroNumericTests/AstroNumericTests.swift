@@ -284,3 +284,36 @@ final class APIDateDecodingTests: XCTestCase {
     }
 }
 
+/// The Numerology screen shows server text beside a number. The app used to
+/// compute that number itself (Pythagorean only, master numbers dropped), so a
+/// Chaldean user or an 11 day could see one number beside another's meaning.
+final class NumerologyNumbersTests: XCTestCase {
+
+    private func decode(numbers: String?) throws -> NumerologyData {
+        let numbersField = numbers.map { #","numerology_numbers":\#($0)"# } ?? ""
+        let json = """
+        {"profile":{"name":"Maria Yolanda Brown","date_of_birth":"1985-11-29"},
+         "life_path":{"number":9,"meaning":"m"},
+         "personal_year":{"year":2026,"cycle_number":5,"interpretation":"i"},
+         "numerology_insights":{"soul_urge":"su","personality":"pe","personal_month":"pm","personal_day":"pd"}\(numbersField)}
+        """
+        return try JSONDecoder().decode(NumerologyData.self, from: Data(json.utf8))
+    }
+
+    func testShowsTheNumberTheServerWroteTheTextFor() throws {
+        let data = try decode(numbers: #"{"soul_urge":7,"personality":22,"personal_month":3,"personal_day":11}"#)
+        XCTAssertEqual(data.coreNumbers?.soulUrge?.number, 7)
+        XCTAssertEqual(data.coreNumbers?.personality?.number, 22)
+        XCTAssertEqual(data.cycles?.personalMonth?.number, 3)
+        // A master-number day: the local fallback would have reduced this to 2.
+        XCTAssertEqual(data.cycles?.personalDay?.number, 11)
+        XCTAssertEqual(data.cycles?.personalDay?.meaning, "pd")
+    }
+
+    func testOlderResponsesWithoutNumbersStillShowANumber() throws {
+        let data = try decode(numbers: nil)
+        XCTAssertNotNil(data.coreNumbers?.soulUrge?.number)
+        XCTAssertNotNil(data.cycles?.personalDay?.number)
+    }
+}
+

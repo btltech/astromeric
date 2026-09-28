@@ -209,7 +209,8 @@ def _build_synthesis(
         )
         keyword = primary_challenge.get("keyword") or num_keyword or "Challenge"
         description = _compact_text(
-            primary_challenge.get(
+            primary_challenge.get("number_description")
+            or primary_challenge.get(
                 "description", "A recurring lesson is asking for patience and maturity."
             )
         )
