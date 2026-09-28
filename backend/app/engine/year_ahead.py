@@ -42,61 +42,64 @@ MONTH_NAMES = [
     "December",
 ]
 
-# 2025-2026 Eclipse data (pre-computed)
+# 2025-2026 Eclipse data, pre-computed with Swiss Ephemeris
+# (swe.sol_eclipse_when_glob / swe.lun_eclipse_when). Degree is the Sun's
+# longitude within its sign for solar eclipses, the Moon's for lunar ones.
 ECLIPSES_2025_2026 = [
     # 2025 Eclipses
     {
         "date": "2025-03-14",
         "type": "Total Lunar Eclipse",
         "sign": "Virgo",
-        "degree": 23.9,
+        "degree": 24.0,
     },
     {
         "date": "2025-03-29",
         "type": "Partial Solar Eclipse",
         "sign": "Aries",
-        "degree": 8.8,
+        "degree": 9.0,
     },
     {
         "date": "2025-09-07",
         "type": "Total Lunar Eclipse",
         "sign": "Pisces",
-        "degree": 15.2,
+        "degree": 15.4,
     },
     {
         "date": "2025-09-21",
         "type": "Partial Solar Eclipse",
         "sign": "Virgo",
-        "degree": 28.8,
+        "degree": 29.1,
     },
     # 2026 Eclipses
     {
         "date": "2026-02-17",
         "type": "Annular Solar Eclipse",
         "sign": "Aquarius",
-        "degree": 28.1,
+        "degree": 28.8,
     },
     {
         "date": "2026-03-03",
         "type": "Total Lunar Eclipse",
         "sign": "Virgo",
-        "degree": 12.4,
+        "degree": 12.9,
     },
     {
         "date": "2026-08-12",
-        "type": "Partial Solar Eclipse",
+        "type": "Total Solar Eclipse",
         "sign": "Leo",
-        "degree": 19.2,
+        "degree": 20.0,
     },
     {
         "date": "2026-08-28",
         "type": "Partial Lunar Eclipse",
         "sign": "Pisces",
-        "degree": 5.1,
+        "degree": 4.9,
     },
 ]
 
-# Slow planet ingress data 2025-2026
+# Slow planet sign changes 2025-2026 (UTC dates, Swiss Ephemeris), including
+# retrograde returns to the previous sign.
 MAJOR_INGRESSES = [
     {
         "date": "2025-03-30",
@@ -112,21 +115,57 @@ MAJOR_INGRESSES = [
     },
     {
         "date": "2025-06-09",
+        "planet": "Jupiter",
+        "sign": "Cancer",
+        "impact": "Expansion in home and family matters",
+    },
+    {
+        "date": "2025-07-07",
         "planet": "Uranus",
         "sign": "Gemini",
         "impact": "Revolution in communication and ideas",
     },
     {
-        "date": "2025-07-07",
-        "planet": "Jupiter",
-        "sign": "Cancer",
-        "impact": "Expansion in home and family matters",
+        "date": "2025-09-01",
+        "planet": "Saturn",
+        "sign": "Pisces",
+        "impact": "Saturn retrogrades back to finish unfinished Pisces lessons",
+    },
+    {
+        "date": "2025-10-22",
+        "planet": "Neptune",
+        "sign": "Pisces",
+        "impact": "Neptune returns to Pisces for a final review of old dreams",
+    },
+    {
+        "date": "2025-11-08",
+        "planet": "Uranus",
+        "sign": "Taurus",
+        "impact": "Uranus revisits Taurus to settle money and values changes",
+    },
+    {
+        "date": "2026-01-26",
+        "planet": "Neptune",
+        "sign": "Aries",
+        "impact": "Neptune enters Aries for good: new ideals and a fresh sense of purpose",
     },
     {
         "date": "2026-02-14",
         "planet": "Saturn",
         "sign": "Aries",
         "impact": "Saturn settles into Aries themes",
+    },
+    {
+        "date": "2026-04-26",
+        "planet": "Uranus",
+        "sign": "Gemini",
+        "impact": "Uranus returns to Gemini for a seven-year shake-up of how we think and talk",
+    },
+    {
+        "date": "2026-06-30",
+        "planet": "Jupiter",
+        "sign": "Leo",
+        "impact": "Growth through creativity, confidence and visibility",
     },
 ]
 

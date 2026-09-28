@@ -11,7 +11,7 @@ from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
 from ..exceptions import StructuredLogger
-from ..schemas import ApiResponse, ProfilePayload, ResponseStatus
+from ..schemas import ApiResponse, ProfilePayload, ResponseStatus, Timestamp
 
 logger = StructuredLogger(__name__)
 router = APIRouter(prefix="/v2/daily", tags=["Daily Features"])
@@ -38,8 +38,8 @@ class MoonPhaseInfo(BaseModel):
 
     phase: str
     illumination: float
-    next_new_moon: datetime
-    next_full_moon: datetime
+    next_new_moon: Timestamp
+    next_full_moon: Timestamp
     influence: str
 
 
@@ -56,7 +56,7 @@ class YesNoResponse(BaseModel):
 class DailyReadingData(BaseModel):
     """Complete daily reading with all features."""
 
-    date: datetime
+    date: Timestamp
     affirmation: str
     tarot_card: TarotCard
     yes_no_response: Optional[YesNoResponse] = None
@@ -66,20 +66,20 @@ class DailyReadingData(BaseModel):
     lucky_color: str
     lucky_numbers: List[int]
     advice: str
-    generated_at: datetime
+    generated_at: Timestamp
 
 
 class SimplifiedDailyData(BaseModel):
     """Simplified daily reading for quick access."""
 
-    date: datetime
+    date: Timestamp
     affirmation: str
     advice: str
     lucky_numbers: List[int]
     lucky_color: Optional[str] = None
     power_hours: List[str] = []
     daily_luck: Optional[float] = None
-    generated_at: datetime
+    generated_at: Timestamp
 
 
 class ForecastDay(BaseModel):
@@ -117,7 +117,7 @@ class BriefBullet(BaseModel):
 class MorningBriefResponse(BaseModel):
     """3-bullet morning summary for widgets and push."""
 
-    date: datetime
+    date: Timestamp
     greeting: str
     bullets: List[BriefBullet]
     moon_phase: str

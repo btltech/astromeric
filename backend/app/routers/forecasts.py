@@ -391,27 +391,18 @@ async def calculate_weekly_forecast(
             tone=req.tone,
         )
 
-        guidance_w = forecast.get("guidance") or {}
-        guidance_avoid_w = _guidance_activities(guidance_w, "avoid")
-        guidance_embrace_w = _guidance_activities(guidance_w, "embrace")
-
-        # Parse sections
+        # Daily guidance (personal day, today's Moon) is not injected here: it
+        # describes one day, not the whole week.
         sections = []
         if isinstance(forecast.get("sections"), list):
-            for i, section in enumerate(forecast["sections"]):
-                if i == 0:
-                    sec_avoid = guidance_avoid_w[:4]
-                    sec_embrace = guidance_embrace_w[:4]
-                else:
-                    sec_avoid = section.get("avoid", [])
-                    sec_embrace = section.get("embrace", [])
+            for section in forecast["sections"]:
                 sections.append(
                     ForecastSection(
                         title=section.get("title", ""),
                         summary=section.get("summary", ""),
                         topics=section.get("topics", {}),
-                        avoid=sec_avoid,
-                        embrace=sec_embrace,
+                        avoid=section.get("avoid", []),
+                        embrace=section.get("embrace", []),
                     )
                 )
 
@@ -495,27 +486,18 @@ async def calculate_monthly_forecast(
             tone=req.tone,
         )
 
-        guidance_m = forecast.get("guidance") or {}
-        guidance_avoid_m = _guidance_activities(guidance_m, "avoid")
-        guidance_embrace_m = _guidance_activities(guidance_m, "embrace")
-
-        # Parse sections
+        # Daily guidance (personal day, today's Moon) is not injected here: it
+        # describes one day, not the whole month.
         sections = []
         if isinstance(forecast.get("sections"), list):
-            for i, section in enumerate(forecast["sections"]):
-                if i == 0:
-                    sec_avoid = guidance_avoid_m[:4]
-                    sec_embrace = guidance_embrace_m[:4]
-                else:
-                    sec_avoid = section.get("avoid", [])
-                    sec_embrace = section.get("embrace", [])
+            for section in forecast["sections"]:
                 sections.append(
                     ForecastSection(
                         title=section.get("title", ""),
                         summary=section.get("summary", ""),
                         topics=section.get("topics", {}),
-                        avoid=sec_avoid,
-                        embrace=sec_embrace,
+                        avoid=section.get("avoid", []),
+                        embrace=section.get("embrace", []),
                     )
                 )
 

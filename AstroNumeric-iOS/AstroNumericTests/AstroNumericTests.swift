@@ -247,3 +247,40 @@ final class AstroNumericTests: XCTestCase {
         XCTAssertEqual(decoded.isRedacted, false)
     }
 }
+
+/// The backend sends timestamps with microseconds. JSONDecoder's built-in
+/// .iso8601 rejects those before iOS 26, which blanked Home's daily features
+/// and the morning brief on iOS 17 and 18. Run these on an iOS 18 simulator to
+/// exercise the old parser.
+final class APIDateDecodingTests: XCTestCase {
+
+    private func decoder() -> JSONDecoder {
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601WithOptionalFractionalSeconds
+        return decoder
+    }
+
+    private func decodeDate(_ string: String) throws -> Date {
+        try decoder().decode([Date].self, from: Data("[\"\(string)\"]".utf8))[0]
+    }
+
+    func testAcceptsFractionalSecondsWholeSecondsAndOffsets() throws {
+        let whole = try decodeDate("2026-09-28T18:24:33Z")
+        XCTAssertEqual(try decodeDate("2026-09-28T18:24:33.258095Z").timeIntervalSince(whole), 0.258, accuracy: 0.001)
+        XCTAssertEqual(try decodeDate("2026-09-28T19:24:33+01:00"), whole)
+    }
+
+    func testRejectsTextThatIsNotADate() {
+        XCTAssertThrowsError(try decodeDate("yesterday"))
+    }
+
+    func testMorningBriefFromTheServerDecodes() throws {
+        let json = """
+        {"date":"2026-09-28T18:24:33.427594Z","greeting":"Good evening","bullets":[{"emoji":"🌕","text":"Full Moon"}],
+         "moon_phase":"Full Moon","personal_day":5,"vibe":"Adventurous"}
+        """
+        let brief = try decoder().decode(MorningBriefData.self, from: Data(json.utf8))
+        XCTAssertEqual(brief.personalDay, 5)
+    }
+}
+

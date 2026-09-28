@@ -1222,17 +1222,23 @@ def _chart_enriched_tldr(
     """Build a more specific TL;DR using real natal data when available."""
     moon = chart_ctx.get("moon_sign") or ""
     asc = chart_ctx.get("asc_sign") or ""
+    # scope arrives as "daily"/"weekly"/"monthly", which is not a noun.
+    period, when = {
+        "daily": ("day", "today"),
+        "weekly": ("week", "this week"),
+        "monthly": ("month", "this month"),
+    }.get(scope, ("day", "today"))
 
     if moon and asc:
         templates = [
-            f"Your {sign} Sun, {moon} Moon, and {asc} rising shape this {scope}'s energy around Life Path {life_path}.",
-            f"With {sign} solar energy, a {moon} Moon, and {asc} on the horizon, {scope} calls for {element_display} focus.",
-            f"{scope.title()}'s vibration blends {sign}'s {element_display} drive with your {moon} Moon's instincts and {asc} ascendant.",
+            f"Your {sign} Sun, {moon} Moon, and {asc} rising shape {when}'s energy around Life Path {life_path}.",
+            f"With {sign} solar energy, a {moon} Moon, and {asc} on the horizon, {when} calls for {element_display} focus.",
+            f"{when[0].upper() + when[1:]}'s vibration blends {sign}'s {element_display} drive with your {moon} Moon's instincts and {asc} ascendant.",
         ]
     elif moon:
         templates = [
-            f"Your {sign} Sun and {moon} Moon guide this {scope}'s energy — Life Path {life_path} leads the way.",
-            f"{sign} solar warmth meets {moon} lunar depth; a {scope} for integrating both.",
+            f"Your {sign} Sun and {moon} Moon guide {when}'s energy — Life Path {life_path} leads the way.",
+            f"{sign} solar warmth meets {moon} lunar depth; a {period} for integrating both.",
         ]
     else:
         # Fallback: use existing scope pools

@@ -30,6 +30,13 @@ class CompatibilityScore(BaseModel):
     interpretation: str
 
 
+class DataConfidence(BaseModel):
+    """How far to trust the result, given which birth times are known."""
+
+    score: int
+    note: Optional[str] = None
+
+
 class CompatibilityData(BaseModel):
     """Full compatibility analysis response."""
 
@@ -44,6 +51,8 @@ class CompatibilityData(BaseModel):
     generated_at: datetime
     confidence: Optional[int] = None
     data_quality_note: Optional[str] = None
+    # The shape the iOS app reads.
+    data_confidence: Optional[DataConfidence] = None
 
 
 # ============================================================================
@@ -150,6 +159,7 @@ async def calculate_romantic_compatibility(
             data_quality_note=(
                 data_conf.get("note") if isinstance(data_conf, dict) else None
             ),
+            data_confidence=data_conf if isinstance(data_conf, dict) else None,
         )
 
         return ApiResponse(
@@ -277,6 +287,7 @@ async def calculate_friendship_compatibility(
             data_quality_note=(
                 data_conf.get("note") if isinstance(data_conf, dict) else None
             ),
+            data_confidence=data_conf if isinstance(data_conf, dict) else None,
         )
 
         return ApiResponse(

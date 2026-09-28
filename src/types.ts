@@ -226,6 +226,8 @@ export interface MoonEvent {
   emoji: string;
   days_away: number;
   sign: string;
+  phase: string;
+  description: string;
 }
 
 export interface MoonRitual {
@@ -235,7 +237,7 @@ export interface MoonRitual {
   energy: string;
   sign_focus: string;
   activities: string[];
-  avoid: string[];
+  avoid: string;
   element_boost: string;
   body_focus: string;
   crystals: string[];

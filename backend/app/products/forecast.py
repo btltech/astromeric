@@ -220,7 +220,7 @@ def _compose_summary(highlights: list[str], tone: Optional[str]) -> str:
         return f"The stars gather around this theme: {first}"
 
     if second:
-        return f"Cosmic weather: {first} Beneath that, the current points to {second}"
+        return f"Cosmic weather: {first} Beneath the surface: {second}"
     return f"Cosmic weather: {first}"
 
 

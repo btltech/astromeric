@@ -21,7 +21,7 @@ actor APIClient {
         
         // Configure decoder (explicit CodingKeys in models handle snake_case)
         decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
+        decoder.dateDecodingStrategy = .iso8601WithOptionalFractionalSeconds
         
         // Configure encoder (explicit CodingKeys in models handle snake_case)
         encoder = JSONEncoder()
@@ -376,4 +376,34 @@ enum APIError: Error, LocalizedError {
         guard let code = statusCode else { return false }
         return policy.retryableStatusCodes.contains(code)
     }
+}
+
+extension JSONDecoder.DateDecodingStrategy {
+    /// ISO 8601 dates with or without fractional seconds. The built-in
+    /// `.iso8601` rejects "2026-09-28T18:24:33.258095Z" before iOS 26, which
+    /// failed the whole response for any screen reading such a date.
+    static let iso8601WithOptionalFractionalSeconds = custom { decoder in
+        let container = try decoder.singleValueContainer()
+        let string = try container.decode(String.self)
+        if let date = ISO8601Parsers.withFractionalSeconds.date(from: string)
+            ?? ISO8601Parsers.wholeSeconds.date(from: string) {
+            return date
+        }
+        throw DecodingError.dataCorruptedError(
+            in: container,
+            debugDescription: "Expected an ISO 8601 date, got \(string)"
+        )
+    }
+}
+
+/// ISO8601DateFormatter is thread-safe, so shared instances avoid rebuilding
+/// one for every date decoded.
+private enum ISO8601Parsers {
+    static let withFractionalSeconds: ISO8601DateFormatter = {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return formatter
+    }()
+
+    static let wholeSeconds = ISO8601DateFormatter()
 }
