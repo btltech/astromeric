@@ -483,7 +483,7 @@ enum OracleTopic: String, CaseIterable {
         switch self {
         case .love: return ["Venus", "Moon"]
         case .money: return ["Jupiter", "Venus"]
-        case .career: return ["Saturn", "Sun"]
+        case .career: return ["Sun", "Saturn"]
         case .communication: return ["Mercury", "Moon"]
         case .action: return ["Mars", "Sun"]
         case .wellbeing: return ["Sun", "Moon"]
@@ -597,6 +597,10 @@ enum HoraryOracle {
 
     private static let helpfulPlanets: Set<String> = ["Venus", "Jupiter"]
     private static let harshPlanets: Set<String> = ["Saturn", "Mars", "Pluto"]
+    /// Planets that stay in one sign, or one retrograde spell, for months.
+    /// Their state counts half, so a question isn't stuck on one answer for
+    /// weeks while the fast-moving Moon and planetary hour keep changing.
+    private static let slowPlanets: Set<String> = ["Jupiter", "Saturn", "Uranus", "Neptune", "Pluto"]
 
     static func read(question: String, snapshot: CalendarOracle.HorarySnapshot) -> YesNoAnswer {
         let topic = OracleTopic.detect(in: question)
@@ -635,23 +639,25 @@ enum HoraryOracle {
         }
 
         if let planet = bodies[key] {
+            let slowWeight: Double = slowPlanets.contains(key) ? 0.5 : 1
+
             // 2. How strong the key planet is in its sign.
             switch planet.dignity {
             case "domicile":
-                factors.append(Factor(weight: 1, text: "\(key) is in \(planet.sign), one of its home signs, where it works at full strength: \(topic.strongMeaning)."))
+                factors.append(Factor(weight: slowWeight, text: "\(key) is in \(planet.sign), one of its home signs, where it works at full strength: \(topic.strongMeaning)."))
             case "exaltation":
-                factors.append(Factor(weight: 1, text: "\(key) is exalted in \(planet.sign), one of its best placements: \(topic.strongMeaning)."))
+                factors.append(Factor(weight: slowWeight, text: "\(key) is exalted in \(planet.sign), one of its best placements: \(topic.strongMeaning)."))
             case "detriment":
-                factors.append(Factor(weight: -1, text: "\(key) is in \(planet.sign), the sign opposite its home, where it struggles: \(topic.weakMeaning)."))
+                factors.append(Factor(weight: -slowWeight, text: "\(key) is in \(planet.sign), the sign opposite its home, where it struggles: \(topic.weakMeaning)."))
             case "fall":
-                factors.append(Factor(weight: -1, text: "\(key) is in its \"fall\" in \(planet.sign), one of its weakest placements: \(topic.weakMeaning)."))
+                factors.append(Factor(weight: -slowWeight, text: "\(key) is in its \"fall\" in \(planet.sign), one of its weakest placements: \(topic.weakMeaning)."))
             default:
                 break
             }
 
             // 3. Retrograde: review, don't start.
             if planet.retrograde == true, key != "Sun", key != "Moon" {
-                factors.append(Factor(weight: -1, text: "\(key) is retrograde: seen from Earth it appears to move backwards. Traditionally that's a time to review and revisit, not to start something new."))
+                factors.append(Factor(weight: -slowWeight, text: "\(key) is retrograde: seen from Earth it appears to move backwards. Traditionally that's a time to review and revisit, not to start something new."))
             }
 
             // 4. The Moon's aspect to the key planet.
@@ -660,11 +666,11 @@ enum HoraryOracle {
                 let angle = aspectDescription(aspect)
                 switch aspect {
                 case "trine", "sextile":
-                    factors.append(Factor(weight: 1, text: "The Moon, which shows how events unfold, is at a friendly angle to \(key) (\(angle)), a sign things can move with ease."))
+                    factors.append(Factor(weight: 1.5, text: "The Moon, which shows how events unfold, is at a friendly angle to \(key) (\(angle)), a sign things can move with ease."))
                 case "conjunction":
-                    factors.append(Factor(weight: 1, text: "The Moon, which shows how events unfold, is travelling alongside \(key) (\(angle)), putting your question in focus."))
+                    factors.append(Factor(weight: 1.5, text: "The Moon, which shows how events unfold, is travelling alongside \(key) (\(angle)), putting your question in focus."))
                 default:
-                    factors.append(Factor(weight: -1, text: "The Moon, which shows how events unfold, is at a tense angle to \(key) (\(angle)), a sign of friction along the way."))
+                    factors.append(Factor(weight: -1.5, text: "The Moon, which shows how events unfold, is at a tense angle to \(key) (\(angle)), a sign of friction along the way."))
                 }
             }
 
@@ -674,10 +680,11 @@ enum HoraryOracle {
                       let aspect = aspect(between: other, and: planet, orb: 3) else { continue }
                 let tense = aspect == "square" || aspect == "opposition"
                 let angle = aspectDescription(aspect)
+                let aspectWeight: Double = slowPlanets.contains(other.name) && slowPlanets.contains(key) ? 0.5 : 1
                 if harshPlanets.contains(other.name), tense || aspect == "conjunction" {
-                    factors.append(Factor(weight: -1, text: "\(other.name) is pressing on \(key) (\(angle)), adding pressure, haste or obstacles."))
+                    factors.append(Factor(weight: -aspectWeight, text: "\(other.name) is pressing on \(key) (\(angle)), adding pressure, haste or obstacles."))
                 } else if helpfulPlanets.contains(other.name), !tense {
-                    factors.append(Factor(weight: 1, text: "\(other.name) is supporting \(key) (\(angle)), which adds goodwill and luck."))
+                    factors.append(Factor(weight: aspectWeight, text: "\(other.name) is supporting \(key) (\(angle)), which adds goodwill and luck."))
                 }
             }
         }
