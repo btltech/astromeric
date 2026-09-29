@@ -64,6 +64,7 @@
 		57CEE0F0E7760AA598DB140E /* seas_18.se1 in Resources */ = {isa = PBXBuildFile; fileRef = BC3590EA1EB79B35EE070950 /* seas_18.se1 */; };
 		585048C2F1757A00EB7B7D5B /* DebugLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9F598B86C523C91F89F98BB /* DebugLog.swift */; };
 		5DD1364240CE10B5CE7C4E70 /* CalendarOracle.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4C5DCB730F089FCA4CBCE83 /* CalendarOracle.swift */; };
+		A1B2C3D4E5F60718293A4B5C /* HoraryJudge.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2C3D4E5F60718293A4B5C6D /* HoraryJudge.swift */; };
 		5E5DCFAD5CD33EC66A1B5D9F /* AdvancedChartsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 993CDC63819847C6B56F518C /* AdvancedChartsView.swift */; };
 		61283FE82A5D6D4584E512FD /* ReadingResultView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5135A82CAFDB163A8F3640A /* ReadingResultView.swift */; };
 		61C3128C5A02DFEF10DB11FD /* Products.storekit in Resources */ = {isa = PBXBuildFile; fileRef = 9152839B6D7A7FEFB054B372 /* Products.storekit */; };
@@ -370,6 +371,7 @@
 		D1CDA2E62D5E90BDE4AB3717 /* sweephe4.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = sweephe4.h; sourceTree = "<group>"; };
 		D367FF1FE2F8BD446D9241F0 /* LearningModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LearningModels.swift; sourceTree = "<group>"; };
 		D4C5DCB730F089FCA4CBCE83 /* CalendarOracle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarOracle.swift; sourceTree = "<group>"; };
+		B2C3D4E5F60718293A4B5C6D /* HoraryJudge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HoraryJudge.swift; sourceTree = "<group>"; };
 		D8732AD478D927CE06BFCD69 /* swemptab.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = swemptab.h; sourceTree = "<group>"; };
 		DDFAE36C5BEF50DE52375F71 /* EditProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditProfileView.swift; sourceTree = "<group>"; };
 		DF6314B17F6917E5C4F9794B /* ChartModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChartModels.swift; sourceTree = "<group>"; };
@@ -897,6 +899,7 @@
 				F2A977B6DB688BD2E59E54C8 /* swisseph */,
 				922B91C9657313D453B099A3 /* AdvancedEphemeris.swift */,
 				D4C5DCB730F089FCA4CBCE83 /* CalendarOracle.swift */,
+				B2C3D4E5F60718293A4B5C6D /* HoraryJudge.swift */,
 				835D7DE2284BACD9D1903BB8 /* EphemerisEngine.swift */,
 				30AE39C3DCD7BEF793176B5C /* PredictiveScanner.swift */,
 				41EFFB8D89AB9E55D335D203 /* SynastryRadar.swift */,
@@ -1201,6 +1204,7 @@
 				899D065F80AF64FD2C7F289E /* BirthstoneGuidanceView.swift in Sources */,
 				B519F623EF801281BD28346B /* CachePrewarmScheduler.swift in Sources */,
 				5DD1364240CE10B5CE7C4E70 /* CalendarOracle.swift in Sources */,
+				A1B2C3D4E5F60718293A4B5C /* HoraryJudge.swift in Sources */,
 				0CC8382DFE5EF5B7E6262B38 /* CardView.swift in Sources */,
 				E8FD0DB77FD234AA9A597130 /* ChartModels.swift in Sources */,
 				AF0EC9EF670EF5BD4E08BA06 /* ChartVM.swift in Sources */,

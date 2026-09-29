@@ -320,27 +320,52 @@ struct OracleView: View {
         // 1. Capture cosmic state at this exact moment. Planetary hours run
         //    from local sunrise and sunset, so time them to where the phone
         //    is; fall back to the birthplace if location isn't allowed.
+        let now = Date()
         let here = await OracleLocation.shared.current()
-        let snapshot = await CalendarOracle.shared.snapshot(
-            at: Date(),
-            latitude: here?.coordinate.latitude ?? profile.latitude,
-            longitude: here?.coordinate.longitude ?? profile.longitude
-        )
-        
-        // Without the owner's AI access, answer from the Horary rules on the
-        // device. This is the normal path there, not a failure, so no error.
+        let latitude = here?.coordinate.latitude ?? profile.latitude
+        let longitude = here?.coordinate.longitude ?? profile.longitude
+        let snapshot = await CalendarOracle.shared.snapshot(at: now, latitude: latitude, longitude: longitude)
+
+        // 2. Judge it. With a place, cast a full horary chart for this moment
+        //    and read it the classical way; without one, fall back to the
+        //    simpler reading of the topic's planet.
+        let builtIn: YesNoAnswer
+        let skySummary: String
+        if let latitude, let longitude,
+           let chart = try? await EphemerisEngine.shared.calculateHoraryChart(date: now, latitude: latitude, longitude: longitude) {
+            let reading = await HoraryJudge.judge(question: trimmedQuestion, chart: chart) { name, days in
+                let later = try? await EphemerisEngine.shared.calculateHoraryChart(
+                    date: now.addingTimeInterval(days * 86_400), latitude: latitude, longitude: longitude
+                )
+                return later?.bodies.first { $0.name == name }?.speed
+            }
+            builtIn = YesNoAnswer(
+                question: trimmedQuestion,
+                answer: reading.answer,
+                confidence: reading.confidence,
+                reasoning: reading.reasoning,
+                guidance: HoraryOracle.guidance(for: reading.topic, decision: reading.answer, voidOfCourse: reading.voidOfCourse),
+                factors: reading.points
+            )
+            skySummary = reading.summary
+        } else {
+            builtIn = HoraryOracle.read(question: trimmedQuestion, snapshot: snapshot)
+            skySummary = snapshot.citation
+        }
+
+        // Without the owner's AI access, the built-in judgement is the answer.
+        // This is the normal path there, not a failure, so no error.
         guard AIAvailability.shared.isEnabled else {
             withAnimation(.spring()) {
-                answer = horaryColdRead(snapshot: snapshot)
-                telemetry = snapshot.citation
+                answer = builtIn
+                telemetry = skySummary
             }
             UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
             return
         }
 
-        // 2. Build the Horary system prompt, anchored on the built-in reading
+        // 3. Build the Horary system prompt, anchored on the built-in reading
         //    so the AI explains the same judgement rather than inventing one.
-        let builtIn = HoraryOracle.read(question: trimmedQuestion, snapshot: snapshot)
         let topic = OracleTopic.detect(in: trimmedQuestion)
         let systemPrompt = """
         You are a precise Horary Astrologer. The user has asked a Yes/No question. \
@@ -354,8 +379,9 @@ struct OracleView: View {
         - Moon Phase: \(snapshot.moonPhase)
         - Void of Course: \(snapshot.isVoidOfCourse ? "YES — advise extreme caution" : "No")
         - Active Transits: \(snapshot.keyTransits.isEmpty ? "None notable" : snapshot.keyTransits.joined(separator: ", "))
-        - Question topic: \(topic.label) (key planet: \(topic.significators[0]))
-        - Rule-based reading: \(builtIn.answer.uppercased()) — \(builtIn.reasoning)
+        - Question topic: \(topic.label), read from \(topic.houseDescription)
+        - Horary chart: \(skySummary)
+        - Rule-based reading: \(builtIn.answer.uppercased()) — \(builtIn.reasoning) \((builtIn.factors ?? []).map(\.text).joined(separator: " "))
         
         USER'S NATAL DATA:
         - Name: \(profile.promptName(hideSensitive: hideSensitive))
@@ -398,7 +424,7 @@ struct OracleView: View {
                 explained.factors = builtIn.factors
                 withAnimation(.spring()) {
                     answer = explained
-                    telemetry = snapshot.citation
+                    telemetry = skySummary
                 }
                 // Heavy haptic — somatic anchor
                 UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
@@ -414,16 +440,15 @@ struct OracleView: View {
                         guidance: builtIn.guidance,
                         factors: builtIn.factors
                     )
-                    telemetry = snapshot.citation
+                    telemetry = skySummary
                 }
                 UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
             }
         } catch {
             // Network failed — fall back to pure Horary math (no LLM)
             withAnimation(.spring()) {
-                let decision = horaryColdRead(snapshot: snapshot)
-                answer = decision
-                telemetry = snapshot.citation
+                answer = builtIn
+                telemetry = skySummary
             }
             errorMessage = "Couldn't reach the AI, so this is the built-in reading from the sky."
             UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
@@ -465,15 +490,6 @@ struct OracleView: View {
         )
     }
     
-    // MARK: - Built-in reading
-
-    /// The on-device answer: used when live AI is off, or unreachable.
-    private func horaryColdRead(snapshot: CalendarOracle.HorarySnapshot) -> YesNoAnswer {
-        HoraryOracle.read(
-            question: question.trimmingCharacters(in: .whitespacesAndNewlines),
-            snapshot: snapshot
-        )
-    }
 }
 
 // MARK: - Where the phone is
@@ -543,9 +559,53 @@ final class OracleLocation: NSObject, CLLocationManagerDelegate {
 
 // MARK: - Built-in horary reading
 
-/// What a yes/no question is about, and the planets that traditionally rule it.
+/// What a yes/no question is about: its horary house, and the planets that
+/// traditionally rule it (used when a full chart can't be cast).
 enum OracleTopic: String, CaseIterable {
-    case love, money, career, communication, action, wellbeing, general
+    case love, money, career, communication, travel, home, children, wellbeing, friends, action, general
+
+    /// The house horary reads the matter from.
+    var house: Int {
+        switch self {
+        case .love: return 7
+        case .money: return 2
+        case .career: return 10
+        case .communication: return 3
+        case .travel: return 9
+        case .home: return 4
+        case .children: return 5
+        case .wellbeing: return 6
+        case .friends: return 11
+        case .action, .general: return 1
+        }
+    }
+
+    var houseOrdinal: String {
+        switch house {
+        case 1: return "1st"
+        case 2: return "2nd"
+        case 3: return "3rd"
+        default: return "\(house)th"
+        }
+    }
+
+    /// "the 7th house (partners and relationships)"
+    var houseDescription: String {
+        let covers: String
+        switch self {
+        case .love: covers = "partners and relationships"
+        case .money: covers = "money and possessions"
+        case .career: covers = "career and reputation"
+        case .communication: covers = "messages, paperwork and short trips"
+        case .travel: covers = "long journeys, study and the law"
+        case .home: covers = "home, property and family"
+        case .children: covers = "children, pleasure and romance"
+        case .wellbeing: covers = "health"
+        case .friends: covers = "friends, groups and hopes"
+        case .action, .general: covers = "you and your own plans"
+        }
+        return "the \(houseOrdinal) house (\(covers))"
+    }
 
     /// The question's key planet first, then a supporting one.
     var significators: [String] {
@@ -554,8 +614,12 @@ enum OracleTopic: String, CaseIterable {
         case .money: return ["Jupiter", "Venus"]
         case .career: return ["Sun", "Saturn"]
         case .communication: return ["Mercury", "Moon"]
+        case .travel: return ["Jupiter", "Mercury"]
+        case .home: return ["Moon", "Saturn"]
+        case .children: return ["Jupiter", "Venus"]
         case .action: return ["Mars", "Sun"]
         case .wellbeing: return ["Sun", "Moon"]
+        case .friends: return ["Jupiter", "Venus"]
         case .general: return ["Moon"]
         }
     }
@@ -566,9 +630,13 @@ enum OracleTopic: String, CaseIterable {
         case .love: return "affection and harmony come easily"
         case .money: return "growth and good fortune are well supported"
         case .career: return "effort tends to turn into lasting results"
-        case .communication: return "messages, travel and paperwork tend to go smoothly"
+        case .communication: return "messages and paperwork tend to go smoothly"
+        case .travel: return "journeys and studies tend to go well"
+        case .home: return "home life feels settled"
+        case .children: return "warmth and fruitfulness are well supported"
         case .action: return "courage and drive are running high"
         case .wellbeing: return "vitality is strong"
+        case .friends: return "friends and allies are helpful"
         case .general: return "things tend to flow"
         }
     }
@@ -580,8 +648,12 @@ enum OracleTopic: String, CaseIterable {
         case .money: return "gains may come slower or smaller than hoped"
         case .career: return "commitments may feel heavy or slow to pay off"
         case .communication: return "details are more likely to go astray"
+        case .travel: return "plans may be delayed or rerouted"
+        case .home: return "home matters may feel unsettled"
+        case .children: return "things may need more patience than hoped"
         case .action: return "energy may scatter or turn into conflict"
         case .wellbeing: return "energy may run lower than usual"
+        case .friends: return "support may be thinner than expected"
         case .general: return "moods and plans may be unsettled"
         }
     }
@@ -590,10 +662,14 @@ enum OracleTopic: String, CaseIterable {
         switch self {
         case .love: return "love and relationships"
         case .money: return "money"
-        case .career: return "work and commitments"
-        case .communication: return "messages, travel and agreements"
-        case .action: return "starting something bold"
+        case .career: return "work and career"
+        case .communication: return "messages and agreements"
+        case .travel: return "travel, study and legal matters"
+        case .home: return "home and family"
+        case .children: return "children"
         case .wellbeing: return "health and wellbeing"
+        case .friends: return "friends and groups"
+        case .action: return "your own plans"
         case .general: return "general"
         }
     }
@@ -604,35 +680,48 @@ enum OracleTopic: String, CaseIterable {
             return ["love", "date", "dating", "relationship", "partner", "boyfriend", "girlfriend",
                     "husband", "wife", "marry", "marriage", "married", "crush", "ex", "romance",
                     "romantic", "kiss", "propose", "proposal", "wedding", "breakup", "divorce",
-                    "soulmate", "flirt", "reconcile"]
+                    "soulmate", "flirt", "reconcile", "spouse", "fiance", "fiancee"]
         case .money:
             return ["money", "invest", "investment", "investing", "buy", "purchase", "sell",
-                    "loan", "debt", "salary", "raise", "pay", "price", "rent", "mortgage",
-                    "stock", "stocks", "crypto", "afford", "spend", "save", "savings", "bonus",
-                    "budget", "profit", "bet", "lottery"]
+                    "loan", "debt", "salary", "raise", "pay", "price", "mortgage", "stock",
+                    "stocks", "crypto", "afford", "spend", "save", "savings", "bonus", "budget",
+                    "profit", "bet", "lottery", "inheritance"]
         case .career:
             return ["job", "work", "career", "boss", "promotion", "interview", "hire", "hired",
                     "quit", "resign", "business", "company", "project", "client", "clients",
-                    "apply", "application", "exam", "study", "school", "university", "college",
-                    "course", "office", "colleague", "commit", "commitment"]
+                    "apply", "application", "office", "colleague", "launch", "startup", "manager"]
         case .communication:
             return ["call", "text", "message", "email", "reply", "send", "sign", "contract",
-                    "travel", "trip", "flight", "fly", "move", "moving", "write", "publish",
-                    "post", "tell", "contact", "agreement", "deal", "negotiate", "visit"]
-        case .action:
-            return ["start", "launch", "begin", "fight", "confront", "compete", "competition",
-                    "race", "risk", "leap", "challenge", "attempt"]
+                    "write", "post", "tell", "contact", "agreement", "deal", "negotiate",
+                    "letter", "paperwork", "sibling", "brother", "sister", "neighbour", "neighbor"]
+        case .travel:
+            return ["travel", "trip", "flight", "fly", "abroad", "visa", "holiday", "vacation",
+                    "study", "exam", "university", "college", "course", "degree", "school",
+                    "court", "lawyer", "lawsuit", "legal", "publish", "journey", "emigrate"]
+        case .home:
+            return ["home", "house", "flat", "apartment", "move", "moving", "property", "rent",
+                    "landlord", "tenant", "family", "parents", "mother", "father", "mum", "mom",
+                    "dad", "renovate", "garden"]
+        case .children:
+            return ["child", "children", "kid", "kids", "baby", "pregnant", "pregnancy", "son",
+                    "daughter", "fertility", "ivf", "conceive"]
         case .wellbeing:
-            return ["health", "doctor", "medication", "medicine", "surgery", "diet", "pregnant",
-                    "pregnancy", "therapy", "therapist", "sick", "hospital", "treatment",
-                    "exercise", "sleep", "weight"]
+            return ["health", "doctor", "medication", "medicine", "surgery", "diet", "therapy",
+                    "therapist", "sick", "hospital", "treatment", "exercise", "sleep", "weight",
+                    "illness", "ill", "pain", "operation", "recover", "recovery"]
+        case .friends:
+            return ["friend", "friends", "friendship", "group", "club", "community", "network",
+                    "wish", "hope", "team"]
+        case .action:
+            return ["start", "begin", "fight", "confront", "compete", "competition", "race",
+                    "risk", "leap", "challenge", "attempt", "change", "try"]
         case .general:
             return []
         }
     }
 
     /// The topic whose keywords appear most in the question. Ties go to the
-    /// earlier topic in this list, so wellbeing and money questions keep their
+    /// earlier topic in this list, so health and money questions keep their
     /// "talk to a professional" note even when other words also match.
     static func detect(in question: String) -> OracleTopic {
         let words = Set(
@@ -640,7 +729,8 @@ enum OracleTopic: String, CaseIterable {
                 .components(separatedBy: CharacterSet.letters.inverted)
                 .filter { !$0.isEmpty }
         )
-        let ranked: [OracleTopic] = [.wellbeing, .money, .love, .career, .communication, .action]
+        let ranked: [OracleTopic] = [.wellbeing, .money, .children, .love, .home, .career,
+                                     .travel, .communication, .friends, .action]
         var best: OracleTopic = .general
         var bestHits = 0
         for topic in ranked {
@@ -821,7 +911,7 @@ enum HoraryOracle {
         return aspects.first { abs(diff - $0.1) <= orb }?.0
     }
 
-    private static func guidance(for topic: OracleTopic, decision: String, voidOfCourse: Bool) -> [String] {
+    static func guidance(for topic: OracleTopic, decision: String, voidOfCourse: Bool) -> [String] {
         var tips: [String] = []
         if voidOfCourse {
             tips.append("Ask again once the Moon enters its next sign, usually within a day.")
@@ -837,6 +927,14 @@ enum HoraryOracle {
             case (.communication, _): tips.append("Double-check the details, and delay signing if you can.")
             case (.action, "Yes"): tips.append("Start while the energy is behind you.")
             case (.action, _): tips.append("Channel the urge into planning rather than acting today.")
+            case (.travel, "Yes"): tips.append("Book or apply, and leave a little slack in the plan.")
+            case (.travel, _): tips.append("Keep options open and check the details twice.")
+            case (.home, "Yes"): tips.append("Go ahead, and get the practical details in writing.")
+            case (.home, _): tips.append("Hold off on big home decisions until things settle.")
+            case (.children, "Yes"): tips.append("Stay hopeful, and look after yourself along the way.")
+            case (.children, _): tips.append("Be patient with yourself; timing often shifts.")
+            case (.friends, "Yes"): tips.append("Reach out; people are more open than you think.")
+            case (.friends, _): tips.append("Give it time, and invest in the friendships that already work.")
             case (.wellbeing, _): tips.append("Look after the basics today: rest, water and a steady routine.")
             case (_, "Yes"): tips.append("Take one concrete step today.")
             case (_, "Wait"): tips.append("Ask again in an hour, when the planetary hour changes.")

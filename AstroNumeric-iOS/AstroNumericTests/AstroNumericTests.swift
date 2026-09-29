@@ -392,8 +392,10 @@ final class HoraryOracleTests: XCTestCase {
         XCTAssertEqual(OracleTopic.detect(in: "Should I sign the contract?"), .communication)
         XCTAssertEqual(OracleTopic.detect(in: "Should I stop my medication?"), .wellbeing)
         XCTAssertEqual(OracleTopic.detect(in: "Is today a good day?"), .general)
-        // "exam" must not read as "ex".
-        XCTAssertEqual(OracleTopic.detect(in: "Will I pass the exam?"), .career)
+        // "exam" must not read as "ex"; exams are 9th-house (study) questions.
+        XCTAssertEqual(OracleTopic.detect(in: "Will I pass the exam?"), .travel)
+        XCTAssertEqual(OracleTopic.detect(in: "Should we move house this year?"), .home)
+        XCTAssertEqual(OracleTopic.detect(in: "Will my friend forgive me?"), .friends)
     }
 
     func testTheSameSkyAnswersDifferentQuestionsDifferently() {
@@ -427,5 +429,75 @@ final class HoraryOracleTests: XCTestCase {
         XCTAssertTrue(health.guidance.contains { $0.contains("doctor") })
         let money = HoraryOracle.read(question: "Should I invest my savings?", snapshot: sky())
         XCTAssertTrue(money.guidance.contains { $0.contains("adviser") })
+    }
+}
+
+
+final class HoraryJudgeTests: XCTestCase {
+
+    /// Aries rising at 10° (Mars stands for you); the 7th house starts in
+    /// Libra (Venus stands for the other person). Mars in Cancer and Venus in
+    /// Virgo are 58° apart and closing: a sextile completes in about 3 days.
+    private func chart(ascendant: Double = 10, extra: [HoraryBody] = [], venusLongitude: Double = 158) -> HoraryChartData {
+        var bodies: [String: HoraryBody] = [
+            "Sun": HoraryBody(name: "Sun", longitude: 250, speed: 1),
+            "Moon": HoraryBody(name: "Moon", longitude: 40, speed: 13),
+            "Mercury": HoraryBody(name: "Mercury", longitude: 255, speed: 1.3),
+            "Venus": HoraryBody(name: "Venus", longitude: venusLongitude, speed: 1.2),
+            "Mars": HoraryBody(name: "Mars", longitude: 100, speed: 0.6),
+            "Jupiter": HoraryBody(name: "Jupiter", longitude: 20, speed: 0.05),
+            "Saturn": HoraryBody(name: "Saturn", longitude: 330, speed: 0.03),
+        ]
+        for body in extra { bodies[body.name] = body }
+        let cusps = (0..<12).map { (ascendant + Double($0) * 30).truncatingRemainder(dividingBy: 360) }
+        return HoraryChartData(date: Date(timeIntervalSince1970: 1_790_000_000), ascendant: ascendant,
+                               cusps: cusps, bodies: Array(bodies.values).sorted { $0.name < $1.name })
+    }
+
+    private let steadySpeeds: (String, Double) async -> Double? = { _, _ in 1 }
+
+    func testPlanetsMeetingMeansYes() async {
+        let reading = await HoraryJudge.judge(question: "Will she say yes to a date?", chart: chart(), speedAt: steadySpeeds)
+        XCTAssertEqual(reading.topic, .love)
+        XCTAssertEqual(reading.answer, "Yes")
+        XCTAssertTrue(reading.reasoning.contains("Mars stands for you"))
+        XCTAssertTrue(reading.reasoning.contains("Venus stands for the matter"))
+        XCTAssertTrue(reading.points.contains { $0.helps && $0.text.contains("sextile") && $0.text.contains("3 days") })
+    }
+
+    func testAnotherPlanetGettingThereFirstMeansNo() async {
+        // Saturn squares Mars in under 2 days, before Mars reaches Venus.
+        let blocked = chart(extra: [HoraryBody(name: "Saturn", longitude: 191, speed: 0.05)])
+        let reading = await HoraryJudge.judge(question: "Will she say yes to a date?", chart: blocked, speedAt: steadySpeeds)
+        XCTAssertEqual(reading.answer, "No")
+        XCTAssertTrue(reading.points.contains { !$0.helps && $0.text.contains("prohibition") && $0.text.contains("Saturn") })
+    }
+
+    func testTurningRetrogradeBeforeMeetingMeansNo() async {
+        let reading = await HoraryJudge.judge(question: "Will she say yes to a date?", chart: chart()) { name, _ in
+            name == "Venus" ? -0.2 : 1
+        }
+        XCTAssertEqual(reading.answer, "No")
+        XCTAssertTrue(reading.points.contains { $0.text.contains("refranation") })
+    }
+
+    func testNoMeetingMeansNo() async {
+        // Venus at 20° Libra: nothing between Mars and Venus completes before one changes sign.
+        let apart = chart(venusLongitude: 200)
+        let reading = await HoraryJudge.judge(question: "Will she say yes to a date?", chart: apart, speedAt: steadySpeeds)
+        XCTAssertEqual(reading.answer, "No")
+    }
+
+    func testAnEarlyRisingDegreeIsFlagged() async {
+        let reading = await HoraryJudge.judge(question: "Will she say yes to a date?", chart: chart(ascendant: 1), speedAt: steadySpeeds)
+        XCTAssertTrue(reading.points.contains { !$0.helps && $0.text.contains("premature") })
+    }
+
+    func testNextMeetingTiming() {
+        let mars = HoraryBody(name: "Mars", longitude: 100, speed: 0.6)
+        let venus = HoraryBody(name: "Venus", longitude: 158, speed: 1.2)
+        let meeting = HoraryJudge.nextMeeting(mars, venus)
+        XCTAssertEqual(meeting?.aspect, .sextile)
+        XCTAssertEqual(meeting?.days ?? 0, 10.0 / 3.0, accuracy: 0.01)
     }
 }
