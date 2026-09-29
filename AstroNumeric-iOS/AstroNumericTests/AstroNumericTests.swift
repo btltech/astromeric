@@ -356,3 +356,73 @@ final class DisplayFormattingTests: XCTestCase {
     }
 }
 
+
+final class HoraryOracleTests: XCTestCase {
+
+    private func body(_ name: String, _ sign: String, _ absolute: Double,
+                      retrograde: Bool = false, dignity: String? = nil) -> PlanetPlacement {
+        PlanetPlacement(name: name, sign: sign, degree: absolute.truncatingRemainder(dividingBy: 30),
+                        absoluteDegree: absolute, house: nil, retrograde: retrograde, dignity: dignity)
+    }
+
+    /// Hour of Venus; Venus strong in Taurus; Mercury retrograde and in fall
+    /// in Pisces; a waning Moon well away from both.
+    private func sky(voidOfCourse: Bool = false) -> CalendarOracle.HorarySnapshot {
+        CalendarOracle.HorarySnapshot(
+            timestamp: Date(timeIntervalSince1970: 1_790_000_000),
+            planetaryHour: "Venus",
+            moonSign: "Leo",
+            moonDegree: 10,
+            moonPhase: "Waning Gibbous",
+            isVoidOfCourse: voidOfCourse,
+            keyTransits: [],
+            bodies: [
+                body("Venus", "Taurus", 45, dignity: "domicile"),
+                body("Mercury", "Pisces", 340, retrograde: true, dignity: "fall"),
+                body("Moon", "Leo", 130),
+                body("Saturn", "Aries", 5),
+            ]
+        )
+    }
+
+    func testDetectsTheQuestionsTopic() {
+        XCTAssertEqual(OracleTopic.detect(in: "Should I text my ex?"), .love)
+        XCTAssertEqual(OracleTopic.detect(in: "Should I invest in crypto this month?"), .money)
+        XCTAssertEqual(OracleTopic.detect(in: "Should I take the job offer?"), .career)
+        XCTAssertEqual(OracleTopic.detect(in: "Should I sign the contract?"), .communication)
+        XCTAssertEqual(OracleTopic.detect(in: "Should I stop my medication?"), .wellbeing)
+        XCTAssertEqual(OracleTopic.detect(in: "Is today a good day?"), .general)
+        // "exam" must not read as "ex".
+        XCTAssertEqual(OracleTopic.detect(in: "Will I pass the exam?"), .career)
+    }
+
+    func testTheSameSkyAnswersDifferentQuestionsDifferently() {
+        let love = HoraryOracle.read(question: "Should I ask her on a date?", snapshot: sky())
+        XCTAssertEqual(love.answer, "Yes")
+        XCTAssertTrue(love.reasoning.contains("Venus"))
+
+        let contract = HoraryOracle.read(question: "Should I sign the contract today?", snapshot: sky())
+        XCTAssertEqual(contract.answer, "No")
+        XCTAssertTrue(contract.reasoning.contains("Mercury is retrograde"))
+    }
+
+    func testVoidOfCourseMoonMeansNo() {
+        let answer = HoraryOracle.read(question: "Should I ask her on a date?", snapshot: sky(voidOfCourse: true))
+        XCTAssertEqual(answer.answer, "No")
+        XCTAssertEqual(answer.confidence, 0.85, accuracy: 0.001)
+    }
+
+    func testSameQuestionAndSkyAlwaysGiveTheSameAnswer() {
+        let first = HoraryOracle.read(question: "Should I launch now?", snapshot: sky())
+        let second = HoraryOracle.read(question: "Should I launch now?", snapshot: sky())
+        XCTAssertEqual(first.answer, second.answer)
+        XCTAssertEqual(first.reasoning, second.reasoning)
+    }
+
+    func testHealthAndMoneyQuestionsPointToAProfessional() {
+        let health = HoraryOracle.read(question: "Should I stop my medication?", snapshot: sky())
+        XCTAssertTrue(health.guidance.contains { $0.contains("doctor") })
+        let money = HoraryOracle.read(question: "Should I invest my savings?", snapshot: sky())
+        XCTAssertTrue(money.guidance.contains { $0.contains("adviser") })
+    }
+}

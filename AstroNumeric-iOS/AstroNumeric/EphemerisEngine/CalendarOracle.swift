@@ -24,6 +24,9 @@ actor CalendarOracle {
         let moonPhase: String
         let isVoidOfCourse: Bool
         let keyTransits: [String]
+        /// Every body's position, retrograde state and dignity at that moment,
+        /// so the Oracle can judge the planet that rules the question's topic.
+        var bodies: [PlanetPlacement] = []
 
         /// Compact telemetry string for UI display.
         var citation: String {
@@ -82,8 +85,10 @@ actor CalendarOracle {
         var moonPhase = "Unknown"
         var isVoid = false
         var keyTransits: [String] = []
+        var bodies: [PlanetPlacement] = []
 
         if let transits = try? await EphemerisEngine.shared.calculateCurrentTransits(date: date) {
+            bodies = transits
             if let moon = transits.first(where: { $0.name == "Moon" }) {
                 moonSign = moon.sign
                 moonDegree = moon.degree
@@ -122,7 +127,8 @@ actor CalendarOracle {
             moonDegree: moonDegree,
             moonPhase: moonPhase,
             isVoidOfCourse: isVoid,
-            keyTransits: keyTransits
+            keyTransits: keyTransits,
+            bodies: bodies
         )
     }
 

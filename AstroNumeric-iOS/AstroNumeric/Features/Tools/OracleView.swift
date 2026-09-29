@@ -314,7 +314,10 @@ struct OracleView: View {
             return
         }
 
-        // 2. Build the Horary system prompt
+        // 2. Build the Horary system prompt, anchored on the built-in reading
+        //    so the AI explains the same judgement rather than inventing one.
+        let builtIn = HoraryOracle.read(question: trimmedQuestion, snapshot: snapshot)
+        let topic = OracleTopic.detect(in: trimmedQuestion)
         let systemPrompt = """
         You are a precise Horary Astrologer. The user has asked a Yes/No question. \
         Answer STRICTLY based on the following exact celestial telemetry captured at the \
@@ -327,6 +330,8 @@ struct OracleView: View {
         - Moon Phase: \(snapshot.moonPhase)
         - Void of Course: \(snapshot.isVoidOfCourse ? "YES — advise extreme caution" : "No")
         - Active Transits: \(snapshot.keyTransits.isEmpty ? "None notable" : snapshot.keyTransits.joined(separator: ", "))
+        - Question topic: \(topic.label) (key planet: \(topic.significators[0]))
+        - Rule-based reading: \(builtIn.answer.uppercased()) — \(builtIn.reasoning)
         
         USER'S NATAL DATA:
         - Name: \(profile.promptName(hideSensitive: hideSensitive))
@@ -336,8 +341,10 @@ struct OracleView: View {
         RULES:
         1. If the Moon is Void of Course, strongly lean toward NO or caution.
         2. Malefic planetary hours (Saturn, Mars) add restriction. Benefic hours (Venus, Jupiter) add support.
-        3. Be direct and specific. No vague hedging.
-        4. You MUST respond with ONLY valid JSON, no markdown, no explanation outside the JSON.
+        3. Keep the decision consistent with the rule-based reading unless the telemetry clearly says otherwise, and speak to the question's topic.
+        4. For health, legal or large financial questions, remind the user to consult a professional.
+        5. Be direct and specific. No vague hedging.
+        6. You MUST respond with ONLY valid JSON, no markdown, no explanation outside the JSON.
         
         Respond in this exact JSON format:
         {"decision":"YES or NO","confidence":0.0 to 1.0,"reasoning":"2-3 sentences explaining WHY based on the telemetry","guidance":["actionable tip 1","actionable tip 2"]}
@@ -430,46 +437,268 @@ struct OracleView: View {
         )
     }
     
-    // MARK: - Offline Cold Read
-    
-    /// Pure Horary math fallback when network is unavailable.
+    // MARK: - Built-in reading
+
+    /// The on-device answer: used when live AI is off, or unreachable.
     private func horaryColdRead(snapshot: CalendarOracle.HorarySnapshot) -> YesNoAnswer {
-        let isYes: Bool
-        let confidence: Double
-        var reasoning: String
-        
+        HoraryOracle.read(
+            question: question.trimmingCharacters(in: .whitespacesAndNewlines),
+            snapshot: snapshot
+        )
+    }
+}
+
+// MARK: - Built-in horary reading
+
+/// What a yes/no question is about, and the planets that traditionally rule it.
+enum OracleTopic: String, CaseIterable {
+    case love, money, career, communication, action, wellbeing, general
+
+    /// The question's key planet first, then a supporting one.
+    var significators: [String] {
+        switch self {
+        case .love: return ["Venus", "Moon"]
+        case .money: return ["Jupiter", "Venus"]
+        case .career: return ["Saturn", "Sun"]
+        case .communication: return ["Mercury", "Moon"]
+        case .action: return ["Mars", "Sun"]
+        case .wellbeing: return ["Sun", "Moon"]
+        case .general: return ["Moon"]
+        }
+    }
+
+    var label: String {
+        switch self {
+        case .love: return "love and relationships"
+        case .money: return "money"
+        case .career: return "work and commitments"
+        case .communication: return "messages, travel and agreements"
+        case .action: return "starting something bold"
+        case .wellbeing: return "health and wellbeing"
+        case .general: return "general"
+        }
+    }
+
+    private var keywords: Set<String> {
+        switch self {
+        case .love:
+            return ["love", "date", "dating", "relationship", "partner", "boyfriend", "girlfriend",
+                    "husband", "wife", "marry", "marriage", "married", "crush", "ex", "romance",
+                    "romantic", "kiss", "propose", "proposal", "wedding", "breakup", "divorce",
+                    "soulmate", "flirt", "reconcile"]
+        case .money:
+            return ["money", "invest", "investment", "investing", "buy", "purchase", "sell",
+                    "loan", "debt", "salary", "raise", "pay", "price", "rent", "mortgage",
+                    "stock", "stocks", "crypto", "afford", "spend", "save", "savings", "bonus",
+                    "budget", "profit", "bet", "lottery"]
+        case .career:
+            return ["job", "work", "career", "boss", "promotion", "interview", "hire", "hired",
+                    "quit", "resign", "business", "company", "project", "client", "clients",
+                    "apply", "application", "exam", "study", "school", "university", "college",
+                    "course", "office", "colleague", "commit", "commitment"]
+        case .communication:
+            return ["call", "text", "message", "email", "reply", "send", "sign", "contract",
+                    "travel", "trip", "flight", "fly", "move", "moving", "write", "publish",
+                    "post", "tell", "contact", "agreement", "deal", "negotiate", "visit"]
+        case .action:
+            return ["start", "launch", "begin", "fight", "confront", "compete", "competition",
+                    "race", "risk", "leap", "challenge", "attempt"]
+        case .wellbeing:
+            return ["health", "doctor", "medication", "medicine", "surgery", "diet", "pregnant",
+                    "pregnancy", "therapy", "therapist", "sick", "hospital", "treatment",
+                    "exercise", "sleep", "weight"]
+        case .general:
+            return []
+        }
+    }
+
+    /// The topic whose keywords appear most in the question. Ties go to the
+    /// earlier topic in this list, so wellbeing and money questions keep their
+    /// "talk to a professional" note even when other words also match.
+    static func detect(in question: String) -> OracleTopic {
+        let words = Set(
+            question.lowercased()
+                .components(separatedBy: CharacterSet.letters.inverted)
+                .filter { !$0.isEmpty }
+        )
+        let ranked: [OracleTopic] = [.wellbeing, .money, .love, .career, .communication, .action]
+        var best: OracleTopic = .general
+        var bestHits = 0
+        for topic in ranked {
+            let hits = topic.keywords.intersection(words).count
+            if hits > bestHits {
+                best = topic
+                bestHits = hits
+            }
+        }
+        return best
+    }
+}
+
+/// Answers a yes/no question from the sky at the moment it is asked, weighted
+/// towards the planet that rules the question's topic. Runs on the device, so
+/// the question never leaves the phone, and the same sky and question always
+/// give the same answer.
+enum HoraryOracle {
+    private struct Factor {
+        let weight: Double
+        let text: String
+    }
+
+    private static let helpfulPlanets: Set<String> = ["Venus", "Jupiter"]
+    private static let harshPlanets: Set<String> = ["Saturn", "Mars", "Pluto"]
+
+    static func read(question: String, snapshot: CalendarOracle.HorarySnapshot) -> YesNoAnswer {
+        let topic = OracleTopic.detect(in: question)
+        let key = topic.significators[0]
+        let bodies = Dictionary(snapshot.bodies.map { ($0.name, $0) }, uniquingKeysWith: { first, _ in first })
+        let opening = topic == .general
+            ? "With no clear topic, the Moon speaks for the question."
+            : "For a question about \(topic.label), the key planet is \(key)."
+
+        // A void-of-course Moon overrides everything in traditional horary.
         if snapshot.isVoidOfCourse {
-            isYes = false
-            confidence = 0.85
-            reasoning = "The Moon is Void of Course — no new aspects will form before sign change. Traditional Horary strongly advises against initiating anything during VOC periods."
-        } else if snapshot.threatLevel == .red {
-            isYes = false
-            confidence = 0.72
-            reasoning = "The Hour of \(snapshot.planetaryHour) is a malefic hour, creating restriction and friction. The cosmic environment does not support this action right now."
-        } else if snapshot.threatLevel == .green {
-            isYes = true
-            confidence = 0.78
-            reasoning = "The Hour of \(snapshot.planetaryHour) is benefic, and the Moon in \(snapshot.moonSign) (\(snapshot.moonPhase)) supports forward momentum."
-        } else {
-            isYes = snapshot.moonPhase.contains("Waxing") || snapshot.moonPhase == "Full Moon"
-            confidence = 0.6
-            reasoning = "Neutral planetary hour. The \(snapshot.moonPhase) in \(snapshot.moonSign) leans \(isYes ? "toward action" : "toward patience")."
+            return YesNoAnswer(
+                question: question,
+                answer: "No",
+                confidence: 0.85,
+                reasoning: "\(opening) But the Moon is void of course: it makes no more major aspects before changing sign, which traditionally means nothing started now comes to much.",
+                guidance: guidance(for: topic, decision: "No", voidOfCourse: true)
+            )
         }
-        
-        if !snapshot.keyTransits.isEmpty {
-            reasoning += " Active transits: \(snapshot.keyTransits.joined(separator: ", "))."
+
+        var factors: [Factor] = []
+
+        // 1. The planetary hour.
+        let hour = snapshot.planetaryHour
+        if hour == key {
+            factors.append(Factor(weight: 2, text: "It is the hour of \(key), the planet that rules this kind of question."))
+        } else if helpfulPlanets.contains(hour) {
+            factors.append(Factor(weight: 1, text: "The hour of \(hour) is a helpful one."))
+        } else if harshPlanets.contains(hour) {
+            factors.append(Factor(weight: -1, text: "The hour of \(hour) tends to bring friction and delay."))
         }
-        
+
+        if let planet = bodies[key] {
+            // 2. How strong the key planet is in its sign.
+            switch planet.dignity {
+            case "domicile":
+                factors.append(Factor(weight: 1, text: "\(key) is strong in \(planet.sign), its own sign."))
+            case "exaltation":
+                factors.append(Factor(weight: 1, text: "\(key) is exalted in \(planet.sign), one of its best placements."))
+            case "detriment", "fall":
+                factors.append(Factor(weight: -1, text: "\(key) is weak in \(planet.sign)."))
+            default:
+                break
+            }
+
+            // 3. Retrograde: review, don't start.
+            if planet.retrograde == true, key != "Sun", key != "Moon" {
+                factors.append(Factor(weight: -1, text: "\(key) is retrograde, which favours reviewing and waiting over starting."))
+            }
+
+            // 4. The Moon's aspect to the key planet.
+            if key != "Moon", let moon = bodies["Moon"],
+               let aspect = aspect(between: moon, and: planet, orb: 6) {
+                switch aspect {
+                case "trine", "sextile":
+                    factors.append(Factor(weight: 1, text: "The Moon makes a supportive \(aspect) to \(key)."))
+                case "conjunction":
+                    factors.append(Factor(weight: 1, text: "The Moon is travelling with \(key)."))
+                default:
+                    factors.append(Factor(weight: -1, text: "The Moon makes a tense \(aspect) to \(key)."))
+                }
+            }
+
+            // 5. Close aspects from helpful or harsh planets.
+            for other in snapshot.bodies where other.name != key && other.name != "Moon" {
+                guard helpfulPlanets.contains(other.name) || harshPlanets.contains(other.name),
+                      let aspect = aspect(between: other, and: planet, orb: 3) else { continue }
+                let tense = aspect == "square" || aspect == "opposition"
+                if harshPlanets.contains(other.name), tense || aspect == "conjunction" {
+                    factors.append(Factor(weight: -1, text: "\(other.name) makes a hard \(aspect) to \(key)."))
+                } else if helpfulPlanets.contains(other.name), !tense {
+                    factors.append(Factor(weight: 1, text: "\(other.name) supports \(key) with a \(aspect)."))
+                }
+            }
+        }
+
+        // 6. The Moon's phase.
+        let phase = snapshot.moonPhase
+        if phase.hasPrefix("Waxing") || phase == "New Moon" || phase == "First Quarter" {
+            factors.append(Factor(weight: 0.5, text: "The \(phase) supports new starts."))
+        } else if phase.hasPrefix("Waning") || phase == "Last Quarter" {
+            factors.append(Factor(weight: -0.5, text: "The \(phase) favours finishing over starting."))
+        }
+
+        let score = factors.reduce(0) { $0 + $1.weight }
+        let decision = score > 0 ? "Yes" : (score < 0 ? "No" : "Wait")
+        let confidence = decision == "Wait" ? 0.5 : min(0.88, 0.55 + 0.08 * abs(score))
+
+        // Lead with the factors that pushed the answer the way it went.
+        let supporting = factors
+            .filter { decision == "Wait" || ($0.weight > 0) == (decision == "Yes") }
+            .sorted { abs($0.weight) > abs($1.weight) }
+        let against = factors.filter { !supporting.map(\.text).contains($0.text) }
+        var sentences = [opening] + supporting.prefix(3).map(\.text)
+        if decision != "Wait", let strongestAgainst = against.max(by: { abs($0.weight) < abs($1.weight) }) {
+            sentences.append("Against that: " + strongestAgainst.text.prefix(1).lowercased() + strongestAgainst.text.dropFirst())
+        }
+        if decision == "Wait" {
+            sentences.append("The signs are evenly balanced right now.")
+        }
+
         return YesNoAnswer(
             question: question,
-            answer: isYes ? "Yes" : "No",
+            answer: decision,
             confidence: confidence,
-            reasoning: reasoning,
-            guidance: [
-                snapshot.isVoidOfCourse ? "Wait until the Moon enters the next sign" : "Trust the timing",
-                snapshot.threatLevel == .red ? "Delay major decisions to a benefic hour" : "Proceed with awareness"
-            ]
+            reasoning: sentences.joined(separator: " "),
+            guidance: guidance(for: topic, decision: decision, voidOfCourse: false)
         )
+    }
+
+    /// The aspect between two bodies within `orb` degrees, if any.
+    private static func aspect(between a: PlanetPlacement, and b: PlanetPlacement, orb: Double) -> String? {
+        guard let aDeg = a.absoluteDegree, let bDeg = b.absoluteDegree else { return nil }
+        var diff = abs(aDeg - bDeg).truncatingRemainder(dividingBy: 360)
+        if diff > 180 { diff = 360 - diff }
+        let aspects: [(String, Double)] = [
+            ("conjunction", 0), ("sextile", 60), ("square", 90), ("trine", 120), ("opposition", 180),
+        ]
+        return aspects.first { abs(diff - $0.1) <= orb }?.0
+    }
+
+    private static func guidance(for topic: OracleTopic, decision: String, voidOfCourse: Bool) -> [String] {
+        var tips: [String] = []
+        if voidOfCourse {
+            tips.append("Ask again once the Moon enters its next sign, usually within a day.")
+        } else {
+            switch (topic, decision) {
+            case (.love, "Yes"): tips.append("Reach out warmly, and let them answer in their own time.")
+            case (.love, _): tips.append("Give it a few days and notice how you feel before raising it.")
+            case (.money, "Yes"): tips.append("Go ahead in a size you could comfortably lose.")
+            case (.money, _): tips.append("Hold off on big purchases or investments for now.")
+            case (.career, "Yes"): tips.append("Put it in writing and commit to a first step this week.")
+            case (.career, _): tips.append("Prepare now and move when the timing is clearer.")
+            case (.communication, "Yes"): tips.append("Send it, but read it through once before you do.")
+            case (.communication, _): tips.append("Double-check the details, and delay signing if you can.")
+            case (.action, "Yes"): tips.append("Start while the energy is behind you.")
+            case (.action, _): tips.append("Channel the urge into planning rather than acting today.")
+            case (.wellbeing, _): tips.append("Look after the basics today: rest, water and a steady routine.")
+            case (_, "Yes"): tips.append("Take one concrete step today.")
+            case (_, "Wait"): tips.append("Ask again in an hour, when the planetary hour changes.")
+            default: tips.append("Give it time and ask again later.")
+            }
+        }
+        switch topic {
+        case .wellbeing:
+            tips.append("This is for reflection. For health decisions, talk to a doctor.")
+        case .money:
+            tips.append("This is for reflection. For big financial decisions, talk to a qualified adviser.")
+        default:
+            tips.append("Treat this as one signal among many, and trust your own judgement.")
+        }
+        return tips
     }
 }
 
