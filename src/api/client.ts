@@ -572,11 +572,18 @@ export interface DailyFeaturesResponse {
   life_path: number;
 }
 
-export function fetchDailyFeatures(profile: ProfilePayload) {
-  return apiFetch<DailyFeaturesResponse>('/v2/daily/reading', {
-    method: 'POST',
-    body: JSON.stringify(profile), // Send flat, not {profile: ...}
-  });
+export async function fetchDailyFeatures(profile: ProfilePayload) {
+  // The server wraps every reply in {status, data}; the full feature set sits
+  // under data.features next to the short summary the app reads.
+  const response = await apiFetch<ApiResponse<{ features?: DailyFeaturesResponse }>>(
+    '/v2/daily/reading',
+    {
+      method: 'POST',
+      body: JSON.stringify(profile), // Send flat, not {profile: ...}
+    }
+  );
+  if (!response.data?.features) throw new Error('Daily features missing from response');
+  return response.data.features;
 }
 
 // ========== TAROT API ==========
@@ -591,10 +598,33 @@ export interface TarotCardResponse {
   drawn_at: string;
 }
 
-export function drawTarotCard() {
-  return apiFetch<TarotCardResponse>('/v2/daily/tarot', {
+interface ServerTarotCard {
+  name: string;
+  number: number;
+  upright: boolean;
+  meaning: string;
+  interpretation: string;
+}
+
+export async function drawTarotCard(): Promise<TarotCardResponse> {
+  const response = await apiFetch<ApiResponse<ServerTarotCard>>('/v2/daily/tarot', {
     method: 'POST',
   });
+  const card = response.data;
+  if (!card) throw new Error('Tarot card missing from response');
+  return {
+    card: card.name,
+    card_number: card.number,
+    // The server sends meaning as comma-separated keywords.
+    keywords: card.meaning
+      .split(',')
+      .map((keyword) => keyword.trim())
+      .filter(Boolean),
+    message: card.interpretation,
+    reversed: !card.upright,
+    daily_advice: '',
+    drawn_at: new Date().toISOString(),
+  };
 }
 
 // ========== ORACLE API ==========
@@ -610,11 +640,33 @@ export interface YesNoResponse {
   asked_at: string;
 }
 
-export function askOracle(question: string, birthDate?: string) {
-  return apiFetch<YesNoResponse>('/v2/daily/yes-no', {
-    method: 'POST',
-    body: JSON.stringify({ question, birth_date: birthDate }),
-  });
+interface ServerYesNo {
+  question: string;
+  answer: YesNoResponse['answer'];
+  confidence: number;
+  reasoning: string;
+  guidance: string[];
+}
+
+export async function askOracle(question: string): Promise<YesNoResponse> {
+  // The server reads the question from the query string, not the body.
+  const response = await apiFetch<ApiResponse<ServerYesNo>>(
+    `/v2/daily/yes-no?${new URLSearchParams({ question }).toString()}`,
+    { method: 'POST' }
+  );
+  const result = response.data;
+  if (!result) throw new Error('Oracle answer missing from response');
+  return {
+    question: result.question,
+    answer: result.answer,
+    emoji: '',
+    // 0-1 from the server; the meter shows a percentage.
+    confidence: Math.round(result.confidence <= 1 ? result.confidence * 100 : result.confidence),
+    message: result.guidance[0] ?? '',
+    reasoning: result.reasoning,
+    timing: result.guidance.slice(1).join(' '),
+    asked_at: new Date().toISOString(),
+  };
 }
 
 export interface QuickInsightResponse {
@@ -777,11 +829,13 @@ export function fetchLearningGlossary(search?: string, category?: string) {
 
 import type { YearAheadForecast, MoonPhaseSummary, MoonPhaseInfo, MoonEvent } from '../types';
 
-export function fetchYearAhead(profile: ProfilePayload, year?: number) {
-  return apiFetch<YearAheadForecast>('/v2/year-ahead/forecast', {
+export async function fetchYearAhead(profile: ProfilePayload, year?: number) {
+  const response = await apiFetch<ApiResponse<YearAheadForecast>>('/v2/year-ahead/forecast', {
     method: 'POST',
     body: JSON.stringify({ profile: toFlatProfilePayload(profile), year }),
   });
+  if (!response.data) throw new Error('Year-ahead forecast missing from response');
+  return response.data;
 }
 
 export function fetchVapidKey(): Promise<string> {

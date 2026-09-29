@@ -4,7 +4,7 @@ Standardized request/response format for daily readings, tarot, moon phases, and
 """
 
 from datetime import datetime, timezone
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, HTTPException, Request
@@ -80,6 +80,10 @@ class SimplifiedDailyData(BaseModel):
     power_hours: List[str] = []
     daily_luck: Optional[float] = None
     generated_at: Timestamp
+    # The full feature set (lucky colours and planet, mood forecast, retrograde
+    # alerts, tarot, numerology day). The website's daily card renders it; the
+    # app reads only the summary fields above.
+    features: Optional[Dict[str, Any]] = None
 
 
 class ForecastDay(BaseModel):
@@ -675,6 +679,7 @@ async def get_daily_reading(
             power_hours=power_hours,
             daily_luck=daily_luck,
             generated_at=datetime.now(timezone.utc),
+            features={**res, "life_path": life_path, "personal_day": personal_day},
         )
 
         return ApiResponse(

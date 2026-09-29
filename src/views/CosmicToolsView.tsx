@@ -135,15 +135,15 @@ export function CosmicToolsView() {
           <MoonPhaseCard />
         </article>
 
-        <article className="product-desk__panel">
+        <article className="product-desk__panel product-desk__panel--wide">
           <div className="tools-content">
             <DailyFeaturesCard birthDate={selectedProfile?.date_of_birth ?? fallbackBirthDate} />
           </div>
         </article>
 
-        <article className="product-desk__panel">
+        <article className="product-desk__panel product-desk__panel--wide">
           <div className="tools-content">
-            <OracleYesNo birthDate={selectedProfile?.date_of_birth} />
+            <OracleYesNo />
           </div>
         </article>
 

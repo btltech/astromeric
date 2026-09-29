@@ -1,11 +1,7 @@
 import React, { useState } from 'react';
 import { askOracle, type YesNoResponse } from '../api/client';
 
-interface Props {
-  birthDate?: string;
-}
-
-export function OracleYesNo({ birthDate }: Props) {
+export function OracleYesNo() {
   const [question, setQuestion] = useState('');
   const [result, setResult] = useState<YesNoResponse | null>(null);
   const [loading, setLoading] = useState(false);
@@ -18,7 +14,7 @@ export function OracleYesNo({ birthDate }: Props) {
     setLoading(true);
     setError(null);
     try {
-      const response = await askOracle(question, birthDate);
+      const response = await askOracle(question);
       setResult(response);
     } catch (err) {
       console.error('Oracle failed:', err);
@@ -140,10 +136,12 @@ export function OracleYesNo({ birthDate }: Props) {
             <p>{result.reasoning}</p>
           </div>
 
-          <div className="oracle-timing">
-            <span className="section-label">⏰ Timing</span>
-            <p>{result.timing}</p>
-          </div>
+          {result.timing && (
+            <div className="oracle-timing">
+              <span className="section-label">⏰ Timing</span>
+              <p>{result.timing}</p>
+            </div>
+          )}
 
           <button onClick={handleReset} className="reset-button">
             Ask Another Question
