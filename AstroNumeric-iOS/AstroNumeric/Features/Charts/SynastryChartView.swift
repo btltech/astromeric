@@ -145,7 +145,7 @@ struct SynastryChartView: View {
                                         ForEach(result.synastryAspects) { aspect in
                                             CardView {
                                                 VStack(alignment: .leading, spacing: 4) {
-                                                    Text("\(aspect.planet1) \(aspect.aspect) \(aspect.planet2)")
+                                                    Text("\(aspect.planet1) \(aspect.aspect.aspectDisplayName.lowercased()) \(aspect.planet2)")
                                                         .font(.headline)
                                                     Text(String(format: "fmt.synastryChart.0".localized, String(format: "%.1f", aspect.orb)))
                                                         .font(.subtext)

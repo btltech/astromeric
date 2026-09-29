@@ -52,6 +52,11 @@ struct LifePhaseCard: View {
     let data: LifePhaseData
     @State private var expanded = false
 
+    /// Renders inline markdown such as **bold**; falls back to the raw text.
+    private static func markdown(_ text: String) -> AttributedString {
+        (try? AttributedString(markdown: text)) ?? AttributedString(text)
+    }
+
     var current: LifePhase { data.currentPhase }
 
     var body: some View {
@@ -98,7 +103,8 @@ struct LifePhaseCard: View {
                     HStack {
                         Text(String(format: "fmt.lifePhaseCard.1".localized, "\(current.minAge)", "\(current.maxAge)"))
                         Spacer()
-                        Text("~\(current.duration)")
+                        // The API already writes "~2-3 years"; don't double the "~".
+                        Text(current.duration.hasPrefix("~") ? current.duration : "~\(current.duration)")
                     }
                     .font(.caption)
                     .foregroundStyle(Color.textMuted)
@@ -147,12 +153,14 @@ struct LifePhaseCard: View {
                             .padding(.top, 2)
                             .accessibilityHidden(true)
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(String(format: "fmt.lifePhaseCard.0".localized, "\(next.beginsInYears)", "\(next.name)"))
+                            // The string bolds the phase name with **markdown**, which a
+                            // plain String doesn't render; parse it so the asterisks go.
+                            Text(Self.markdown(String(format: "fmt.lifePhaseCard.0".localized, "\(next.beginsInYears)", "\(next.name)")))
                                 .font(.caption.bold())
                             Text(next.preview)
                                 .font(.caption)
                                 .foregroundStyle(Color.textSecondary)
-                                .lineLimit(2)
+                                .fixedSize(horizontal: false, vertical: true)
                         }
                     }
                     .accessibilityElement(children: .combine)

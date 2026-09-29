@@ -326,3 +326,23 @@ final class NumerologyNumbersTests: XCTestCase {
     }
 }
 
+final class DisplayFormattingTests: XCTestCase {
+
+    func testHomeHeadlineIsTheReadingsFirstSentence() {
+        // The reading's "headline" is a paragraph; Home shows its first sentence.
+        XCTAssertEqual(
+            HomeView.firstSentence(of: "Your warmth gives you an edge — use it. Mercury is busy. More."),
+            "Your warmth gives you an edge — use it."
+        )
+        XCTAssertEqual(HomeView.firstSentence(of: "Big day! Then rest."), "Big day!")
+        XCTAssertEqual(HomeView.firstSentence(of: "No full stop at all"), "No full stop at all")
+        // A decimal point is not a sentence end.
+        XCTAssertEqual(HomeView.firstSentence(of: "Energy is 7.7 today. Rest."), "Energy is 7.7 today.")
+    }
+
+    func testAspectKeysReadAsWords() {
+        XCTAssertEqual("semi_square".aspectDisplayName, "Semi-square")
+        XCTAssertEqual("conjunction".aspectDisplayName, "Conjunction")
+    }
+}
+

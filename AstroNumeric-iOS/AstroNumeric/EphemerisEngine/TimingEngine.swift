@@ -118,24 +118,28 @@ actor TimingEngine {
         let bestScore = allWindows.first?.score ?? 0.5
         
         // Best times = top 3 windows
+        // Day label ("Today", "Tomorrow" or a weekday) then the time alone;
+        // the time format used to repeat the weekday ("Thu 12:00 pm Thu 12:00 pm").
+        let dayFormatter = DateFormatter()
+        dayFormatter.dateFormat = "EEE"
         let formatter = DateFormatter()
-        formatter.dateFormat = "EEE h:mm a"
+        formatter.dateFormat = "h:mm a"
         let bestTimes = allWindows.prefix(3).map { window in
             let dayLabel = calendar.isDateInToday(window.start) ? "Today" :
                            calendar.isDateInTomorrow(window.start) ? "Tomorrow" :
-                           formatter.string(from: window.start)
-            let endFmt = DateFormatter()
-            endFmt.dateFormat = "h:mm a"
+                           dayFormatter.string(from: window.start)
             let hourRuler = window.factors.planetaryHourName
-            return "\(dayLabel) \(formatter.string(from: window.start))–\(endFmt.string(from: window.end)) • \(hourRuler) hour (\(Int(window.score * 100))%)"
+            return "\(dayLabel) \(formatter.string(from: window.start))–\(formatter.string(from: window.end)) • \(hourRuler) hour (\(Int(window.score * 100))%)"
         }
         
         // Avoid times = bottom 3 windows that aren't in the past
-        let worstWindows = allWindows.suffix(3).reversed()
+        // Three weakest windows, listed in time order (by score they read
+        // "Today 10pm, Fri 4am, Today 6pm").
+        let worstWindows = allWindows.suffix(3).sorted { $0.start < $1.start }
         let avoidTimes: [String] = worstWindows.compactMap { window in
             let dayLabel = calendar.isDateInToday(window.start) ? "Today" :
                            calendar.isDateInTomorrow(window.start) ? "Tomorrow" :
-                           formatter.string(from: window.start)
+                           dayFormatter.string(from: window.start)
             let reason = window.factors.worstFactor
             return "\(dayLabel) \(formatter.string(from: window.start)) • \(reason)"
         }

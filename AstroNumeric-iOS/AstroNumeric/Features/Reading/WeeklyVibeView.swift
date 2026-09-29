@@ -294,12 +294,14 @@ struct ShimmerModifier: ViewModifier {
                     endPoint: .trailing
                 )
                 .offset(x: phase)
+                .animation(.linear(duration: 1.5).repeatForever(autoreverses: false), value: phase)
                 .mask(content)
             )
             .onAppear {
-                withAnimation(.linear(duration: 1.5).repeatForever(autoreverses: false)) {
-                    phase = 200
-                }
+                // Repeating animations are attached to the one property they drive, not
+                // started with withAnimation in onAppear: that swept any layout change made
+                // in the same moment (e.g. a navigation push) into the endless loop too.
+                phase = 200
             }
     }
 }

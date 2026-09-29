@@ -104,10 +104,11 @@ final class LearningProgressManager {
 
 // MARK: - Learning Track Lesson IDs
 
-/// Static lesson ID sets for each learning track, matching the backend module IDs
+/// Lesson ID sets for each learning track: the lessons that actually exist in
+/// LearnVM. (Earlier tracks listed 12/8/6/10 lessons, including Moon and Tarot
+/// tracks with no lessons at all, and numerology IDs that matched none.)
 enum LearningTrack {
-    static let astrology101LessonIds = (1...12).map { "astro-\($0)" }
-    static let numerologyBasicsLessonIds = (1...8).map { "numerology-\($0)" }
-    static let moonWisdomLessonIds = (1...6).map { "moon-\($0)" }
-    static let tarotMasteryLessonIds = (1...10).map { "tarot-\($0)" }
+    static let astrology101LessonIds = (1...4).map { "astro-\($0)" }
+    static let signsAndElementsLessonIds = (1...3).map { "zodiac-\($0)" } + (1...4).map { "elem-\($0)" }
+    static let numerologyBasicsLessonIds = (1...3).map { "num-\($0)" }
 }

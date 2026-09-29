@@ -59,20 +59,21 @@ struct CosmicSpinner: View {
                 )
                 .frame(width: 50, height: 50)
                 .rotationEffect(.degrees(rotation))
+                .animation(.linear(duration: 2).repeatForever(autoreverses: false), value: rotation)
             
             // Moon emoji
             Text("🌙")
                 .font(.title)
                 .scaleEffect(scale)
+                .animation(.easeInOut(duration: 1).repeatForever(), value: scale)
                 .accessibilityHidden(true)
         }
         .onAppear {
-            withAnimation(.linear(duration: 2).repeatForever(autoreverses: false)) {
-                rotation = 360
-            }
-            withAnimation(.easeInOut(duration: 1).repeatForever()) {
-                scale = 1.1
-            }
+            // Repeating animations are attached to the one property they drive, not
+            // started with withAnimation in onAppear: that swept any layout change made
+            // in the same moment (e.g. a navigation push) into the endless loop too.
+            rotation = 360
+            scale = 1.1
         }
     }
 }
@@ -118,11 +119,13 @@ struct SkeletonView: View {
                     endPoint: shimmer ? .trailing : .leading
                 )
             )
+            .animation(.linear(duration: 1.5).repeatForever(autoreverses: false), value: shimmer)
             .frame(height: height)
             .onAppear {
-                withAnimation(.linear(duration: 1.5).repeatForever(autoreverses: false)) {
-                    shimmer.toggle()
-                }
+                // Repeating animations are attached to the one property they drive, not
+                // started with withAnimation in onAppear: that swept any layout change made
+                // in the same moment (e.g. a navigation push) into the endless loop too.
+                shimmer.toggle()
             }
     }
 }

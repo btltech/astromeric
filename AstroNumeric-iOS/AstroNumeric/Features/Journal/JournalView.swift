@@ -5,47 +5,33 @@ import SwiftUI
 
 struct JournalView: View {
     @Environment(AppStore.self) private var store
-    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @State private var vm = JournalVM()
     @State private var selectedReading: JournalReading?
     @State private var entryDraft: String = ""
     @State private var outcomeDraft: JournalOutcome = .neutral
     @State private var voiceRecorder = VoiceRecorder()
-    @State private var columnVisibility: NavigationSplitViewVisibility = .doubleColumn
 
     var body: some View {
-        NavigationSplitView(columnVisibility: $columnVisibility) {
-            sidebar
-                .navigationTitle("screen.journal".localized)
-                .navigationBarTitleDisplayMode(.inline)
-                .task(id: store.activeProfile?.id) {
-                    await vm.load(profile: store.activeProfile, isAuthenticated: store.isAuthenticated)
-                }
-                .refreshable {
-                    await vm.load(profile: store.activeProfile, isAuthenticated: store.isAuthenticated, forceRefresh: true)
-                }
-                .navigationDestination(isPresented: Binding(
-                    get: { horizontalSizeClass == .compact && selectedReading != nil },
-                    set: { if !$0 { selectedReading = nil } }
-                )) {
-                    if let reading = selectedReading {
-                        journalEditor(reading: reading)
-                    }
-                }
-        } detail: {
-            NavigationStack {
+        // Journal is pushed onto the caller's NavigationStack. A split view
+        // nested inside it doubled the nav bar and swallowed the push, so
+        // "New Entry" and existing entries never opened the editor.
+        sidebar
+            .navigationTitle("screen.journal".localized)
+            .navigationBarTitleDisplayMode(.inline)
+            .task(id: store.activeProfile?.id) {
+                await vm.load(profile: store.activeProfile, isAuthenticated: store.isAuthenticated)
+            }
+            .refreshable {
+                await vm.load(profile: store.activeProfile, isAuthenticated: store.isAuthenticated, forceRefresh: true)
+            }
+            .navigationDestination(isPresented: Binding(
+                get: { selectedReading != nil },
+                set: { if !$0 { selectedReading = nil } }
+            )) {
                 if let reading = selectedReading {
                     journalEditor(reading: reading)
-                } else {
-                    ContentUnavailableView(
-                        "Pick an entry",
-                        systemImage: "square.and.pencil",
-                        description: Text("ui.journal.0".localized)
-                    )
                 }
             }
-        }
-        .navigationSplitViewStyle(.balanced)
     }
 
     private var sidebar: some View {
@@ -192,6 +178,9 @@ struct JournalView: View {
                     .pickerStyle(.segmented)
 
                     TextEditor(text: $entryDraft)
+                        // TextEditor paints an opaque system background over
+                        // the card styling below, leaving a black box.
+                        .scrollContentBackground(.hidden)
                         .frame(minHeight: 240)
                         .padding(Space.sm)
                         .background(

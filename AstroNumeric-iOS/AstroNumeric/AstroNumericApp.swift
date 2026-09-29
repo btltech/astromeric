@@ -12,7 +12,31 @@ struct AstroNumericApp: App {
     @State private var appStore = AppStore.shared
     @State private var services = AppServices.live
     @Environment(\.scenePhase) private var scenePhase
-    
+
+    init() {
+        Self.configureNavigationBar()
+    }
+
+    /// Screens sit their ScrollView inside a layered background, so the system
+    /// never applies its scroll-edge blur and scrolled content drew straight
+    /// over the nav title. Give the bar a blurred dark backing once content is
+    /// under it; at the top of a page it stays transparent as before.
+    private static func configureNavigationBar() {
+        let scrolled = UINavigationBarAppearance()
+        scrolled.configureWithDefaultBackground()
+        scrolled.backgroundEffect = UIBlurEffect(style: .systemUltraThinMaterialDark)
+        scrolled.backgroundColor = UIColor(Color.appBackground).withAlphaComponent(0.7)
+        scrolled.shadowColor = .clear
+
+        let atTop = UINavigationBarAppearance()
+        atTop.configureWithTransparentBackground()
+
+        let bar = UINavigationBar.appearance()
+        bar.standardAppearance = scrolled
+        bar.compactAppearance = scrolled
+        bar.scrollEdgeAppearance = atTop
+    }
+
     var body: some Scene {
         WindowGroup {
             ContentView()

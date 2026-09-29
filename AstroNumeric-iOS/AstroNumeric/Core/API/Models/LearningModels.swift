@@ -39,8 +39,11 @@ struct LearningModule: Codable, Identifiable {
         case relatedModules = "related_modules"
     }
     
+    /// Reading time from the lesson's length (about 200 words a minute).
+    /// The stored durationMinutes values overstated it 5-12 times.
     var formattedDuration: String {
-        "\(durationMinutes) min"
+        let words = content.split(whereSeparator: \.isWhitespace).count
+        return "\(max(1, Int((Double(words) / 200).rounded()))) min read"
     }
     
     var icon: String {

@@ -43,7 +43,16 @@ struct HomeView: View {
 
                         // 4. Weekly Timing card
                         NavigationLink {
-                            WeeklyVibeView(showShare: true)
+                            // WeeklyVibeView is a card-sized component; give
+                            // it a page (scroll, margins, background, title).
+                            ScrollView {
+                                WeeklyVibeView(showShare: true)
+                                    .padding(Space.md)
+                                    .readableContainer()
+                            }
+                            .background(Color.appBackground.ignoresSafeArea())
+                            .navigationTitle("weeklyVibe.title".localized)
+                            .navigationBarTitleDisplayMode(.inline)
                         } label: {
                             WeeklyVibeCard(showShare: false)
                         }
@@ -141,17 +150,19 @@ struct HomeView: View {
                                 .tracking(1.6)
                                 .foregroundStyle(Color.textMuted)
 
+                            // Shown in full: the day's headline and guidance
+                            // are the point of the card, and ran past 3 lines.
                             Text(heroHeadlineText)
                                 .font(.system(.title3, design: .serif).weight(.bold))
                                 .foregroundStyle(.white)
-                                .lineLimit(3)
                                 .multilineTextAlignment(.leading)
+                                .fixedSize(horizontal: false, vertical: true)
 
                             Text(heroSupportCopy)
                                 .font(.subheadline)
                                 .foregroundStyle(Color.textSecondary)
-                                .lineLimit(3)
                                 .multilineTextAlignment(.leading)
+                                .fixedSize(horizontal: false, vertical: true)
                         }
 
                         Spacer(minLength: Space.md)
@@ -476,6 +487,7 @@ struct HomeView: View {
                         Text("Inspect how the next week shifts before you act.")
                             .font(.caption)
                             .foregroundStyle(Color.textSecondary)
+                            .multilineTextAlignment(.leading)
                     }
                 }
             }
@@ -523,8 +535,18 @@ struct HomeView: View {
     }
 
     private var heroHeadlineText: String {
-        if let h = vm.dailyReading?.headline { return h }
+        // The reading's "headline" is a whole paragraph; its first sentence is
+        // the headline. (The full text is on the Reading screen.)
+        if let h = vm.dailyReading?.headline { return Self.firstSentence(of: h) }
         return "\(vm.sunSignEmoji) \(activeSunSign) Sun in focus"
+    }
+
+    static func firstSentence(of text: String) -> String {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let end = trimmed.range(of: #"[.!?](\s|$)"#, options: .regularExpression) else {
+            return trimmed
+        }
+        return String(trimmed[..<end.upperBound]).trimmingCharacters(in: .whitespaces)
     }
 
     private var heroSupportCopy: String {
@@ -712,26 +734,6 @@ extension Color {
             blue:  Double(b) / 255,
             opacity: Double(a) / 255
         )
-    }
-}
-
-// Flashing animation modifier
-struct FlickerRequest: ViewModifier {
-    @State private var opacity: Double = 1.0
-    func body(content: Content) -> some View {
-        content
-            .opacity(opacity)
-            .onAppear {
-                withAnimation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true)) {
-                    opacity = 0.4
-                }
-            }
-    }
-}
-
-extension View {
-    func flickerEffect() -> some View {
-        modifier(FlickerRequest())
     }
 }
 

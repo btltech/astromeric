@@ -25,6 +25,7 @@ struct OrbitRingView: View {
                 )
                 .frame(width: 140, height: 140)
                 .opacity(glowOpacity)
+                .animation(.easeInOut(duration: 3).repeatForever(autoreverses: true), value: glowOpacity)
             
             // Orbit rings
             ForEach(0..<3) { index in
@@ -48,6 +49,7 @@ struct OrbitRingView: View {
                 .font(.title3)
                 .offset(x: 45)
                 .rotationEffect(.degrees(orbitRotation))
+                .animation(.linear(duration: 20).repeatForever(autoreverses: false), value: orbitRotation)
                 .shadow(color: .purple.opacity(0.5), radius: 4)
             
             // Central sun with pulse
@@ -63,6 +65,7 @@ struct OrbitRingView: View {
                     )
                     .frame(width: 50, height: 50)
                     .scaleEffect(pulseScale)
+                    .animation(.easeInOut(duration: 2).repeatForever(autoreverses: true), value: pulseScale)
                 
                 Text(sunEmoji)
                     .font(.largeTitle)
@@ -75,20 +78,12 @@ struct OrbitRingView: View {
     }
     
     private func startAnimations() {
-        // Orbit animation
-        withAnimation(.linear(duration: 20).repeatForever(autoreverses: false)) {
-            orbitRotation = 360
-        }
-        
-        // Pulse animation
-        withAnimation(.easeInOut(duration: 2).repeatForever(autoreverses: true)) {
-            pulseScale = 1.15
-        }
-        
-        // Glow animation
-        withAnimation(.easeInOut(duration: 3).repeatForever(autoreverses: true)) {
-            glowOpacity = 0.6
-        }
+        // Repeating animations are attached to the one property they drive, not
+        // started with withAnimation in onAppear: that swept any layout change made
+        // in the same moment (e.g. a navigation push) into the endless loop too.
+        orbitRotation = 360
+        pulseScale = 1.15
+        glowOpacity = 0.6
     }
 }
 

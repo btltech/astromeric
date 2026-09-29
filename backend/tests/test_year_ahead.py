@@ -308,3 +308,12 @@ class TestYearAheadForecast:
 
         assert isinstance(result["advice"], list)
         assert len(result["advice"]) >= 1
+
+
+def test_eclipse_theme_agrees_with_the_count():
+    from app.engine.year_ahead import _generate_key_themes
+
+    one = _generate_key_themes(1, 1, [{"eclipse": {}}], [], {})
+    two = _generate_key_themes(1, 1, [{"eclipse": {}}, {"eclipse": {}}], [], {})
+    assert any("1 eclipse activates your chart" in t for t in one), one
+    assert any("2 eclipses activate your chart" in t for t in two), two

@@ -9,7 +9,9 @@ struct CosmicGuideView: View {
     @State private var showTonePicker = false
     
     var body: some View {
-        NavigationStack {
+        // Pushed onto the caller's NavigationStack; a nested one here
+        // stacked two bars and made the top inset jump.
+        Group {
             ZStack {
                 CosmicBackgroundView(element: nil)
                     .ignoresSafeArea()

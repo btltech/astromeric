@@ -402,7 +402,8 @@ private struct FloatingAIButtonClearance: ViewModifier {
     @ScaledMetric(relativeTo: .body) private var clearance: CGFloat = 148
 
     func body(content: Content) -> some View {
-        content.padding(.bottom, clearance)
+        // Without the button there is nothing to clear; keep a normal margin.
+        content.padding(.bottom, AIAvailability.shared.isEnabled ? clearance : Space.lg)
     }
 }
 

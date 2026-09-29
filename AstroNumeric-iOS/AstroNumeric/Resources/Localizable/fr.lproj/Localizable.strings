@@ -395,7 +395,7 @@
 "section.friends.0.title" = "Use the list as a live roster";
 "section.glossary.0.subtitle" = "Search when you know the term. Browse by category when you just need a quick conceptual anchor.";
 "section.glossary.0.title" = "Search or browse";
-"section.habits.0.subtitle" = "Filter by category when you want clarity. The page should immediately tell you what to complete next.";
+"section.habits.0.subtitle" = "Filter by category to focus. What's due today is listed first.";
 "section.habits.0.title" = "Choose a lane";
 "section.help.0.subtitle" = "Use search when you know the issue. Browse by section when you need orientation or context.";
 "section.help.0.title" = "Browse by topic";
@@ -456,7 +456,7 @@
 "section.oracle.1.title" = "Read the response";
 "section.profile.1.subtitle" = "Make the privacy boundary legible. The product feels better when users understand what stays local and what travels to the backend.";
 "section.profile.1.title" = "Trust and safety";
-"section.timingAdvisor.1.subtitle" = "A premium result does not just score the day. It tells you when to act, what to avoid, and why.";
+"section.timingAdvisor.1.subtitle" = "More than a score: when to act, what to avoid, and why.";
 "section.timingAdvisor.1.title" = "Read the recommendation clearly";
 "section.tools.1.subtitle" = "The fastest way to a premium feel here is clarity: each card should tell you what it is for before you tap.";
 "section.tools.1.title" = "Choose your next tool";
@@ -805,7 +805,7 @@
 "ui.readingResult.11" = "Fast read";
 "ui.readingResult.2" = "What This Means Today";
 "ui.readingResult.3" = "Why This Reading Landed Here";
-"ui.readingResult.4" = "This forecast blends your birth profile, today's numerology cycle, and the strongest scored themes returned by the engine.";
+"ui.readingResult.4" = "This forecast blends your birth chart, today's numerology cycle, and the strongest themes in today's sky.";
 "ui.readingResult.5" = "Scored Themes";
 "ui.readingResult.6" = "✨ Embrace";
 "ui.readingResult.7" = "⚠️ Avoid";

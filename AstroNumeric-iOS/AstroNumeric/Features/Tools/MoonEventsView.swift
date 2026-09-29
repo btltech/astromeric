@@ -9,7 +9,9 @@ struct MoonEventsView: View {
     @State private var error: String?
     
     var body: some View {
-        NavigationStack {
+        // Pushed onto the caller's NavigationStack; a nested one here
+        // stacked two bars and made the top inset jump.
+        Group {
             ZStack {
                 CosmicBackgroundView(element: nil)
                     .ignoresSafeArea()

@@ -26,7 +26,9 @@ struct NumerologyView: View {
     }
     
     var body: some View {
-        NavigationStack {
+        // Pushed onto the caller's NavigationStack; a nested one here
+        // stacked two bars and made the top inset jump.
+        Group {
             ZStack {
                 CosmicBackgroundView(element: nil)
                     .ignoresSafeArea()
@@ -66,36 +68,39 @@ struct NumerologyView: View {
                                         )
                                     }
 
-                                    // AI Explain button — placed after cycles so user has full context first
-                                    Button {
-                                        Task { @MainActor in
-                                            await explain(
-                                                data,
-                                                name: profile.displayName(
-                                                    hideSensitive: store.hideSensitiveDetailsEnabled,
-                                                    role: .share
+                                    // AI explanations need the owner's access code; hidden elsewhere.
+                                    if AIAvailability.shared.isEnabled {
+                                        // AI Explain button — placed after cycles so user has full context first
+                                        Button {
+                                            Task { @MainActor in
+                                                await explain(
+                                                    data,
+                                                    name: profile.displayName(
+                                                        hideSensitive: store.hideSensitiveDetailsEnabled,
+                                                        role: .share
+                                                    )
                                                 )
-                                            )
-                                        }
-                                    } label: {
-                                        HStack(spacing: 8) {
-                                            if isExplaining {
-                                                ProgressView()
-                                                    .scaleEffect(0.8)
-                                            } else {
-                                                Image(systemName: "sparkles")
                                             }
-                                            Text(isExplaining ? "tern.numerology.0a".localized : "tern.numerology.0b".localized)
-                                                .font(.subheadline.weight(.medium))
+                                        } label: {
+                                            HStack(spacing: 8) {
+                                                if isExplaining {
+                                                    ProgressView()
+                                                        .scaleEffect(0.8)
+                                                } else {
+                                                    Image(systemName: "sparkles")
+                                                }
+                                                Text(isExplaining ? "tern.numerology.0a".localized : "tern.numerology.0b".localized)
+                                                    .font(.subheadline.weight(.medium))
+                                            }
+                                            .foregroundStyle(.purple)
+                                            .padding(.horizontal, 16)
+                                            .padding(.vertical, 10)
+                                            .background(Color.purple.opacity(0.15))
+                                            .clipShape(Capsule())
+                                            .frame(maxWidth: .infinity)
                                         }
-                                        .foregroundStyle(.purple)
-                                        .padding(.horizontal, 16)
-                                        .padding(.vertical, 10)
-                                        .background(Color.purple.opacity(0.15))
-                                        .clipShape(Capsule())
-                                        .frame(maxWidth: .infinity)
+                                        .disabled(isExplaining)
                                     }
-                                    .disabled(isExplaining)
                                     
                                     if hasAdvancedNumberWork(data) {
                                         advancedNumberWorkSummary(data)
@@ -204,10 +209,12 @@ struct NumerologyView: View {
                     .foregroundStyle(.primary)
                 
                 if let traits = lifePath.traits, !traits.isEmpty {
-                    HStack {
+                    // Wraps to a new row instead of squeezing a chip's text.
+                    FlowLayout(spacing: 8) {
                         ForEach(traits.prefix(4), id: \.self) { trait in
                             Text(trait)
                                 .font(.caption)
+                                .lineLimit(1)
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 4)
                                 .background(Color.purple.opacity(0.2))
@@ -244,7 +251,6 @@ struct NumerologyView: View {
                 Text(synthesis.summary)
                     .font(.body)
                     .foregroundStyle(.primary)
-                    .lineLimit(5)
                     .fixedSize(horizontal: false, vertical: true)
 
                 VStack(alignment: .leading, spacing: 8) {
@@ -253,7 +259,6 @@ struct NumerologyView: View {
                     Text(synthesis.currentFocus)
                         .font(.subheadline)
                         .foregroundStyle(Color.textSecondary)
-                        .lineLimit(4)
                         .fixedSize(horizontal: false, vertical: true)
                 }
 
@@ -295,7 +300,6 @@ struct NumerologyView: View {
                         Text(growthEdge)
                             .font(.caption)
                             .foregroundStyle(Color.textSecondary)
-                            .lineLimit(4)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }
@@ -783,6 +787,8 @@ struct NumberCardView: View {
                 Text(title)
                     .font(.caption)
                     .foregroundStyle(Color.textSecondary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
                 
                 Text("\(number)")
                     .font(.system(.largeTitle, design: .rounded)).fontWeight(.bold)

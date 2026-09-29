@@ -32,7 +32,7 @@ final class LearnVM {
     
     // MARK: - Fallback Content
     
-    private func fallbackModules(for category: String) -> [LearningModule] {
+    func fallbackModules(for category: String) -> [LearningModule] {
         switch category.lowercased() {
         case "astrology":
             return [
