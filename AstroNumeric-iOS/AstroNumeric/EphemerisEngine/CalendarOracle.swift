@@ -421,12 +421,16 @@ actor CalendarOracle {
 
         for planet in transits where planet.name != "Moon" {
             guard let pDeg = planet.absoluteDegree else { continue }
+            // Void of course means the Moon perfects no exact major aspect
+            // before leaving its sign. Step through every remaining degree
+            // (±0.5° covers the whole path); the old 8° tolerance counted
+            // near-misses as aspects, so the Moon was almost never void.
             for offset in stride(from: 0.5, through: remainingDegrees, by: 1.0) {
                 let futureMoon = moonDeg + offset
-                var diff = abs(futureMoon - pDeg)
+                var diff = abs(futureMoon - pDeg).truncatingRemainder(dividingBy: 360)
                 if diff > 180 { diff = 360 - diff }
                 for angle in aspectAngles {
-                    if abs(diff - angle) <= 8 { return false }
+                    if abs(diff - angle) <= 0.5 { return false }
                 }
             }
         }
