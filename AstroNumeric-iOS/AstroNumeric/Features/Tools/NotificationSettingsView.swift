@@ -47,19 +47,34 @@ struct NotificationSettingsView: View {
                         personalRemindersGroup
                         advancedTransitGroup
 
-                        if let statusText {
-                            PremiumStatusBanner(
-                                title: "settings.notifications.status.title".localized,
-                                message: statusText,
-                                tone: .info
-                            )
-                        }
-
                         habitsLink
                     }
                     .padding()
                     .readableContainer()
                 }
+                // Pinned under the navigation bar rather than at the end of the
+                // form: a toggle that bounces back (permission denied, a failed
+                // sync) is explained where the person is looking, at any
+                // scroll position.
+                .safeAreaInset(edge: .top, spacing: 0) {
+                    if let statusText {
+                        PremiumStatusBanner(
+                            title: "settings.notifications.status.title".localized,
+                            message: statusText,
+                            tone: .warning,
+                            actionTitle: "Dismiss",
+                            action: {
+                                withAnimation { self.statusText = nil }
+                            }
+                        )
+                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: Radius.md))
+                        .padding(.horizontal)
+                        .padding(.vertical, Space.xs)
+                        .readableContainer()
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                    }
+                }
+                .animation(.easeInOut(duration: 0.25), value: statusText)
             }
             .navigationTitle("screen.notifications".localized)
             .navigationBarTitleDisplayMode(.inline)
@@ -335,9 +350,9 @@ struct NotificationSettingsView: View {
     private func initializePermissionStatus() async {
         let status = await NotificationService.shared.checkPermissionStatus()
         authorizationStatus = status
-        if status == .denied {
-            statusText = "settings.notifications.disabledStatus".localized
-        }
+        // A denied permission is already explained by `permissionBanner` at
+        // the top of the form, with a button to iOS Settings; repeating it in
+        // the pinned status banner would only stack two copies of one message.
     }
 
     private func openAppSettings() {

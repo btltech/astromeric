@@ -94,6 +94,12 @@ class ForecastDay(BaseModel):
     vibe: str
     icon: str
     recommendation: str
+    # What the day's full forecast says, for the app's day detail. Optional so
+    # older app builds (and the numerology fallback) decode unchanged.
+    overview: Optional[str] = None
+    embrace: List[str] = []
+    avoid: List[str] = []
+    best_time: Optional[str] = None
 
 
 class WeeklyForecast(BaseModel):
@@ -769,6 +775,10 @@ async def get_weekly_vibe_forecast(
             forecast_date = today + timedelta(days=i)
             date_str = forecast_date.date().isoformat()
 
+            overview = None
+            embrace: List[str] = []
+            avoid: List[str] = []
+            best_time = None
             try:
                 # Real forecast using transit aspects + numerology cycles
                 result = build_forecast(
@@ -780,6 +790,15 @@ async def get_weekly_vibe_forecast(
                 raw_score = result.get("overall_score", 5.0)
                 # Convert to 0-100 for consistency with ForecastDay model
                 score = int(round(raw_score * 10))
+                sections = result.get("sections") or []
+                if sections:
+                    overview = (sections[0].get("summary") or "").removeprefix(
+                        "Cosmic weather: "
+                    ) or None
+                guidance = result.get("guidance") or {}
+                embrace = (guidance.get("embrace") or {}).get("activities", [])[:3]
+                avoid = (guidance.get("avoid") or {}).get("activities", [])[:3]
+                best_time = (guidance.get("embrace") or {}).get("time")
             except Exception as day_error:
                 logger.warning(
                     f"build_forecast failed for day {i}, using numerology fallback: {day_error}",
@@ -818,6 +837,10 @@ async def get_weekly_vibe_forecast(
                     vibe=vibe_name,
                     icon=vibe_icon,
                     recommendation=recommendation,
+                    overview=overview,
+                    embrace=embrace,
+                    avoid=avoid,
+                    best_time=best_time,
                 )
             )
 

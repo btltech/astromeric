@@ -73,6 +73,7 @@ struct GlossaryView: View {
                         await load()
                     }
                 } else {
+                    ScrollViewReader { proxy in
                     ScrollView {
                         VStack(spacing: 16) {
                             PremiumScreenHeader(
@@ -84,6 +85,7 @@ struct GlossaryView: View {
                             )
 
                             categoryPicker
+                                .id(Self.resultsAnchor)
 
                             PremiumSectionHeader(
                 title: "section.glossary.0.title".localized,
@@ -138,10 +140,17 @@ struct GlossaryView: View {
                         .padding()
                         .readableContainer()
                     }
+                    // Results sit under a tall header. Bring the filter and
+                    // results up once when a search starts, not on every
+                    // keystroke.
+                    .scrollsIntoView(Self.resultsAnchor, using: proxy, onChangeOf: searchText.isEmpty) { !$0 }
+                    }
                 }
             }
         }
     }
+
+    private static let resultsAnchor = "glossary-results"
 
     private var categoryPicker: some View {
         ScrollView(.horizontal, showsIndicators: false) {

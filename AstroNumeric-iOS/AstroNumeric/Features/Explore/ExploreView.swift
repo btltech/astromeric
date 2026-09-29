@@ -148,11 +148,10 @@ struct ExploreView: View {
     // MARK: - Tools Content
     
     private var filteredToolItems: [ExploreToolItem] {
-        // The Oracle answers through the AI, so it is offered only where AI is on.
-        let oracle: [ExploreToolItem] = AIAvailability.shared.isEnabled
-            ? [ExploreToolItem(title: "Oracle", icon: "questionmark.circle.fill", color: .blue, description: "Yes/no guidance using your day number and moon phase.", provenance: .hybrid, destination: AnyView(OracleView()))]
-            : []
-        let all: [ExploreToolItem] = oracle + [
+        // Everyone gets the Oracle: it answers on the device from the live sky,
+        // and only the owner's device (with the AI code) adds the AI reading.
+        let oracle = ExploreToolItem(title: "Oracle", icon: "questionmark.circle.fill", color: .blue, description: "Yes/no guidance from the Moon, the planetary hour and live transits.", provenance: AIAvailability.shared.isEnabled ? .hybrid : .calculated, destination: AnyView(OracleView()))
+        let all: [ExploreToolItem] = [oracle] + [
             ExploreToolItem(title: "Affirmation", icon: "star.fill", color: .orange, description: "Supportive language tuned to today's mood.", provenance: .interpretive, destination: AnyView(AffirmationView())),
             ExploreToolItem(title: "Moon Phase", icon: "moon.fill", color: .indigo, description: "Current lunar phase, sign, and ritual timing.", provenance: .calculated, destination: AnyView(MoonPhaseView())),
             ExploreToolItem(title: "Timing", icon: "clock.badge.checkmark", color: .green, description: "Activity windows scored from the live sky.", provenance: .calculated, destination: AnyView(TimingAdvisorView())),

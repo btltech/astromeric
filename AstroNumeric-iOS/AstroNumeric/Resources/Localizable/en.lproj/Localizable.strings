@@ -411,7 +411,7 @@
 "section.moonPhase.0.title" = "Work with the phase";
 "section.notificationSettings.0.subtitle" = "The point is not more alerts. It is the right alerts at the right frequency, so the app feels useful instead of noisy.";
 "section.notificationSettings.0.title" = "Set the cadence";
-"section.oracle.0.subtitle" = "A premium oracle experience feels sharp, not vague. Ask about timing, readiness, or whether to proceed, rather than abstract fate.";
+"section.oracle.0.subtitle" = "Specific questions get useful answers. Ask about timing, readiness, or whether to go ahead, rather than about fate.";
 "section.oracle.0.title" = "Frame the question well";
 "section.privacy.0.subtitle" = "Start with storage, network use, permissions, or deletion depending on the question you need answered.";
 "section.privacy.0.title" = "Read by concern";
@@ -746,7 +746,7 @@
 "ui.oracle.1" = "Consult the Oracle";
 "ui.oracle.2" = "Confidence:";
 "ui.oracle.3" = "Guidance";
-"ui.oracle.4" = "SYS.STATE";
+"ui.oracle.4" = "Sky when you asked";
 "ui.oracle.5" = "Type your question...";
 "ui.orbitRing.0" = "Today";
 "ui.privacy.0" = "For any privacy questions, data deletion requests, or concerns, please contact us at:";

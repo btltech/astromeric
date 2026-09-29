@@ -7,7 +7,16 @@ struct ProgressionsView: View {
     @Environment(AppStore.self) private var store
     @State private var vm = ProgressionsVM()
     @State private var targetDate = Date()
-    
+    @State private var datePickedByUser = false
+
+    private static let resultsAnchor = "progressions-results"
+
+    /// Changes whenever the results area changes state, so the chart for a
+    /// newly picked date is brought into view instead of left below the picker.
+    private var resultsKey: String {
+        "\(targetDate.timeIntervalSince1970)-\(vm.isLoading)-\(vm.error != nil)-\(vm.chart != nil)"
+    }
+
     var body: some View {
         // Pushed onto the caller's NavigationStack; a nested one here
         // stacked two bars and made the top inset jump.
@@ -16,6 +25,7 @@ struct ProgressionsView: View {
                 CosmicBackgroundView(element: nil)
                     .ignoresSafeArea()
                 
+                ScrollViewReader { proxy in
                 ScrollView {
                     VStack(spacing: 16) {
                         PremiumScreenHeader(
@@ -38,6 +48,7 @@ struct ProgressionsView: View {
 
                         DatePicker("Target Date", selection: $targetDate, displayedComponents: .date)
                             .onChange(of: targetDate) { _, _ in
+                                datePickedByUser = true
                                 Task { await vm.load(profile: store.activeProfile, targetDate: targetDate) }
                             }
                             .padding(.horizontal)
@@ -46,10 +57,16 @@ struct ProgressionsView: View {
                 title: "section.progressions.0.title".localized,
                 subtitle: "section.progressions.0.subtitle".localized
             )
+                        .id(Self.resultsAnchor)
                         
                         if vm.isLoading {
                             ProgressView("Calculating progressions...")
                                 .tint(.white)
+                        } else if let error = vm.error {
+                            // A failed load used to fall through to the generic empty card.
+                            ErrorStateView(message: error) {
+                                await vm.load(profile: store.activeProfile, targetDate: targetDate)
+                            }
                         } else if let chart = vm.chart {
                             CardView {
                                 VStack(alignment: .leading, spacing: 8) {
@@ -98,6 +115,10 @@ struct ProgressionsView: View {
                     }
                     .padding()
                     .readableContainer()
+                }
+                .scrollsIntoView(Self.resultsAnchor, using: proxy, onChangeOf: resultsKey) { _ in
+                    datePickedByUser && (vm.isLoading || vm.error != nil || vm.chart != nil)
+                }
                 }
             }
             .navigationTitle("screen.progressions".localized)

@@ -36,6 +36,7 @@ struct NumerologyView: View {
                 Group {
                     if let profile = store.selectedProfile {
                         if let data = numerologyData {
+                            ScrollViewReader { proxy in
                             ScrollView {
                                 VStack(spacing: 20) {
                                     // Chaldean / Pythagorean toggle
@@ -106,21 +107,24 @@ struct NumerologyView: View {
                                         advancedNumberWorkSummary(data)
 
                                         if showAdvancedNumberWork {
-                                            if let lucky = data.luckyNumbers, !lucky.isEmpty {
-                                                luckyNumbersSection(lucky)
+                                            VStack(spacing: 20) {
+                                                if let lucky = data.luckyNumbers, !lucky.isEmpty {
+                                                    luckyNumbersSection(lucky)
+                                                }
+                                                if let days = data.auspiciousDays, !days.isEmpty {
+                                                    auspiciousDaysSection(days)
+                                                }
+                                                if let pinnacles = data.pinnacles, !pinnacles.isEmpty {
+                                                    pinnaclesSection(pinnacles)
+                                                }
+                                                if let challenges = data.challenges, !challenges.isEmpty {
+                                                    challengesSection(challenges)
+                                                }
+                                                if let debts = data.karmicDebts, !debts.isEmpty {
+                                                    karmicDebtsSection(debts)
+                                                }
                                             }
-                                            if let days = data.auspiciousDays, !days.isEmpty {
-                                                auspiciousDaysSection(days)
-                                            }
-                                            if let pinnacles = data.pinnacles, !pinnacles.isEmpty {
-                                                pinnaclesSection(pinnacles)
-                                            }
-                                            if let challenges = data.challenges, !challenges.isEmpty {
-                                                challengesSection(challenges)
-                                            }
-                                            if let debts = data.karmicDebts, !debts.isEmpty {
-                                                karmicDebtsSection(debts)
-                                            }
+                                            .id(Self.advancedAnchor)
                                         }
                                     }
                                 }
@@ -129,6 +133,11 @@ struct NumerologyView: View {
                             }
                             .refreshable {
                                 await fetchNumerology(for: profile, useChaldean: useChaldean)
+                            }
+                            // The extra sections open at the very end of the
+                            // page; bring the first one up so the tap shows
+                            // something.
+                            .scrollsIntoView(Self.advancedAnchor, using: proxy, onChangeOf: showAdvancedNumberWork) { $0 }
                             }
                         } else if isLoading {
                             VStack(spacing: 16) {
@@ -321,6 +330,8 @@ struct NumerologyView: View {
     }
     
     @State private var tappedNumerologyLuckyNumber: Int?
+
+    private static let advancedAnchor = "numerology-advanced"
 
     private func advancedNumberWorkSummary(_ data: NumerologyData) -> some View {
         let detailCount = advancedNumberWorkCount(data)

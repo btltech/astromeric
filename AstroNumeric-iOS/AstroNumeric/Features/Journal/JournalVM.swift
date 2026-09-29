@@ -13,6 +13,10 @@ final class JournalVM {
     var prompts: [String] = []
     var isLoading = false
     var error: String?
+    /// Set while the editor is writing an entry, so Save can show progress.
+    var isSaving = false
+    /// Why the last save failed; the editor stays open and shows it.
+    var saveError: String?
     private(set) var isLocalMode: Bool = true
 
     private let repository: JournalRepository
@@ -27,6 +31,7 @@ final class JournalVM {
         guard let profile else { return }
         currentProfileId = profile.id
         isLoading = true
+        error = nil
         defer { isLoading = false }
 
         isLocalMode = AppConfig.personalMode || !isAuthenticated || profile.id <= 0
@@ -52,7 +57,22 @@ final class JournalVM {
         }
     }
 
-    func saveEntry(readingId: Int, entry: String) async {
+    /// Saves the text and the outcome together. Returns false (with
+    /// `saveError` set) when either write fails, so the editor can stay open.
+    func save(readingId: Int, entry: String, outcome: JournalOutcome) async -> Bool {
+        isSaving = true
+        saveError = nil
+        defer { isSaving = false }
+
+        guard await saveEntry(readingId: readingId, entry: entry),
+              await saveOutcome(readingId: readingId, outcome: outcome) else {
+            return false
+        }
+        return true
+    }
+
+    @discardableResult
+    func saveEntry(readingId: Int, entry: String) async -> Bool {
         if isLocalMode, let profileId = currentProfileId {
             let entries = await repository.saveLocalEntryText(
                 profileId: profileId,
@@ -61,16 +81,19 @@ final class JournalVM {
             )
             readings = entries.map { mapLocalEntry($0) }
             scheduleEmbedderRebuild(profileId: profileId, entries: entries)
-            return
+            return true
         }
         do {
             try await repository.saveRemoteEntry(readingId: readingId, entry: entry)
+            return true
         } catch {
-            self.error = error.localizedDescription
+            saveError = error.localizedDescription
+            return false
         }
     }
 
-    func saveOutcome(readingId: Int, outcome: JournalOutcome) async {
+    @discardableResult
+    func saveOutcome(readingId: Int, outcome: JournalOutcome) async -> Bool {
         if isLocalMode, let profileId = currentProfileId {
             let entries = await repository.saveLocalEntryOutcome(
                 profileId: profileId,
@@ -78,12 +101,14 @@ final class JournalVM {
                 outcome: outcome.rawValue
             )
             readings = entries.map { mapLocalEntry($0) }
-            return
+            return true
         }
         do {
             try await repository.saveRemoteOutcome(readingId: readingId, outcome: outcome.rawValue)
+            return true
         } catch {
-            self.error = error.localizedDescription
+            saveError = error.localizedDescription
+            return false
         }
     }
 

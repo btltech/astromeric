@@ -974,9 +974,62 @@ actor EphemerisEngine {
 
         return results
     }
+
+    // MARK: - Horary chart
+
+    /// A chart for any moment and place, for horary questions: the rising
+    /// degree, Regiomontanus house cusps (the classical horary system), and the
+    /// seven traditional planets with their daily motion.
+    func calculateHoraryChart(date: Date, latitude: Double, longitude: Double) throws -> HoraryChartData {
+        ensureInitialized()
+
+        let utc = Calendar(identifier: .gregorian).dateComponents(in: TimeZone(identifier: "UTC")!, from: date)
+        guard let year = utc.year, let month = utc.month, let day = utc.day else {
+            throw EphemerisError.invalidDate
+        }
+        let hour = Double(utc.hour ?? 0) + Double(utc.minute ?? 0) / 60 + Double(utc.second ?? 0) / 3600
+        let jd = swe_julday(Int32(year), Int32(month), Int32(day), hour, SE_GREG_CAL)
+
+        var cusps = [Double](repeating: 0, count: 13)
+        var ascmc = [Double](repeating: 0, count: 10)
+        swe_houses(jd, latitude, longitude, Int32(Character("R").asciiValue!), &cusps, &ascmc)
+
+        var bodies: [HoraryBody] = []
+        for planet in Self.planets.prefix(7) { // Sun to Saturn
+            var xx = [Double](repeating: 0, count: 6)
+            var serr = [CChar](repeating: 0, count: 256)
+            guard swe_calc_ut(jd, planet.id, SEFLG_SWIEPH | SEFLG_SPEED, &xx, &serr) >= 0 else {
+                throw EphemerisError.calculationFailed(String(cString: serr))
+            }
+            bodies.append(HoraryBody(name: planet.name, longitude: xx[0], speed: xx[3]))
+        }
+
+        return HoraryChartData(date: date, ascendant: ascmc[0], cusps: Array(cusps[1...12]), bodies: bodies)
+    }
 }
 
 // MARK: - Errors
+
+/// One traditional planet in a horary chart.
+struct HoraryBody: Equatable {
+    let name: String
+    /// Ecliptic longitude, 0–360°.
+    let longitude: Double
+    /// Degrees per day; negative while retrograde.
+    let speed: Double
+
+    var signIndex: Int { Int(longitude / 30) % 12 }
+    var degreeInSign: Double { longitude.truncatingRemainder(dividingBy: 30) }
+}
+
+/// A horary chart: the moment, the rising degree, the 12 house cusps
+/// (index 0 is the 1st house) and the seven traditional planets.
+struct HoraryChartData {
+    let date: Date
+    let ascendant: Double
+    let cusps: [Double]
+    let bodies: [HoraryBody]
+}
 
 enum EphemerisError: LocalizedError {
     case missingLocation

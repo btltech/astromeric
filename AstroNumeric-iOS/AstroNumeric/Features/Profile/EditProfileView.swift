@@ -21,6 +21,7 @@ struct EditProfileView: View {
                 CosmicBackgroundView(element: nil)
                     .ignoresSafeArea()
                 
+                ScrollViewReader { proxy in
                 ScrollView {
                     VStack(spacing: Space.md) {
                         headerSection
@@ -33,6 +34,11 @@ struct EditProfileView: View {
                     }
                     .padding()
                     .readableContainer()
+                }
+                // The place field is the last input, so its suggestions open
+                // under the keyboard. Lift the field to the top of what is
+                // visible so the list (or the confirmation) shows below it.
+                .scrollsIntoView(Self.placeFieldAnchor, using: proxy, onChangeOf: placeResultState) { $0 != .none }
                 }
             }
             .navigationTitle(viewModel.isEditing ? "tern.editProfile.0a".localized : "tern.editProfile.0b".localized)
@@ -52,6 +58,37 @@ struct EditProfileView: View {
         }
     }
     
+    private static let placeFieldAnchor = "birth-place-field"
+
+    private enum PlaceResultState: Equatable {
+        case none, suggestions, choices, confirmed
+    }
+
+    /// Follows which list is showing, not every keystroke, so typing does
+    /// not keep yanking the page around.
+    private var placeResultState: PlaceResultState {
+        if !viewModel.placeSuggestions.isEmpty { return .suggestions }
+        if !viewModel.geocodedSuggestions.isEmpty { return .choices }
+        if viewModel.selectedPlace != nil { return .confirmed }
+        return .none
+    }
+
+    /// What still stands between the form and a working Save button, drawn
+    /// from the same checks as `EditProfileVM.isValid`.
+    private var missingRequirement: String? {
+        guard !viewModel.isValid else { return nil }
+        let needsName = viewModel.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        let needsPlace = viewModel.selectedPlace == nil
+        let typedPlace = !viewModel.placeQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        let placeHint = typedPlace ? "pick your birth place from the suggestions" : "add your birth place"
+        switch (needsName, needsPlace) {
+        case (true, true): return "To save, add a name and \(placeHint)."
+        case (true, false): return "To save, add a name."
+        case (false, true): return "To save, \(placeHint)."
+        case (false, false): return nil
+        }
+    }
+
     // MARK: - Header Section
     
     private var headerSection: some View {
@@ -282,6 +319,7 @@ struct EditProfileView: View {
                     .onChange(of: viewModel.placeQuery) { _, newValue in
                         viewModel.searchPlaces(query: newValue)
                     }
+                    .id(Self.placeFieldAnchor)
                 
                 if viewModel.isSearchingPlaces || viewModel.isGeocodingPlace {
                     HStack {
@@ -367,21 +405,33 @@ struct EditProfileView: View {
     // MARK: - Save Button
     
     private var saveButton: some View {
-        GradientButton(
-            viewModel.isEditing ? "tern.editProfile.4a".localized : "tern.editProfile.4b".localized,
-            icon: "checkmark.circle.fill"
-        ) {
-            Task {
-                await viewModel.save(store: store)
-                if !viewModel.showError {
-                    dismiss()
+        VStack(spacing: Space.xs) {
+            GradientButton(
+                viewModel.isEditing ? "tern.editProfile.4a".localized : "tern.editProfile.4b".localized,
+                icon: "checkmark.circle.fill",
+                isLoading: viewModel.isSaving
+            ) {
+                Task {
+                    await viewModel.save(store: store)
+                    if !viewModel.showError {
+                        dismiss()
+                    }
                 }
             }
+            .disabled(!viewModel.isValid || viewModel.isSaving)
+            .opacity(viewModel.isValid ? 1 : 0.6)
+            .accessibilityLabel(viewModel.isEditing ? "Save profile" : "Create profile")
+
+            // A greyed-out button alone does not say what it is waiting for.
+            if let missingRequirement {
+                Text(missingRequirement)
+                    .font(.caption)
+                    .foregroundStyle(Color.textMuted)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: .infinity)
+            }
         }
-        .disabled(!viewModel.isValid || viewModel.isSaving)
-        .opacity(viewModel.isValid ? 1 : 0.6)
         .padding(.top)
-        .accessibilityLabel(viewModel.isEditing ? "Save profile" : "Create profile")
     }
 
     private func profileTextField(_ placeholder: String, text: Binding<String>, accessibilityLabel: String) -> some View {

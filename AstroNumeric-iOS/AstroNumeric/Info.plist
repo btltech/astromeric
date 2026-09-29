@@ -34,7 +34,7 @@
 	<key>NSCalendarsFullAccessUsageDescription</key>
 	<string>AstroNumeric reads your upcoming calendar events to show how they line up with planetary timing. If you turn on calendar context in the Cosmic Guide, only the day and time of day of upcoming events are included in your question, never their titles or details.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>We need your location to determine your birthplace timezone.</string>
+	<string>AstroNumeric uses your location to fill in a place when you choose "Use current location", and to time the Oracle's planetary hours to your local sunrise and sunset. The Oracle uses it on your device only.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>AstroNumeric uses your microphone to record voice journal entries using live speech-to-text transcription.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>

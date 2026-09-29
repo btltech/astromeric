@@ -18,6 +18,7 @@ struct ChartView: View {
                 CosmicBackgroundView(element: nil)
                     .ignoresSafeArea()
                 
+                ScrollViewReader { proxy in
                 ScrollView {
                     VStack(spacing: 24) {
                         if viewModel.isLoading {
@@ -45,6 +46,12 @@ struct ChartView: View {
                     if let profile = store.activeProfile {
                         await viewModel.fetchChart(for: profile)
                     }
+                }
+                // "Show less" is at the bottom of a long list; collapsing it
+                // would leave the user far down the page. Go back to the
+                // section's header instead.
+                .scrollsIntoView(Self.placementsAnchor, using: proxy, onChangeOf: showAllPlacements) { !$0 }
+                .scrollsIntoView(Self.aspectsAnchor, using: proxy, onChangeOf: showAllAspects) { !$0 }
                 }
             }
             .navigationTitle("charts.birthChart".localized)
@@ -212,6 +219,8 @@ struct ChartView: View {
     
     // MARK: - Placements
     
+    private static let placementsAnchor = "chart-placements"
+
     private var placementsSection: some View {
         let visiblePlacements = showAllPlacements ? viewModel.placements : Array(viewModel.placements.prefix(7))
 
@@ -315,6 +324,7 @@ struct ChartView: View {
                 }
             }
         }
+        .id(Self.placementsAnchor)
     }
     
     // MARK: - Sensitive Points
@@ -371,6 +381,8 @@ struct ChartView: View {
 
     // MARK: - Aspects
     
+    private static let aspectsAnchor = "chart-aspects"
+
     private var aspectsSection: some View {
         let visibleAspects = showAllAspects ? viewModel.aspects : Array(viewModel.aspects.prefix(5))
 
@@ -412,6 +424,7 @@ struct ChartView: View {
                 }
             }
         }
+        .id(Self.aspectsAnchor)
     }
     
     // MARK: - States

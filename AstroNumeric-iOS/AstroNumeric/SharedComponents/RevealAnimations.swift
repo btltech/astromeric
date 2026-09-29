@@ -206,6 +206,51 @@ extension View {
     }
 }
 
+// MARK: - Bring a new result into view
+
+extension View {
+    /// Scrolls `proxy` to `id` whenever `value` changes and `shouldScroll`
+    /// accepts it, so an answer that appears below the controls is shown
+    /// without the user having to go looking for it.
+    func scrollsIntoView<Value: Equatable, ID: Hashable>(
+        _ id: ID,
+        using proxy: ScrollViewProxy,
+        onChangeOf value: Value,
+        anchor: UnitPoint = .top,
+        when shouldScroll: @escaping (Value) -> Bool = { _ in true }
+    ) -> some View {
+        modifier(ScrollIntoViewModifier(
+            id: id, proxy: proxy, value: value, anchor: anchor, shouldScroll: shouldScroll
+        ))
+    }
+}
+
+private struct ScrollIntoViewModifier<Value: Equatable, ID: Hashable>: ViewModifier {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    let id: ID
+    let proxy: ScrollViewProxy
+    let value: Value
+    let anchor: UnitPoint
+    let shouldScroll: (Value) -> Bool
+
+    func body(content: Content) -> some View {
+        content.onChange(of: value) { _, newValue in
+            guard shouldScroll(newValue) else { return }
+            Task { @MainActor in
+                // Let the new rows lay out first, or there is nothing to scroll to yet.
+                try? await Task.sleep(for: .milliseconds(80))
+                if reduceMotion {
+                    proxy.scrollTo(id, anchor: anchor)
+                } else {
+                    withAnimation(.easeInOut(duration: 0.4)) {
+                        proxy.scrollTo(id, anchor: anchor)
+                    }
+                }
+            }
+        }
+    }
+}
+
 // MARK: - Preview
 
 #Preview("Reveal Animations") {

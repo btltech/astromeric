@@ -7,7 +7,16 @@ struct CompositeChartView: View {
     @Environment(AppStore.self) private var store
     @State private var vm = CompositeChartVM()
     @State private var selectedPartnerId: Int?
-    
+    @State private var partnerPickedByUser = false
+
+    private static let resultsAnchor = "composite-results"
+
+    /// Changes whenever the results area changes state, so a new partner's
+    /// composite chart is brought into view instead of left below the picker.
+    private var resultsKey: String {
+        "\(selectedPartnerId ?? 0)-\(vm.isLoading)-\(vm.error != nil)-\(vm.chart != nil)"
+    }
+
     var body: some View {
         // Pushed onto the caller's NavigationStack; a nested one here
         // stacked two bars and made the top inset jump.
@@ -16,6 +25,7 @@ struct CompositeChartView: View {
                 CosmicBackgroundView(element: nil)
                     .ignoresSafeArea()
                 
+                ScrollViewReader { proxy in
                 ScrollView {
                     VStack(spacing: 16) {
                         PremiumScreenHeader(
@@ -44,7 +54,10 @@ struct CompositeChartView: View {
                                 }
                             }
                             .pickerStyle(.menu)
-                            .onChange(of: selectedPartnerId) { _, _ in
+                            .onChange(of: selectedPartnerId) { oldValue, _ in
+                                // The first partner is set (and loaded) by .task below.
+                                guard oldValue != nil else { return }
+                                partnerPickedByUser = true
                                 Task { await vm.load(store: store, partnerId: selectedPartnerId) }
                             }
 
@@ -52,6 +65,7 @@ struct CompositeChartView: View {
                 title: "section.compositeChart.0.title".localized,
                 subtitle: "section.compositeChart.0.subtitle".localized
             )
+                            .id(Self.resultsAnchor)
 
                             // Data quality warning when either profile lacks exact birth time
                             let personA = store.activeProfile
@@ -67,6 +81,11 @@ struct CompositeChartView: View {
                             if vm.isLoading {
                                 ProgressView("Building composite chart...")
                                     .tint(.white)
+                            } else if let error = vm.error {
+                                // A failed load used to leave this area blank.
+                                ErrorStateView(message: error) {
+                                    await vm.load(store: store, partnerId: selectedPartnerId)
+                                }
                             } else if let chart = vm.chart {
                                 CardView {
                                     VStack(alignment: .leading, spacing: 6) {
@@ -114,6 +133,10 @@ struct CompositeChartView: View {
                     }
                     .padding()
                     .readableContainer()
+                }
+                .scrollsIntoView(Self.resultsAnchor, using: proxy, onChangeOf: resultsKey) { _ in
+                    partnerPickedByUser && (vm.isLoading || vm.error != nil || vm.chart != nil)
+                }
                 }
             }
             .navigationTitle("screen.compositeChart".localized)

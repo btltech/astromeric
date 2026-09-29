@@ -132,51 +132,13 @@ struct VoidOfCourseMoonIntent: AppIntent {
     static var openAppWhenRun: Bool = false
     
     private func checkVoidOfCourse() async throws -> (isVoid: Bool, moonSign: String, advice: String) {
-        let transits = try await EphemerisEngine.shared.calculateCurrentTransits()
-        
-        guard let moon = transits.first(where: { $0.name == "Moon" }) else {
-            return (false, "unknown", "")
-        }
-        
-        let moonSign = moon.sign
-        let moonDegree = moon.degree
-        
-        // Check if the Moon makes any major aspects to other planets
-        // within the remaining degrees of its current sign
-        let remainingDegrees = 30.0 - moonDegree
-        
-        // Major aspect angles
-        let aspectAngles: [Double] = [0, 60, 90, 120, 150, 180]
-        let orb = 8.0
-        
-        guard let moonAbsDeg = moon.absoluteDegree else {
-            return (false, moonSign, "")
-        }
-        
-        var hasUpcomingAspect = false
-        
-        for planet in transits where planet.name != "Moon" {
-            guard let planetAbsDeg = planet.absoluteDegree else { continue }
-            
-            // Check future positions of the Moon (scan ahead in 1° increments)
-            for offset in stride(from: 0.0, through: remainingDegrees, by: 1.0) {
-                let futureMoonDeg = moonAbsDeg + offset
-                var diff = abs(futureMoonDeg - planetAbsDeg)
-                if diff > 180 { diff = 360 - diff }
-                
-                for angle in aspectAngles {
-                    if abs(diff - angle) <= orb {
-                        if offset > 0.5 { // Must be an upcoming aspect, not a separating one
-                            hasUpcomingAspect = true
-                            break
-                        }
-                    }
-                }
-                if hasUpcomingAspect { break }
-            }
-            if hasUpcomingAspect { break }
-        }
-        
+        // One shared check with the Oracle, which requires an exact aspect
+        // before the Moon leaves its sign (an 8° tolerance here almost never
+        // reported void of course).
+        let snapshot = await CalendarOracle.shared.snapshot()
+        let moonSign = snapshot.moonSign
+        let hasUpcomingAspect = !snapshot.isVoidOfCourse
+
         let isVoid = !hasUpcomingAspect
         let advice = isVoid
             ? "Avoid starting new projects, signing contracts, or making major purchases. Great for rest, meditation, and routine tasks."

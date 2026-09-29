@@ -56,3 +56,20 @@ def test_peak_hours_never_start_at_midnight():
             "peak_hours"
         ]
         assert not hours.startswith("12am"), (personal_day, hours)
+
+
+def test_weekly_forecast_days_carry_the_day_detail():
+    from app.main import api
+
+    client = TestClient(api)
+    resp = client.post(
+        "/v2/daily/forecast", json={"name": "Guest", "date_of_birth": "1992-04-12"}
+    )
+    assert resp.status_code == 200
+    days = resp.json()["data"]["days"]
+    assert len(days) == 7
+    for day in days:
+        assert day["recommendation"]
+        assert day["overview"] and not day["overview"].startswith("Cosmic weather")
+        assert 0 < len(day["embrace"]) <= 3
+        assert 0 < len(day["avoid"]) <= 3

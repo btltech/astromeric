@@ -23,6 +23,7 @@ struct YearAheadView: View {
                 CosmicBackgroundView(element: nil)
                     .ignoresSafeArea()
                 
+                ScrollViewReader { proxy in
                 ScrollView {
                     VStack(spacing: 16) {
                         PremiumScreenHeader(
@@ -32,6 +33,7 @@ struct YearAheadView: View {
                             accent: .accentPrimary,
                             chips: ["hero.yearAhead.chip.0".localized, "hero.yearAhead.chip.1".localized, "hero.yearAhead.chip.2".localized]
                         )
+                        .id(Self.topAnchor)
 
                         // Warn when birth time unknown — Solar Return depends on exact time
                         if store.activeProfile?.dataQuality != .full {
@@ -43,220 +45,235 @@ struct YearAheadView: View {
                             .padding(.horizontal)
                         }
 
+                        if vm.isLoading, vm.forecast != nil {
+                            HStack(spacing: 10) {
+                                ProgressView()
+                                    .tint(.white)
+                                Text("Loading \(String(selectedYear))…")
+                                    .font(.subheadline.weight(.medium))
+                                    .foregroundStyle(Color.textSecondary)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 8)
+                            .accessibilityElement(children: .combine)
+                        }
+
                         if let forecast = vm.forecast {
-                            PremiumSectionHeader(
-                title: "section.yearAhead.0.title".localized,
-                subtitle: "section.yearAhead.0.subtitle".localized
-            )
+                            VStack(spacing: 16) {
+                                PremiumSectionHeader(
+                    title: "section.yearAhead.0.title".localized,
+                    subtitle: "section.yearAhead.0.subtitle".localized
+                )
 
-                            // AI explanations need the owner's access code; hidden elsewhere.
-                            if AIAvailability.shared.isEnabled {
-                                Button {
-                                    Task { @MainActor in
-                                        await explain(forecast)
-                                    }
-                                } label: {
-                                    HStack(spacing: 8) {
-                                        if isExplaining {
-                                            ProgressView()
-                                                .scaleEffect(0.8)
-                                        } else {
-                                            Image(systemName: "sparkles")
+                                // AI explanations need the owner's access code; hidden elsewhere.
+                                if AIAvailability.shared.isEnabled {
+                                    Button {
+                                        Task { @MainActor in
+                                            await explain(forecast)
                                         }
-                                        Text(isExplaining ? "tern.yearAhead.0a".localized : "tern.yearAhead.0b".localized)
-                                            .font(.subheadline.weight(.medium))
-                                    }
-                                    .foregroundStyle(.purple)
-                                    .padding(.horizontal, 16)
-                                    .padding(.vertical, 10)
-                                    .background(Color.purple.opacity(0.15))
-                                    .clipShape(Capsule())
-                                }
-                                .disabled(isExplaining)
-                            }
-
-                            // Life Phase — show FIRST for context
-                            if let phase = lifePhaseData {
-                                LifePhaseCard(data: phase)
-                            }
-
-                            CardView {
-                                VStack(alignment: .leading, spacing: 8) {
-                                    Text(String(format: "fmt.yearAhead.3".localized, "\(forecast.year)"))
-                                        .font(.headline)
-                                    Text(String(format: "fmt.yearAhead.2".localized, "\(forecast.personalYear.number)", "\(forecast.personalYear.theme)"))
-                                        .font(.subheadline)
-                                    Text(forecast.personalYear.description ?? "")
-                                        .font(.caption)
-                                        .foregroundStyle(Color.textSecondary)
-                                }
-                            }
-                            
-                            CardView {
-                                VStack(alignment: .leading, spacing: 8) {
-                                    Text("ui.yearAhead.0".localized)
-                                        .font(.headline)
-                                    Text(Self.readableDate(forecast.solarReturn.date))
-                                        .font(.subheadline)
-                                    Text(forecast.solarReturn.description)
-                                        .font(.caption)
-                                        .foregroundStyle(Color.textSecondary)
-                                }
-                            }
-
-                            if !forecast.eclipses.all.isEmpty {
-                                CardView {
-                                    VStack(alignment: .leading, spacing: 10) {
-                                        Text("ui.yearAhead.1".localized)
-                                            .font(.headline)
-                                        ForEach(forecast.eclipses.all) { eclipse in
-                                            VStack(alignment: .leading, spacing: 4) {
-                                                HStack(alignment: .firstTextBaseline) {
-                                                    Text(eclipseTypeSymbol(eclipse.type))
-                                                    Text(eclipseDisplayTitle(eclipse))
-                                                        .font(.subheadline.weight(.semibold))
-                                                    Spacer()
-                                                    Text(Self.readableDate(eclipse.date))
-                                                        .font(.caption.monospaced())
-                                                        .foregroundStyle(Color.textSecondary)
-                                                }
-                                                Text("ui.yearAhead.2".localized)
-                                                    .font(.caption)
-                                                    .foregroundStyle(Color.textSecondary)
+                                    } label: {
+                                        HStack(spacing: 8) {
+                                            if isExplaining {
+                                                ProgressView()
+                                                    .scaleEffect(0.8)
+                                            } else {
+                                                Image(systemName: "sparkles")
                                             }
-                                            if eclipse.id != forecast.eclipses.all.last?.id {
-                                                Divider()
-                                            }
+                                            Text(isExplaining ? "tern.yearAhead.0a".localized : "tern.yearAhead.0b".localized)
+                                                .font(.subheadline.weight(.medium))
                                         }
+                                        .foregroundStyle(.purple)
+                                        .padding(.horizontal, 16)
+                                        .padding(.vertical, 10)
+                                        .background(Color.purple.opacity(0.15))
+                                        .clipShape(Capsule())
                                     }
+                                    .disabled(isExplaining)
                                 }
-                            }
 
-                            if !forecast.eclipses.personalImpacts.isEmpty {
+                                // Life Phase — show FIRST for context
+                                if let phase = lifePhaseData {
+                                    LifePhaseCard(data: phase)
+                                }
+
                                 CardView {
-                                    VStack(alignment: .leading, spacing: 10) {
-                                        Text("ui.yearAhead.3".localized)
+                                    VStack(alignment: .leading, spacing: 8) {
+                                        Text(String(format: "fmt.yearAhead.3".localized, "\(forecast.year)"))
                                             .font(.headline)
-                                        Text("ui.yearAhead.4".localized)
+                                        Text(String(format: "fmt.yearAhead.2".localized, "\(forecast.personalYear.number)", "\(forecast.personalYear.theme)"))
+                                            .font(.subheadline)
+                                        Text(forecast.personalYear.description ?? "")
                                             .font(.caption)
                                             .foregroundStyle(Color.textSecondary)
+                                    }
+                                }
+                            
+                                CardView {
+                                    VStack(alignment: .leading, spacing: 8) {
+                                        Text("ui.yearAhead.0".localized)
+                                            .font(.headline)
+                                        Text(Self.readableDate(forecast.solarReturn.date))
+                                            .font(.subheadline)
+                                        Text(forecast.solarReturn.description)
+                                            .font(.caption)
+                                            .foregroundStyle(Color.textSecondary)
+                                    }
+                                }
 
-                                        ForEach(Array(forecast.eclipses.personalImpacts.enumerated()), id: \.offset) { _, impact in
-                                            VStack(alignment: .leading, spacing: 6) {
-                                                HStack(alignment: .firstTextBaseline) {
-                                                    Text(eclipseTypeSymbol(impact.eclipse.type))
-                                                    Text(eclipseDisplayTitle(impact.eclipse))
-                                                        .font(.subheadline.weight(.semibold))
-                                                    Spacer()
-                                                    Text(impact.significance)
-                                                        .font(.caption.weight(.semibold))
-                                                        .foregroundStyle(.purple)
-                                                }
-
-                                                if !impact.impacts.isEmpty {
-                                                    ForEach(Array(impact.impacts.enumerated()), id: \.offset) { _, detail in
-                                                        Text("• \(detail.name) \(detail.aspect)\(orbText(detail.orb))")
-                                                            .font(.caption)
+                                if !forecast.eclipses.all.isEmpty {
+                                    CardView {
+                                        VStack(alignment: .leading, spacing: 10) {
+                                            Text("ui.yearAhead.1".localized)
+                                                .font(.headline)
+                                            ForEach(forecast.eclipses.all) { eclipse in
+                                                VStack(alignment: .leading, spacing: 4) {
+                                                    HStack(alignment: .firstTextBaseline) {
+                                                        Text(eclipseTypeSymbol(eclipse.type))
+                                                        Text(eclipseDisplayTitle(eclipse))
+                                                            .font(.subheadline.weight(.semibold))
+                                                        Spacer()
+                                                        Text(Self.readableDate(eclipse.date))
+                                                            .font(.caption.monospaced())
                                                             .foregroundStyle(Color.textSecondary)
                                                     }
+                                                    Text("ui.yearAhead.2".localized)
+                                                        .font(.caption)
+                                                        .foregroundStyle(Color.textSecondary)
                                                 }
-                                            }
-                                            if impact.eclipse.id != forecast.eclipses.personalImpacts.last?.eclipse.id {
-                                                Divider()
+                                                if eclipse.id != forecast.eclipses.all.last?.id {
+                                                    Divider()
+                                                }
                                             }
                                         }
                                     }
                                 }
-                            }
 
-                            if !forecast.ingresses.isEmpty {
-                                CardView {
-                                    VStack(alignment: .leading, spacing: 8) {
-                                        Text("ui.yearAhead.5".localized)
-                                            .font(.headline)
-                                        ForEach(Array(forecast.ingresses.prefix(6).enumerated()), id: \.offset) { _, ingress in
-                                            VStack(alignment: .leading, spacing: 2) {
-                                                HStack(alignment: .firstTextBaseline) {
-                                                    Text("• \(ingress.planet) → \(ingress.sign)")
-                                                        .font(.subheadline)
-                                                    Spacer()
-                                                    Text(Self.readableDate(ingress.date))
-                                                        .font(.caption.monospaced())
+                                if !forecast.eclipses.personalImpacts.isEmpty {
+                                    CardView {
+                                        VStack(alignment: .leading, spacing: 10) {
+                                            Text("ui.yearAhead.3".localized)
+                                                .font(.headline)
+                                            Text("ui.yearAhead.4".localized)
+                                                .font(.caption)
+                                                .foregroundStyle(Color.textSecondary)
+
+                                            ForEach(Array(forecast.eclipses.personalImpacts.enumerated()), id: \.offset) { _, impact in
+                                                VStack(alignment: .leading, spacing: 6) {
+                                                    HStack(alignment: .firstTextBaseline) {
+                                                        Text(eclipseTypeSymbol(impact.eclipse.type))
+                                                        Text(eclipseDisplayTitle(impact.eclipse))
+                                                            .font(.subheadline.weight(.semibold))
+                                                        Spacer()
+                                                        Text(impact.significance)
+                                                            .font(.caption.weight(.semibold))
+                                                            .foregroundStyle(.purple)
+                                                    }
+
+                                                    if !impact.impacts.isEmpty {
+                                                        ForEach(Array(impact.impacts.enumerated()), id: \.offset) { _, detail in
+                                                            Text("• \(detail.name) \(detail.aspect)\(orbText(detail.orb))")
+                                                                .font(.caption)
+                                                                .foregroundStyle(Color.textSecondary)
+                                                        }
+                                                    }
+                                                }
+                                                if impact.eclipse.id != forecast.eclipses.personalImpacts.last?.eclipse.id {
+                                                    Divider()
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+
+                                if !forecast.ingresses.isEmpty {
+                                    CardView {
+                                        VStack(alignment: .leading, spacing: 8) {
+                                            Text("ui.yearAhead.5".localized)
+                                                .font(.headline)
+                                            ForEach(Array(forecast.ingresses.prefix(6).enumerated()), id: \.offset) { _, ingress in
+                                                VStack(alignment: .leading, spacing: 2) {
+                                                    HStack(alignment: .firstTextBaseline) {
+                                                        Text("• \(ingress.planet) → \(ingress.sign)")
+                                                            .font(.subheadline)
+                                                        Spacer()
+                                                        Text(Self.readableDate(ingress.date))
+                                                            .font(.caption.monospaced())
+                                                            .foregroundStyle(Color.textSecondary)
+                                                    }
+                                                    Text(ingress.impact)
+                                                        .font(.caption)
                                                         .foregroundStyle(Color.textSecondary)
                                                 }
-                                                Text(ingress.impact)
+                                            }
+                                        }
+                                    }
+                                }
+                            
+                                if !forecast.keyThemes.isEmpty {
+                                    CardView {
+                                        VStack(alignment: .leading, spacing: 8) {
+                                            Text("ui.yearAhead.6".localized)
+                                                .font(.headline)
+                                            ForEach(forecast.keyThemes, id: \.self) { theme in
+                                                Text("• \(theme)")
                                                     .font(.caption)
                                                     .foregroundStyle(Color.textSecondary)
                                             }
                                         }
                                     }
                                 }
-                            }
                             
-                            if !forecast.keyThemes.isEmpty {
-                                CardView {
-                                    VStack(alignment: .leading, spacing: 8) {
-                                        Text("ui.yearAhead.6".localized)
-                                            .font(.headline)
-                                        ForEach(forecast.keyThemes, id: \.self) { theme in
-                                            Text("• \(theme)")
-                                                .font(.caption)
-                                                .foregroundStyle(Color.textSecondary)
+                                if !forecast.advice.isEmpty {
+                                    CardView {
+                                        VStack(alignment: .leading, spacing: 8) {
+                                            Text("ui.yearAhead.7".localized)
+                                                .font(.headline)
+                                            ForEach(forecast.advice, id: \.self) { tip in
+                                                Text("• \(tip)")
+                                                    .font(.caption)
+                                                    .foregroundStyle(Color.textSecondary)
+                                            }
                                         }
                                     }
                                 }
-                            }
                             
-                            if !forecast.advice.isEmpty {
-                                CardView {
+                                if !forecast.monthlyForecasts.isEmpty {
                                     VStack(alignment: .leading, spacing: 8) {
-                                        Text("ui.yearAhead.7".localized)
-                                            .font(.headline)
-                                        ForEach(forecast.advice, id: \.self) { tip in
-                                            Text("• \(tip)")
-                                                .font(.caption)
-                                                .foregroundStyle(Color.textSecondary)
-                                        }
-                                    }
-                                }
-                            }
-                            
-                            if !forecast.monthlyForecasts.isEmpty {
-                                VStack(alignment: .leading, spacing: 8) {
-                                    PremiumSectionHeader(
-                title: "section.yearAhead.1.title".localized,
-                subtitle: "section.yearAhead.1.subtitle".localized
-            )
-                                    ForEach(forecast.monthlyForecasts, id: \.month) { month in
-                                        CardView {
-                                            VStack(alignment: .leading, spacing: 6) {
-                                                HStack {
-                                                    // String(year): an interpolated Int in Text is
-                                                    // number-formatted, giving "January 2,026".
-                                                    Text("\(month.monthName) \(String(month.year))")
-                                                        .font(.headline)
-                                                    Spacer()
-                                                    Text(String(format: "fmt.yearAhead.1".localized, "\(month.personalMonth)"))
-                                                        .font(.caption)
-                                                        .foregroundStyle(Color.textSecondary)
-                                                }
-                                                Text(month.focus)
-                                                    .font(.subheadline)
-                                                if !month.eclipses.isEmpty {
-                                                    Text(String(format: "fmt.yearAhead.0".localized, "\(month.eclipses.map { eclipseDisplayTitle($0) }.joined(separator: " • "))"))
-                                                        .font(.caption)
-                                                        .foregroundStyle(.purple)
-                                                }
-                                                if !month.ingresses.isEmpty {
-                                                    Text("Ingresses: \(month.ingresses.map { "\($0.planet) → \($0.sign)" }.joined(separator: " • "))")
-                                                        .font(.caption)
-                                                        .foregroundStyle(.blue)
-                                                }
-                                                if !month.highlights.isEmpty {
-                                                    ForEach(month.highlights, id: \.self) { highlight in
-                                                        Text("• \(highlight)")
+                                        PremiumSectionHeader(
+                    title: "section.yearAhead.1.title".localized,
+                    subtitle: "section.yearAhead.1.subtitle".localized
+                )
+                                        ForEach(forecast.monthlyForecasts, id: \.month) { month in
+                                            CardView {
+                                                VStack(alignment: .leading, spacing: 6) {
+                                                    HStack {
+                                                        // String(year): an interpolated Int in Text is
+                                                        // number-formatted, giving "January 2,026".
+                                                        Text("\(month.monthName) \(String(month.year))")
+                                                            .font(.headline)
+                                                        Spacer()
+                                                        Text(String(format: "fmt.yearAhead.1".localized, "\(month.personalMonth)"))
                                                             .font(.caption)
                                                             .foregroundStyle(Color.textSecondary)
+                                                    }
+                                                    Text(month.focus)
+                                                        .font(.subheadline)
+                                                    if !month.eclipses.isEmpty {
+                                                        Text(String(format: "fmt.yearAhead.0".localized, "\(month.eclipses.map { eclipseDisplayTitle($0) }.joined(separator: " • "))"))
+                                                            .font(.caption)
+                                                            .foregroundStyle(.purple)
+                                                    }
+                                                    if !month.ingresses.isEmpty {
+                                                        Text("Ingresses: \(month.ingresses.map { "\($0.planet) → \($0.sign)" }.joined(separator: " • "))")
+                                                            .font(.caption)
+                                                            .foregroundStyle(.blue)
+                                                    }
+                                                    if !month.highlights.isEmpty {
+                                                        ForEach(month.highlights, id: \.self) { highlight in
+                                                            Text("• \(highlight)")
+                                                                .font(.caption)
+                                                                .foregroundStyle(Color.textSecondary)
+                                                        }
                                                     }
                                                 }
                                             }
@@ -264,6 +281,11 @@ struct YearAheadView: View {
                                     }
                                 }
                             }
+                            // Picking another year keeps the old forecast on screen until the
+                            // new one lands; fade it so it doesn't read as the new year.
+                            .opacity(vm.isLoading ? 0.4 : 1)
+                            .allowsHitTesting(!vm.isLoading)
+                            .animation(.easeInOut(duration: 0.2), value: vm.isLoading)
                         } else if vm.isLoading {
                             ProgressView("Loading year ahead...")
                                 .tint(.white)
@@ -286,6 +308,12 @@ struct YearAheadView: View {
                     .padding()
                     .readableContainer()
                 }
+                // The year is picked from the toolbar, possibly from deep in
+                // last year's months: go to the top to show the loading line,
+                // and again when the new year's forecast arrives.
+                .scrollsIntoView(Self.topAnchor, using: proxy, onChangeOf: selectedYear)
+                .scrollsIntoView(Self.topAnchor, using: proxy, onChangeOf: vm.forecast?.year) { $0 != nil }
+                }
             }
             .navigationTitle("screen.yearAhead".localized)
             .navigationBarTitleDisplayMode(.inline)
@@ -293,9 +321,9 @@ struct YearAheadView: View {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Menu {
                         ForEach((selectedYear-2)...(selectedYear+1), id: \.self) { year in
+                            // .task(id:) below does the fetch for the new year.
                             Button(String(year)) {
                                 selectedYear = year
-                                Task { await vm.load(profile: store.activeProfile, year: year) }
                             }
                         }
                     } label: {
@@ -326,6 +354,8 @@ struct YearAheadView: View {
             }
         }
     }
+
+    private static let topAnchor = "year-ahead-top"
 
     @MainActor
     /// "2026-02-17" -> "17 Feb 2026" in the user's locale; unparseable text is shown as-is.
