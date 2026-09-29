@@ -110,3 +110,107 @@ def test_profile_endpoint_returns_todays_reading():
     assert reading["lens"] in LENSES
     assert reading["personal_day"] == data["numerology_numbers"]["personal_day"]
     assert len(reading["text"].split()) >= 38
+
+
+# --- Lifelong, yearly, relationship and cycle readings ----------------------
+
+from backend.app.interpretation.numerology_library import (  # noqa: E402
+    LIFELONG_POSITIONS,
+    cycle_reading,
+    life_path_pair_reading,
+    lifelong_reading,
+    load_readings,
+    month_reading,
+    year_reading,
+)
+
+NUMBERS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 22, 33)
+
+
+def _in_voice(text: str, low: int, high: int) -> None:
+    assert low <= len(text.split()) <= high, (len(text.split()), text[:80])
+    assert "!" not in text and not EMOJI.search(text), text[:80]
+    assert not BANNED.search(text), text[:80]
+
+
+def test_every_lifelong_reading_exists_and_reads_as_lifelong():
+    for position in LIFELONG_POSITIONS:
+        for number in NUMBERS:
+            reading = lifelong_reading(position, number)
+            assert reading and 2 <= len(reading["title"].split()) <= 4, (
+                position,
+                number,
+            )
+            _in_voice(reading["text"], 170, 230)
+            assert not re.search(r"\btoday\b", reading["text"], re.I), (
+                position,
+                number,
+            )
+
+
+def test_every_life_path_pair_reads_the_same_either_way_round():
+    for a in NUMBERS:
+        for b in NUMBERS:
+            text = life_path_pair_reading(a, b)
+            assert text and text == life_path_pair_reading(b, a), (a, b)
+            _in_voice(text, 90, 130)
+    assert life_path_pair_reading(10, 4) is None
+
+
+def test_every_year_and_month_reading_exists():
+    for life_path in NUMBERS:
+        for personal_year in range(1, 10):
+            _in_voice(year_reading(life_path, personal_year), 90, 130)
+    # A master Personal Year reads as its root.
+    assert year_reading(7, 11) == year_reading(7, 2)
+    for personal_year in range(1, 10):
+        for personal_month in range(1, 10):
+            _in_voice(month_reading(personal_year, personal_month), 60, 85)
+
+
+def test_cycle_readings_cover_every_number_they_can_take():
+    for number in NUMBERS:
+        _in_voice(cycle_reading("pinnacles", number)["text"], 60, 90)
+    for number in range(9):
+        _in_voice(cycle_reading("challenges", number)["text"], 60, 90)
+    for number in (13, 14, 16, 19):
+        _in_voice(cycle_reading("karmic_debt", number)["text"], 80, 110)
+    assert set(load_readings()["karmic_debt"]) == {"13", "14", "16", "19"}
+
+
+def test_profile_carries_the_full_readings_beside_the_short_ones():
+    resp = client.post(
+        "/v2/numerology/profile",
+        json={
+            "profile": {"name": "Maria Yolanda Brown", "date_of_birth": "1985-11-29"}
+        },
+    )
+    data = resp.json()["data"]
+    life_path = data["life_path"]["number"]
+    assert data["lifelong"]["life_path"]["number"] == life_path
+    assert (
+        data["lifelong"]["life_path"]["text"]
+        == lifelong_reading("life_path", life_path)["text"]
+    )
+    assert set(data["lifelong"]) == set(LIFELONG_POSITIONS)
+    assert data["year_reading"] == year_reading(
+        life_path, data["personal_year"]["cycle_number"]
+    )
+    assert data["month_reading"]
+    assert all(p["reading"] for p in data["pinnacles"])
+    assert all(c["reading"] for c in data["challenges"])
+    # Short fields are untouched: build 6 shows them in clipped rows.
+    assert len(data["life_path"]["meaning"].split()) < 40
+
+
+def test_compatibility_life_path_dimension_uses_the_pair_reading():
+    resp = client.post(
+        "/v2/compatibility/romantic",
+        json={
+            "person_a": {"name": "A", "date_of_birth": "1990-06-15"},
+            "person_b": {"name": "B", "date_of_birth": "1992-11-03"},
+        },
+    )
+    assert resp.status_code == 200, resp.text
+    dims = {d["name"]: d["interpretation"] for d in resp.json()["data"]["dimensions"]}
+    assert dims["Life Path"] in load_readings()["compatibility"].values()

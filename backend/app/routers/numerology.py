@@ -10,7 +10,14 @@ from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
 from ..exceptions import InvalidDateError, StructuredLogger
-from ..interpretation.numerology_library import daily_reading
+from ..interpretation.numerology_library import (
+    LIFELONG_POSITIONS,
+    cycle_reading,
+    daily_reading,
+    lifelong_reading,
+    month_reading,
+    year_reading,
+)
 from ..numerology_engine import build_numerology
 from ..schemas import (
     ApiResponse,
@@ -54,6 +61,8 @@ class PinnacleData(BaseModel):
     number: int
     ages: Optional[str] = None
     meaning: Optional[str] = None
+    # Full text; meaning stays short because build 6 clips it to two lines.
+    reading: Optional[str] = None
 
 
 class ChallengeData(BaseModel):
@@ -63,6 +72,7 @@ class ChallengeData(BaseModel):
     number: int
     ages: Optional[str] = None
     meaning: Optional[str] = None
+    reading: Optional[str] = None
 
 
 class NumerologyHighlight(BaseModel):
@@ -83,6 +93,14 @@ class NumerologySynthesis(BaseModel):
     current_focus: str
     affirmation: str
     dominant_numbers: List[NumerologyHighlight]
+
+
+class LifelongReading(BaseModel):
+    """A core number's full reading in one position, e.g. Life Path 4."""
+
+    number: int
+    title: str
+    text: str
 
 
 class DailyReading(BaseModel):
@@ -114,6 +132,11 @@ class NumerologyData(BaseModel):
     # A full passage, unlike the one-line personal_day insight. Separate so
     # clients that clip that line (build 6 shows three lines) are unaffected.
     daily_reading: Optional[DailyReading] = None
+    # Full written readings. Separate from the short meanings above, which
+    # build 6 shows in clipped rows and on share cards.
+    lifelong: Dict[str, LifelongReading] = {}
+    year_reading: Optional[str] = None
+    month_reading: Optional[str] = None
     pinnacles: List[PinnacleData] = []
     challenges: List[ChallengeData] = []
     karmic_debts: List[Dict] = []
@@ -124,6 +147,14 @@ class NumerologyData(BaseModel):
 # ============================================================================
 # HELPER FUNCTIONS
 # ============================================================================
+
+
+def _karmic_reading(raw: Optional[int]) -> Dict[str, str]:
+    """The full karmic-debt text as extra keys; description stays short for build 6."""
+    reading = cycle_reading("karmic_debt", raw) if raw else None
+    if not reading:
+        return {}
+    return {"reading_title": reading.get("title", ""), "reading": reading["text"]}
 
 
 # Life path traits by number
@@ -390,6 +421,9 @@ async def calculate_numerology_profile(
                 or f"{item.get('keyword', '')}: {item.get('description', '')}".strip(
                     ": "
                 ),
+                reading=(cycle_reading("pinnacles", item.get("number", 0)) or {}).get(
+                    "text"
+                ),
             )
             for i, item in enumerate(numerology.get("pinnacles", []))
         ]
@@ -408,6 +442,9 @@ async def calculate_numerology_profile(
                         item.get("description", ""),
                     )
                     if part
+                ),
+                reading=(cycle_reading("challenges", item.get("number", 0)) or {}).get(
+                    "text"
                 ),
             )
             for i, item in enumerate(numerology.get("challenges", []))
@@ -453,7 +490,18 @@ async def calculate_numerology_profile(
             },
             pinnacles=pinnacles,
             challenges=challenges,
-            karmic_debts=numerology.get("karmic_debts", []),
+            karmic_debts=[
+                {**debt, **_karmic_reading(debt.get("raw"))}
+                for debt in numerology.get("karmic_debts", [])
+            ],
+            lifelong={
+                position: LifelongReading(number=core[position]["number"], **reading)
+                for position in LIFELONG_POSITIONS
+                if position in core
+                and (reading := lifelong_reading(position, core[position]["number"]))
+            },
+            year_reading=year_reading(life_path_num, personal_year_num),
+            month_reading=month_reading(personal_year_num, personal_month_num),
             synthesis=synthesis,
             generated_at=datetime.now(timezone.utc),
         )

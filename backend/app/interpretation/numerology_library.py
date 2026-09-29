@@ -100,3 +100,60 @@ def daily_reading(personal_year: int, on: date) -> Optional[Dict]:
         "personal_day": pd,
         "personal_month": pm,
     }
+
+
+# --- Lifelong, yearly and relationship readings -------------------------
+
+READINGS_PATH = Path(__file__).parent / "library" / "numerology_readings.json"
+
+LIFELONG_POSITIONS = ("life_path", "expression", "soul_urge", "personality", "birthday")
+
+# The order pairs are stored in: master numbers after 9.
+_PAIR_ORDER = (1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 22, 33)
+
+
+@lru_cache(maxsize=1)
+def load_readings() -> Dict:
+    return json.loads(READINGS_PATH.read_text(encoding="utf-8"))
+
+
+def lifelong_reading(position: str, number: int) -> Optional[Dict]:
+    """{"title", "text"} for a core number in one position, e.g. Life Path 4."""
+    return load_readings().get("lifelong", {}).get(position, {}).get(str(number))
+
+
+def life_path_pair_reading(a: int, b: int) -> Optional[str]:
+    """How two Life Paths meet, in either order."""
+    if a not in _PAIR_ORDER or b not in _PAIR_ORDER:
+        return None
+    first, second = sorted((a, b), key=_PAIR_ORDER.index)
+    return load_readings().get("compatibility", {}).get(f"{first}-{second}")
+
+
+def year_reading(life_path: int, personal_year: int) -> Optional[str]:
+    """How this Personal Year runs for this Life Path."""
+    return (
+        load_readings()
+        .get("life_path_year", {})
+        .get(str(life_path), {})
+        .get(str(_root(personal_year)))
+    )
+
+
+def month_reading(personal_year: int, personal_month: int) -> Optional[str]:
+    """What this Personal Month adds to the Personal Year."""
+    return (
+        load_readings()
+        .get("month_year", {})
+        .get(str(_root(personal_year)), {})
+        .get(str(_root(personal_month)))
+    )
+
+
+def cycle_reading(kind: str, number: int) -> Optional[Dict]:
+    """Longer text for a pinnacle, challenge or karmic debt number.
+
+    kind is "pinnacles", "challenges" or "karmic_debt"; karmic debt entries
+    also carry a title.
+    """
+    return load_readings().get(kind, {}).get(str(number))
