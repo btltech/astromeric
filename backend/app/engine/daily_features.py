@@ -1081,7 +1081,11 @@ def _calculate_mood_forecast(
         "luck_score": luck_100,  # full 0–100 value used by daily_luck field
         "description": description,
         "tips": tips,
-        "peak_hours": f"{10 + (personal_day % 3)}am - {2 + (personal_day % 4)}pm",
+        # Starts at 10, 11 or 12 in the morning; 12 is noon, so "12pm".
+        "peak_hours": (
+            f"{10 + (personal_day % 3)}{'pm' if personal_day % 3 == 2 else 'am'}"
+            f" - {2 + (personal_day % 4)}pm"
+        ),
     }
 
 

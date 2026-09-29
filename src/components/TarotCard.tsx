@@ -88,10 +88,12 @@ export function TarotCard() {
                     <span className="meaning-label">Message</span>
                     <p>{card.message}</p>
                   </div>
-                  <div className="card-advice">
-                    <span className="advice-label">Advice</span>
-                    <p>{card.daily_advice}</p>
-                  </div>
+                  {card.daily_advice && (
+                    <div className="card-advice">
+                      <span className="advice-label">Advice</span>
+                      <p>{card.daily_advice}</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

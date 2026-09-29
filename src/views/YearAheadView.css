@@ -6,6 +6,70 @@
   gap: 1.5rem;
 }
 
+/* The shared desk grid sizes its one column to the widest content, which
+   pushed this page past the screen edge on phones. */
+.year-ahead-desk {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/* Page header. These class names had no styles, so the two links ran
+   together as default blue underlined text. */
+.product-desk__header {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1.3rem;
+  border-radius: 24px;
+  border: 1px solid rgba(136, 192, 208, 0.16);
+  background: rgba(10, 14, 28, 0.72);
+}
+
+.product-desk__header-top {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.5rem 1.5rem;
+}
+
+.product-desk__back,
+.product-desk__cta-link {
+  color: #88c0d0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.product-desk__back:hover,
+.product-desk__cta-link:hover {
+  text-decoration: underline;
+}
+
+.product-desk__title {
+  margin: 0;
+  font-size: clamp(1.8rem, 4vw, 2.6rem);
+}
+
+.product-desk__subtitle {
+  margin: 0;
+  color: rgba(229, 233, 240, 0.76);
+}
+
+.product-desk__loading,
+.product-desk__error {
+  display: grid;
+  justify-items: center;
+  gap: 0.75rem;
+  padding: 2rem;
+  text-align: center;
+  color: rgba(229, 233, 240, 0.76);
+}
+
+/* Shared desk panels stretch to fill grid rows (min-height: 100%). In this
+   single column that made every panel as tall as the whole page. */
+.ya-layout .product-desk__panel {
+  min-height: auto;
+  grid-template-columns: minmax(0, 1fr);
+}
+
 /* Banner — personal year */
 .ya-banner {
   display: flex;
@@ -182,6 +246,7 @@
 
 .ya-month-card__focus {
   flex: 1;
+  min-width: 0; /* let the ellipsis work instead of widening the page */
   color: var(--color-text-muted, #a1a1aa);
   font-size: 0.9rem;
   white-space: nowrap;

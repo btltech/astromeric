@@ -146,7 +146,7 @@ export function YearAheadView() {
         description={getRouteMeta('/year-ahead').description}
       />
 
-      <div className="product-desk">
+      <div className="product-desk year-ahead-desk">
         <header className="product-desk__header">
           <div className="product-desk__header-top">
             <Link to="/" className="product-desk__back">
