@@ -480,12 +480,12 @@ struct DailyGuideMetricCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            // Two lines rather than one, so "Daily Luck Score" isn't cut.
+            // Two lines, reserved on every tile: "Daily Luck Score" isn't cut
+            // and the tiles in the row stay the same height.
             Text(title)
                 .font(.metadata.weight(.semibold))
                 .foregroundStyle(Color.textMuted)
-                .lineLimit(2)
-                .fixedSize(horizontal: false, vertical: true)
+                .lineLimit(2, reservesSpace: true)
 
             Text(value)
                 .font(.cardTitle)

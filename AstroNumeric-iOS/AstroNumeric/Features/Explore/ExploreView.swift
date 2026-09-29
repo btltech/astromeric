@@ -706,16 +706,18 @@ struct TipCard: View {
             Text(emoji)
                 .font(.largeTitle)
             
+            // Reserve the same lines on every card so the row lines up.
             Text(title)
                 .font(.subheadline.weight(.semibold))
-            
+                .lineLimit(2, reservesSpace: true)
+
             Text(tip)
                 .font(.caption)
                 .foregroundStyle(Color.textSecondary)
-                .lineLimit(3)
+                .lineLimit(4, reservesSpace: true)
         }
         .padding()
-        .frame(width: 160)
+        .frame(width: 160, alignment: .topLeading)
         .background(
             RoundedRectangle(cornerRadius: 16)
                 .fill(.ultraThinMaterial)

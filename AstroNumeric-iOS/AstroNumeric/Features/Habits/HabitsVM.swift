@@ -93,8 +93,15 @@ final class HabitsVM {
     
     @MainActor
     private func fetchLunarGuidance() async {
-        // Backend doesn't have lunar-guidance endpoint - use local fallback
-        lunarGuidance = LunarHabitGuidance.fallback
+        // There's no lunar-guidance endpoint. This used to show the Waxing
+        // Crescent guide every day; take the phase from the same live moon the
+        // other screens use and pick its guide.
+        let moon: V2ApiResponse<MoonData>? = try? await APIClient.shared.fetch(
+            .currentMoon,
+            cachePolicy: .cacheFirst
+        )
+        let phase = moon?.data.phaseName.flatMap(MoonPhase.from(apiString:))
+        lunarGuidance = phase.map(LunarHabitGuidance.forPhase) ?? .fallback
         currentMoonPhase = lunarGuidance?.phase ?? "waxing_crescent"
     }
     
@@ -369,6 +376,49 @@ struct LunarHabitGuidance: Codable {
         case powerScoreModifier = "power_score_modifier"
     }
     
+    /// Habit guidance for each lunar phase.
+    static func forPhase(_ phase: MoonPhase) -> LunarHabitGuidance {
+        switch phase {
+        case .newMoon:
+            return LunarHabitGuidance(phase: "new_moon", phaseName: "New Moon", emoji: "🌑", theme: "Fresh Starts",
+                bestFor: ["Setting intentions", "Starting a new habit", "Planning the month"],
+                avoid: ["Big launches", "Overcommitting"], energy: "Quiet, receptive",
+                idealHabits: ["meditation", "learning", "spiritual"], powerScoreModifier: 1.0)
+        case .waxingCrescent:
+            return .fallback
+        case .firstQuarter:
+            return LunarHabitGuidance(phase: "first_quarter", phaseName: "First Quarter", emoji: "🌓", theme: "Push Through",
+                bestFor: ["Sticking with a new routine", "Solving obstacles", "Committing to a plan"],
+                avoid: ["Indecision", "Skipping days"], energy: "Active, testing",
+                idealHabits: ["exercise", "learning", "health"], powerScoreModifier: 1.15)
+        case .waxingGibbous:
+            return LunarHabitGuidance(phase: "waxing_gibbous", phaseName: "Waxing Gibbous", emoji: "🌔", theme: "Refine and Build",
+                bestFor: ["Fine-tuning habits", "Consistency", "Preparing for results"],
+                avoid: ["Rushing", "Perfectionism"], energy: "Building, focused",
+                idealHabits: ["exercise", "health", "creative"], powerScoreModifier: 1.1)
+        case .fullMoon:
+            return LunarHabitGuidance(phase: "full_moon", phaseName: "Full Moon", emoji: "🌕", theme: "Peak and Celebrate",
+                bestFor: ["Reviewing progress", "Celebrating streaks", "Social habits"],
+                avoid: ["Starting something new", "Overexertion"], energy: "High, emotional",
+                idealHabits: ["creative", "spiritual", "meditation"], powerScoreModifier: 1.2)
+        case .waningGibbous:
+            return LunarHabitGuidance(phase: "waning_gibbous", phaseName: "Waning Gibbous", emoji: "🌖", theme: "Share and Adjust",
+                bestFor: ["Teaching what worked", "Adjusting routines", "Gratitude practice"],
+                avoid: ["Holding on to what isn't working"], energy: "Settling, generous",
+                idealHabits: ["meditation", "learning", "spiritual"], powerScoreModifier: 1.0)
+        case .lastQuarter:
+            return LunarHabitGuidance(phase: "last_quarter", phaseName: "Last Quarter", emoji: "🌗", theme: "Release",
+                bestFor: ["Dropping a habit", "Decluttering", "Honest review"],
+                avoid: ["Clinging to old patterns"], energy: "Clearing, reflective",
+                idealHabits: ["meditation", "health", "learning"], powerScoreModifier: 0.95)
+        case .waningCrescent:
+            return LunarHabitGuidance(phase: "waning_crescent", phaseName: "Waning Crescent", emoji: "🌘", theme: "Rest and Reset",
+                bestFor: ["Sleep and recovery", "Gentle routines", "Reflection"],
+                avoid: ["Overexertion", "Forcing new starts"], energy: "Low, restorative",
+                idealHabits: ["meditation", "health"], powerScoreModifier: 0.9)
+        }
+    }
+
     static let fallback = LunarHabitGuidance(
         phase: "waxing_crescent",
         phaseName: "Waxing Crescent",
@@ -377,7 +427,7 @@ struct LunarHabitGuidance: Codable {
         bestFor: ["Taking first steps", "Building routines", "Learning new skills"],
         avoid: ["Giving up early", "Overanalyzing"],
         energy: "Increasing, hopeful",
-        idealHabits: ["exercise", "learning", "creative", "social"],
+        idealHabits: ["exercise", "learning", "creative", "health"],
         powerScoreModifier: 1.1
     )
 }

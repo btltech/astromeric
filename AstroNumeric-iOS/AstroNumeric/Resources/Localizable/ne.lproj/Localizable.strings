@@ -858,6 +858,9 @@
 "ui.temporalMatrix.5" = "No Events";
 "ui.temporalMatrix.6" = "Your next 48 hours are clear. The cosmos awaits your initiative.";
 "ui.temporalMatrix.7" = "Open Settings";
+"ui.temporalMatrix.8" = "Connect your calendar";
+"ui.temporalMatrix.9" = "Temporal Matrix reads the next 48 hours of your calendar and shows the sky at each event. Your events are read on this iPhone and never uploaded.";
+"ui.temporalMatrix.10" = "Connect Calendar";
 "ui.timeScrubber.0" = "PAST";
 "ui.timeScrubber.1" = "FUTURE";
 "ui.timingAdvisor.0" = "Disclaimer";
