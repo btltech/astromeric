@@ -167,9 +167,12 @@ class DailyRateLimiter:
             return False, headers
 
 
-# Daily sliding-window limiters (limit = 1 for Gemini, 3 for general services)
+# Daily sliding-window limiters for website visitors (the app is not capped).
+# 50 lets a visitor use every website tool a few times a day; 3 ran out
+# within a page or two, since single pages make one to three calls.
+GENERAL_DAILY_LIMIT = 50
 gemini_daily_limiter = DailyRateLimiter(limit=1)
-general_daily_limiter = DailyRateLimiter(limit=3)
+general_daily_limiter = DailyRateLimiter(limit=GENERAL_DAILY_LIMIT)
 
 
 def get_user_id_from_request(request: Request) -> Optional[str]:
