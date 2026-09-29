@@ -310,6 +310,15 @@ final class NumerologyNumbersTests: XCTestCase {
         XCTAssertEqual(data.cycles?.personalDay?.meaning, "pd")
     }
 
+    func testDecodesTodaysFullReading() throws {
+        let json = """
+        {"life_path":{"number":9},"daily_reading":{"text":"A full passage.","lens":"work","personal_day":33,"personal_month":5}}
+        """
+        let data = try JSONDecoder().decode(NumerologyData.self, from: Data(json.utf8))
+        XCTAssertEqual(data.dailyReading?.text, "A full passage.")
+        XCTAssertEqual(data.dailyReading?.personalDay, 33)
+    }
+
     func testOlderResponsesWithoutNumbersStillShowANumber() throws {
         let data = try decode(numbers: nil)
         XCTAssertNotNil(data.coreNumbers?.soulUrge?.number)

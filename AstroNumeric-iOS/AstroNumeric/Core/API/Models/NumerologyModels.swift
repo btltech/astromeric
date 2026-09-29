@@ -88,6 +88,8 @@ struct NumerologyData: Codable {
     /// fallbacks below, which always use Pythagorean values and can differ
     /// on master-number days, so the number shown matches its text.
     let numerologyNumbers: [String: Int]?
+    /// Today's full written reading. Absent from older servers and caches.
+    let dailyReading: DailyNumerologyReading?
     let pinnacles: [Pinnacle]?
     let challenges: [Challenge]?
     let karmicDebts: [KarmicDebt]?
@@ -106,6 +108,7 @@ struct NumerologyData: Codable {
         case auspiciousDays = "auspicious_days"
         case numerologyInsights = "numerology_insights"
         case numerologyNumbers = "numerology_numbers"
+        case dailyReading = "daily_reading"
         case pinnacles
         case challenges
         case karmicDebts = "karmic_debts"
@@ -222,6 +225,19 @@ struct NumerologyData: Codable {
 
         let day = calendar.component(.day, from: Date())
         return reduceNumber(personalMonth + day, keepMaster: false)
+    }
+}
+
+struct DailyNumerologyReading: Codable {
+    let text: String
+    let lens: String
+    let personalDay: Int
+    let personalMonth: Int
+
+    enum CodingKeys: String, CodingKey {
+        case text, lens
+        case personalDay = "personal_day"
+        case personalMonth = "personal_month"
     }
 }
 
