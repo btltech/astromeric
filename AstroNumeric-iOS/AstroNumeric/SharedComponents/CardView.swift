@@ -90,6 +90,9 @@ struct CardView<Content: View>: View {
 
     var body: some View {
         content
+            // Fill the width offered: otherwise a card whose text is short
+            // shrinks to fit it and floats centred, unlike its neighbours.
+            .frame(maxWidth: .infinity, alignment: .leading)
             .padding(padding)
             .background(
                 ZStack {
@@ -151,6 +154,8 @@ struct GlowCardView<Content: View>: View {
     
     var body: some View {
         content
+            // Fill the grid cell / row instead of hugging the content.
+            .frame(maxWidth: .infinity)
             .padding(padding)
             .background(
                 RoundedRectangle(cornerRadius: cornerRadius)

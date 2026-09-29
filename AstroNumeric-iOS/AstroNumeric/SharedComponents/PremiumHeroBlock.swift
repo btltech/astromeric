@@ -23,6 +23,7 @@ struct PremiumHeroBlock: View {
                 startPoint: UnitPoint(x: 0, y: gradientPhase),
                 endPoint: UnitPoint(x: 1, y: 1 - gradientPhase * 0.4)
             )
+            .animation(Motion.ambient, value: gradientPhase)
 
             // Soft inner glow top-left
             RadialGradient(
@@ -91,7 +92,10 @@ struct PremiumHeroBlock: View {
         .featureShadow(tint: .cosmicPurple)
         .onAppear {
             guard !reduceMotion else { return }
-            withAnimation(Motion.ambient) { gradientPhase = 1 }
+            // Repeating animations are attached to the one property they drive, not
+            // started with withAnimation in onAppear: that swept any layout change made
+            // in the same moment (e.g. a navigation push) into the endless loop too.
+            gradientPhase = 1
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(eyebrow). \(headline). \(support)")

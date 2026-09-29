@@ -417,6 +417,7 @@ private struct TimeConfidenceChip: View {
                     .multilineTextAlignment(.center)
                     .minimumScaleFactor(0.8)
             }
+            .padding(.horizontal, Space.xs)
             .frame(maxWidth: .infinity, minHeight: 64)
             .foregroundStyle(isSelected ? accent : Color.textSecondary)
             .background(

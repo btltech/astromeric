@@ -234,8 +234,13 @@ struct FlowLayout: Layout {
     var spacing: CGFloat = 8
     
     func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-        let result = FlowResult(in: proposal.width ?? 0, subviews: subviews, spacing: spacing)
-        return result.size
+        let width = proposal.width ?? .infinity
+        let result = FlowResult(in: width, subviews: subviews, spacing: spacing)
+        // Claim the full offered width. Reporting only the used width got this
+        // layout placed in exactly that width, where rounding could wrap the
+        // last item onto a row the reported height didn't include, so it
+        // overlapped whatever came next (seen on the Habits header chips).
+        return CGSize(width: width.isFinite ? width : result.size.width, height: result.size.height)
     }
     
     func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
@@ -256,7 +261,7 @@ struct FlowLayout: Layout {
             for subview in subviews {
                 let size = subview.sizeThatFits(.unspecified)
                 
-                if currentPosition.x + size.width > maxWidth, currentPosition.x > 0 {
+                if currentPosition.x + size.width > maxWidth + 0.5, currentPosition.x > 0 {
                     currentPosition.x = 0
                     currentPosition.y += lineHeight + spacing
                     lineHeight = 0

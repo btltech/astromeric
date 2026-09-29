@@ -83,10 +83,13 @@ struct ReadingResultView: View {
             .readableContainer()
         }
         .safeAreaInset(edge: .bottom, spacing: 0) {
-            aiInsightsCard
-                .padding(.horizontal, Space.sm)
-                .padding(.vertical, Space.xs)
-                .background(.ultraThinMaterial)
+            // AI insights need the owner's access code; hidden elsewhere.
+            if AIAvailability.shared.isEnabled {
+                aiInsightsCard
+                    .padding(.horizontal, Space.sm)
+                    .padding(.vertical, Space.xs)
+                    .background(.ultraThinMaterial)
+            }
         }
         .onAppear {
             // Trigger reveal animation

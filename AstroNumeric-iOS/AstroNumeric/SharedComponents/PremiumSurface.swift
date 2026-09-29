@@ -154,7 +154,6 @@ struct ToolSectionHeader: View {
 struct PremiumSectionHeader: View {
     let title: String
     let subtitle: String
-    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
@@ -166,7 +165,6 @@ struct PremiumSectionHeader: View {
             Text(subtitle)
                 .font(.caption)
                 .foregroundStyle(Color.textSecondary)
-                .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 2)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -221,18 +219,18 @@ struct PremiumActionCard: View {
                 )
 
             VStack(alignment: .leading, spacing: 3) {
-                HStack(spacing: 6) {
-                    Text(title)
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(Color.textPrimary)
-                    if !label.isEmpty {
-                        PremiumBadge(text: label, tint: accent)
-                    }
+                // Badge sits above the title rather than beside it, where it
+                // squeezed the title onto two lines.
+                if !label.isEmpty {
+                    PremiumBadge(text: label, tint: accent)
                 }
+                Text(title)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Color.textPrimary)
+                    .fixedSize(horizontal: false, vertical: true)
                 Text(subtitle)
                     .font(.caption)
                     .foregroundStyle(Color.textSecondary)
-                    .lineLimit(2)
                     .fixedSize(horizontal: false, vertical: true)
             }
 

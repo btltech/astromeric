@@ -110,14 +110,9 @@ struct ContentView: View {
             .symbolRenderingMode(.hierarchical)
             .adaptiveTabViewStyle() // iPad: sidebar; iPhone: bottom tab bar
 
-            // Selected tab indicator dot (above tab bar). Hidden on iPad
-            // sidebar mode where the bottom tab bar isn't shown.
-            TabSelectedDot(selectedTab: selectedTab, tabCount: Tab.allCases.count)
-                .allowsHitTesting(false)
-                .opacity(horizontalSizeClass == .regular ? 0 : 1)
             
-            // Floating AI Button overlay - hide on Profile tab
-            if selectedTab != .profile {
+            // Floating AI Button overlay: owner's device only, and not on Profile
+            if selectedTab != .profile, AIAvailability.shared.isEnabled {
                 FloatingAIButton()
             }
 

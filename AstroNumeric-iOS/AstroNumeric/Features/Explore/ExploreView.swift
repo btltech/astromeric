@@ -86,18 +86,28 @@ struct ExploreView: View {
                     
                     // Content based on category
                     ScrollView {
-                        switch selectedCategory {
-                        case .tools:
-                            toolsContent
-                        case .learn:
-                            learnContent
-                        case .habits:
-                            habitsContent
-                        case .relationships:
-                            relationshipsContent
-                            .readableContainer()
+                        Group {
+                            switch selectedCategory {
+                            case .tools:
+                                toolsContent
+                            case .learn:
+                                learnContent
+                            case .habits:
+                                habitsContent
+                            case .relationships:
+                                relationshipsContent
+                            }
                         }
+                        // Same width rule for every category (it used to apply
+                        // to Relationships only, so wide screens shifted).
+                        .readableContainer()
                     }
+                    // Switching category used to spring-animate one list into
+                    // another of a different height, from the old scroll offset,
+                    // which read as the page jumping. Each category now starts
+                    // at its own top and swaps instantly; the chip still animates.
+                    .id(selectedCategory)
+                    .transaction(value: selectedCategory) { $0.animation = nil }
                 }
             }
             .navigationTitle("nav.explore".localized)
@@ -109,31 +119,40 @@ struct ExploreView: View {
     // MARK: - Category Picker
     
     private var categoryPicker: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 12) {
-                ForEach(ExploreCategory.allCases, id: \.self) { category in
-                    CategoryChip(
-                        title: category.title,
-                        icon: category.icon,
-                        color: category.color,
-                        isSelected: selectedCategory == category
-                    ) {
-                        withAnimation(.spring(duration: 0.3)) {
-                            selectedCategory = category
+        ScrollViewReader { proxy in
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 12) {
+                    ForEach(ExploreCategory.allCases, id: \.self) { category in
+                        CategoryChip(
+                            title: category.title,
+                            icon: category.icon,
+                            color: category.color,
+                            isSelected: selectedCategory == category
+                        ) {
+                            withAnimation(.spring(duration: 0.3)) {
+                                selectedCategory = category
+                                // Bring the chosen chip fully into view; the last
+                                // one ("Relationships") stayed cut off at the edge.
+                                proxy.scrollTo(category, anchor: .center)
+                            }
+                            HapticManager.impact(.light)
                         }
-                        HapticManager.impact(.light)
+                        .id(category)
                     }
                 }
+                .padding(.vertical, 8)
             }
-            .padding(.vertical, 8)
         }
     }
     
     // MARK: - Tools Content
     
     private var filteredToolItems: [ExploreToolItem] {
-        let all: [ExploreToolItem] = [
-            ExploreToolItem(title: "Oracle", icon: "questionmark.circle.fill", color: .blue, description: "Yes/no guidance using your day number and moon phase.", provenance: .hybrid, destination: AnyView(OracleView())),
+        // The Oracle answers through the AI, so it is offered only where AI is on.
+        let oracle: [ExploreToolItem] = AIAvailability.shared.isEnabled
+            ? [ExploreToolItem(title: "Oracle", icon: "questionmark.circle.fill", color: .blue, description: "Yes/no guidance using your day number and moon phase.", provenance: .hybrid, destination: AnyView(OracleView()))]
+            : []
+        let all: [ExploreToolItem] = oracle + [
             ExploreToolItem(title: "Affirmation", icon: "star.fill", color: .orange, description: "Supportive language tuned to today's mood.", provenance: .interpretive, destination: AnyView(AffirmationView())),
             ExploreToolItem(title: "Moon Phase", icon: "moon.fill", color: .indigo, description: "Current lunar phase, sign, and ritual timing.", provenance: .calculated, destination: AnyView(MoonPhaseView())),
             ExploreToolItem(title: "Timing", icon: "clock.badge.checkmark", color: .green, description: "Activity windows scored from the live sky.", provenance: .calculated, destination: AnyView(TimingAdvisorView())),
@@ -144,7 +163,6 @@ struct ExploreView: View {
             ExploreToolItem(title: "Moon Events", icon: "moon.stars.fill", color: .indigo, description: "Upcoming lunar phases with exact timing.", provenance: .calculated, destination: AnyView(MoonEventsView())),
             ExploreToolItem(title: "Birthstone", icon: "diamond.fill", color: .mint, description: "Stones, signs, meanings, and practical ways to work with them.", provenance: .interpretive, destination: AnyView(BirthstoneGuidanceView())),
             ExploreToolItem(title: "Temporal Matrix", icon: "point.3.connected.trianglepath.dotted", color: .cyan, description: "A structured view of current life phase, cycles, and timing signals.", provenance: .hybrid, destination: AnyView(TemporalMatrixView())),
-            ExploreToolItem(title: "Life Phase", icon: "arrow.trianglehead.clockwise", color: .teal, description: "Your current cycle interpreted from annual timing.", provenance: .hybrid, destination: AnyView(TemporalMatrixView())),
         ]
         if searchText.isEmpty { return all }
         let q = searchText.lowercased()
@@ -223,33 +241,25 @@ struct ExploreView: View {
                         LearningTrackCard(
                             title: "Astrology 101",
                             emoji: "⭐️",
-                            lessonCount: 12,
+                            lessonCount: LearningTrack.astrology101LessonIds.count,
                             progress: progressManager.progress(for: LearningTrack.astrology101LessonIds),
                             color: .purple
                         )
-                        
+
+                        LearningTrackCard(
+                            title: "Signs & Elements",
+                            emoji: "🌗",
+                            lessonCount: LearningTrack.signsAndElementsLessonIds.count,
+                            progress: progressManager.progress(for: LearningTrack.signsAndElementsLessonIds),
+                            color: .indigo
+                        )
+
                         LearningTrackCard(
                             title: "Numerology Basics",
                             emoji: "🔢",
-                            lessonCount: 8,
+                            lessonCount: LearningTrack.numerologyBasicsLessonIds.count,
                             progress: progressManager.progress(for: LearningTrack.numerologyBasicsLessonIds),
                             color: .blue
-                        )
-                        
-                        LearningTrackCard(
-                            title: "Moon Wisdom",
-                            emoji: "🌙",
-                            lessonCount: 6,
-                            progress: progressManager.progress(for: LearningTrack.moonWisdomLessonIds),
-                            color: .indigo
-                        )
-                        
-                        LearningTrackCard(
-                            title: "Tarot Mastery",
-                            emoji: "🃏",
-                            lessonCount: 10,
-                            progress: progressManager.progress(for: LearningTrack.tarotMasteryLessonIds),
-                            color: .pink
                         )
                     }
                     .padding(.horizontal)
@@ -288,14 +298,9 @@ struct ExploreView: View {
     
     private var habitsContent: some View {
         VStack(spacing: 16) {
-            // Stats overview
-            HStack(spacing: 16) {
-                StatBox(value: "7", label: "Day Streak", icon: "🔥")
-                StatBox(value: "4", label: "Active", icon: "✓")
-                StatBox(value: "85%", label: "Rate", icon: "📈")
-            }
-            .padding(.horizontal)
-            
+            // (A stats row here showed hard-coded 7 / 4 / 85% to everyone;
+            // the real numbers are in HabitsView below.)
+
             // Full habits view
             NavigationLink {
                 HabitsView()
@@ -605,10 +610,11 @@ struct ExploreToolCard<Destination: View>: View {
                 Text(description)
                     .font(.label)
                     .foregroundStyle(Color.textSecondary)
-                    .lineLimit(3)
                     .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
             }
-            .frame(maxWidth: .infinity)
+            // Full height of the grid row, so neighbouring cards line up.
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             .padding()
             .background(
                 RoundedRectangle(cornerRadius: 16)
@@ -652,33 +658,11 @@ struct LearningTrackCard: View {
             .frame(height: 4)
         }
         .padding()
-        .frame(width: 150)
+        // Same size for every track: a two-line title made one card taller
+        // and offset from its neighbours.
+        .frame(width: 150, height: 150, alignment: .topLeading)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(.ultraThinMaterial)
-        )
-    }
-}
-
-struct StatBox: View {
-    let value: String
-    let label: String
-    let icon: String
-    
-    var body: some View {
-        VStack(spacing: 4) {
-            Text(icon)
-                .font(.title2)
-            Text(value)
-                .font(.title2.bold())
-            Text(label)
-                .font(.caption)
-                .foregroundStyle(Color.textSecondary)
-        }
-        .frame(maxWidth: .infinity)
-        .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 12)
                 .fill(.ultraThinMaterial)
         )
     }
@@ -722,16 +706,18 @@ struct TipCard: View {
             Text(emoji)
                 .font(.largeTitle)
             
+            // Reserve the same lines on every card so the row lines up.
             Text(title)
                 .font(.subheadline.weight(.semibold))
-            
+                .lineLimit(2, reservesSpace: true)
+
             Text(tip)
                 .font(.caption)
                 .foregroundStyle(Color.textSecondary)
-                .lineLimit(3)
+                .lineLimit(4, reservesSpace: true)
         }
         .padding()
-        .frame(width: 160)
+        .frame(width: 160, alignment: .topLeading)
         .background(
             RoundedRectangle(cornerRadius: 16)
                 .fill(.ultraThinMaterial)

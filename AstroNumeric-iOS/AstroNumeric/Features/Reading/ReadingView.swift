@@ -8,10 +8,22 @@ struct ReadingView: View {
     @State private var vm = ReadingVM()
     
     var body: some View {
-        NavigationStack {
+        // Pushed onto the caller's NavigationStack; a nested one here
+        // stacked two bars and made the top inset jump.
+        Group {
             ZStack {
                 Color.appBackground.ignoresSafeArea()
-                
+
+                // The scope bar is laid out above the content rather than as a
+                // .safeAreaInset(edge: .top): the inset was recomputed while the
+                // pushed nav bar settled, so the bar slid up into the title.
+                VStack(spacing: 0) {
+                if store.selectedProfile != nil {
+                    scopeFilterBar
+                        .padding(.horizontal, Space.sm)
+                        .padding(.vertical, Space.xs)
+                }
+
                 Group {
                     if let profile = store.selectedProfile {
                         if let reading = vm.currentReading {
@@ -52,16 +64,11 @@ struct ReadingView: View {
                         noProfileView
                     }
                 }
+                .frame(maxHeight: .infinity)
+                }
             }
             .navigationTitle("screen.reading".localized)
             .navigationBarTitleDisplayMode(.inline)
-            .safeAreaInset(edge: .top) {
-                if store.selectedProfile != nil {
-                    scopeFilterBar
-                        .padding(.horizontal, Space.sm)
-                        .padding(.top, Space.xs)
-                }
-            }
         }
     }
     

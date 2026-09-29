@@ -2,6 +2,7 @@
 // Private access code that unlocks live AI answers on the owner's own device.
 
 import Foundation
+import Observation
 import Security
 
 /// Live AI runs on an unpaid Gemini key whose prompts Google may use to improve
@@ -58,5 +59,25 @@ enum AIAccessCode {
             kSecAttrAccount as String: account,
         ]
         SecItemDelete(query as CFDictionary)
+    }
+}
+
+/// Whether this device shows AI features at all. Without the owner's code the
+/// server only returns canned stand-ins, so the Oracle, the floating Cosmic
+/// Guide button and "AI insights" are hidden rather than offered half-working.
+@MainActor
+@Observable
+final class AIAvailability {
+    static let shared = AIAvailability()
+
+    private(set) var isEnabled: Bool
+
+    init(isEnabled: Bool = AIAccessCode.current() != nil) {
+        self.isEnabled = isEnabled
+    }
+
+    /// Call after the code is saved or cleared so screens update immediately.
+    func refresh() {
+        isEnabled = AIAccessCode.current() != nil
     }
 }

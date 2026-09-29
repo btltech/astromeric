@@ -11,13 +11,19 @@ struct TarotView: View {
     @State private var error: String?
     @ScaledMetric(relativeTo: .body) private var cardWidth: CGFloat = 200
 
-    private var adaptiveCardWidth: CGFloat { min(cardWidth, UIScreen.main.bounds.width * 0.58) }
+    /// Width this screen actually has. UIScreen.main.bounds is the physical
+    /// screen, which is wrong on devices with more than one display or a
+    /// resizable window (iPhone Duo folded/unfolded, iPad multitasking).
+    @State private var availableWidth: CGFloat = 390
+
+    private var adaptiveCardWidth: CGFloat { min(cardWidth, availableWidth * 0.58) }
     private var adaptiveCardHeight: CGFloat { adaptiveCardWidth * 1.5 }
     
     var body: some View {
         ZStack {
             CosmicBackgroundView(element: nil)
                 .ignoresSafeArea()
+                .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { availableWidth = $0 }
 
             ScrollView {
                 VStack(spacing: 24) {

@@ -88,6 +88,10 @@ struct AdvancedChartsView: View {
             .padding()
             .readableContainer()
         }
+        // Match the other pushed pages: a title and the app background.
+        .background(Color.appBackground.ignoresSafeArea())
+        .navigationTitle("section.charts.advanced.title".localized)
+        .navigationBarTitleDisplayMode(.inline)
     }
 }
 

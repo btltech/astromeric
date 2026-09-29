@@ -46,14 +46,14 @@ final class LearningProgressManagerTests: XCTestCase {
         manager.markComplete(moduleId: "astro-2")
         manager.markComplete(moduleId: "astro-3")
         let progress = manager.progress(for: LearningTrack.astrology101LessonIds)
-        XCTAssertEqual(progress, 3.0 / 12.0, accuracy: 0.001)
+        XCTAssertEqual(progress, 3.0 / Double(LearningTrack.astrology101LessonIds.count), accuracy: 0.001)
     }
     
     func testProgressReturnsOneWhenAllComplete() {
-        for id in LearningTrack.moonWisdomLessonIds {
+        for id in LearningTrack.signsAndElementsLessonIds {
             manager.markComplete(moduleId: id)
         }
-        let progress = manager.progress(for: LearningTrack.moonWisdomLessonIds)
+        let progress = manager.progress(for: LearningTrack.signsAndElementsLessonIds)
         XCTAssertEqual(progress, 1.0, accuracy: 0.001)
     }
     
@@ -63,7 +63,7 @@ final class LearningProgressManagerTests: XCTestCase {
     }
     
     func testProgressIgnoresUnrelatedCompletions() {
-        manager.markComplete(moduleId: "tarot-1")
+        manager.markComplete(moduleId: "num-1")
         let progress = manager.progress(for: LearningTrack.astrology101LessonIds)
         XCTAssertEqual(progress, 0.0)
     }
@@ -71,8 +71,8 @@ final class LearningProgressManagerTests: XCTestCase {
     // MARK: - Completed Count Tests
     
     func testCompletedCountReturnsCorrectCount() {
-        manager.markComplete(moduleId: "numerology-1")
-        manager.markComplete(moduleId: "numerology-3")
+        manager.markComplete(moduleId: "num-1")
+        manager.markComplete(moduleId: "num-3")
         let count = manager.completedCount(from: LearningTrack.numerologyBasicsLessonIds)
         XCTAssertEqual(count, 2)
     }
@@ -81,26 +81,31 @@ final class LearningProgressManagerTests: XCTestCase {
     
     func testResetAllClearsAllProgress() {
         manager.markComplete(moduleId: "astro-1")
-        manager.markComplete(moduleId: "tarot-1")
+        manager.markComplete(moduleId: "num-1")
         manager.resetAll()
         XCTAssertFalse(manager.isComplete(moduleId: "astro-1"))
-        XCTAssertFalse(manager.isComplete(moduleId: "tarot-1"))
+        XCTAssertFalse(manager.isComplete(moduleId: "num-1"))
         XCTAssertEqual(manager.completedModuleIds.count, 0)
     }
     
     // MARK: - Learning Track ID Tests
     
-    func testLearningTrackIdCounts() {
-        XCTAssertEqual(LearningTrack.astrology101LessonIds.count, 12)
-        XCTAssertEqual(LearningTrack.numerologyBasicsLessonIds.count, 8)
-        XCTAssertEqual(LearningTrack.moonWisdomLessonIds.count, 6)
-        XCTAssertEqual(LearningTrack.tarotMasteryLessonIds.count, 10)
-    }
-    
-    func testLearningTrackIdFormat() {
-        XCTAssertEqual(LearningTrack.astrology101LessonIds.first, "astro-1")
-        XCTAssertEqual(LearningTrack.astrology101LessonIds.last, "astro-12")
-        XCTAssertEqual(LearningTrack.numerologyBasicsLessonIds.first, "numerology-1")
-        XCTAssertEqual(LearningTrack.tarotMasteryLessonIds.last, "tarot-10")
+    func testEveryTrackLessonExists() {
+        // A track may only count lessons the app actually has; the old tracks
+        // advertised 36 lessons across four tracks against 14 real ones.
+        let vm = LearnVM()
+        let real = Set(["astrology", "numerology", "zodiac", "elements"]
+            .flatMap { vm.fallbackModules(for: $0) }
+            .map(\.id))
+        let tracks = [
+            LearningTrack.astrology101LessonIds,
+            LearningTrack.signsAndElementsLessonIds,
+            LearningTrack.numerologyBasicsLessonIds,
+        ]
+        for track in tracks {
+            XCTAssertFalse(track.isEmpty)
+            XCTAssertTrue(Set(track).isSubset(of: real), "missing: \(Set(track).subtracting(real))")
+        }
+        XCTAssertEqual(Set(tracks.flatMap { $0 }), real, "every lesson belongs to a track")
     }
 }

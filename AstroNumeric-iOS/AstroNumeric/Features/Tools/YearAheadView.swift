@@ -16,7 +16,9 @@ struct YearAheadView: View {
     @State private var showExplanation = false
     
     var body: some View {
-        NavigationStack {
+        // Pushed onto the caller's NavigationStack; a nested one here
+        // stacked two bars and made the top inset jump.
+        Group {
             ZStack {
                 CosmicBackgroundView(element: nil)
                     .ignoresSafeArea()
@@ -47,28 +49,31 @@ struct YearAheadView: View {
                 subtitle: "section.yearAhead.0.subtitle".localized
             )
 
-                            Button {
-                                Task { @MainActor in
-                                    await explain(forecast)
-                                }
-                            } label: {
-                                HStack(spacing: 8) {
-                                    if isExplaining {
-                                        ProgressView()
-                                            .scaleEffect(0.8)
-                                    } else {
-                                        Image(systemName: "sparkles")
+                            // AI explanations need the owner's access code; hidden elsewhere.
+                            if AIAvailability.shared.isEnabled {
+                                Button {
+                                    Task { @MainActor in
+                                        await explain(forecast)
                                     }
-                                    Text(isExplaining ? "tern.yearAhead.0a".localized : "tern.yearAhead.0b".localized)
-                                        .font(.subheadline.weight(.medium))
+                                } label: {
+                                    HStack(spacing: 8) {
+                                        if isExplaining {
+                                            ProgressView()
+                                                .scaleEffect(0.8)
+                                        } else {
+                                            Image(systemName: "sparkles")
+                                        }
+                                        Text(isExplaining ? "tern.yearAhead.0a".localized : "tern.yearAhead.0b".localized)
+                                            .font(.subheadline.weight(.medium))
+                                    }
+                                    .foregroundStyle(.purple)
+                                    .padding(.horizontal, 16)
+                                    .padding(.vertical, 10)
+                                    .background(Color.purple.opacity(0.15))
+                                    .clipShape(Capsule())
                                 }
-                                .foregroundStyle(.purple)
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 10)
-                                .background(Color.purple.opacity(0.15))
-                                .clipShape(Capsule())
+                                .disabled(isExplaining)
                             }
-                            .disabled(isExplaining)
 
                             // Life Phase — show FIRST for context
                             if let phase = lifePhaseData {
@@ -91,7 +96,7 @@ struct YearAheadView: View {
                                 VStack(alignment: .leading, spacing: 8) {
                                     Text("ui.yearAhead.0".localized)
                                         .font(.headline)
-                                    Text(forecast.solarReturn.date)
+                                    Text(Self.readableDate(forecast.solarReturn.date))
                                         .font(.subheadline)
                                     Text(forecast.solarReturn.description)
                                         .font(.caption)
@@ -111,7 +116,7 @@ struct YearAheadView: View {
                                                     Text(eclipseDisplayTitle(eclipse))
                                                         .font(.subheadline.weight(.semibold))
                                                     Spacer()
-                                                    Text(eclipse.date)
+                                                    Text(Self.readableDate(eclipse.date))
                                                         .font(.caption.monospaced())
                                                         .foregroundStyle(Color.textSecondary)
                                                 }
@@ -175,7 +180,7 @@ struct YearAheadView: View {
                                                     Text("• \(ingress.planet) → \(ingress.sign)")
                                                         .font(.subheadline)
                                                     Spacer()
-                                                    Text(ingress.date)
+                                                    Text(Self.readableDate(ingress.date))
                                                         .font(.caption.monospaced())
                                                         .foregroundStyle(Color.textSecondary)
                                                 }
@@ -226,7 +231,9 @@ struct YearAheadView: View {
                                         CardView {
                                             VStack(alignment: .leading, spacing: 6) {
                                                 HStack {
-                                                    Text("\(month.monthName) \(month.year)")
+                                                    // String(year): an interpolated Int in Text is
+                                                    // number-formatted, giving "January 2,026".
+                                                    Text("\(month.monthName) \(String(month.year))")
                                                         .font(.headline)
                                                     Spacer()
                                                     Text(String(format: "fmt.yearAhead.1".localized, "\(month.personalMonth)"))
@@ -321,6 +328,17 @@ struct YearAheadView: View {
     }
 
     @MainActor
+    /// "2026-02-17" -> "17 Feb 2026" in the user's locale; unparseable text is shown as-is.
+    static func readableDate(_ isoDay: String) -> String {
+        let parser = DateFormatter()
+        parser.calendar = Calendar(identifier: .gregorian)
+        parser.locale = Locale(identifier: "en_US_POSIX")
+        parser.timeZone = TimeZone(identifier: "UTC")
+        parser.dateFormat = "yyyy-MM-dd"
+        guard let date = parser.date(from: String(isoDay.prefix(10))) else { return isoDay }
+        return date.formatted(Date.FormatStyle(date: .abbreviated, time: .omitted, timeZone: TimeZone(identifier: "UTC")!))
+    }
+
     private func explain(_ forecast: YearAheadForecast, forceRefresh: Bool = false) async {
         isExplaining = true
         defer { isExplaining = false }

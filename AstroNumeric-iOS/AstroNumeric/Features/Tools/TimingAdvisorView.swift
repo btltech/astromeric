@@ -130,7 +130,8 @@ struct TimingAdvisorView: View {
                         .font(.title2)
 
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("ui.timingAdvisor.0".localized)
+                        // Was "ui.timingAdvisor.0" ("Disclaimer"), the wrong string.
+                        Text("ui.timingAdvisor.8".localized)
                             .font(.sectionTitle)
                             .foregroundStyle(Color.textPrimary)
 
@@ -296,7 +297,15 @@ struct TimingAdvisorView: View {
                     Text(String(format: "fmt.timingAdvisor.0".localized, "\(TimingActivity(rawValue: result.activity)?.displayName ?? selectedActivity?.displayName ?? "Activity")"))
                         .font(.sectionTitle)
                     Spacer()
-                    PremiumBadge(text: result.rating)
+                }
+
+                // The rating is a sentence, so it reads as text; squeezed into
+                // a badge it wrapped to four lines and crushed the title.
+                if !result.rating.isEmpty {
+                    Text(result.rating)
+                        .font(.subheadline)
+                        .foregroundStyle(Color.textSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
                 
                 // Score
@@ -310,9 +319,12 @@ struct TimingAdvisorView: View {
                         .foregroundStyle(result.score > 0.7 ? .green : result.score > 0.4 ? .orange : .red)
                 }
 
-                Text(result.generatedAt)
-                    .font(.body)
-                    .foregroundStyle(Color.textSecondary)
+                // generatedAt is an ISO timestamp; show it as a readable date.
+                if let calculated = parseISODate(result.generatedAt) {
+                    Text(calculated.formatted(date: .abbreviated, time: .shortened))
+                        .font(.caption)
+                        .foregroundStyle(Color.textMuted)
+                }
             }
         }
     }

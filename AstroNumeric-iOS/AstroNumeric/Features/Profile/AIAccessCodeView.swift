@@ -36,6 +36,7 @@ struct AIAccessCodeView: View {
                 if isEnabled {
                     Button("Turn off live AI", role: .destructive) {
                         AIAccessCode.clear()
+                        AIAvailability.shared.refresh()
                         code = ""
                         dismiss()
                     }
@@ -50,6 +51,7 @@ struct AIAccessCodeView: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
                         if AIAccessCode.set(code) {
+                            AIAvailability.shared.refresh()
                             dismiss()
                         } else {
                             saveFailed = true

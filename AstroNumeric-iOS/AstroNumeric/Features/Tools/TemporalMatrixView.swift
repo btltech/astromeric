@@ -12,6 +12,8 @@ struct TemporalMatrixView: View {
     @State private var snapshots: [Date: CalendarOracle.HorarySnapshot] = [:]
     @State private var isLoading = true
     @State private var permissionDenied = false
+    /// Calendar access not yet decided: explain first, ask only on tap.
+    @State private var needsConsent = false
 
     private var prefersStackedEventLayout: Bool {
         dynamicTypeSize.isAccessibilitySize
@@ -39,7 +41,9 @@ struct TemporalMatrixView: View {
                 subtitle: "section.temporalMatrix.0.subtitle".localized
             )
                     
-                    if isLoading {
+                    if needsConsent {
+                        connectSection
+                    } else if isLoading {
                         loadingSection
                     } else if permissionDenied {
                         permissionDeniedSection
@@ -56,7 +60,13 @@ struct TemporalMatrixView: View {
         .navigationTitle("screen.temporalMatrix".localized)
         .navigationBarTitleDisplayMode(.inline)
         .task {
-            await loadEvents()
+            // Don't fire the system prompt the moment the screen opens.
+            if EKEventStore.authorizationStatus(for: .event) == .notDetermined {
+                needsConsent = true
+                isLoading = false
+            } else {
+                await loadEvents()
+            }
         }
     }
     
@@ -89,6 +99,34 @@ struct TemporalMatrixView: View {
     
     // MARK: - Permission Denied
     
+    private var connectSection: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "calendar.badge.plus")
+                .font(.largeTitle)
+                .foregroundStyle(Color.accentPrimary)
+            Text("ui.temporalMatrix.8".localized)
+                .font(.headline)
+            Text("ui.temporalMatrix.9".localized)
+                .font(.subheadline)
+                .foregroundStyle(Color.textSecondary)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Button("ui.temporalMatrix.10".localized) {
+                needsConsent = false
+                Task { await loadEvents() }
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(.accentPrimary)
+        }
+        .padding()
+        .frame(maxWidth: .infinity)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(.ultraThinMaterial)
+        )
+    }
+
     private var permissionDeniedSection: some View {
         VStack(spacing: 12) {
             Image(systemName: "calendar.badge.exclamationmark")

@@ -93,8 +93,15 @@ final class ChartVM {
         if let moon = planets.first(where: { $0.name.lowercased() == "moon" }) {
             result.append(BigThreeItem(name: "Moon", sign: moon.sign, emoji: "🌙"))
         }
-        if let asc = planets.first(where: { $0.name.lowercased().contains("ascendant") || $0.name.lowercased() == "rising" }) {
+        // The Ascendant isn't in the planet list the API returns; the 1st house
+        // cusp is the same point, so fall back to it (and to a named point).
+        let isAscendant: (String) -> Bool = { $0.lowercased().contains("ascendant") || $0.lowercased() == "rising" }
+        if let asc = planets.first(where: { isAscendant($0.name) }) {
             result.append(BigThreeItem(name: "Rising", sign: asc.sign, emoji: "⬆️"))
+        } else if let asc = chartData?.points?.first(where: { isAscendant($0.name) }) {
+            result.append(BigThreeItem(name: "Rising", sign: asc.sign, emoji: "⬆️"))
+        } else if let firstHouse = chartData?.houses?.first(where: { $0.house == 1 }) {
+            result.append(BigThreeItem(name: "Rising", sign: firstHouse.sign, emoji: "⬆️"))
         }
         
         return result

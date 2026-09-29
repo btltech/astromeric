@@ -70,3 +70,20 @@ def test_master_number_life_paths_use_their_root_pairing():
     assert get_life_path_compat(11, 2)["harmony"] == LIFE_PATH_COMPAT[(2, 2)]["harmony"]
     assert get_life_path_compat(22, 8)["harmony"] == LIFE_PATH_COMPAT[(4, 8)]["harmony"]
     assert get_life_path_compat(33, 2)["harmony"] == LIFE_PATH_COMPAT[(2, 6)]["harmony"]
+
+
+def test_synthesis_names_the_pinnacle_you_are_in_now():
+    # Born 1977: pinnacle 1 runs to about age 30, pinnacle 4 covers age 49.
+    data = build_numerology(
+        "Abiola Bolaji", "1977-07-02", datetime(2026, 9, 29, tzinfo=timezone.utc)
+    )
+    current = next(
+        p
+        for p in data["pinnacles"]
+        if p["start_year"] <= 2026 and (p["end_year"] is None or 2026 <= p["end_year"])
+    )
+    assert current["index"] == 4
+    assert f"Pinnacle {current['number']}," in data["synthesis"]["current_focus"]
+    first = data["pinnacles"][0]
+    if first["number"] != current["number"]:
+        assert f"Pinnacle {first['number']}," not in data["synthesis"]["current_focus"]

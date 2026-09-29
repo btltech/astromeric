@@ -633,7 +633,7 @@ def _generate_key_themes(
             themes.append(eclipse_template[0].format(count=len(eclipse_impacts)))
         else:
             themes.append(
-                f"{len(eclipse_impacts)} eclipses activate your chart - significant shifts ahead"
+                f"{len(eclipse_impacts)} {'eclipse activates' if len(eclipse_impacts) == 1 else 'eclipses activate'} your chart - significant shifts ahead"
             )
 
     # Major ingress themes
@@ -876,7 +876,9 @@ def get_life_phase(date_of_birth: str, lang: str = "en") -> Dict:
                 "name": name,
                 "begins_in_years": years_until,
                 "begins_at_age": min_age,
-                "preview": narrative[:120] + "…",
+                # Whole narrative (two sentences): cutting at 120 characters
+                # ended mid-word, e.g. "…evaluate the structures of you…".
+                "preview": narrative,
             }
             break
 

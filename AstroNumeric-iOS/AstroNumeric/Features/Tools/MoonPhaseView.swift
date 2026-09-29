@@ -127,15 +127,20 @@ struct MoonPhaseView: View {
                 )
                 .frame(width: 150, height: 150)
                 .overlay(
-                    // Illuminated portion
+                    // Lit disc with a dark disc slid across it, clipped to the
+                    // moon: gives a curved terminator (a rectangular mask drew
+                    // a straight edge). 0% = fully covered, 100% = clear;
+                    // waxing is lit on the right, so the shadow sits left.
                     Circle()
                         .fill(.white)
                         .frame(width: 150, height: 150)
-                        .mask(
-                            Rectangle()
-                                .frame(width: 150 * illumination)
-                                .offset(x: currentPhase.isWaxing ? -75 + (75 * illumination) : 75 - (75 * illumination))
+                        .overlay(
+                            Circle()
+                                .fill(Color.black.opacity(0.85))
+                                .frame(width: 150, height: 150)
+                                .offset(x: (currentPhase.isWaxing ? -150 : 150) * illumination)
                         )
+                        .clipShape(Circle())
                 )
                 .shadow(color: .white.opacity(0.3), radius: 20)
         }
@@ -232,7 +237,8 @@ struct MoonPhaseView: View {
                 currentPhase = phase
             }
             if let illum = moonData?.illumination {
-                illumination = illum
+                // The API sends a percentage (92.2); this view works in 0-1.
+                illumination = min(max(illum > 1 ? illum / 100 : illum, 0), 1)
             }
             
             // Fetch ritual suggestion

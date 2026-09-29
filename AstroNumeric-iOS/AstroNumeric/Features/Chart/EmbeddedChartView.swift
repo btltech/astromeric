@@ -168,7 +168,7 @@ struct EmbeddedChartView: View {
                         Text("\(aspect.planet1)")
                             .font(.subheadline.weight(.medium))
                         
-                        Text(aspect.aspectType)
+                        Text(aspect.aspectType.aspectDisplayName)
                             .font(.caption)
                             .foregroundStyle(Color.textSecondary)
                         
@@ -219,7 +219,8 @@ struct EmbeddedChartView: View {
                                 .font(.caption.bold())
                             
                             if let degree = house.degree {
-                                Text(String(format: "%.0f°", degree))
+                                // Truncate like the rest of the chart: rounding showed 29.96° as "30°".
+                                Text("\(Int(degree))°")
                                     .font(.meta)
                                     .foregroundStyle(Color.textSecondary)
                             }
@@ -343,13 +344,16 @@ private struct ChartAnchorCard: View {
                 .font(.metadata.weight(.semibold))
                 .foregroundStyle(Color.textMuted)
 
+            // One line, shrinking to fit: "Capricorn" was hyphenated across
+            // two lines, leaving the three tiles different heights.
             Text(item.sign)
                 .font(.cardTitle)
                 .foregroundStyle(Color.textPrimary)
                 .multilineTextAlignment(.center)
-                .minimumScaleFactor(0.8)
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
         }
-        .frame(maxWidth: .infinity)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding(.vertical, 12)
         .padding(.horizontal, 8)
         .background(
@@ -369,4 +373,12 @@ private struct ChartAnchorCard: View {
     EmbeddedChartView()
         .environment(AppStore.shared)
         .preferredColorScheme(.dark)
+}
+
+extension String {
+    /// "semi_square" -> "Semi-square": API aspect keys as readable names.
+    var aspectDisplayName: String {
+        let words = replacingOccurrences(of: "_", with: "-")
+        return words.prefix(1).uppercased() + words.dropFirst()
+    }
 }

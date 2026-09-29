@@ -8,7 +8,7 @@ Supports both Pythagorean (default) and Chaldean systems.
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from .engine.constants import (
     CHALDEAN_LETTER_VALUES,
@@ -174,12 +174,27 @@ def _build_dominant_numbers(core: Dict, cycles: Dict) -> List[Dict]:
     ]
 
 
+def _current_pinnacle(pinnacles: List[Dict], year: Optional[int]) -> Dict:
+    """The pinnacle whose years include `year`.
+
+    The synthesis used to name the first pinnacle whatever the person's age,
+    e.g. a birth-to-30 pinnacle for someone of 49.
+    """
+    if year is not None:
+        for pinnacle in pinnacles:
+            start, end = pinnacle.get("start_year"), pinnacle.get("end_year")
+            if start is not None and start <= year and (end is None or year <= end):
+                return pinnacle
+    return pinnacles[0]
+
+
 def _build_synthesis(
     core: Dict,
     cycles: Dict,
     karmic_debts: List[Dict],
     pinnacles: List[Dict],
     challenges: List[Dict],
+    year: Optional[int] = None,
 ) -> Dict:
     life_path_data = core["life_path"]
     expression_data = core["expression"]
@@ -224,9 +239,10 @@ def _build_synthesis(
     )
 
     if pinnacles:
+        pinnacle = _current_pinnacle(pinnacles, year)
         current_focus += (
-            f" Your longer arc is still shaped by Pinnacle {pinnacles[0].get('number', 0)}, "
-            f"which emphasizes {_sentence_fragment(pinnacles[0].get('short_meaning') or pinnacles[0].get('description', ''), 'long-term development')}"
+            f" Your longer arc is still shaped by Pinnacle {pinnacle.get('number', 0)}, "
+            f"which emphasizes {_sentence_fragment(pinnacle.get('short_meaning') or pinnacle.get('description', ''), 'long-term development')}"
             f"."
         )
 
@@ -296,7 +312,9 @@ def build_numerology(
     karmic_debts = _find_karmic_debts(name, dob)
     pinnacles = calculate_pinnacles(dob)
     challenges = calculate_challenges(dob)
-    synthesis = _build_synthesis(core, cycles, karmic_debts, pinnacles, challenges)
+    synthesis = _build_synthesis(
+        core, cycles, karmic_debts, pinnacles, challenges, year=ref.year
+    )
     return {
         "core_numbers": core,
         "cycles": cycles,

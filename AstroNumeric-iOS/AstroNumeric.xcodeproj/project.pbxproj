@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		0294D1CCDB97FA745915EF51 /* seleapsec.txt in Resources */ = {isa = PBXBuildFile; fileRef = 14E73AE50849E9AF48A01820 /* seleapsec.txt */; };
-		05137B45EEFE4AA5E54D4B92 /* TabSelectedDot.swift in Sources */ = {isa = PBXBuildFile; fileRef = F91689FE3E16FB74FFE758F7 /* TabSelectedDot.swift */; };
 		0537B91774AF5C4BADC5A204 /* TLDRBoxView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27FD1DC17E5975AB92C8F54E /* TLDRBoxView.swift */; };
 		06190B7561E11840CE2401B0 /* OracleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A597391D3D3DC2BF25700234 /* OracleView.swift */; };
 		09E6BD2C39C649AA86EEA35F /* AppServices.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F2B0BE1BC15ADD653CA4480 /* AppServices.swift */; };
@@ -396,7 +395,6 @@
 		F5B129D14AB488CCD19BB676 /* PremiumSurface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PremiumSurface.swift; sourceTree = "<group>"; };
 		F5F4C7DD7085FF3B557420AE /* ProfileExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileExporter.swift; sourceTree = "<group>"; };
 		F64FA00F412D1933FD143E93 /* swedate.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = swedate.c; sourceTree = "<group>"; };
-		F91689FE3E16FB74FFE758F7 /* TabSelectedDot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabSelectedDot.swift; sourceTree = "<group>"; };
 		F959CA7F381C942022B8AA66 /* CoreModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreModels.swift; sourceTree = "<group>"; };
 		FB5A3BFC50283DC804AB81B2 /* AffirmationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AffirmationView.swift; sourceTree = "<group>"; };
 		FE0463C05FB09223C5C58961 /* swephlib.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = swephlib.h; sourceTree = "<group>"; };
@@ -487,7 +485,6 @@
 				7CCF694F8CA34C87CAA57128 /* PremiumSkeleton.swift */,
 				F5B129D14AB488CCD19BB676 /* PremiumSurface.swift */,
 				A96E720F3EBDAB01700D9109 /* RevealAnimations.swift */,
-				F91689FE3E16FB74FFE758F7 /* TabSelectedDot.swift */,
 				F3C1FA259EF4E1B04087484B /* TimeScrubber.swift */,
 			);
 			path = SharedComponents;
@@ -1294,7 +1291,6 @@
 				8949B75323D05BC1AA4C68C5 /* SynastryChartView.swift in Sources */,
 				CF3D879247DD859DE37A84FC /* SynastryRadar.swift in Sources */,
 				0537B91774AF5C4BADC5A204 /* TLDRBoxView.swift in Sources */,
-				05137B45EEFE4AA5E54D4B92 /* TabSelectedDot.swift in Sources */,
 				804667322644AAAC0A983EB2 /* TarotView.swift in Sources */,
 				FD1C5FE63B7B50A8C8D799B0 /* TemporalMatrixView.swift in Sources */,
 				790311FA49A3A5C7099D5860 /* TimeScrubber.swift in Sources */,
