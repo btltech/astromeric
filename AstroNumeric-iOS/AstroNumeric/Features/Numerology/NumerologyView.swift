@@ -53,12 +53,17 @@ struct NumerologyView: View {
                                     
                                     // Core Numbers
                                     if let core = data.coreNumbers {
-                                        coreNumbersSection(core)
+                                        coreNumbersSection(core, lifelong: data.lifelong ?? [:])
                                     }
                                     
                                     // Cycles
                                     if let cycles = data.cycles {
-                                        cyclesSection(cycles, dailyReading: data.dailyReading)
+                                        cyclesSection(
+                                            cycles,
+                                            dailyReading: data.dailyReading,
+                                            yearReading: data.yearReading,
+                                            monthReading: data.monthReading
+                                        )
                                     }
 
                                     // AI Explain button — placed after cycles so user has full context first
@@ -448,29 +453,34 @@ struct NumerologyView: View {
         }
     }
     
-    private func coreNumbersSection(_ core: CoreNumbers) -> some View {
+    private func coreNumbersSection(_ core: CoreNumbers, lifelong: [String: LifelongNumerologyReading]) -> some View {
         VStack(spacing: 16) {
             Text("ui.numerology.10".localized)
                 .font(.headline)
             
             LazyVGrid(columns: numerologyColumns, spacing: 12) {
                 if let lifePath = core.lifePath {
-                    NumberCardView(title: "Life Path", number: lifePath.number, meaning: lifePath.meaning)
+                    NumberCardView(title: "Life Path", number: lifePath.number, meaning: lifePath.meaning, reading: lifelong["life_path"])
                 }
                 if let expression = core.expression {
-                    NumberCardView(title: "Expression", number: expression.number, meaning: expression.meaning)
+                    NumberCardView(title: "Expression", number: expression.number, meaning: expression.meaning, reading: lifelong["expression"])
                 }
                 if let soulUrge = core.soulUrge {
-                    NumberCardView(title: "Soul Urge", number: soulUrge.number, meaning: soulUrge.meaning)
+                    NumberCardView(title: "Soul Urge", number: soulUrge.number, meaning: soulUrge.meaning, reading: lifelong["soul_urge"])
                 }
                 if let personality = core.personality {
-                    NumberCardView(title: "Personality", number: personality.number, meaning: personality.meaning)
+                    NumberCardView(title: "Personality", number: personality.number, meaning: personality.meaning, reading: lifelong["personality"])
                 }
             }
         }
     }
     
-    private func cyclesSection(_ cycles: NumerologyCycles, dailyReading: DailyNumerologyReading?) -> some View {
+    private func cyclesSection(
+        _ cycles: NumerologyCycles,
+        dailyReading: DailyNumerologyReading?,
+        yearReading: String?,
+        monthReading: String?
+    ) -> some View {
         CardView {
             VStack(alignment: .leading, spacing: 12) {
                 Text("ui.numerology.11".localized)
@@ -513,16 +523,18 @@ struct NumerologyView: View {
                     CycleRow(
                         label: "Personal Month",
                         number: month.number,
-                        meaning: month.meaning,
-                        note: "Sets the monthly backdrop."
+                        meaning: monthReading ?? month.meaning,
+                        note: "Sets the monthly backdrop.",
+                        showsFullText: monthReading != nil
                     )
                 }
                 if let year = cycles.personalYear {
                     CycleRow(
                         label: "Personal Year",
                         number: year.number,
-                        meaning: year.meaning,
-                        note: "Your overarching yearly theme."
+                        meaning: yearReading ?? year.meaning,
+                        note: "Your overarching yearly theme.",
+                        showsFullText: yearReading != nil
                     )
                 }
             }
@@ -565,10 +577,10 @@ struct NumerologyView: View {
                         Text(debt.theme)
                             .font(.caption.italic())
                             .foregroundStyle(Color.textSecondary)
-                        Text(debt.description)
+                        Text(debt.reading ?? debt.description)
                             .font(.caption)
                             .foregroundStyle(Color.textPrimary)
-                            .lineLimit(4)
+                            .lineLimit(debt.reading == nil ? 4 : nil)
                     }
                     if debt.id != debts.last?.id {
                         Divider()
@@ -616,11 +628,11 @@ struct NumerologyView: View {
                                             .foregroundStyle(Color.textSecondary)
                                     }
                                 }
-                                if let meaning = pinnacle.meaning, !meaning.isEmpty {
-                                    Text(meaning)
+                                if let text = pinnacle.reading ?? pinnacle.meaning, !text.isEmpty {
+                                    Text(text)
                                         .font(.caption)
                                         .foregroundStyle(Color.textSecondary)
-                                        .lineLimit(2)
+                                        .lineLimit(pinnacle.reading == nil ? 2 : nil)
                                 }
                             }
                         }
@@ -650,8 +662,8 @@ struct NumerologyView: View {
                                     .foregroundStyle(Color.textSecondary)
                             }
                         }
-                        if let meaning = challenge.meaning {
-                            Text(meaning)
+                        if let text = challenge.reading ?? challenge.meaning {
+                            Text(text)
                                 .font(.caption)
                                 .foregroundStyle(Color.textSecondary)
                         }
@@ -761,6 +773,7 @@ struct NumberCardView: View {
     let title: String
     let number: Int
     let meaning: String?
+    var reading: LifelongNumerologyReading? = nil
     
     @State private var showTooltip = false
     
@@ -781,7 +794,7 @@ struct NumberCardView: View {
                         )
                     )
                 
-                if meaning != nil {
+                if meaning != nil || reading != nil {
                     Button {
                         showTooltip = true
                     } label: {
@@ -795,7 +808,9 @@ struct NumberCardView: View {
             }
         }
         .sheet(isPresented: $showTooltip) {
-            if let meaning {
+            if let reading {
+                TooltipSheet(title: "\(title) \(number): \(reading.title)", content: reading.text)
+            } else if let meaning {
                 TooltipSheet(title: "\(title) Number \(number)", content: meaning)
             }
         }
@@ -809,6 +824,8 @@ struct CycleRow: View {
     let number: Int
     let meaning: String?
     var note: String? = nil
+    /// Written readings are shown in full; short meanings stay clipped.
+    var showsFullText = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -825,7 +842,7 @@ struct CycleRow: View {
                 Text(meaning)
                     .font(.caption)
                     .foregroundStyle(Color.textSecondary)
-                    .lineLimit(3)
+                    .lineLimit(showsFullText ? nil : 3)
             }
             if let note, !note.isEmpty {
                 Text(note)
@@ -860,7 +877,7 @@ struct TooltipSheet: View {
                 Button("action.done".localized) { dismiss() }
             }
         }
-        .presentationDetents([.medium])
+        .presentationDetents([.medium, .large])
     }
 }
 

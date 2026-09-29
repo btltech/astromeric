@@ -9,6 +9,7 @@ from __future__ import annotations
 from typing import Any, Dict, List
 
 from ..engine.compatibility import calculate_combined_compatibility
+from ..interpretation.numerology_library import life_path_pair_reading
 
 
 def build_compatibility(
@@ -168,7 +169,8 @@ def _build_dimensions(score_breakdown: Dict, result: Dict) -> List[Dict[str, Any
             {
                 "name": "Life Path",
                 "score": float(lp_score),  # 0-100 scale
-                "interpretation": f"Life Paths {lp1} and {lp2} - {numerology.get('advice', '')}",
+                "interpretation": life_path_pair_reading(lp1, lp2)
+                or f"Life Paths {lp1} and {lp2} - {numerology.get('advice', '')}",
             }
         )
 

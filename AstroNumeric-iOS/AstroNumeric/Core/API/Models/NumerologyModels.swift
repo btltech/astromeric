@@ -90,6 +90,12 @@ struct NumerologyData: Codable {
     let numerologyNumbers: [String: Int]?
     /// Today's full written reading. Absent from older servers and caches.
     let dailyReading: DailyNumerologyReading?
+    /// Full lifelong readings keyed by position ("life_path", "expression", ...).
+    let lifelong: [String: LifelongNumerologyReading]?
+    /// How this Personal Year runs for this Life Path.
+    let yearReading: String?
+    /// What this Personal Month adds to the Personal Year.
+    let monthReading: String?
     let pinnacles: [Pinnacle]?
     let challenges: [Challenge]?
     let karmicDebts: [KarmicDebt]?
@@ -109,6 +115,9 @@ struct NumerologyData: Codable {
         case numerologyInsights = "numerology_insights"
         case numerologyNumbers = "numerology_numbers"
         case dailyReading = "daily_reading"
+        case lifelong
+        case yearReading = "year_reading"
+        case monthReading = "month_reading"
         case pinnacles
         case challenges
         case karmicDebts = "karmic_debts"
@@ -228,6 +237,12 @@ struct NumerologyData: Codable {
     }
 }
 
+struct LifelongNumerologyReading: Codable {
+    let number: Int
+    let title: String
+    let text: String
+}
+
 struct DailyNumerologyReading: Codable {
     let text: String
     let lens: String
@@ -312,6 +327,8 @@ struct Pinnacle: Codable, Identifiable {
     let number: Int
     let ages: String?
     let meaning: String?
+    /// Full text; `meaning` is the short line.
+    let reading: String?
 
     // Use index as the SwiftUI stable ID so duplicate numerological values
     // (e.g. two pinnacles both equal to 8) never collapse into one row.
@@ -323,6 +340,7 @@ struct Challenge: Codable, Identifiable {
     let number: Int
     let ages: String?
     let meaning: String?
+    let reading: String?
 
     var id: Int { index ?? number }
 }
@@ -339,6 +357,8 @@ struct KarmicDebt: Codable, Identifiable {
     let theme: String
     /// Full description of the karmic lesson
     let description: String
+    /// Longer written reading, when the server has one
+    let reading: String?
 }
 
 struct NumerologySynthesis: Codable {
