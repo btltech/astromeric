@@ -4,6 +4,7 @@
 // pipeline with EphemerisEngine telemetry; otherwise it answers on-device
 // from the Horary rules alone and the question never leaves the phone.
 
+import CoreLocation
 import SwiftUI
 import UIKit
 
@@ -316,11 +317,14 @@ struct OracleView: View {
         
         defer { isLoading = false }
         
-        // 1. Capture cosmic state at this exact moment
+        // 1. Capture cosmic state at this exact moment. Planetary hours run
+        //    from local sunrise and sunset, so time them to where the phone
+        //    is; fall back to the birthplace if location isn't allowed.
+        let here = await OracleLocation.shared.current()
         let snapshot = await CalendarOracle.shared.snapshot(
             at: Date(),
-            latitude: profile.latitude,
-            longitude: profile.longitude
+            latitude: here?.coordinate.latitude ?? profile.latitude,
+            longitude: here?.coordinate.longitude ?? profile.longitude
         )
         
         // Without the owner's AI access, answer from the Horary rules on the
@@ -469,6 +473,71 @@ struct OracleView: View {
             question: question.trimmingCharacters(in: .whitespacesAndNewlines),
             snapshot: snapshot
         )
+    }
+}
+
+// MARK: - Where the phone is
+
+/// Finds the phone's approximate location once, to time the Oracle's
+/// planetary hours to local sunrise and sunset. Asks permission the first
+/// time; the location is used on the device and never sent anywhere.
+@MainActor
+final class OracleLocation: NSObject, CLLocationManagerDelegate {
+    static let shared = OracleLocation()
+
+    private let manager = CLLocationManager()
+    private var locationWaiter: CheckedContinuation<CLLocation?, Never>?
+    private var permissionWaiter: CheckedContinuation<Void, Never>?
+
+    override private init() {
+        super.init()
+        manager.delegate = self
+        // City-level is plenty for sunrise and sunset, and quicker to get.
+        manager.desiredAccuracy = kCLLocationAccuracyKilometer
+    }
+
+    func current() async -> CLLocation? {
+        if manager.authorizationStatus == .notDetermined {
+            await withCheckedContinuation { waiter in
+                permissionWaiter = waiter
+                manager.requestWhenInUseAuthorization()
+            }
+        }
+        let status = manager.authorizationStatus
+        guard status == .authorizedWhenInUse || status == .authorizedAlways else { return nil }
+        // Sunrise barely moves within an hour or a few miles, so reuse a recent fix.
+        if let recent = manager.location, recent.timestamp.timeIntervalSinceNow > -3600 {
+            return recent
+        }
+        guard locationWaiter == nil else { return manager.location }
+        return await withCheckedContinuation { waiter in
+            locationWaiter = waiter
+            manager.requestLocation()
+        }
+    }
+
+    nonisolated func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        let status = manager.authorizationStatus
+        Task { @MainActor in
+            guard status != .notDetermined else { return }
+            permissionWaiter?.resume()
+            permissionWaiter = nil
+        }
+    }
+
+    nonisolated func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        let latest = locations.last
+        Task { @MainActor in
+            locationWaiter?.resume(returning: latest)
+            locationWaiter = nil
+        }
+    }
+
+    nonisolated func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        Task { @MainActor in
+            locationWaiter?.resume(returning: nil)
+            locationWaiter = nil
+        }
     }
 }
 
