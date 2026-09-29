@@ -5,6 +5,7 @@ from starlette.testclient import TestClient
 
 from backend.app.main import app
 from backend.app.middleware.rate_limit import (
+    GENERAL_DAILY_LIMIT,
     gemini_daily_limiter,
     general_daily_limiter,
     login_limiter,
@@ -46,8 +47,8 @@ def test_gemini_api_daily_rate_limiting():
 
 
 def test_general_services_daily_rate_limiting():
-    # General services allow 3 requests then block the 4th
-    for _ in range(3):
+    # General services allow GENERAL_DAILY_LIMIT requests then block the next
+    for _ in range(GENERAL_DAILY_LIMIT):
         response = client.post("/v2/natal", json={})
         assert response.status_code != 429
 
@@ -60,15 +61,15 @@ def test_general_services_daily_rate_limiting():
 
 
 def test_auth_endpoints_do_not_consume_general_quota():
-    # Auth endpoints do not consume the general 3/day quota
+    # Auth endpoints do not consume the general daily quota
     # Hit auth endpoints multiple times
     for _ in range(4):
         response = client.post("/v2/auth/login", json={})
         # Should not get 429 (since login limit is 5)
         assert response.status_code != 429
 
-    # The general 3/day quota should still be completely free
-    for _ in range(3):
+    # The general daily quota should still be completely free
+    for _ in range(GENERAL_DAILY_LIMIT):
         response = client.post("/v2/natal", json={})
         assert response.status_code != 429
 
@@ -85,8 +86,8 @@ def test_bypass_routes_are_never_blocked():
 
 
 def test_unknown_api_routes_fall_under_general_limit():
-    # Unknown API routes also fall under the 3/day general limit
-    for _ in range(3):
+    # Unknown API routes also fall under the general daily limit
+    for _ in range(GENERAL_DAILY_LIMIT):
         response = client.get("/v2/nonexistent-route-random-xyz")
         assert response.status_code == 404
 
@@ -96,7 +97,7 @@ def test_unknown_api_routes_fall_under_general_limit():
 
 
 def test_ios_requests_bypass_daily_limits():
-    # iOS requests bypass the 1/day Gemini limit and 3/day service limit
+    # iOS requests bypass the 1/day Gemini limit and the daily service limit
     headers = {"X-Client-Platform": "ios"}
 
     # 1. Gemini AI endpoint (allows more than 1)
@@ -104,7 +105,7 @@ def test_ios_requests_bypass_daily_limits():
         response = client.post("/v2/ai/explain", json={}, headers=headers)
         assert response.status_code != 429
 
-    # 2. General core services (allows more than 3)
-    for _ in range(5):
+    # 2. General core services (allows more than the website's daily limit)
+    for _ in range(GENERAL_DAILY_LIMIT + 5):
         response = client.post("/v2/natal", json={}, headers=headers)
         assert response.status_code != 429

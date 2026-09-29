@@ -266,6 +266,15 @@ describe('LearnView', () => {
       ).toBeTruthy();
     });
   });
+
+  it('shows the full shared lessons without waiting on the API', () => {
+    renderWithProviders(<LearnView />);
+
+    // The first astrology lesson is ~880 words, so about 4 minutes, not the
+    // 1-minute stub the page used to fall back to when the API was limited.
+    expect(screen.getAllByText('What is Astrology?').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('4 min read').length).toBeGreaterThan(0);
+  });
 });
 
 // ============================================

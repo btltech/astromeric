@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+import lessonLibrary from '../../backend/app/interpretation/library/lessons.json';
 import {
   fetchLearningGlossary,
-  fetchLearningModules,
   type LearningGlossaryEntry,
   type LearningModule,
 } from '../api/client';
@@ -50,185 +50,20 @@ const learnCategories: LearnCategory[] = [
   },
 ];
 
-const fallbackModulesByCategory: Record<LearnCategoryId, LearningModule[]> = {
-  astrology: [
-    {
-      id: 'astro-1',
-      title: 'What is Astrology?',
-      description: 'Understand the system before trying to interpret the signal.',
-      category: 'astrology',
-      difficulty: 'beginner',
-      duration_minutes: 5,
-      content:
-        'Astrology treats the sky as a symbolic map. The point is not decoration. The point is learning how planets, signs, houses, and aspects combine into a readable pattern you can actually use.',
-      keywords: ['astrology', 'basics', 'patterns'],
-      related_modules: ['astro-2', 'astro-3'],
-      item_count: 3,
-    },
-    {
-      id: 'astro-2',
-      title: 'The Birth Chart',
-      description: 'Read the chart as a system instead of a pile of isolated facts.',
-      category: 'astrology',
-      difficulty: 'beginner',
-      duration_minutes: 8,
-      content:
-        'A natal chart is a snapshot of the sky at birth. Signs describe style, planets describe functions, houses describe life areas, and aspects describe relationships between signals. Meaning comes from the combination.',
-      keywords: ['birth chart', 'natal chart', 'houses'],
-      related_modules: ['astro-1', 'astro-3'],
-      item_count: 3,
-    },
-    {
-      id: 'astro-3',
-      title: 'Planets and Meanings',
-      description: 'Know what each planetary voice is actually responsible for.',
-      category: 'astrology',
-      difficulty: 'intermediate',
-      duration_minutes: 10,
-      content:
-        'The Sun is identity, the Moon is emotional regulation, Mercury is thinking and language, Venus is attraction and taste, and Mars is action. Interpreting a chart gets easier when each planet keeps a clear job.',
-      keywords: ['planets', 'sun', 'moon', 'mercury'],
-      related_modules: ['astro-2'],
-      item_count: 4,
-    },
-  ],
-  numerology: [
-    {
-      id: 'num-1',
-      title: 'Introduction to Numerology',
-      description: 'Treat numbers as a timing language, not a novelty add-on.',
-      category: 'numerology',
-      difficulty: 'beginner',
-      duration_minutes: 5,
-      content:
-        'Numerology maps recurring number patterns to character, timing, and life cycles. The strongest web use case is practical: connect core numbers to the present cycle and turn them into an action read.',
-      keywords: ['numerology', 'timing', 'cycles'],
-      related_modules: ['num-2', 'num-3'],
-      item_count: 3,
-    },
-    {
-      id: 'num-2',
-      title: 'Life Path Number',
-      description: 'Use the Life Path as the long-arc lens, not the whole story.',
-      category: 'numerology',
-      difficulty: 'beginner',
-      duration_minutes: 7,
-      content:
-        'The Life Path frames the long-term orientation of a person: how they move, what they are learning, and what patterns repeat. It becomes most useful when paired with the active Personal Year.',
-      keywords: ['life path', 'destiny', 'purpose'],
-      related_modules: ['num-1', 'num-3'],
-      item_count: 3,
-    },
-    {
-      id: 'num-3',
-      title: 'Personal Year Cycles',
-      description: 'Translate annual number themes into present-tense decisions.',
-      category: 'numerology',
-      difficulty: 'intermediate',
-      duration_minutes: 8,
-      content:
-        'Personal Years run in nine-year cycles. A Year 1 resets, a Year 5 disrupts, and a Year 9 closes. The useful move is to treat the cycle as a timing posture, then test it against what is actually happening.',
-      keywords: ['personal year', 'cycles', 'timing'],
-      related_modules: ['num-2'],
-      item_count: 3,
-    },
-  ],
-  zodiac: [
-    {
-      id: 'zodiac-1',
-      title: 'The 12 Signs',
-      description: 'Learn the signs as archetypes with different operating styles.',
-      category: 'zodiac',
-      difficulty: 'beginner',
-      duration_minutes: 10,
-      content:
-        'Signs are styles, not total identities. Aries initiates, Taurus stabilizes, Gemini connects, Cancer protects, Leo radiates, Virgo refines, Libra balances, Scorpio intensifies, Sagittarius expands, Capricorn structures, Aquarius reframes, and Pisces dissolves.',
-      keywords: ['zodiac', 'signs', 'archetypes'],
-      related_modules: ['zodiac-2', 'zodiac-3'],
-      item_count: 3,
-    },
-    {
-      id: 'zodiac-2',
-      title: 'Sun, Moon, and Rising',
-      description: 'Read the Big Three before you chase deeper detail.',
-      category: 'zodiac',
-      difficulty: 'intermediate',
-      duration_minutes: 8,
-      content:
-        'The Sun shows identity, the Moon shows emotional patterning, and the Rising sign shapes presentation and how experience arrives. This is the fastest reliable shorthand when the full chart is still loading in the user’s head.',
-      keywords: ['sun', 'moon', 'rising'],
-      related_modules: ['zodiac-1'],
-      item_count: 3,
-    },
-    {
-      id: 'zodiac-3',
-      title: 'Sign Compatibility',
-      description: 'Use signs for quick pattern recognition, not final verdicts.',
-      category: 'zodiac',
-      difficulty: 'intermediate',
-      duration_minutes: 10,
-      content:
-        'Sign compatibility is useful as a first scan. It helps you see natural ease, friction style, and pacing differences. It becomes trustworthy only after you add elements, modalities, and the deeper pairing context.',
-      keywords: ['compatibility', 'signs', 'elements'],
-      related_modules: ['zodiac-2'],
-      item_count: 3,
-    },
-  ],
-  elements: [
-    {
-      id: 'elem-1',
-      title: 'Fire Signs',
-      description: 'Aries, Leo, and Sagittarius prioritize motion, courage, and momentum.',
-      category: 'elements',
-      difficulty: 'beginner',
-      duration_minutes: 6,
-      content:
-        'Fire signs move by desire and energy. They respond quickly, prefer momentum over hesitation, and bring heat into every system they touch. That makes them useful to spot in both chart reading and compatibility.',
-      keywords: ['fire', 'aries', 'leo', 'sagittarius'],
-      related_modules: ['elem-2', 'elem-3', 'elem-4'],
-      item_count: 4,
-    },
-    {
-      id: 'elem-2',
-      title: 'Earth Signs',
-      description: 'Taurus, Virgo, and Capricorn stabilize, structure, and measure results.',
-      category: 'elements',
-      difficulty: 'beginner',
-      duration_minutes: 6,
-      content:
-        'Earth signs move through reliability, material reality, and practical improvement. They help the system settle and become legible. In compatibility, they often show where grounding or friction around pacing appears.',
-      keywords: ['earth', 'taurus', 'virgo', 'capricorn'],
-      related_modules: ['elem-1', 'elem-3', 'elem-4'],
-      item_count: 4,
-    },
-    {
-      id: 'elem-3',
-      title: 'Air Signs',
-      description: 'Gemini, Libra, and Aquarius process experience through ideas and exchange.',
-      category: 'elements',
-      difficulty: 'beginner',
-      duration_minutes: 6,
-      content:
-        'Air signs track thought, language, pattern recognition, and social motion. They are helpful for understanding how a chart speaks, negotiates, and reframes. In pairings they often surface intellectual affinity.',
-      keywords: ['air', 'gemini', 'libra', 'aquarius'],
-      related_modules: ['elem-1', 'elem-2', 'elem-4'],
-      item_count: 4,
-    },
-    {
-      id: 'elem-4',
-      title: 'Water Signs',
-      description: 'Cancer, Scorpio, and Pisces experience the world through feeling and depth.',
-      category: 'elements',
-      difficulty: 'beginner',
-      duration_minutes: 6,
-      content:
-        'Water signs register emotional atmosphere, intuition, and undercurrents first. They are essential for interpreting sensitivity, bonding, and emotional pacing. In compatibility they often show where attunement or overwhelm lives.',
-      keywords: ['water', 'cancer', 'scorpio', 'pisces'],
-      related_modules: ['elem-1', 'elem-2', 'elem-3'],
-      item_count: 4,
-    },
-  ],
-};
+// The lessons are fixed text shared with the app and the API
+// (backend/app/interpretation/library/lessons.json), so the website ships
+// them instead of spending a visitor's daily API allowance on them.
+const modulesByCategory = (lessonLibrary as Omit<LearningModule, 'item_count'>[]).reduce(
+  (byCategory, lesson) => {
+    const category = lesson.category as LearnCategoryId;
+    byCategory[category].push({ ...lesson, item_count: lesson.keywords?.length ?? 1 });
+    return byCategory;
+  },
+  { astrology: [], numerology: [], zodiac: [], elements: [] } as Record<
+    LearnCategoryId,
+    LearningModule[]
+  >
+);
 
 const fallbackGlossaryEntries: LearningGlossaryEntry[] = [
   {
@@ -348,7 +183,7 @@ function trimCopy(text: string, maxLength = 170) {
 export function LearnView() {
   const { activeProfile, activeProfileSourceLabel, hasActiveProfile } = useActiveProfile();
   const [selectedCategory, setSelectedCategory] = useState<LearnCategoryId>('astrology');
-  const [modules, setModules] = useState<LearningModule[]>(fallbackModulesByCategory.astrology);
+  const [modules, setModules] = useState<LearningModule[]>(modulesByCategory.astrology);
   const [selectedModuleId, setSelectedModuleId] = useState<string | null>(null);
   const [lessonOpen, setLessonOpen] = useState(false);
   const [glossaryEntries, setGlossaryEntries] = useState<LearningGlossaryEntry[]>([]);
@@ -358,61 +193,16 @@ export function LearnView() {
   const [completedModuleIds, setCompletedModuleIds] = useState<string[]>(() =>
     readCompletedModuleIds()
   );
-  const [loadingModules, setLoadingModules] = useState(true);
   const [loadingGlossary, setLoadingGlossary] = useState(true);
-  const [moduleIssue, setModuleIssue] = useState<string | null>(null);
   const [glossaryIssue, setGlossaryIssue] = useState<string | null>(null);
   const lessonDrawerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    let isCancelled = false;
-
-    async function loadModules() {
-      setLoadingModules(true);
-
-      try {
-        const response = await fetchLearningModules(selectedCategory);
-        const nextModules =
-          response.modules.length > 0
-            ? response.modules
-            : fallbackModulesByCategory[selectedCategory];
-
-        if (!isCancelled) {
-          setModules(nextModules);
-          setSelectedModuleId((current) =>
-            nextModules.some((module) => module.id === current)
-              ? current
-              : nextModules[0]?.id ?? null
-          );
-          setModuleIssue(
-            response.modules.length > 0 ? null : 'Showing built-in lessons for this category.'
-          );
-        }
-      } catch {
-        if (!isCancelled) {
-          const fallbackModules = fallbackModulesByCategory[selectedCategory];
-          setModules(fallbackModules);
-          setSelectedModuleId((current) =>
-            fallbackModules.some((module) => module.id === current)
-              ? current
-              : fallbackModules[0]?.id ?? null
-          );
-          setModuleIssue(
-            'Lesson content is temporarily unavailable. Showing built-in lessons instead.'
-          );
-        }
-      } finally {
-        if (!isCancelled) {
-          setLoadingModules(false);
-        }
-      }
-    }
-
-    void loadModules();
-
-    return () => {
-      isCancelled = true;
-    };
+    const nextModules = modulesByCategory[selectedCategory];
+    setModules(nextModules);
+    setSelectedModuleId((current) =>
+      nextModules.some((module) => module.id === current) ? current : nextModules[0]?.id ?? null
+    );
   }, [selectedCategory]);
 
   useEffect(() => {
@@ -526,9 +316,7 @@ export function LearnView() {
   );
   const profileLabel = hasActiveProfile ? activeProfile?.name ?? 'Connected' : 'Optional';
   const profileSourceLabel = hasActiveProfile ? activeProfileSourceLabel : 'No active profile';
-  const learnIssues = [moduleIssue, glossaryIssue].filter((issue): issue is string =>
-    Boolean(issue)
-  );
+  const learnIssues = [glossaryIssue].filter((issue): issue is string => Boolean(issue));
 
   function handleToggleComplete(moduleId: string) {
     setCompletedModuleIds((current) => {
@@ -611,9 +399,7 @@ export function LearnView() {
             </div>
             <div className="product-desk__stat">
               <span className="product-desk__label">Category progress</span>
-              <span className="product-desk__value">
-                {loadingModules ? 'Loading...' : `${completionRate}%`}
-              </span>
+              <span className="product-desk__value">{completionRate}%</span>
             </div>
           </div>
           <p className="product-desk__note">
@@ -652,15 +438,11 @@ export function LearnView() {
           <div className="product-desk__stats">
             <div className="product-desk__stat">
               <span className="product-desk__label">Lessons in lane</span>
-              <span className="product-desk__value">
-                {loadingModules ? 'Loading...' : modules.length}
-              </span>
+              <span className="product-desk__value">{modules.length}</span>
             </div>
             <div className="product-desk__stat">
               <span className="product-desk__label">Completed here</span>
-              <span className="product-desk__value">
-                {loadingModules ? 'Loading...' : completedInCategory}
-              </span>
+              <span className="product-desk__value">{completedInCategory}</span>
             </div>
             <div className="product-desk__stat">
               <span className="product-desk__label">Next lesson</span>
@@ -796,14 +578,12 @@ export function LearnView() {
           <div className="product-desk__stats">
             <div className="product-desk__stat">
               <span className="product-desk__label">Category progress</span>
-              <span className="product-desk__value">
-                {loadingModules ? 'Loading...' : `${completionRate}%`}
-              </span>
+              <span className="product-desk__value">{completionRate}%</span>
             </div>
             <div className="product-desk__stat">
               <span className="product-desk__label">Completed</span>
               <span className="product-desk__value">
-                {loadingModules ? '—' : `${completedInCategory} / ${modules.length}`}
+                {completedInCategory} / {modules.length}
               </span>
             </div>
           </div>
