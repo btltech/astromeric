@@ -54,6 +54,7 @@
 		4A41A015ADD331A6EC8C2953 /* ResponseCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10EC38AE733A85894FA849FC /* ResponseCache.swift */; };
 		4C313DF88D6E4D834F2DC485 /* GlossaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CB4569C92CCFAF543D05ECD /* GlossaryView.swift */; };
 		4CA6D00006797DB10BF252C5 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A7840008267ED5FE0C80C323 /* Assets.xcassets */; };
+		D85D219CA233B38A1EC1F25B /* lessons.json in Resources */ = {isa = PBXBuildFile; fileRef = 69697F2F5B9BDB050530DF9F /* lessons.json */; };
 		4CEBC18254707EC9ACE2ACEC /* JournalModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0FAE63C4C18810AF4A818B4 /* JournalModels.swift */; };
 		4DC3401138F3B090E5F69E73 /* MorningBriefWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F7849558EF475BFD90EB816 /* MorningBriefWidget.swift */; };
 		4F00D46A256A26417BB9F0A8 /* HomeVM.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2062AB2D1CF664F14995D5FE /* HomeVM.swift */; };
@@ -335,6 +336,7 @@
 		A5AE7ACED1B7513142018098 /* MoonPhaseWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoonPhaseWidget.swift; sourceTree = "<group>"; };
 		A69E131334F60E43B4055BB5 /* MoonPhaseActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoonPhaseActivity.swift; sourceTree = "<group>"; };
 		A7840008267ED5FE0C80C323 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		69697F2F5B9BDB050530DF9F /* lessons.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lessons.json; sourceTree = "<group>"; };
 		A7A196AB65E31671F7973A84 /* CompatibilityVM.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompatibilityVM.swift; sourceTree = "<group>"; };
 		A96E720F3EBDAB01700D9109 /* RevealAnimations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RevealAnimations.swift; sourceTree = "<group>"; };
 		AF52D413D30C4366557131B8 /* swephexp.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = swephexp.h; sourceTree = "<group>"; };
@@ -535,6 +537,7 @@
 				2E0D5495BA3F32A0886D0C12 /* Particles */,
 				DD344ED74BD58F420C6884FB /* StoreKit */,
 				A7840008267ED5FE0C80C323 /* Assets.xcassets */,
+				69697F2F5B9BDB050530DF9F /* lessons.json */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -1115,6 +1118,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				4CA6D00006797DB10BF252C5 /* Assets.xcassets in Resources */,
+				D85D219CA233B38A1EC1F25B /* lessons.json in Resources */,
 				B16A1D37EB71031BADF7215F /* Localizable.strings in Resources */,
 				83B23DA5A97AD4613871C31D /* PrivacyInfo.xcprivacy in Resources */,
 				61C3128C5A02DFEF10DB11FD /* Products.storekit in Resources */,

@@ -196,26 +196,34 @@ struct NumerologyData: Codable {
         return current
     }
 
-    private static func soulUrgeNumber(for name: String) -> Int {
-        let lowercased = name.lowercased()
-        var total = 0
-        for scalar in lowercased.unicodeScalars {
-            guard vowels.contains(scalar.value),
-                  let value = pythagoreanLetterValues[scalar.value] else { continue }
-            total += value
+    /// Splits a name's letters the way the server does: Y is a vowel where it
+    /// isn't next to a, e, i, o or u ("Lynn") and a consonant where it is ("Maya").
+    static func vowelAndConsonantValues(for name: String) -> (vowels: [Int], consonants: [Int]) {
+        let scalars = Array(name.lowercased().unicodeScalars)
+        let y: UInt32 = 121
+        var vowelValues: [Int] = []
+        var consonantValues: [Int] = []
+        for (index, scalar) in scalars.enumerated() {
+            guard let value = pythagoreanLetterValues[scalar.value] else { continue }
+            let isVowel: Bool
+            if scalar.value == y {
+                let left = index > 0 ? scalars[index - 1].value : 0
+                let right = index + 1 < scalars.count ? scalars[index + 1].value : 0
+                isVowel = !vowels.contains(left) && !vowels.contains(right)
+            } else {
+                isVowel = vowels.contains(scalar.value)
+            }
+            if isVowel { vowelValues.append(value) } else { consonantValues.append(value) }
         }
-        return reduceNumber(total, keepMaster: true)
+        return (vowelValues, consonantValues)
+    }
+
+    private static func soulUrgeNumber(for name: String) -> Int {
+        reduceNumber(vowelAndConsonantValues(for: name).vowels.reduce(0, +), keepMaster: true)
     }
 
     private static func personalityNumber(for name: String) -> Int {
-        let lowercased = name.lowercased()
-        var total = 0
-        for scalar in lowercased.unicodeScalars {
-            guard let value = pythagoreanLetterValues[scalar.value],
-                  !vowels.contains(scalar.value) else { continue }
-            total += value
-        }
-        return reduceNumber(total, keepMaster: true)
+        reduceNumber(vowelAndConsonantValues(for: name).consonants.reduce(0, +), keepMaster: true)
     }
 
     private static func personalMonthNumber(personalYear: Int) -> Int {

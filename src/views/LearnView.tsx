@@ -303,6 +303,36 @@ function formatDifficulty(value?: string) {
   return value.replace(/\b\w/g, (character) => character.toUpperCase());
 }
 
+// Lessons use a tiny markup shared with the app: blank-line-separated blocks,
+// "## " headings and "• " bullet lines. Rendered as real elements so the
+// paragraphs don't collapse into one run of text.
+function LessonBody({ text }: { text: string }) {
+  const blocks = text
+    .split(/\n\s*\n/)
+    .map((block) => block.trim())
+    .filter(Boolean);
+  return (
+    <div className="learn-view__drawer-content">
+      {blocks.map((block, index) => {
+        if (block.startsWith('## ')) {
+          return <h3 key={index}>{block.slice(3)}</h3>;
+        }
+        const lines = block.split('\n');
+        if (lines.every((line) => line.startsWith('• '))) {
+          return (
+            <ul key={index}>
+              {lines.map((line, i) => (
+                <li key={i}>{line.slice(2)}</li>
+              ))}
+            </ul>
+          );
+        }
+        return <p key={index}>{block}</p>;
+      })}
+    </div>
+  );
+}
+
 // Reading time from the lesson's length (about 200 words a minute). The
 // hand-typed duration_minutes values overstated it 5-12 times.
 function formatDuration(module: { content?: string; duration_minutes?: number }) {
@@ -712,9 +742,7 @@ export function LearnView() {
               </div>
 
               <div className="learn-view__drawer-body">
-                <p className="learn-view__drawer-content">
-                  {selectedModule.content ?? selectedModule.description}
-                </p>
+                <LessonBody text={selectedModule.content ?? selectedModule.description} />
 
                 {(selectedModule.keywords ?? []).length > 0 ? (
                   <div className="learn-view__keyword-row">

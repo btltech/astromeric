@@ -324,6 +324,16 @@ final class NumerologyNumbersTests: XCTestCase {
         XCTAssertNotNil(data.coreNumbers?.soulUrge?.number)
         XCTAssertNotNil(data.cycles?.personalDay?.number)
     }
+
+    func testEachYIsAVowelOrAConsonantNeverBoth() {
+        // "Lynn": Y is the only vowel sound. "Maya": Y sits between vowels.
+        let lynn = NumerologyData.vowelAndConsonantValues(for: "Lynn")
+        XCTAssertEqual(lynn.vowels, [7])
+        XCTAssertEqual(lynn.consonants, [3, 5, 5])
+        let maya = NumerologyData.vowelAndConsonantValues(for: "Maya Lynn")
+        XCTAssertEqual(maya.vowels, [1, 1, 7])
+        XCTAssertEqual(maya.vowels.count + maya.consonants.count, 8)
+    }
 }
 
 final class DisplayFormattingTests: XCTestCase {

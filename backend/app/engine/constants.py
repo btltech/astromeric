@@ -4,7 +4,7 @@ Shared constants for numerology calculations.
 Single source of truth for letter values, vowels, and reduction functions.
 """
 
-from typing import Set
+from typing import List, Set, Tuple
 
 # Pythagorean numerology letter values (1-9 cycle)
 LETTER_VALUES = {
@@ -75,11 +75,35 @@ CHALDEAN_LETTER_VALUES = {
     "p": 8,
 }
 
-# Standard vowels for Soul Urge calculation (Y is treated as consonant in Pythagorean system)
+# Standard vowels. Y is decided per position: see split_vowels_consonants.
 VOWELS: Set[str] = {"a", "e", "i", "o", "u"}
 
 # Master numbers that are not reduced
 MASTER_NUMBERS = {11, 22, 33}
+
+
+def split_vowels_consonants(name: str) -> Tuple[List[str], List[str]]:
+    """
+    Split a name's letters into vowels (Soul Urge) and consonants (Personality).
+
+    Y is a vowel where it is not next to a standard vowel ("Lynn") and a
+    consonant where it is ("Maya", "Yolanda"). Each Y is judged on its own, so
+    every letter lands in exactly one list.
+    """
+    lower = name.lower()
+    vowels: List[str] = []
+    consonants: List[str] = []
+    for i, ch in enumerate(lower):
+        if not ch.isalpha():
+            continue
+        if ch == "y":
+            left = lower[i - 1] if i > 0 else ""
+            right = lower[i + 1] if i + 1 < len(lower) else ""
+            is_vowel = left not in VOWELS and right not in VOWELS
+        else:
+            is_vowel = ch in VOWELS
+        (vowels if is_vowel else consonants).append(ch)
+    return vowels, consonants
 
 
 def reduce_number(num: int, keep_master: bool = True) -> int:

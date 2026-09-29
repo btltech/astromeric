@@ -25,11 +25,13 @@ struct LessonDetailView: View {
                         chips: [module.formattedDuration, module.category.capitalized]
                     )
 
-                    // Header
-                    headerSection
-                    
-                    // Content
-                    contentSection
+                    LessonBody(content: module.content)
+                        .padding()
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(
+                            RoundedRectangle(cornerRadius: 16)
+                                .fill(.ultraThinMaterial)
+                        )
                     
                     // Keywords
                     keywordsSection
@@ -44,53 +46,6 @@ struct LessonDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             hasCompleted = progressManager.isComplete(moduleId: module.id)
-        }
-    }
-    
-    private var headerSection: some View {
-        VStack(spacing: 12) {
-            ZStack {
-                Circle()
-                    .fill(
-                        LinearGradient(
-                            colors: [.purple, .indigo],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .frame(width: 64, height: 64)
-                
-                Image(systemName: module.icon)
-                    .font(.system(.title2, weight: .semibold))
-                    .foregroundStyle(.white)
-            }
-            
-            Text(module.title)
-                .font(.title3.bold())
-                .multilineTextAlignment(.center)
-            
-            HStack(spacing: 16) {
-                Label(module.difficulty.capitalized, systemImage: "chart.bar")
-                Label(module.formattedDuration, systemImage: "clock")
-            }
-            .font(.caption)
-            .foregroundStyle(Color.textSecondary)
-        }
-        .frame(maxWidth: .infinity)
-    }
-    
-    private var contentSection: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            // Main Content
-            PremiumSectionHeader(
-                title: "section.lessonDetail.0.title".localized,
-                subtitle: "section.lessonDetail.0.subtitle".localized
-            )
-
-            sectionCard(
-                title: "Lesson Content",
-                content: module.content
-            )
         }
     }
     
@@ -121,25 +76,6 @@ struct LessonDetailView: View {
                     .fill(.ultraThinMaterial)
             )
         }
-    }
-    
-    private func sectionCard(title: String, content: String) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(title)
-                .font(.headline)
-            
-            Text(content)
-                .font(.body)
-                .foregroundStyle(Color.textSecondary)
-                .fixedSize(horizontal: false, vertical: true)
-                .lineSpacing(6)
-        }
-        .padding()
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(.ultraThinMaterial)
-        )
     }
     
     private var completeButton: some View {
@@ -188,3 +124,66 @@ struct LessonDetailView: View {
     .preferredColorScheme(.dark)
 }
 
+
+
+/// Renders lesson text: blank-line-separated blocks, where a block starting
+/// "## " is a heading, a block of "• " lines is a bullet list, and anything
+/// else is a paragraph. (lessons.json uses exactly this markup.)
+struct LessonBody: View {
+    let content: String
+
+    private enum Block: Hashable {
+        case heading(String)
+        case bullets([String])
+        case paragraph(String)
+    }
+
+    private var blocks: [Block] {
+        content.components(separatedBy: "\n\n").compactMap { raw in
+            let block = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !block.isEmpty else { return nil }
+            if block.hasPrefix("## ") {
+                return .heading(String(block.dropFirst(3)))
+            }
+            let lines = block.components(separatedBy: "\n")
+            if lines.allSatisfy({ $0.hasPrefix("• ") }) {
+                return .bullets(lines.map { String($0.dropFirst(2)) })
+            }
+            return .paragraph(block)
+        }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            ForEach(Array(blocks.enumerated()), id: \.offset) { _, block in
+                switch block {
+                case .heading(let text):
+                    Text(text)
+                        .font(.headline)
+                        .foregroundStyle(Color.textPrimary)
+                        .padding(.top, 6)
+                        .accessibilityAddTraits(.isHeader)
+                case .bullets(let items):
+                    VStack(alignment: .leading, spacing: 8) {
+                        ForEach(Array(items.enumerated()), id: \.offset) { _, item in
+                            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                                Text("•")
+                                Text(item)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                        }
+                    }
+                    .font(.body)
+                    .foregroundStyle(Color.textSecondary)
+                case .paragraph(let text):
+                    Text(text)
+                        .font(.body)
+                        .foregroundStyle(Color.textSecondary)
+                        .lineSpacing(6)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}

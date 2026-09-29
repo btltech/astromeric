@@ -5,7 +5,7 @@ from typing import Dict, List, Optional
 
 from app.interpretation.translations import get_translation
 
-from .constants import LETTER_VALUES, VOWELS, reduce_number
+from .constants import LETTER_VALUES, reduce_number, split_vowels_consonants
 
 # Karmic debt numbers and their core meanings
 KARMIC_DEBT_NUMBERS: Dict[int, Dict] = {
@@ -92,9 +92,8 @@ def calculate_expression_number(full_name: str) -> int:
 
 def calculate_soul_urge_number(full_name: str) -> int:
     """Soul Urge/Heart's Desire: Sum of vowels only."""
-    name = full_name.lower()
-    total = sum(LETTER_VALUES.get(c, 0) for c in name if c in VOWELS)
-    return reduce_number(total)
+    vowels, _ = split_vowels_consonants(full_name)
+    return reduce_number(sum(LETTER_VALUES.get(c, 0) for c in vowels))
 
 
 def _find_karmic_debts(name: str, dob: str) -> List[Dict]:
@@ -123,20 +122,10 @@ def _find_karmic_debts(name: str, dob: str) -> List[Dict]:
     clean = name.lower().replace(" ", "").replace("-", "")
     _check("expression", sum(LETTER_VALUES.get(c, 0) for c in clean if c.isalpha()))
 
-    # Soul Urge: raw sum of vowel letter values
-    _check(
-        "soul_urge", sum(LETTER_VALUES.get(c, 0) for c in name.lower() if c in VOWELS)
-    )
-
-    # Personality: raw sum of consonant letter values
-    _check(
-        "personality",
-        sum(
-            LETTER_VALUES.get(c, 0)
-            for c in name.lower()
-            if c.isalpha() and c not in VOWELS
-        ),
-    )
+    # Soul Urge and Personality: raw sums of vowel and consonant letter values
+    vowels, consonants = split_vowels_consonants(name)
+    _check("soul_urge", sum(LETTER_VALUES.get(c, 0) for c in vowels))
+    _check("personality", sum(LETTER_VALUES.get(c, 0) for c in consonants))
 
     return [
         {"raw": n, "sources": sources, **KARMIC_DEBT_NUMBERS[n]}
@@ -146,11 +135,8 @@ def _find_karmic_debts(name: str, dob: str) -> List[Dict]:
 
 def calculate_personality_number(full_name: str) -> int:
     """Personality Number: Sum of consonants only."""
-    name = full_name.lower()
-    total = sum(
-        LETTER_VALUES.get(c, 0) for c in name if c.isalpha() and c not in VOWELS
-    )
-    return reduce_number(total)
+    _, consonants = split_vowels_consonants(full_name)
+    return reduce_number(sum(LETTER_VALUES.get(c, 0) for c in consonants))
 
 
 def calculate_maturity_number(life_path: int, expression: int) -> int:
@@ -206,9 +192,9 @@ def calculate_pinnacles(dob: str, lang: str = "en") -> List[Dict]:
     day_r = reduce_number(day, keep_master=False)
     year_r = reduce_number(year, keep_master=False)
 
-    # Life Path for timing — must use same component-reduction method as the
-    # main life_path calculation to keep pinnacle ages accurate for master-number LPs.
-    life_path = reduce_number(month_r + day_r + year_r, keep_master=True)
+    # Life Path for timing, reduced to one digit: a master 11 or 22 times the
+    # pinnacles as 2 or 4, so the first pinnacle always ends between 27 and 35.
+    life_path = reduce_number(month_r + day_r + year_r, keep_master=False)
 
     # Pinnacle numbers
     p1 = reduce_number(month_r + day_r)
