@@ -403,7 +403,10 @@ final class HoraryOracleTests: XCTestCase {
 
         let contract = HoraryOracle.read(question: "Should I sign the contract today?", snapshot: sky())
         XCTAssertEqual(contract.answer, "No")
-        XCTAssertTrue(contract.reasoning.contains("Mercury is retrograde"))
+        XCTAssertTrue(contract.factors?.contains { !$0.helps && $0.text.contains("Mercury is retrograde") } == true)
+        // Every point is explained, and the summary says how they balanced out.
+        XCTAssertTrue(contract.reasoning.contains("so the answer is no"))
+        XCTAssertTrue(love.factors?.contains { $0.helps && $0.text.contains("home signs") } == true)
     }
 
     func testVoidOfCourseMoonMeansNo() {

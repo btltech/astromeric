@@ -194,6 +194,14 @@ struct YesNoAnswer: Codable {
     let confidence: Double
     let reasoning: String
     let guidance: [String]
+    /// Each point the Oracle weighed, shown as "How it was decided".
+    var factors: [OracleFactorLine]? = nil
+}
+
+/// One point in the Oracle's tally: whether it helped a yes, and what it means.
+struct OracleFactorLine: Codable, Hashable {
+    let helps: Bool
+    let text: String
 }
 
 struct YesNoRequest: Encodable {

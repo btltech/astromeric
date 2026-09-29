@@ -236,6 +236,26 @@ struct OracleView: View {
                     .foregroundStyle(Color.textSecondary)
                     .multilineTextAlignment(.center)
 
+                if let factors = answer.factors, !factors.isEmpty {
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("How it was decided")
+                            .font(.headline)
+
+                        ForEach(factors, id: \.self) { factor in
+                            HStack(alignment: .top, spacing: 10) {
+                                Image(systemName: factor.helps ? "plus.circle.fill" : "minus.circle.fill")
+                                    .foregroundStyle(factor.helps ? Color.positiveGreen : Color.warningOrange)
+                                    .accessibilityLabel(factor.helps ? "In favour" : "Against")
+                                Text(factor.text)
+                                    .font(.subheadline)
+                                    .foregroundStyle(Color.textSecondary)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+
                 if !answer.guidance.isEmpty {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("ui.oracle.3".localized)
@@ -370,8 +390,10 @@ struct OracleView: View {
             // 4. Parse the JSON response from the LLM
             let rawResponse = response.response
             if let parsed = parseOracleJSON(rawResponse, question: trimmedQuestion) {
+                var explained = parsed
+                explained.factors = builtIn.factors
                 withAnimation(.spring()) {
-                    answer = parsed
+                    answer = explained
                     telemetry = snapshot.citation
                 }
                 // Heavy haptic — somatic anchor
@@ -379,12 +401,14 @@ struct OracleView: View {
             } else {
                 // LLM returned text but not valid JSON — use it as reasoning
                 withAnimation(.spring()) {
+                    // Keep the built-in decision and use the AI's prose as the explanation.
                     answer = YesNoAnswer(
                         question: trimmedQuestion,
-                        answer: snapshot.isVoidOfCourse ? "No" : (snapshot.threatLevel == .red ? "No" : "Yes"),
-                        confidence: 0.65,
+                        answer: builtIn.answer,
+                        confidence: builtIn.confidence,
                         reasoning: rawResponse,
-                        guidance: ["Response was interpreted from cosmic state"]
+                        guidance: builtIn.guidance,
+                        factors: builtIn.factors
                     )
                     telemetry = snapshot.citation
                 }
@@ -397,7 +421,7 @@ struct OracleView: View {
                 answer = decision
                 telemetry = snapshot.citation
             }
-            errorMessage = "Offline mode: \(error.localizedDescription)"
+            errorMessage = "Couldn't reach the AI, so this is the built-in reading from the sky."
             UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
         }
     }
@@ -464,6 +488,32 @@ enum OracleTopic: String, CaseIterable {
         case .action: return ["Mars", "Sun"]
         case .wellbeing: return ["Sun", "Moon"]
         case .general: return ["Moon"]
+        }
+    }
+
+    /// What a strong key planet suggests for this topic.
+    var strongMeaning: String {
+        switch self {
+        case .love: return "affection and harmony come easily"
+        case .money: return "growth and good fortune are well supported"
+        case .career: return "effort tends to turn into lasting results"
+        case .communication: return "messages, travel and paperwork tend to go smoothly"
+        case .action: return "courage and drive are running high"
+        case .wellbeing: return "vitality is strong"
+        case .general: return "things tend to flow"
+        }
+    }
+
+    /// What a weak key planet suggests for this topic.
+    var weakMeaning: String {
+        switch self {
+        case .love: return "feelings may be guarded, intense or complicated"
+        case .money: return "gains may come slower or smaller than hoped"
+        case .career: return "commitments may feel heavy or slow to pay off"
+        case .communication: return "details are more likely to go astray"
+        case .action: return "energy may scatter or turn into conflict"
+        case .wellbeing: return "energy may run lower than usual"
+        case .general: return "moods and plans may be unsettled"
         }
     }
 
@@ -538,7 +588,7 @@ enum OracleTopic: String, CaseIterable {
 /// Answers a yes/no question from the sky at the moment it is asked, weighted
 /// towards the planet that rules the question's topic. Runs on the device, so
 /// the question never leaves the phone, and the same sky and question always
-/// give the same answer.
+/// give the same answer. Every point it weighs is explained in plain words.
 enum HoraryOracle {
     private struct Factor {
         let weight: Double
@@ -553,17 +603,22 @@ enum HoraryOracle {
         let key = topic.significators[0]
         let bodies = Dictionary(snapshot.bodies.map { ($0.name, $0) }, uniquingKeysWith: { first, _ in first })
         let opening = topic == .general
-            ? "With no clear topic, the Moon speaks for the question."
-            : "For a question about \(topic.label), the key planet is \(key)."
+            ? "No clear topic, so the Moon speaks for your question: it rules the everyday flow of events."
+            : "This is a question about \(topic.label), which traditional astrology reads through \(key)."
 
         // A void-of-course Moon overrides everything in traditional horary.
         if snapshot.isVoidOfCourse {
+            let line = OracleFactorLine(
+                helps: false,
+                text: "The Moon is \"void of course\": it will make no more contact with other planets before it changes sign. Traditionally, nothing started in this gap comes to much."
+            )
             return YesNoAnswer(
                 question: question,
                 answer: "No",
                 confidence: 0.85,
-                reasoning: "\(opening) But the Moon is void of course: it makes no more major aspects before changing sign, which traditionally means nothing started now comes to much.",
-                guidance: guidance(for: topic, decision: "No", voidOfCourse: true)
+                reasoning: "\(opening) But the Moon is void of course right now, which traditional astrology treats as a firm no until it moves into its next sign.",
+                guidance: guidance(for: topic, decision: "No", voidOfCourse: true),
+                factors: [line]
             )
         }
 
@@ -572,41 +627,44 @@ enum HoraryOracle {
         // 1. The planetary hour.
         let hour = snapshot.planetaryHour
         if hour == key {
-            factors.append(Factor(weight: 2, text: "It is the hour of \(key), the planet that rules this kind of question."))
+            factors.append(Factor(weight: 2, text: "It's the hour of \(key). Astrologers split each day into 12 planetary hours, and asking in the hour of the planet that rules your question is the strongest sign in favour."))
         } else if helpfulPlanets.contains(hour) {
-            factors.append(Factor(weight: 1, text: "The hour of \(hour) is a helpful one."))
+            factors.append(Factor(weight: 1, text: "It's the hour of \(hour), one of the two traditionally helpful planets, which tips things towards yes."))
         } else if harshPlanets.contains(hour) {
-            factors.append(Factor(weight: -1, text: "The hour of \(hour) tends to bring friction and delay."))
+            factors.append(Factor(weight: -1, text: "It's the hour of \(hour), a traditionally harsh planet linked with delays and obstacles."))
         }
 
         if let planet = bodies[key] {
             // 2. How strong the key planet is in its sign.
             switch planet.dignity {
             case "domicile":
-                factors.append(Factor(weight: 1, text: "\(key) is strong in \(planet.sign), its own sign."))
+                factors.append(Factor(weight: 1, text: "\(key) is in \(planet.sign), one of its home signs, where it works at full strength: \(topic.strongMeaning)."))
             case "exaltation":
-                factors.append(Factor(weight: 1, text: "\(key) is exalted in \(planet.sign), one of its best placements."))
-            case "detriment", "fall":
-                factors.append(Factor(weight: -1, text: "\(key) is weak in \(planet.sign)."))
+                factors.append(Factor(weight: 1, text: "\(key) is exalted in \(planet.sign), one of its best placements: \(topic.strongMeaning)."))
+            case "detriment":
+                factors.append(Factor(weight: -1, text: "\(key) is in \(planet.sign), the sign opposite its home, where it struggles: \(topic.weakMeaning)."))
+            case "fall":
+                factors.append(Factor(weight: -1, text: "\(key) is in its \"fall\" in \(planet.sign), one of its weakest placements: \(topic.weakMeaning)."))
             default:
                 break
             }
 
             // 3. Retrograde: review, don't start.
             if planet.retrograde == true, key != "Sun", key != "Moon" {
-                factors.append(Factor(weight: -1, text: "\(key) is retrograde, which favours reviewing and waiting over starting."))
+                factors.append(Factor(weight: -1, text: "\(key) is retrograde: seen from Earth it appears to move backwards. Traditionally that's a time to review and revisit, not to start something new."))
             }
 
             // 4. The Moon's aspect to the key planet.
             if key != "Moon", let moon = bodies["Moon"],
                let aspect = aspect(between: moon, and: planet, orb: 6) {
+                let angle = aspectDescription(aspect)
                 switch aspect {
                 case "trine", "sextile":
-                    factors.append(Factor(weight: 1, text: "The Moon makes a supportive \(aspect) to \(key)."))
+                    factors.append(Factor(weight: 1, text: "The Moon, which shows how events unfold, is at a friendly angle to \(key) (\(angle)), a sign things can move with ease."))
                 case "conjunction":
-                    factors.append(Factor(weight: 1, text: "The Moon is travelling with \(key)."))
+                    factors.append(Factor(weight: 1, text: "The Moon, which shows how events unfold, is travelling alongside \(key) (\(angle)), putting your question in focus."))
                 default:
-                    factors.append(Factor(weight: -1, text: "The Moon makes a tense \(aspect) to \(key)."))
+                    factors.append(Factor(weight: -1, text: "The Moon, which shows how events unfold, is at a tense angle to \(key) (\(angle)), a sign of friction along the way."))
                 }
             }
 
@@ -615,10 +673,11 @@ enum HoraryOracle {
                 guard helpfulPlanets.contains(other.name) || harshPlanets.contains(other.name),
                       let aspect = aspect(between: other, and: planet, orb: 3) else { continue }
                 let tense = aspect == "square" || aspect == "opposition"
+                let angle = aspectDescription(aspect)
                 if harshPlanets.contains(other.name), tense || aspect == "conjunction" {
-                    factors.append(Factor(weight: -1, text: "\(other.name) makes a hard \(aspect) to \(key)."))
+                    factors.append(Factor(weight: -1, text: "\(other.name) is pressing on \(key) (\(angle)), adding pressure, haste or obstacles."))
                 } else if helpfulPlanets.contains(other.name), !tense {
-                    factors.append(Factor(weight: 1, text: "\(other.name) supports \(key) with a \(aspect)."))
+                    factors.append(Factor(weight: 1, text: "\(other.name) is supporting \(key) (\(angle)), which adds goodwill and luck."))
                 }
             }
         }
@@ -626,35 +685,53 @@ enum HoraryOracle {
         // 6. The Moon's phase.
         let phase = snapshot.moonPhase
         if phase.hasPrefix("Waxing") || phase == "New Moon" || phase == "First Quarter" {
-            factors.append(Factor(weight: 0.5, text: "The \(phase) supports new starts."))
+            factors.append(Factor(weight: 0.5, text: "The Moon is growing (\(phase)), which traditionally favours new beginnings."))
         } else if phase.hasPrefix("Waning") || phase == "Last Quarter" {
-            factors.append(Factor(weight: -0.5, text: "The \(phase) favours finishing over starting."))
+            factors.append(Factor(weight: -0.5, text: "The Moon is shrinking (\(phase)), which favours finishing things over starting them."))
         }
 
         let score = factors.reduce(0) { $0 + $1.weight }
         let decision = score > 0 ? "Yes" : (score < 0 ? "No" : "Wait")
         let confidence = decision == "Wait" ? 0.5 : min(0.88, 0.55 + 0.08 * abs(score))
+        let forCount = factors.filter { $0.weight > 0 }.count
+        let againstCount = factors.filter { $0.weight < 0 }.count
 
-        // Lead with the factors that pushed the answer the way it went.
-        let supporting = factors
-            .filter { decision == "Wait" || ($0.weight > 0) == (decision == "Yes") }
-            .sorted { abs($0.weight) > abs($1.weight) }
-        let against = factors.filter { !supporting.map(\.text).contains($0.text) }
-        var sentences = [opening] + supporting.prefix(3).map(\.text)
-        if decision != "Wait", let strongestAgainst = against.max(by: { abs($0.weight) < abs($1.weight) }) {
-            sentences.append("Against that: " + strongestAgainst.text.prefix(1).lowercased() + strongestAgainst.text.dropFirst())
-        }
-        if decision == "Wait" {
-            sentences.append("The signs are evenly balanced right now.")
+        let summary: String
+        switch decision {
+        case "Yes":
+            summary = againstCount == 0
+                ? "Everything the Oracle checked points the same way, so the answer is yes."
+                : "The signs in favour outweigh the \(againstCount == 1 ? "one" : "\(againstCount)") against, so the answer is yes."
+        case "No":
+            summary = forCount == 0
+                ? "Nothing the Oracle checked is working in your favour right now, so the answer is no."
+                : "The signs against outweigh the \(forCount == 1 ? "one" : "\(forCount)") in favour, so the answer is no for now."
+        default:
+            summary = factors.isEmpty
+                ? "The sky gives no clear signal for this question right now. Try again when the hour changes."
+                : "The signs for and against are evenly balanced, so the Oracle says wait."
         }
 
         return YesNoAnswer(
             question: question,
             answer: decision,
             confidence: confidence,
-            reasoning: sentences.joined(separator: " "),
-            guidance: guidance(for: topic, decision: decision, voidOfCourse: false)
+            reasoning: "\(opening) \(summary)",
+            guidance: guidance(for: topic, decision: decision, voidOfCourse: false),
+            factors: factors
+                .sorted { abs($0.weight) > abs($1.weight) }
+                .map { OracleFactorLine(helps: $0.weight > 0, text: $0.text) }
         )
+    }
+
+    private static func aspectDescription(_ aspect: String) -> String {
+        switch aspect {
+        case "conjunction": return "a conjunction, side by side"
+        case "sextile": return "a sextile, 60°"
+        case "square": return "a square, 90°"
+        case "trine": return "a trine, 120°"
+        default: return "an opposition, 180°"
+        }
     }
 
     /// The aspect between two bodies within `orb` degrees, if any.
