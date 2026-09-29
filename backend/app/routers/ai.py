@@ -7,8 +7,10 @@ from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, Field
+from starlette.concurrency import run_in_threadpool
 
-from ..ai_service import explain_with_gemini, fallback_summary, has_ai_access
+from ..ai_service import explain_reading as explain_with_ai
+from ..ai_service import fallback_summary, has_ai_access
 from ..auth import get_current_user
 from ..models import User
 from ..schemas import ApiResponse, ResponseStatus
@@ -57,7 +59,7 @@ async def explain_reading(
     Requires valid JWT token and premium subscription.
 
     ## Features
-    - Gemini Flash-powered natural language explanations
+    - AI natural language explanations (NVIDIA first, Gemini as backup)
     - Personalized insights based on reading data
     - Fallback to rule-based summary if AI unavailable
 
@@ -82,7 +84,8 @@ async def explain_reading(
             payload.headline, sections, payload.numerology_summary
         )
     else:
-        summary = explain_with_gemini(
+        result = await run_in_threadpool(
+            explain_with_ai,
             payload.scope,
             payload.headline,
             payload.theme,
@@ -90,9 +93,10 @@ async def explain_reading(
             payload.numerology_summary,
             simple_language=payload.simple_language,
         )
-        provider = "gemini-flash"
-
-        if not summary:
+        if result:
+            provider = result.provider
+            summary = result.text
+        else:
             provider = "fallback"
             summary = fallback_summary(
                 payload.headline, sections, payload.numerology_summary

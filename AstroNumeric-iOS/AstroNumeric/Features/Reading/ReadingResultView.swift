@@ -741,7 +741,7 @@ enum AIInsightSource: String {
 
     init(provider: String?) {
         switch provider {
-        case "gemini-flash", "gemini":
+        case "gemini-flash", "gemini", "nvidia":
             self = .ai
         case "deterministic", "fallback":
             self = .structured

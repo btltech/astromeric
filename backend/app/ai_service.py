@@ -1,11 +1,21 @@
-"""Utility helpers for Gemini Flash explanations."""
+"""AI text generation for readings and the Cosmic Guide.
+
+NVIDIA's hosted API is tried first; Gemini is the fallback when NVIDIA is not
+configured or fails. Callers get ``None`` when neither answers and then use their
+own built-in fallback text.
+"""
 
 from __future__ import annotations
 
 import hmac
+import logging
 import os
+import re
+import time
+from dataclasses import dataclass
 from typing import Any, List, Optional
 
+import httpx
 from fastapi import Request
 
 from .interpretation import rank_interpretation_signals, select_practical_tip
@@ -63,6 +73,9 @@ except ImportError:  # pragma: no cover - handled gracefully at runtime
     genai = None  # type: ignore
 
 
+_log = logging.getLogger(__name__)
+
+
 def _get_model_name() -> str:
     """Get model name, stripping any 'models/' prefix."""
     name = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
@@ -118,7 +131,7 @@ def build_prompt(
     if simple_language:
         # Ultra-simple mode: 5th grade reading level, everyday words
         parts = [
-            "You are Gemini Flash, a friendly astrology helper.",
+            "You are a friendly astrology helper.",
             "Explain this reading like you're talking to a friend who knows nothing about astrology.",
             "Use only simple, everyday words. No astrology terms.",
             "Keep sentences short. One idea per sentence.",
@@ -135,7 +148,7 @@ def build_prompt(
     else:
         # Original mode: still plain language but allows some astrology context
         parts = [
-            "You are Gemini Flash, helping explain an astrology + numerology reading in upbeat, plain language.",
+            "You are a friendly astrology helper explaining an astrology + numerology reading in upbeat, plain language.",
             "Write for a normal person (no jargon).",
             "Output MUST be Markdown.",
             "Keep it short (120-180 words max).",
@@ -162,28 +175,125 @@ def build_prompt(
     return "\n".join(parts)
 
 
-def explain_with_gemini(
-    scope: str,
-    headline: Optional[str],
-    theme: Optional[str],
-    sections: List[dict],
-    numerology: Optional[str],
-    simple_language: bool = True,
-) -> Optional[str]:
+# ---------------------------------------------------------------------------
+# NVIDIA (OpenAI-compatible chat completions)
+# ---------------------------------------------------------------------------
+
+NVIDIA_DEFAULT_URL = "https://integrate.api.nvidia.com/v1"
+# The 120B Super model answers in 1-4s; the 550B Ultra took 11-15s, too slow for
+# requests a person is waiting on.
+NVIDIA_DEFAULT_MODEL = "nvidia/nemotron-3-super-120b-a12b"
+NVIDIA_TIMEOUT_SECONDS = 20.0
+# NVIDIA's free tier often answers "busy" with a 5xx; one retry usually lands.
+NVIDIA_RETRY_STATUSES = frozenset({500, 502, 503, 504})
+NVIDIA_RETRY_DELAY_SECONDS = 2.0
+DEFAULT_MAX_TOKENS = 1024
+
+_THINK_BLOCK = re.compile(r"<think>.*?</think>", re.DOTALL | re.IGNORECASE)
+_THINK_CLOSE = re.compile(r"</think>", re.IGNORECASE)
+
+
+@dataclass(frozen=True)
+class AIText:
+    """Text from a hosted model, with which provider and model produced it."""
+
+    text: str
+    provider: str  # "nvidia" or "gemini"
+    model: str
+
+
+def _get_nvidia_api_key() -> str | None:
+    key = os.getenv("NVIDIA_API_KEY", "").strip()
+    return key or None
+
+
+def _get_nvidia_model() -> str:
+    return os.getenv("NVIDIA_MODEL", "").strip() or NVIDIA_DEFAULT_MODEL
+
+
+def _get_nvidia_url() -> str:
+    base = os.getenv("NVIDIA_API_URL", "").strip() or NVIDIA_DEFAULT_URL
+    return base.rstrip("/") + "/chat/completions"
+
+
+def strip_thinking(text: Optional[str]) -> Optional[str]:
+    """Drop any reasoning the model wrote into its answer.
+
+    Removes whole ``<think>...</think>`` blocks, then anything before a stray
+    closing ``</think>`` (the opening tag is sometimes left out).
+    """
+    if not text:
+        return None
+    cleaned = _THINK_BLOCK.sub("", text)
+    parts = _THINK_CLOSE.split(cleaned)
+    cleaned = parts[-1].strip()
+    return cleaned or None
+
+
+def ai_configured() -> bool:
+    """True when at least one hosted provider could be tried."""
+    return bool(_get_nvidia_api_key()) or _configure_client()
+
+
+def _nvidia_generate(
+    prompt: str, system: Optional[str], max_tokens: int
+) -> Optional[AIText]:
+    api_key = _get_nvidia_api_key()
+    if not api_key:
+        return None
+
+    model = _get_nvidia_model()
+    messages = []
+    if system:
+        messages.append({"role": "system", "content": system})
+    messages.append({"role": "user", "content": prompt})
+    body = {
+        "model": model,
+        "messages": messages,
+        "max_tokens": max_tokens,
+        "stream": False,
+        # Without this Nemotron writes its reasoning into the answer.
+        "chat_template_kwargs": {"enable_thinking": False},
+    }
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Accept": "application/json",
+    }
+
+    try:
+        with httpx.Client(timeout=NVIDIA_TIMEOUT_SECONDS) as client:
+            response = client.post(_get_nvidia_url(), json=body, headers=headers)
+            if response.status_code in NVIDIA_RETRY_STATUSES:
+                _log.info("NVIDIA answered %s; retrying once", response.status_code)
+                time.sleep(NVIDIA_RETRY_DELAY_SECONDS)
+                response = client.post(_get_nvidia_url(), json=body, headers=headers)
+            if response.status_code != 200:
+                _log.warning("NVIDIA call failed with HTTP %s", response.status_code)
+                return None
+            data = response.json()
+        content = data["choices"][0]["message"].get("content")
+    except Exception as e:
+        _log.warning("NVIDIA call failed: %s: %s", type(e).__name__, str(e))
+        return None
+
+    text = strip_thinking(content if isinstance(content, str) else None)
+    if not text:
+        _log.warning("NVIDIA returned no usable text")
+        return None
+    return AIText(text=text, provider="nvidia", model=model)
+
+
+def _gemini_generate(prompt: str, system: Optional[str]) -> Optional[AIText]:
     client = create_gemini_client()
     if client is None:
         return None
 
-    import logging
-
-    _log = logging.getLogger(__name__)
-
-    prompt = build_prompt(scope, headline, theme, sections, numerology, simple_language)
+    # Gemini keeps the original single-message shape: the guide prompt is
+    # prepended to the question rather than sent as a separate system turn.
+    contents = f"{system}\n\nUser question: {prompt}" if system else prompt
+    model = _get_model_name()
     try:
-        response = client.models.generate_content(
-            model=_get_model_name(),
-            contents=prompt,
-        )
+        response = client.models.generate_content(model=model, contents=contents)
         result = extract_gemini_text(response)
         if result is None:
             text_attr = getattr(response, "text", "NO_TEXT_ATTR")
@@ -197,12 +307,64 @@ def explain_with_gemini(
                 len(candidates or []),
                 finish_reasons,
             )
-        return result
+            return None
+        return AIText(text=result, provider="gemini", model=model)
     except Exception as e:
         _log.warning("Gemini call failed: %s: %s", type(e).__name__, str(e))
         return None
     finally:
         close_gemini_client(client)
+
+
+def generate_ai_text(
+    prompt: str,
+    system: Optional[str] = None,
+    max_tokens: int = DEFAULT_MAX_TOKENS,
+) -> Optional[AIText]:
+    """Try NVIDIA, then Gemini. Return None when neither answers."""
+    return _nvidia_generate(prompt, system, max_tokens) or _gemini_generate(
+        prompt, system
+    )
+
+
+def generate_text(
+    prompt: str,
+    system: Optional[str] = None,
+    max_tokens: int = DEFAULT_MAX_TOKENS,
+) -> Optional[str]:
+    """Text-only form of :func:`generate_ai_text`."""
+    result = generate_ai_text(prompt, system=system, max_tokens=max_tokens)
+    return result.text if result else None
+
+
+def explain_reading(
+    scope: str,
+    headline: Optional[str],
+    theme: Optional[str],
+    sections: List[dict],
+    numerology: Optional[str],
+    simple_language: bool = True,
+) -> Optional[AIText]:
+    prompt = build_prompt(scope, headline, theme, sections, numerology, simple_language)
+    return generate_ai_text(prompt, max_tokens=512)
+
+
+def explain_with_gemini(
+    scope: str,
+    headline: Optional[str],
+    theme: Optional[str],
+    sections: List[dict],
+    numerology: Optional[str],
+    simple_language: bool = True,
+) -> Optional[str]:
+    """Explain a reading with whichever provider answers (NVIDIA, then Gemini).
+
+    The name is kept for existing callers.
+    """
+    result = explain_reading(
+        scope, headline, theme, sections, numerology, simple_language
+    )
+    return result.text if result else None
 
 
 def fallback_summary(

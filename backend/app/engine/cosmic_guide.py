@@ -7,14 +7,11 @@ Answers questions about readings, charts, and provides mystical guidance.
 
 from __future__ import annotations
 
+import asyncio
 import os
 from typing import Dict, List, Optional
 
-from app.ai_service import (
-    close_gemini_client,
-    create_gemini_client,
-    extract_gemini_text,
-)
+from app.ai_service import _configure_client, ai_configured, generate_ai_text
 from app.interpretation.translations import get_translation
 
 COSMIC_SYSTEM_PROMPT = """You are the Cosmic Guide, a mystical yet friendly AI assistant for Astronumeric, 
@@ -107,14 +104,19 @@ TONE_OVERRIDES = {
 }
 
 
-def _get_api_key() -> Optional[str]:
-    """Get API key dynamically."""
-    return os.environ.get("GEMINI_API_KEY")
-
-
-def _get_model_name() -> str:
-    """Get model name dynamically."""
-    return os.environ.get("GEMINI_MODEL", "gemini-2.0-flash")
+def _fallback_response(question: str, lang: str) -> tuple[str, str]:
+    """Return (topic, localized built-in answer) for when no AI answers."""
+    topic = _detect_topic(question)
+    fallback_trans = get_translation(lang, f"guide_fallback_{topic}")
+    if fallback_trans:
+        return topic, fallback_trans[0]
+    default_trans = get_translation(lang, "guide_fallback_default")
+    response = (
+        default_trans[0]
+        if default_trans
+        else FALLBACK_RESPONSES.get(topic, FALLBACK_RESPONSES["default"])
+    )
+    return topic, response
 
 
 def _build_context(
@@ -253,23 +255,10 @@ async def ask_cosmic_guide(
         chart_data, numerology_data, reading_data, birth_time_assumed, time_confidence
     )
 
-    api_key = _get_api_key()
-
     # Short-circuit to fallback when the caller has no AI access
-    # (see ai_service.has_ai_access — Gemini is reserved for the owner's own device)
+    # (see ai_service.has_ai_access — hosted AI is reserved for the owner's device)
     if not use_ai:
-        topic = _detect_topic(question)
-        fallback_key = f"guide_fallback_{topic}"
-        fallback_trans = get_translation(lang, fallback_key)
-        if fallback_trans:
-            response = fallback_trans[0]
-        else:
-            default_trans = get_translation(lang, "guide_fallback_default")
-            response = (
-                default_trans[0]
-                if default_trans
-                else FALLBACK_RESPONSES.get(topic, FALLBACK_RESPONSES["default"])
-            )
+        topic, response = _fallback_response(question, lang)
         return {
             "response": response,
             "provider": "fallback",
@@ -277,88 +266,50 @@ async def ask_cosmic_guide(
             "topic_detected": topic,
         }
 
-    client = create_gemini_client()
-
-    # If no API key, use intelligent fallback
-    if client is None:
-        topic = _detect_topic(question)
-
-        # Localize fallback response
-        fallback_key = f"guide_fallback_{topic}"
-        fallback_trans = get_translation(lang, fallback_key)
-
-        if fallback_trans:
-            response = fallback_trans[0]
-        else:
-            # Try default fallback if specific topic not found
-            default_trans = get_translation(lang, "guide_fallback_default")
-            response = (
-                default_trans[0]
-                if default_trans
-                else FALLBACK_RESPONSES.get(topic, FALLBACK_RESPONSES["default"])
-            )
-
+    # If no provider is configured, use intelligent fallback
+    if not ai_configured():
+        topic, response = _fallback_response(question, lang)
+        gemini_key_without_library = (
+            bool(os.environ.get("GEMINI_API_KEY")) and not _configure_client()
+        )
         return {
             "response": response,
             "provider": "fallback",
-            "reason": "no_api_key" if not api_key else "no_genai_library",
+            "reason": (
+                "no_genai_library" if gemini_key_without_library else "no_api_key"
+            ),
             "topic_detected": topic,
         }
 
-    try:
-        # Build the full prompt
-        lang_instruction = (
-            f"\nPlease respond in {lang} language." if lang != "en" else ""
-        )
-        full_prompt = (
-            system_prompt.strip() if system_prompt else COSMIC_SYSTEM_PROMPT
-        ) + lang_instruction
+    # Build the full prompt
+    lang_instruction = f"\nPlease respond in {lang} language." if lang != "en" else ""
+    full_prompt = (
+        system_prompt.strip() if system_prompt else COSMIC_SYSTEM_PROMPT
+    ) + lang_instruction
 
-        if context and not system_prompt:
-            full_prompt += context
+    if context and not system_prompt:
+        full_prompt += context
 
-        tone_instruction = TONE_OVERRIDES.get((tone or "").strip().lower())
-        if tone_instruction:
-            full_prompt += f"\n\nTone override:\n{tone_instruction}"
+    tone_instruction = TONE_OVERRIDES.get((tone or "").strip().lower())
+    if tone_instruction:
+        full_prompt += f"\n\nTone override:\n{tone_instruction}"
 
-        chat = client.chats.create(model=_get_model_name())
-
-        # Send system prompt first (simulated as user message for context setting)
-        # Note: Gemini doesn't have explicit system prompt in chat mode same way as GPT
-        # So we prepend it to the first message or use it as context
-
-        response = chat.send_message(full_prompt + "\n\nUser question: " + question)
-        response_text = extract_gemini_text(response)
-        if not response_text:
-            raise ValueError("Gemini returned empty response")
-
-        return {
-            "response": response_text,
-            "provider": "gemini",
-            "model": _get_model_name(),
-        }
-
-    except Exception as e:
-        # Fallback on error
-        topic = _detect_topic(question)
-
-        # Localize fallback response
-        fallback_key = f"guide_fallback_{topic}"
-        fallback_trans = get_translation(lang, fallback_key)
-        response = (
-            fallback_trans[0]
-            if fallback_trans
-            else FALLBACK_RESPONSES.get(topic, FALLBACK_RESPONSES["default"])
-        )
-
+    # The HTTP calls block (and may wait to retry), so keep them off the event loop.
+    result = await asyncio.to_thread(generate_ai_text, question, full_prompt)
+    if result is None:
+        topic, response = _fallback_response(question, lang)
         return {
             "response": response,
             "provider": "fallback",
-            "reason": str(e),
+            "reason": "ai_unavailable",
             "topic_detected": topic,
         }
-    finally:
-        close_gemini_client(client)
+
+    return {
+        "response": result.text,
+        "provider": result.provider,
+        "model": result.model,
+    }
 
 
 def get_suggested_questions(
@@ -444,32 +395,15 @@ async def get_quick_insight(topic: str, sun_sign: Optional[str] = None) -> str:
     # Detect which category this falls into
     topic_key = _detect_topic(topic)
 
-    # Build minimal context
-    if sun_sign:
-        pass
-
-    # For quick insights, use a more focused prompt
-    client = create_gemini_client()
-    if client is None:
-        return FALLBACK_RESPONSES.get(topic_key, FALLBACK_RESPONSES["default"])
-
-    try:
-        prompt = f"""You are the Cosmic Guide, a mystical AI advisor. 
+    prompt = f"""You are the Cosmic Guide, a mystical AI advisor.
 Give a brief, uplifting insight about: {topic}
 {f'The user is a {sun_sign}.' if sun_sign else ''}
 Keep it to 2-3 sentences maximum. Be warm and encouraging. Include one emoji."""
 
-        response = client.models.generate_content(
-            model=_get_model_name(),
-            contents=prompt,
-        )
-        text = extract_gemini_text(response)
-        return text or FALLBACK_RESPONSES.get(topic_key, FALLBACK_RESPONSES["default"])
-
-    except Exception:
+    result = await asyncio.to_thread(generate_ai_text, prompt, None, 256)
+    if result is None:
         return FALLBACK_RESPONSES.get(topic_key, FALLBACK_RESPONSES["default"])
-    finally:
-        close_gemini_client(client)
+    return result.text
 
 
 # Sync wrapper for non-async contexts

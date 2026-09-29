@@ -4,6 +4,8 @@ import os
 import sys
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from app.ai_service import (
@@ -16,6 +18,12 @@ from app.ai_service import (
     extract_gemini_text,
     fallback_summary,
 )
+
+
+@pytest.fixture(autouse=True)
+def _no_nvidia(monkeypatch):
+    """These tests cover the Gemini path, which runs when NVIDIA is not set."""
+    monkeypatch.delenv("NVIDIA_API_KEY", raising=False)
 
 
 class TestBuildPrompt:
@@ -77,9 +85,12 @@ class TestBuildPrompt:
         # Should not crash, section with no highlights is skipped
         assert "Section Empty" not in prompt or "Empty:" not in prompt
 
-    def test_gemini_flash_identity(self):
-        prompt = build_prompt("daily", None, None, [], None)
-        assert "Gemini Flash" in prompt
+    def test_persona_does_not_name_a_model(self):
+        for simple in (True, False):
+            prompt = build_prompt("daily", None, None, [], None, simple)
+            assert "friendly astrology helper" in prompt
+            assert "Gemini" not in prompt
+            assert "Nemotron" not in prompt
 
 
 class TestFallbackSummary:

@@ -8,6 +8,7 @@ from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Body, HTTPException, Request
 from pydantic import BaseModel
+from starlette.concurrency import run_in_threadpool
 
 from ..ai_service import explain_with_gemini, fallback_summary, has_ai_access
 from ..engine.cosmic_guide import ask_cosmic_guide
@@ -223,7 +224,8 @@ async def get_cosmic_guidance(
             )
 
         if has_ai_access(request):
-            guidance_text = explain_with_gemini(
+            guidance_text = await run_in_threadpool(
+                explain_with_gemini,
                 scope="guidance",
                 headline=effective_question,
                 theme=None,
@@ -329,7 +331,8 @@ async def get_detailed_interpretation(
         if effective_context:
             sections.append({"title": "Context", "highlights": [effective_context]})
         if has_ai_access(request):
-            interpretation_text = explain_with_gemini(
+            interpretation_text = await run_in_threadpool(
+                explain_with_gemini,
                 scope="interpretation",
                 headline=effective_topic,
                 theme=None,
