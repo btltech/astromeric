@@ -219,6 +219,17 @@ struct ForecastDay: Codable, Identifiable {
     let vibe: String
     let icon: String
     let recommendation: String
+    /// The day's own forecast, shown when a day is tapped. Absent from older
+    /// responses and cached data, so each is optional.
+    var overview: String? = nil
+    var embrace: [String]? = nil
+    var avoid: [String]? = nil
+    var bestTime: String? = nil
+
+    enum CodingKeys: String, CodingKey {
+        case date, score, vibe, icon, recommendation, overview, embrace, avoid
+        case bestTime = "best_time"
+    }
 
     private var canonicalDateString: String {
         String(date.prefix(10))

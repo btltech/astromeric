@@ -24,6 +24,7 @@ struct TimingAdvisorView: View {
         ZStack {
             Color.appBackground.ignoresSafeArea()
             
+            ScrollViewReader { proxy in
             ScrollView {
                 VStack(alignment: .leading, spacing: Space.md) {
                     PremiumScreenHeader(
@@ -51,11 +52,10 @@ struct TimingAdvisorView: View {
                             showsChevron: false
                         )
 
-                        actionPanel
+                        // Picking an activity fetches its advice straight away.
+                        activityPicker
 
-                        // Activity picker
-                    activityPicker
-
+                        VStack(alignment: .leading, spacing: Space.md) {
                         if let result = timingResult {
                             PremiumSectionHeader(
                                 title: "section.timingAdvisor.1.title".localized,
@@ -88,12 +88,18 @@ struct TimingAdvisorView: View {
                                 cachedResultCard(cached)
                             }
                         }
+                        }
+                        .id(Self.resultsAnchor)
                     }
                 }
                 .padding(.horizontal, Space.sm)
                 .padding(.top, Space.sm)
                 .padding(.bottom, Space.lg)
                 .readableContainer()
+            }
+            // The picker sits above the results, so show the answer (or the
+            // spinner, or the error) instead of leaving it below the fold.
+            .scrollsIntoView(Self.resultsAnchor, using: proxy, onChangeOf: resultState) { $0 != .none }
             }
         }
         .accessibilityIdentifier("TimingAdvisorScreen")
@@ -110,6 +116,19 @@ struct TimingAdvisorView: View {
         }
     }
 
+    private static let resultsAnchor = "timing-results"
+
+    private enum ResultState: Equatable {
+        case none, loading, failed, loaded(TimingResult)
+    }
+
+    private var resultState: ResultState {
+        if isLoading { return .loading }
+        if let timingResult { return .loaded(timingResult) }
+        if error != nil { return .failed }
+        return .none
+    }
+
     private var noProfileCard: some View {
         PremiumActionCard(
             title: "ui.content.0".localized,
@@ -122,36 +141,8 @@ struct TimingAdvisorView: View {
         )
     }
 
-    private var actionPanel: some View {
-        CardView(withShadow: false) {
-            VStack(alignment: .leading, spacing: Space.sm) {
-                HStack(alignment: .top, spacing: Space.sm) {
-                    Text(selectedActivity?.emoji ?? "⏰")
-                        .font(.title2)
-
-                    VStack(alignment: .leading, spacing: 4) {
-                        // Was "ui.timingAdvisor.0" ("Disclaimer"), the wrong string.
-                        Text("ui.timingAdvisor.8".localized)
-                            .font(.sectionTitle)
-                            .foregroundStyle(Color.textPrimary)
-
-                        Text(selectedActivity?.displayName ?? "ui.timingAdvisor.2".localized)
-                            .font(.bodyCopy)
-                            .foregroundStyle(Color.textMuted)
-                    }
-                }
-
-                GradientButton("Get Timing Advice", icon: "clock.badge.checkmark", isLoading: isLoading) {
-                    Task { await fetchTiming() }
-                }
-                .disabled(selectedActivity == nil || isLoading)
-                .opacity(selectedActivity == nil ? 0.6 : 1.0)
-            }
-        }
-    }
-    
     // MARK: - Loading State
-    
+
     private var loadingStateView: some View {
         VStack(spacing: 20) {
             CardView {
@@ -244,10 +235,12 @@ struct TimingAdvisorView: View {
                             // Allow deselect by tapping same activity
                             if selectedActivity == activity {
                                 selectedActivity = nil
+                                timingResult = nil
                                 HapticManager.impact(.light)
                             } else {
                                 selectedActivity = activity
                                 HapticManager.impact(.medium)
+                                Task { await fetchTiming() }
                             }
                         } label: {
                             HStack(spacing: 8) {

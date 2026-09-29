@@ -19,6 +19,7 @@ struct CompatibilityView: View {
                 CosmicBackgroundView(element: nil)
                     .ignoresSafeArea()
                 
+                ScrollViewReader { proxy in
                 ScrollView {
                     VStack(spacing: 24) {
                         PremiumScreenHeader(
@@ -29,14 +30,22 @@ struct CompatibilityView: View {
                             chips: ["hero.compatibility.chip.0".localized, "hero.compatibility.chip.1".localized, "hero.compatibility.chip.2".localized, "hero.compatibility.chip.3".localized]
                         )
 
-                        if viewModel.hasData {
-                            resultsSection
-                        } else {
-                            inputSection
+                        VStack(spacing: 24) {
+                            if viewModel.hasData {
+                                resultsSection
+                            } else {
+                                inputSection
+                            }
                         }
+                        .id(Self.contentAnchor)
                     }
                     .padding()
                     .readableContainer()
+                }
+                // Results replace the form (and Reset brings the form back) at
+                // the same scroll offset, which would drop the user mid-page.
+                // Start either one from its top.
+                .scrollsIntoView(Self.contentAnchor, using: proxy, onChangeOf: viewModel.hasData)
                 }
             }
             .navigationTitle("charts.compatibility".localized)
@@ -73,6 +82,8 @@ struct CompatibilityView: View {
             }
         }
     }
+
+    private static let contentAnchor = "compatibility-content"
 
     private var personBCandidates: [Profile] {
         guard let activeId = store.activeProfile?.id else { return store.profiles }

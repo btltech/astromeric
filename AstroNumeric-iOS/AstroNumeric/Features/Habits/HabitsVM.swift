@@ -15,6 +15,9 @@ final class HabitsVM {
     var selectedCategory: String = "all"
     var isLoading = false
     var error: String?
+    /// The habit just added, so the screen can bring it into view; it lands
+    /// below the lunar card, stats and filters, well off-screen.
+    var lastCreatedHabitID: String?
     
     // MARK: - Computed Properties
     
@@ -136,6 +139,7 @@ final class HabitsVM {
     @MainActor
     func createHabit(name: String, category: String, description: String = "") async -> Bool {
         isLoading = true
+        error = nil
         defer { isLoading = false }
         
         do {
@@ -155,6 +159,7 @@ final class HabitsVM {
                 lastCompleted: nil
             )
             habits.insert(newHabit, at: 0)
+            revealNewHabit(newHabit)
             await repository.saveLocalHabits(habits)
             HapticManager.notification(.success)
             return true
@@ -172,13 +177,24 @@ final class HabitsVM {
                 lastCompleted: nil
             )
             habits.insert(newHabit, at: 0)
+            revealNewHabit(newHabit)
             await repository.saveLocalHabits(habits)
-            self.error = "Saved locally (sync unavailable)"
+            self.error = "Saved on this device only. It will not sync to your account until the connection is back."
             HapticManager.notification(.warning)
             return true
         }
     }
     
+    /// A filter for another category would hide the habit just made, so widen
+    /// it before pointing the screen at the new row.
+    @MainActor
+    private func revealNewHabit(_ habit: LocalHabit) {
+        if selectedCategory != "all" && selectedCategory != habit.category {
+            selectedCategory = "all"
+        }
+        lastCreatedHabitID = habit.id
+    }
+
     @MainActor
     func toggleHabitCompletion(_ habit: LocalHabit) async {
         guard let index = habits.firstIndex(where: { $0.id == habit.id }) else { return }

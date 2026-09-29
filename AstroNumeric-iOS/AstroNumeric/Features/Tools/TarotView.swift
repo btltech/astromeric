@@ -25,6 +25,7 @@ struct TarotView: View {
                 .ignoresSafeArea()
                 .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { availableWidth = $0 }
 
+            ScrollViewReader { proxy in
             ScrollView {
                 VStack(spacing: 24) {
                     PremiumScreenHeader(
@@ -37,6 +38,7 @@ struct TarotView: View {
 
                     // Card display
                     cardSection
+                        .id(Self.cardAnchor)
 
                     // Draw button - show initially or after card is revealed
                     if !isLoading {
@@ -60,6 +62,11 @@ struct TarotView: View {
                 .padding()
                 .readableContainer()
             }
+            // Draw Again sits below the card, so without this the flip can
+            // happen above the fold. Put the card at the top; the details
+            // start right under it once it turns over.
+            .scrollsIntoView(Self.cardAnchor, using: proxy, onChangeOf: isLoading) { $0 }
+            }
             .alert(
                 "Daily Tarot",
                 isPresented: Binding(
@@ -76,6 +83,8 @@ struct TarotView: View {
         .navigationBarTitleDisplayMode(.inline)
     }
     
+    private static let cardAnchor = "tarot-card"
+
     private var cardSection: some View {
         ZStack {
             // Card back

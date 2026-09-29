@@ -761,6 +761,8 @@ struct AIInsightsSheetView: View {
     @State private var showShareSheet = false
     @State private var shareItems: [Any] = []
     @State private var expandAll = false
+    @State private var isRegenerating = false
+    @State private var showCopied = false
 
     private var parsed: ParsedMarkdownDoc {
         ParsedMarkdownDoc(markdown)
@@ -772,23 +774,61 @@ struct AIInsightsSheetView: View {
                 VStack(alignment: .leading, spacing: 14) {
                     headerRow
 
-                    if let tldr = parsed.tldr, !tldr.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                        tldrBox(tldr)
+                    // The parent's spinner is hidden behind this sheet, so
+                    // show the regeneration here.
+                    if isRegenerating {
+                        HStack(spacing: 10) {
+                            ProgressView()
+                            Text("Writing a fresh explanation…")
+                                .font(.subheadline.weight(.medium))
+                                .foregroundStyle(Color.textSecondary)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 8)
+                        .accessibilityElement(children: .combine)
+                        .transition(.opacity)
                     }
 
-                    ForEach(parsed.sections) { section in
-                        CardView {
-                            DisclosureGroup(isExpanded: bindingForSection(section)) {
-                                markdownBlock(section.body)
-                                    .padding(.top, 6)
-                            } label: {
-                                Text(section.title)
-                                    .font(.headline)
+                    VStack(alignment: .leading, spacing: 14) {
+                        if let tldr = parsed.tldr, !tldr.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                            tldrBox(tldr)
+                        }
+
+                        ForEach(parsed.sections) { section in
+                            CardView {
+                                DisclosureGroup(isExpanded: bindingForSection(section)) {
+                                    markdownBlock(section.body)
+                                        .padding(.top, 6)
+                                } label: {
+                                    Text(section.title)
+                                        .font(.headline)
+                                }
                             }
                         }
                     }
+                    .opacity(isRegenerating ? 0.4 : 1)
                 }
                 .padding()
+                .animation(.easeInOut(duration: 0.2), value: isRegenerating)
+            }
+            .overlay(alignment: .bottom) {
+                if showCopied {
+                    Label("Copied", systemImage: "checkmark.circle.fill")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Color.textPrimary)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 10)
+                        .background(Capsule().fill(Color.surfaceBase))
+                        .overlay(Capsule().stroke(Color.borderSubtle, lineWidth: Stroke.hairline))
+                        .padding(.bottom, Space.md)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                        .accessibilityHidden(true)
+                }
+            }
+            // Every caller stamps a new generatedAt when it finishes, whether
+            // the AI answered or it fell back, so that ends the spinner.
+            .onChange(of: generatedAt) { _, _ in
+                isRegenerating = false
             }
             .navigationTitle("screen.aiInsights".localized)
             .navigationBarTitleDisplayMode(.inline)
@@ -810,12 +850,14 @@ struct AIInsightsSheetView: View {
                     Button {
                         copyToClipboard(parsed.copyText)
                         HapticManager.notification(.success)
+                        flashCopied()
                     } label: {
-                        Image(systemName: "doc.on.doc")
+                        Image(systemName: showCopied ? "checkmark" : "doc.on.doc")
+                            .foregroundStyle(showCopied ? Color.positiveGreen : Color.accentColor)
                             .frame(width: 44, height: 44)
                             .contentShape(Rectangle())
                     }
-                    .accessibilityLabel("Copy")
+                    .accessibilityLabel(showCopied ? "Copied" : "Copy")
 
                     Button {
                         shareItems = [parsed.copyText]
@@ -828,13 +870,27 @@ struct AIInsightsSheetView: View {
                     .accessibilityLabel("Share")
 
                     Button {
+                        isRegenerating = true
                         onRegenerate()
+                        Task { @MainActor in
+                            // Don't leave the spinner up if the caller never
+                            // reports back.
+                            try? await Task.sleep(for: .seconds(45))
+                            isRegenerating = false
+                        }
                     } label: {
-                        Image(systemName: "arrow.clockwise")
-                            .frame(width: 44, height: 44)
-                            .contentShape(Rectangle())
+                        Group {
+                            if isRegenerating {
+                                ProgressView()
+                            } else {
+                                Image(systemName: "arrow.clockwise")
+                            }
+                        }
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
                     }
-                    .accessibilityLabel("Regenerate")
+                    .disabled(isRegenerating)
+                    .accessibilityLabel(isRegenerating ? "Regenerating" : "Regenerate")
                 }
             }
             .sheet(isPresented: $showShareSheet) {
@@ -929,6 +985,15 @@ struct AIInsightsSheetView: View {
 
     private func copyToClipboard(_ text: String) {
         UIPasteboard.general.string = text
+    }
+
+    private func flashCopied() {
+        UIAccessibility.post(notification: .announcement, argument: "Copied")
+        withAnimation(.spring(response: 0.3)) { showCopied = true }
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(1.5))
+            withAnimation(.easeOut(duration: 0.2)) { showCopied = false }
+        }
     }
 
     private func relativeTime(_ date: Date) -> String {

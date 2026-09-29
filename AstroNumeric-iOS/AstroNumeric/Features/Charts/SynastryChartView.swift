@@ -7,12 +7,22 @@ struct SynastryChartView: View {
     @Environment(AppStore.self) private var store
     @State private var vm = SynastryChartVM()
     @State private var selectedPartnerId: Int?
-    
+    @State private var partnerPickedByUser = false
+
+    private static let resultsAnchor = "synastry-results"
+
+    /// Changes whenever the results area changes state, so a new partner's
+    /// synastry is brought into view instead of left below the picker.
+    private var resultsKey: String {
+        "\(selectedPartnerId ?? 0)-\(vm.isLoading)-\(vm.error != nil)-\(vm.result != nil)"
+    }
+
     var body: some View {
         ZStack {
             CosmicBackgroundView(element: nil)
                 .ignoresSafeArea()
 
+            ScrollViewReader { proxy in
             ScrollView {
                 VStack(spacing: 16) {
                         PremiumScreenHeader(
@@ -41,7 +51,10 @@ struct SynastryChartView: View {
                                 }
                             }
                             .pickerStyle(.menu)
-                            .onChange(of: selectedPartnerId) { _, _ in
+                            .onChange(of: selectedPartnerId) { oldValue, _ in
+                                // The first partner is set (and loaded) by .task below.
+                                guard oldValue != nil else { return }
+                                partnerPickedByUser = true
                                 Task { await vm.load(store: store, partnerId: selectedPartnerId) }
                             }
 
@@ -49,6 +62,7 @@ struct SynastryChartView: View {
                 title: "section.synastryChart.0.title".localized,
                 subtitle: "section.synastryChart.0.subtitle".localized
             )
+                            .id(Self.resultsAnchor)
 
                             // Data quality warning when either profile lacks exact birth time
                             let personA = store.activeProfile
@@ -160,6 +174,10 @@ struct SynastryChartView: View {
                 }
                 .padding()
                 .readableContainer()
+            }
+            .scrollsIntoView(Self.resultsAnchor, using: proxy, onChangeOf: resultsKey) { _ in
+                partnerPickedByUser && (vm.isLoading || vm.error != nil || vm.result != nil)
+            }
             }
         }
         .accessibilityIdentifier("SynastryScreen")

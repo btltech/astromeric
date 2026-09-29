@@ -24,6 +24,19 @@ struct JournalView: View {
             .refreshable {
                 await vm.load(profile: store.activeProfile, isAuthenticated: store.isAuthenticated, forceRefresh: true)
             }
+            .toolbar {
+                // Always reachable, however long the list of entries gets.
+                if vm.isLocalMode, let profile = store.activeProfile {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button {
+                            startNewEntry(profileId: profile.id)
+                        } label: {
+                            Image(systemName: "square.and.pencil")
+                        }
+                        .accessibilityLabel("ui.journal.4".localized)
+                    }
+                }
+            }
             .navigationDestination(isPresented: Binding(
                 get: { selectedReading != nil },
                 set: { if !$0 { selectedReading = nil } }
@@ -65,6 +78,28 @@ struct JournalView: View {
                                 subtitle: vm.isLocalMode ? "tern.journal.0a".localized : "tern.journal.0b".localized
                             )
 
+                            // Above the entries, so writing one never means
+                            // scrolling past everything already written.
+                            if vm.isLocalMode {
+                                GradientButton("ui.journal.4".localized, icon: "plus") {
+                                    startNewEntry(profileId: profile.id)
+                                }
+                            }
+
+                            if let error = vm.error, !vm.isLoading {
+                                PremiumStatusBanner(
+                                    title: "Couldn't load your journal",
+                                    message: error,
+                                    tone: .critical,
+                                    actionTitle: "Try again",
+                                    action: {
+                                        Task {
+                                            await vm.load(profile: store.activeProfile, isAuthenticated: store.isAuthenticated, forceRefresh: true)
+                                        }
+                                    }
+                                )
+                            }
+
                             if !vm.prompts.isEmpty {
                                 CardView {
                                     VStack(alignment: .leading, spacing: 8) {
@@ -94,6 +129,7 @@ struct JournalView: View {
                             } else {
                                 ForEach(vm.readings) { reading in
                                     Button {
+                                        vm.saveError = nil
                                         selectedReading = reading
                                         entryDraft = reading.journalFull ?? ""
                                         outcomeDraft = JournalOutcome.from(reading.feedback)
@@ -129,17 +165,6 @@ struct JournalView: View {
                                         }
                                     }
                                     .buttonStyle(ScaleButtonStyle())
-                                }
-                            }
-                            
-                            if vm.isLocalMode {
-                                GradientButton("ui.journal.4".localized, icon: "plus") {
-                                    Task {
-                                        let draft = await vm.makeLocalDraft(profileId: profile.id)
-                                        selectedReading = draft
-                                        entryDraft = ""
-                                        outcomeDraft = .neutral
-                                    }
                                 }
                             }
                         }
@@ -229,14 +254,29 @@ struct JournalView: View {
                         Spacer()
                     }
 
-                    GradientButton("ui.journal.6".localized, icon: "checkmark.circle.fill") {
+                    // A failed save keeps the editor (and the words) open
+                    // and says why, instead of closing as if it had worked.
+                    if let saveError = vm.saveError {
+                        PremiumStatusBanner(
+                            title: "Couldn't save this entry",
+                            message: saveError,
+                            tone: .critical
+                        )
+                    }
+
+                    GradientButton("ui.journal.6".localized, icon: "checkmark.circle.fill", isLoading: vm.isSaving) {
                         Task {
-                            await vm.saveEntry(readingId: reading.id, entry: entryDraft)
-                            await vm.saveOutcome(readingId: reading.id, outcome: outcomeDraft)
-                            await vm.load(profile: store.activeProfile, isAuthenticated: store.isAuthenticated, forceRefresh: true)
+                            let saved = await vm.save(readingId: reading.id, entry: entryDraft, outcome: outcomeDraft)
+                            guard saved else {
+                                HapticManager.notification(.error)
+                                return
+                            }
+                            HapticManager.notification(.success)
                             selectedReading = nil
+                            await vm.load(profile: store.activeProfile, isAuthenticated: store.isAuthenticated, forceRefresh: true)
                         }
                     }
+                    .disabled(vm.isSaving)
                 }
                 .padding()
                 .readableContainer()
@@ -244,6 +284,16 @@ struct JournalView: View {
         }
         .navigationTitle("screen.journalEntry".localized)
         .navigationBarTitleDisplayMode(.inline)
+    }
+
+    private func startNewEntry(profileId: Int) {
+        Task {
+            let draft = await vm.makeLocalDraft(profileId: profileId)
+            vm.saveError = nil
+            selectedReading = draft
+            entryDraft = ""
+            outcomeDraft = .neutral
+        }
     }
 }
 

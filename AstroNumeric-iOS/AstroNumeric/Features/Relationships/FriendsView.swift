@@ -52,11 +52,23 @@ struct FriendsView: View {
     @State private var isLoading = false
     @State private var showingAddFriend = false
     @State private var selectedFriend: FriendCompatibility?
+    @State private var loadError: String?
+    @State private var reveal: RevealRequest?
+
+    /// Where to scroll after a friend is added. The token makes a second add
+    /// that lands on the same target still count as a change.
+    private struct RevealRequest: Equatable {
+        let target: String
+        let token = UUID()
+    }
+
+    private static let listAnchor = "friends-list"
 
     var body: some View {
         ZStack {
             CosmicBackgroundView(element: nil).ignoresSafeArea()
 
+            ScrollViewReader { proxy in
             ScrollView {
                 VStack(spacing: 20) {
                     PremiumScreenHeader(
@@ -85,6 +97,7 @@ struct FriendsView: View {
                 title: "section.friends.0.title".localized,
                 subtitle: "section.friends.0.subtitle".localized
             )
+                    .id(Self.listAnchor)
 
                     // Add friend button
                     Button {
@@ -109,6 +122,16 @@ struct FriendsView: View {
                     if isLoading {
                         SkeletonCard()
                         SkeletonCard()
+                    } else if let loadError {
+                        PremiumStatusBanner(
+                            title: "Couldn't load your circle",
+                            message: loadError,
+                            tone: .critical,
+                            actionTitle: "Try again",
+                            action: {
+                                Task { await loadFriends() }
+                            }
+                        )
                     } else if compatibilities.isEmpty && !friends.isEmpty {
                         CardView {
                             VStack(spacing: 8) {
@@ -144,6 +167,7 @@ struct FriendsView: View {
                             .buttonStyle(ScaleButtonStyle())
                             .accessibilityLabel("\(compat.displayName(hideSensitive: store.hideSensitiveDetailsEnabled)), \(Int(compat.overallScore))% compatible. \(compat.headline)")
                             .accessibilityHint("Tap to view full compatibility report")
+                            .id(compat.friendId)
                         }
                     }
                 }
@@ -151,13 +175,21 @@ struct FriendsView: View {
                 .floatingAIButtonClearance()
                 .readableContainer()
             }
+            // The ranked list sits below the intro and the add button, so show
+            // where the new friend landed rather than leaving it off-screen.
+            .scrollsIntoView(reveal?.target ?? Self.listAnchor, using: proxy, onChangeOf: reveal, anchor: .center) { $0 != nil }
+            }
         }
         .navigationTitle("screen.cosmicCircle".localized)
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showingAddFriend) {
             AddFriendSheet { newFriend in
                 friends.append(newFriend)
-                Task { await loadCompatibilities() }
+                Task {
+                    await loadCompatibilities()
+                    let ranked = compatibilities.contains { $0.friendId == newFriend.id }
+                    reveal = RevealRequest(target: ranked ? newFriend.id : Self.listAnchor)
+                }
             }
         }
         .sheet(item: $selectedFriend) { compat in
@@ -242,6 +274,7 @@ struct FriendsView: View {
         guard let profile = store.activeProfile,
               let ownerId = FriendsOwnerKey.ownerId(forProfileId: profile.id) else { return }
         isLoading = true
+        loadError = nil
         defer { isLoading = false }
         do {
             let response: V2ApiResponse<[FriendProfile]> = try await APIClient.shared.fetch(
@@ -250,7 +283,11 @@ struct FriendsView: View {
             )
             friends = response.data
             if !friends.isEmpty { await loadCompatibilities() }
-        } catch { /* silent */ }
+        } catch {
+            // Without this the screen claimed "no friends yet" when the list
+            // simply failed to load.
+            loadError = error.localizedDescription
+        }
     }
 
     private func loadCompatibilities() async {
@@ -262,8 +299,13 @@ struct FriendsView: View {
                 .compareAllFriends(ownerId: ownerId, profile: profile),
                 cachePolicy: .networkFirst
             )
-            await MainActor.run { compatibilities = response.data }
-        } catch { /* silent */ }
+            await MainActor.run {
+                compatibilities = response.data
+                loadError = nil
+            }
+        } catch {
+            await MainActor.run { loadError = error.localizedDescription }
+        }
     }
 }
 
@@ -278,6 +320,7 @@ struct AddFriendSheet: View {
     @State private var relationshipType = "friendship"
     @State private var avatarEmoji = "👤"
     @State private var isSaving = false
+    @State private var saveError: String?
     @Environment(AppStore.self) private var store
 
     let emojis = ["👤", "👩", "👨", "🧑", "👫", "💃", "🕺", "🦋", "🌟", "🔥"]
@@ -286,6 +329,14 @@ struct AddFriendSheet: View {
     var body: some View {
         NavigationStack {
             Form {
+                // At the top, where it is seen with the keyboard up.
+                if let saveError {
+                    Section {
+                        Label(saveError, systemImage: "exclamationmark.triangle.fill")
+                            .font(.subheadline)
+                            .foregroundStyle(Color.negativeRed)
+                    }
+                }
                 Section("ui.friends.12".localized) {
                     TextField("ui.friends.10".localized, text: $name)
                     DatePicker("Date of Birth", selection: $dob, displayedComponents: .date)
@@ -316,7 +367,13 @@ struct AddFriendSheet: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("action.cancel".localized) { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("action.save".localized) { save() }.disabled(name.isEmpty || isSaving)
+                    if isSaving {
+                        ProgressView()
+                            .accessibilityLabel("Saving")
+                    } else {
+                        Button("action.save".localized) { save() }
+                            .disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    }
                 }
             }
         }
@@ -324,6 +381,7 @@ struct AddFriendSheet: View {
 
     private func save() {
         isSaving = true
+        saveError = nil
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd"
         let friend = FriendProfile(
@@ -336,7 +394,10 @@ struct AddFriendSheet: View {
         Task {
             guard let p = store.activeProfile,
                   let ownerId = FriendsOwnerKey.ownerId(forProfileId: p.id) else {
-                await MainActor.run { isSaving = false }
+                await MainActor.run {
+                    isSaving = false
+                    saveError = "Couldn't add a friend yet. Make sure your own profile is set up, then try again."
+                }
                 return
             }
             do {
@@ -349,7 +410,11 @@ struct AddFriendSheet: View {
                     dismiss()
                 }
             } catch {
-                await MainActor.run { isSaving = false }
+                await MainActor.run {
+                    isSaving = false
+                    saveError = "Couldn't add \(friend.name): \(error.localizedDescription)"
+                    HapticManager.notification(.error)
+                }
             }
         }
     }

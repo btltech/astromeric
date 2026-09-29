@@ -8,6 +8,7 @@ struct DailyGuidanceView: View {
     let guidance: DailyGuidance
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @State private var showCopied = false
 
     private var guidanceColumns: [GridItem] {
         if dynamicTypeSize.isAccessibilitySize { return [GridItem(.flexible())] }
@@ -96,10 +97,20 @@ struct DailyGuidanceView: View {
                             Button {
                                 UIPasteboard.general.string = affirmation
                                 HapticManager.notification(.success)
+                                UIAccessibility.post(notification: .announcement, argument: "Copied")
+                                // A haptic alone is easy to miss; say so on the button.
+                                withAnimation(.easeInOut(duration: 0.2)) { showCopied = true }
+                                Task { @MainActor in
+                                    try? await Task.sleep(for: .seconds(1.5))
+                                    withAnimation(.easeInOut(duration: 0.2)) { showCopied = false }
+                                }
                             } label: {
-                                Label("ui.dailyGuidance.3".localized, systemImage: "doc.on.doc")
-                                    .font(.caption)
-                                    .foregroundStyle(Color.textSecondary)
+                                Label(
+                                    showCopied ? "Copied" : "ui.dailyGuidance.3".localized,
+                                    systemImage: showCopied ? "checkmark" : "doc.on.doc"
+                                )
+                                .font(.caption)
+                                .foregroundStyle(showCopied ? Color.positiveGreen : Color.textSecondary)
                             }
                         }
                     }

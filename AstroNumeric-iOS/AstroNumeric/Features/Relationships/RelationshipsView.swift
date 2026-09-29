@@ -204,34 +204,48 @@ struct RelationshipsView: View {
                 emptyStateCard
             } else {
                 ForEach(filtered) { relationship in
-                    RelationshipCard(relationship: relationship) {
-                        selectedRelationship = relationship
-                    }
-                    .contextMenu {
-                        Button {
+                    // These rows live in a ScrollView, not a List, so swipe
+                    // actions never fired. Delete is offered on long press and
+                    // from a visible "more" button on each row instead.
+                    HStack(spacing: Space.xs) {
+                        RelationshipCard(relationship: relationship) {
                             selectedRelationship = relationship
-                        } label: {
-                            Label("ui.relationships.14".localized, systemImage: "info.circle")
                         }
-                        Divider()
-                        Button(role: .destructive) {
-                            viewModel.deleteRelationship(relationship)
-                        } label: {
-                            Label("ui.relationships.15".localized, systemImage: "trash")
+                        .contextMenu {
+                            relationshipActions(relationship)
                         }
-                    }
-                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                        Button(role: .destructive) {
-                            viewModel.deleteRelationship(relationship)
+
+                        Menu {
+                            relationshipActions(relationship)
                         } label: {
-                            Label("ui.relationships.16".localized, systemImage: "trash")
+                            Image(systemName: "ellipsis.circle")
+                                .font(.title3)
+                                .foregroundStyle(Color.textSecondary)
+                                .frame(width: 44, height: 44)
+                                .contentShape(Rectangle())
                         }
+                        .accessibilityLabel("More actions for \(relationship.displayPair(hideSensitive: store.hideSensitiveDetailsEnabled))")
                     }
                 }
             }
         }
     }
     
+    @ViewBuilder
+    private func relationshipActions(_ relationship: SavedRelationship) -> some View {
+        Button {
+            selectedRelationship = relationship
+        } label: {
+            Label("ui.relationships.14".localized, systemImage: "info.circle")
+        }
+        Divider()
+        Button(role: .destructive) {
+            viewModel.deleteRelationship(relationship)
+        } label: {
+            Label("ui.relationships.15".localized, systemImage: "trash")
+        }
+    }
+
     private var filteredRelationships: [SavedRelationship] {
         guard let type = filterType else {
             return viewModel.savedRelationships

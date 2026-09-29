@@ -26,10 +26,6 @@ struct CosmicGuideView: View {
                                     welcomeSection
                                 }
 
-                                if let error = vm.error, !error.isEmpty {
-                                    errorBanner(error)
-                                }
-                                
                                 // Chat messages
                                 ForEach(vm.messages) { message in
                                     ChatBubbleView(message: message)
@@ -51,6 +47,18 @@ struct CosmicGuideView: View {
                                 }
                             }
                         }
+                        // Show the "thinking" dots as soon as they appear,
+                        // not only once the reply lands.
+                        .scrollsIntoView("typing", using: proxy, onChangeOf: vm.isLoading, anchor: .bottom) { $0 }
+                    }
+
+                    // Pinned above the input, where the user is, rather than
+                    // at the top of a long conversation.
+                    if let error = vm.error, !error.isEmpty {
+                        errorBanner(error)
+                            .padding(.horizontal)
+                            .padding(.vertical, 8)
+                            .transition(.move(edge: .bottom).combined(with: .opacity))
                     }
                     
                     // Tone picker (slides in above input)

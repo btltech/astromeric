@@ -466,6 +466,11 @@ struct HomeView: View {
                             }
                         }
                     }
+
+                    // The date line and snapshot card this changes are at the
+                    // top of the screen, out of sight from here. Show what the
+                    // scrubber picked right next to it.
+                    scrubbedDaySummary
                 }
                 .padding(.top, Space.sm)
             } label: {
@@ -493,6 +498,55 @@ struct HomeView: View {
             }
             .tint(Color.textPrimary)
         }
+    }
+
+    /// The day the scrubber points at, known before the data for it arrives.
+    private var scrubbedDate: Date {
+        Date().addingTimeInterval(timeOffset * 86400)
+    }
+
+    /// True once the dashboard is showing the day the scrubber points at.
+    private var scrubbedDayIsLoaded: Bool {
+        !vm.isLoading && Calendar.current.isDate(vm.selectedDate, inSameDayAs: scrubbedDate)
+    }
+
+    private var scrubbedDaySummary: some View {
+        VStack(alignment: .leading, spacing: Space.xs) {
+            HStack(spacing: Space.xs) {
+                Text(scrubbedDate.formatted(.dateTime.weekday(.wide).month().day()))
+                    .font(.system(.caption2, design: .monospaced).weight(.bold))
+                    .textCase(.uppercase)
+                    .tracking(1.4)
+                    .foregroundStyle(Color.cosmicPurple)
+
+                Spacer(minLength: Space.xs)
+
+                if !scrubbedDayIsLoaded {
+                    ProgressView()
+                        .controlSize(.small)
+                } else if let n = vm.personalDayNumber {
+                    PremiumBadge(text: "Day \(n)", tint: .accentPrimary)
+                }
+            }
+
+            Text(heroHeadlineText)
+                .font(.system(.subheadline, design: .serif).weight(.semibold))
+                .foregroundStyle(Color.textPrimary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            if let desc = vm.personalDayDescription {
+                Text(desc)
+                    .font(.caption)
+                    .foregroundStyle(Color.textSecondary)
+                    .lineLimit(2)
+            }
+        }
+        .opacity(scrubbedDayIsLoaded ? 1 : 0.55)
+        .animation(.easeInOut(duration: 0.2), value: scrubbedDayIsLoaded)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(Space.sm)
+        .background(Color.white.opacity(0.04), in: RoundedRectangle(cornerRadius: Radius.sm))
+        .accessibilityElement(children: .combine)
     }
 
     private func dailyReadingCard(_ reading: DailyReadingSummary) -> some View {

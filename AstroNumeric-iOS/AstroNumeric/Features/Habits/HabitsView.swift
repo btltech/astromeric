@@ -27,6 +27,7 @@ struct HabitsView: View {
                 CosmicBackgroundView(element: nil)
                     .ignoresSafeArea()
                 
+                ScrollViewReader { proxy in
                 ScrollView {
                     VStack(spacing: 20) {
                         PremiumScreenHeader(
@@ -58,9 +59,15 @@ struct HabitsView: View {
                         
                         // Habits list
                         habitsSection
+                            .id(Self.habitsListAnchor)
                     }
                     .padding()
                     .readableContainer()
+                }
+                // A new habit is inserted first in "Up Next", below the lunar
+                // card, stats and filters; show the list (and any sync notice
+                // above it) instead of leaving the habit off-screen.
+                .scrollsIntoView(Self.habitsListAnchor, using: proxy, onChangeOf: viewModel.lastCreatedHabitID) { $0 != nil }
                 }
                 
                 if viewModel.isLoading && viewModel.habits.isEmpty {
@@ -137,6 +144,8 @@ struct HabitsView: View {
         }
     }
     
+    private static let habitsListAnchor = "habits-list"
+
     // MARK: - Lunar Guidance Card
     
     private func lunarGuidanceCard(_ guidance: LunarHabitGuidance) -> some View {
@@ -343,6 +352,19 @@ struct HabitsView: View {
     
     private var habitsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
+            if let error = viewModel.error {
+                PremiumStatusBanner(
+                    title: "Not synced yet",
+                    message: error,
+                    tone: .warning,
+                    actionTitle: "Dismiss",
+                    action: {
+                        withAnimation { viewModel.error = nil }
+                    }
+                )
+                .transition(.opacity)
+            }
+
             if viewModel.filteredHabits.isEmpty {
                 emptyHabitsCard
             } else {

@@ -12,6 +12,15 @@ struct WeeklyVibeView: View {
     /// Show the share button
     var showShare: Bool = true
 
+    /// On the full page, days are tappable and the chosen day's forecast shows
+    /// under the strip. The Home card is itself a link, so it stays a strip.
+    var showsDayDetail: Bool = true
+    @State private var selectedDayId: String?
+
+    private var selectedDay: ForecastDay? {
+        viewModel.days.first { $0.id == selectedDayId } ?? viewModel.days.first
+    }
+
     /// Kept in step with VibeDayCard so the skeleton matches the loaded row.
     @ScaledMetric(relativeTo: .caption) private var cardWidth: CGFloat = 70
     @ScaledMetric(relativeTo: .caption) private var cardMinHeight: CGFloat = 110
@@ -26,6 +35,9 @@ struct WeeklyVibeView: View {
                 loadingView
             } else if !viewModel.days.isEmpty {
                 timelineSection
+                if showsDayDetail, let day = selectedDay {
+                    dayDetail(day)
+                }
             } else {
                 emptyView
             }
@@ -82,10 +94,79 @@ struct WeeklyVibeView: View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 12) {
                 ForEach(viewModel.days) { day in
-                    VibeDayCard(day: day)
+                    if showsDayDetail {
+                        Button {
+                            selectedDayId = day.id
+                            HapticManager.impact(.light)
+                        } label: {
+                            VibeDayCard(day: day)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: Radius.md)
+                                        .strokeBorder(Color.white.opacity(0.7), lineWidth: 2)
+                                        .opacity(day.id == selectedDay?.id && !day.isToday ? 1 : 0)
+                                )
+                        }
+                        .buttonStyle(ScaleButtonStyle())
+                        .accessibilityAddTraits(day.id == selectedDay?.id ? .isSelected : [])
+                    } else {
+                        VibeDayCard(day: day)
+                    }
                 }
             }
             .padding(.horizontal, 4)
+            .padding(.vertical, 2)
+        }
+    }
+
+    // MARK: - Day detail
+
+    private func dayDetail(_ day: ForecastDay) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .firstTextBaseline) {
+                Text(day.dateObject?.formatted(.dateTime.weekday(.wide).day().month(.wide)) ?? day.weekday)
+                    .font(.headline)
+                    .foregroundStyle(Color.textPrimary)
+                Spacer()
+                Text("\(day.icon) \(day.vibe) · \(day.score)%")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Color.accentPrimary)
+            }
+
+            Text(day.recommendation)
+                .font(.bodyCopy)
+                .foregroundStyle(Color.textPrimary)
+
+            if let overview = day.overview {
+                Text(overview)
+                    .font(.bodyCopy)
+                    .foregroundStyle(Color.textSecondary)
+            }
+
+            if let embrace = day.embrace, !embrace.isEmpty {
+                detailLine(title: "Good for", items: embrace, icon: "checkmark.circle.fill", color: .green)
+            }
+            if let avoid = day.avoid, !avoid.isEmpty {
+                detailLine(title: "Go easy on", items: avoid, icon: "exclamationmark.circle.fill", color: .orange)
+            }
+            if let bestTime = day.bestTime {
+                Label(bestTime, systemImage: "clock.fill")
+                    .font(.subheadline)
+                    .foregroundStyle(Color.textSecondary)
+            }
+        }
+        .padding()
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(RoundedRectangle(cornerRadius: Radius.md).fill(.ultraThinMaterial))
+        .animation(.easeInOut(duration: 0.2), value: day.id)
+    }
+
+    private func detailLine(title: String, items: [String], icon: String, color: Color) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
+            Image(systemName: icon)
+                .foregroundStyle(color)
+            Text("\(Text("\(title):").fontWeight(.semibold).foregroundStyle(Color.textPrimary)) \(items.joined(separator: ", "))")
+                .font(.subheadline)
+                .foregroundStyle(Color.textSecondary)
         }
     }
     
@@ -265,7 +346,7 @@ struct WeeklyVibeCard: View {
     
     var body: some View {
         CardView {
-            WeeklyVibeView(showShare: showShare)
+            WeeklyVibeView(showShare: showShare, showsDayDetail: false)
         }
     }
 }

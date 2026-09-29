@@ -1,6 +1,8 @@
 // OracleView.swift
-// Horary Oracle — Yes/No answers grounded in real-time planetary math
-// Routes through Cosmic Guide chat pipeline with EphemerisEngine telemetry
+// Horary Oracle — Yes/No answers grounded in real-time planetary math.
+// With the owner's AI access code it routes through the Cosmic Guide chat
+// pipeline with EphemerisEngine telemetry; otherwise it answers on-device
+// from the Horary rules alone and the question never leaves the phone.
 
 import SwiftUI
 import UIKit
@@ -13,6 +15,7 @@ struct OracleView: View {
     @State private var isLoading = false
     @State private var pendulumAngle: Double = 0
     @State private var errorMessage: String?
+    @FocusState private var questionFocused: Bool
     
     private let cosmicGuide: CosmicGuideRepository = DefaultCosmicGuideRepository()
     
@@ -21,6 +24,7 @@ struct OracleView: View {
             CosmicBackgroundView(element: nil)
                 .ignoresSafeArea()
             
+            ScrollViewReader { proxy in
             ScrollView {
                 VStack(spacing: 24) {
                     PremiumScreenHeader(
@@ -38,6 +42,7 @@ struct OracleView: View {
 
                     // Pendulum
                     pendulumSection
+                        .id(Self.pendulumAnchor)
                     
                     // Question input
                     questionInput
@@ -45,34 +50,64 @@ struct OracleView: View {
                     // Ask button
                     askButton
                     
-                    // Error
-                    if let errorMessage {
-                        errorCard(errorMessage)
-                    }
-                    
-                    // Answer
-                    if let answer {
-                        PremiumSectionHeader(
-                            title: "section.oracle.1.title".localized,
-                            subtitle: "section.oracle.1.subtitle".localized
-                        )
-
-                        answerSection(answer)
-                    }
-                    
-                    // Telemetry citation
-                    if let telemetry {
-                        telemetrySection(telemetry)
-                    }
+                    resultsArea
+                        .id(Self.resultsAnchor)
                 }
                 .padding()
                 .readableContainer()
+            }
+            .scrollDismissesKeyboard(.interactively)
+            // While the oracle thinks, keep the swinging pendulum in view;
+            // once it answers, bring the answer (or the error) up to the top.
+            .scrollsIntoView(Self.pendulumAnchor, using: proxy, onChangeOf: resultState) { $0 == .loading }
+            .scrollsIntoView(Self.resultsAnchor, using: proxy, onChangeOf: resultState) { $0.isFinished }
             }
         }
         .navigationTitle("screen.oracle".localized)
         .navigationBarTitleDisplayMode(.inline)
     }
     
+    private static let pendulumAnchor = "oracle-pendulum"
+    private static let resultsAnchor = "oracle-results"
+
+    private enum ResultState: Equatable {
+        case none, loading, answered, failed
+
+        var isFinished: Bool { self == .answered || self == .failed }
+    }
+
+    /// Error, answer and telemetry: everything that shows up after Ask.
+    private var resultsArea: some View {
+        VStack(spacing: 24) {
+            // Error
+            if let errorMessage {
+                errorCard(errorMessage)
+            }
+
+            // Answer
+            if let answer {
+                PremiumSectionHeader(
+                    title: "section.oracle.1.title".localized,
+                    subtitle: "section.oracle.1.subtitle".localized
+                )
+
+                answerSection(answer)
+            }
+
+            // Telemetry citation
+            if let telemetry {
+                telemetrySection(telemetry)
+            }
+        }
+    }
+
+    private var resultState: ResultState {
+        if isLoading { return .loading }
+        if answer != nil { return .answered }
+        if errorMessage != nil { return .failed }
+        return .none
+    }
+
     // MARK: - Pendulum
     
     private var pendulumSection: some View {
@@ -129,18 +164,44 @@ struct OracleView: View {
                         )
                 )
                 .lineLimit(2...4)
+                .focused($questionFocused)
+                .submitLabel(.go)
+                // A wrapping field turns Return into a newline; treat it as
+                // "ask" instead, since the keyboard hides the button below.
+                .onChange(of: question) { _, newValue in
+                    guard newValue.contains("\n") else { return }
+                    question = newValue.replacingOccurrences(of: "\n", with: "")
+                    submitQuestion()
+                }
+                .toolbar {
+                    ToolbarItemGroup(placement: .keyboard) {
+                        Spacer()
+                        Button("ui.oracle.1".localized) { submitQuestion() }
+                            .fontWeight(.semibold)
+                            .disabled(!canAsk)
+                    }
+                }
         }
+    }
+
+    private var canAsk: Bool {
+        !question.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !isLoading
+    }
+
+    private func submitQuestion() {
+        guard canAsk else { return }
+        // Put the keyboard away so it doesn't cover the answer.
+        questionFocused = false
+        Task { await askOracle() }
     }
     
     // MARK: - Ask Button
     
     private var askButton: some View {
         GradientButton("ui.oracle.1".localized, icon: "sparkle", isLoading: isLoading) {
-            Task {
-                await askOracle()
-            }
+            submitQuestion()
         }
-        .disabled(question.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isLoading)
+        .disabled(!canAsk)
     }
     
     // MARK: - Error Card
@@ -242,6 +303,17 @@ struct OracleView: View {
             longitude: profile.longitude
         )
         
+        // Without the owner's AI access, answer from the Horary rules on the
+        // device. This is the normal path there, not a failure, so no error.
+        guard AIAvailability.shared.isEnabled else {
+            withAnimation(.spring()) {
+                answer = horaryColdRead(snapshot: snapshot)
+                telemetry = snapshot.citation
+            }
+            UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
+            return
+        }
+
         // 2. Build the Horary system prompt
         let systemPrompt = """
         You are a precise Horary Astrologer. The user has asked a Yes/No question. \
