@@ -6,7 +6,7 @@ Standardized request/response format for educational astrology content.
 from typing import Dict, Generic, List, Optional, TypeVar
 
 from fastapi import APIRouter, HTTPException, Query, Request
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
 
 from ..engine.glossary import get_sign_info
 from ..exceptions import StructuredLogger
@@ -65,6 +65,13 @@ class LearningModule(BaseModel):
     content: str
     keywords: List[str]
     related_modules: List[str] = []
+
+    @model_validator(mode="after")
+    def _duration_from_length(self) -> "LearningModule":
+        # Hand-typed durations claimed 5-12 minutes for ~200-word lessons.
+        # Derive it from the text at about 200 words a minute instead.
+        self.duration_minutes = max(1, round(len(self.content.split()) / 200))
+        return self
 
 
 class ZodiacGuidance(BaseModel):
