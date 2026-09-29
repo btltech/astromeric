@@ -13,8 +13,8 @@ from typing import Dict, List, Optional
 from .engine.constants import (
     CHALDEAN_LETTER_VALUES,
     LETTER_VALUES,
-    VOWELS,
     reduce_number,
+    split_vowels_consonants,
 )
 from .engine.numerology import calculate_life_path_number_chaldean
 from .engine.numerology_extended import (
@@ -24,10 +24,6 @@ from .engine.numerology_extended import (
     calculate_pinnacles,
 )
 from .interpretation import NUMEROLOGY_MEANINGS
-
-# Chaldean uses same vowels as Pythagorean for soul urge extraction
-_CHALDEAN_VOWELS = VOWELS
-
 
 _AFFIRMATIONS = {
     1: "I lead with courage and trust my own direction.",
@@ -70,38 +66,16 @@ def expression(name: str, method: str = "pythagorean") -> int:
     return reduce_number(total)
 
 
-def _vowels_for_name(name: str) -> set:
-    """
-    Return the effective vowel set for a name, handling the Y ambiguity.
-
-    Y is treated as a vowel when it acts as the only vowel sound in a position —
-    specifically when it is NOT adjacent (left or right) to another standard vowel.
-    This matches the most widely-used numerology convention.
-    """
-    base = set(VOWELS)
-    lower = name.lower()
-    for i, ch in enumerate(lower):
-        if ch == "y":
-            left = lower[i - 1] if i > 0 else ""
-            right = lower[i + 1] if i < len(lower) - 1 else ""
-            # Y is vocalic when not flanked by a standard vowel
-            if left not in VOWELS and right not in VOWELS:
-                base = base | {"y"}
-                break
-    return base
-
-
 def soul_urge(name: str, method: str = "pythagorean") -> int:
     lv = _letter_values(method)
-    vowels = _vowels_for_name(name)
-    total = sum(lv.get(c, 0) for c in name.lower() if c in vowels)
-    return reduce_number(total)
+    vowels, _ = split_vowels_consonants(name)
+    return reduce_number(sum(lv.get(c, 0) for c in vowels))
 
 
 def personality(name: str, method: str = "pythagorean") -> int:
     lv = _letter_values(method)
-    total = sum(lv.get(c, 0) for c in name.lower() if c.isalpha() and c not in VOWELS)
-    return reduce_number(total)
+    _, consonants = split_vowels_consonants(name)
+    return reduce_number(sum(lv.get(c, 0) for c in consonants))
 
 
 def birthday_number(dob: str) -> int:

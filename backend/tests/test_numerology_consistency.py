@@ -9,6 +9,7 @@ from backend.app.engine.compatibility import LIFE_PATH_COMPAT, get_life_path_com
 from backend.app.engine.numerology_extended import (
     CHALLENGE_MEANINGS,
     calculate_challenges,
+    calculate_pinnacles,
 )
 from backend.app.main import app
 from backend.app.numerology_engine import _numerology_text, build_numerology
@@ -87,3 +88,28 @@ def test_synthesis_names_the_pinnacle_you_are_in_now():
     first = data["pinnacles"][0]
     if first["number"] != current["number"]:
         assert f"Pinnacle {first['number']}," not in data["synthesis"]["current_focus"]
+
+
+def test_each_y_is_a_vowel_or_a_consonant_never_both():
+    from backend.app.engine.constants import split_vowels_consonants
+    from backend.app.engine.numerology_extended import (
+        calculate_personality_number,
+        calculate_soul_urge_number,
+    )
+    from backend.app.numerology_engine import personality, soul_urge
+
+    # Lynn: Y is the only vowel sound, so Soul Urge 7 and Personality 3+5+5 = 13 -> 4.
+    assert split_vowels_consonants("Lynn") == (["y"], ["l", "n", "n"])
+    assert soul_urge("Lynn") == calculate_soul_urge_number("Lynn") == 7
+    assert personality("Lynn") == calculate_personality_number("Lynn") == 4
+    # Maya Lynn: the first Y sits between vowels (consonant), the second doesn't.
+    vowels, consonants = split_vowels_consonants("Maya Lynn")
+    assert vowels == ["a", "a", "y"]
+    assert consonants == ["m", "y", "l", "n", "n"]
+
+
+def test_master_life_path_times_pinnacles_as_its_single_digit():
+    # 4 June 1990 is Life Path 11, timed as 2: the first pinnacle ends at 34.
+    pinnacles = calculate_pinnacles("1990-06-04")
+    assert pinnacles[0]["period"] == "Birth to age 34"
+    assert pinnacles[3]["period"] == "Age 53 onwards"

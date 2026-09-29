@@ -108,7 +108,7 @@ final class LearningProgressManager {
 /// LearnVM. (Earlier tracks listed 12/8/6/10 lessons, including Moon and Tarot
 /// tracks with no lessons at all, and numerology IDs that matched none.)
 enum LearningTrack {
-    static let astrology101LessonIds = (1...4).map { "astro-\($0)" }
-    static let signsAndElementsLessonIds = (1...3).map { "zodiac-\($0)" } + (1...4).map { "elem-\($0)" }
-    static let numerologyBasicsLessonIds = (1...3).map { "num-\($0)" }
+    static let astrology101LessonIds = (1...7).map { "astro-\($0)" }
+    static let signsAndElementsLessonIds = (1...4).map { "zodiac-\($0)" } + (1...4).map { "elem-\($0)" }
+    static let numerologyBasicsLessonIds = (1...7).map { "num-\($0)" }
 }
