@@ -137,6 +137,8 @@ export interface LiveNumerologyArc {
   number: number;
   ages: string;
   meaning: string;
+  /** Full written reading; meaning is the short line. */
+  reading?: string | null;
 }
 
 export interface LiveKarmicDebt {
@@ -145,6 +147,21 @@ export interface LiveKarmicDebt {
   label: string;
   theme: string;
   description: string;
+  reading_title?: string;
+  reading?: string;
+}
+
+export interface LiveLifelongReading {
+  number: number;
+  title: string;
+  text: string;
+}
+
+export interface LiveDailyReading {
+  text: string;
+  lens: string;
+  personal_day: number;
+  personal_month: number;
 }
 
 export interface LiveNumerologySynthesis {
@@ -175,6 +192,16 @@ export interface LiveNumerologyProfile {
   challenges: LiveNumerologyArc[];
   karmic_debts?: LiveKarmicDebt[];
   synthesis?: LiveNumerologySynthesis;
+  /** Written library readings (see backend numerology_library.py). */
+  daily_reading?: LiveDailyReading | null;
+  lifelong?: Partial<
+    Record<
+      'life_path' | 'expression' | 'soul_urge' | 'personality' | 'birthday',
+      LiveLifelongReading
+    >
+  >;
+  year_reading?: string | null;
+  month_reading?: string | null;
 }
 
 export interface AiExplainSectionPayload {

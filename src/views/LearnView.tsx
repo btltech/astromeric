@@ -303,8 +303,12 @@ function formatDifficulty(value?: string) {
   return value.replace(/\b\w/g, (character) => character.toUpperCase());
 }
 
-function formatDuration(value?: number) {
-  return value ? `${value} min` : 'Flexible';
+// Reading time from the lesson's length (about 200 words a minute). The
+// hand-typed duration_minutes values overstated it 5-12 times.
+function formatDuration(module: { content?: string; duration_minutes?: number }) {
+  const words = module.content?.trim().split(/\s+/).length ?? 0;
+  if (words > 0) return `${Math.max(1, Math.round(words / 200))} min read`;
+  return module.duration_minutes ? `${module.duration_minutes} min read` : 'Flexible';
 }
 
 function trimCopy(text: string, maxLength = 170) {
@@ -655,7 +659,7 @@ export function LearnView() {
                     <span className="product-desk__badge">
                       {formatDifficulty(module.difficulty)}
                     </span>
-                    <span>{formatDuration(module.duration_minutes)}</span>
+                    <span>{formatDuration(module)}</span>
                   </div>
                   <strong>{module.title}</strong>
                   <p>{trimCopy(module.description, 120)}</p>
@@ -697,7 +701,7 @@ export function LearnView() {
                   </button>
                 </div>
                 <div className="learn-view__detail-meta">
-                  <span>{formatDuration(selectedModule.duration_minutes)}</span>
+                  <span>{formatDuration(selectedModule)}</span>
                   <span>{selectedModule.category ?? selectedCategoryMeta.label}</span>
                   <span>
                     {completedModuleIdSet.has(selectedModule.id)

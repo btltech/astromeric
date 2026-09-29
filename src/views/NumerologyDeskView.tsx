@@ -90,6 +90,19 @@ export function NumerologyDeskView() {
   }, [requestProfile]);
 
   const sourceLabel = hasActiveProfile ? activeProfileSourceLabel : 'Preview profile';
+  const lifelongReadings = (
+    [
+      ['life_path', 'Life Path'],
+      ['expression', 'Expression'],
+      ['soul_urge', 'Soul Urge'],
+      ['personality', 'Personality'],
+      ['birthday', 'Birthday'],
+    ] as const
+  ).flatMap(([key, label]) => {
+    const reading = numerologyProfile?.lifelong?.[key];
+    return reading ? [{ label, reading }] : [];
+  });
+
   const coreNumbers = [
     { label: 'Life Path', value: numerologyProfile?.life_path.number ?? '...' },
     { label: 'Destiny', value: numerologyProfile?.destiny_number ?? '...' },
@@ -235,6 +248,28 @@ export function NumerologyDeskView() {
           </p>
         </article>
 
+        {lifelongReadings.length > 0 && (
+          <article className="product-desk__panel product-desk__panel--full">
+            <h2>Your numbers in depth</h2>
+            <div className="product-desk__stack">
+              {lifelongReadings.map(({ label, reading }) => (
+                <details key={label} className="product-desk__linkcard">
+                  <summary>
+                    <strong>
+                      {label} {reading.number}: {reading.title}
+                    </strong>
+                  </summary>
+                  {reading.text.split('\n\n').map((paragraph, index) => (
+                    <p key={index} className="product-desk__meta">
+                      {paragraph}
+                    </p>
+                  ))}
+                </details>
+              ))}
+            </div>
+          </article>
+        )}
+
         <article className="product-desk__panel">
           <h2>Current timing</h2>
           <ul className="product-desk__list">
@@ -242,7 +277,8 @@ export function NumerologyDeskView() {
               <div>
                 <strong>Personal Year</strong>
                 <span className="product-desk__meta">
-                  {numerologyProfile?.personal_year.interpretation ??
+                  {numerologyProfile?.year_reading ??
+                    numerologyProfile?.personal_year.interpretation ??
                     'The current year cycle will appear here.'}
                 </span>
               </div>
@@ -251,7 +287,8 @@ export function NumerologyDeskView() {
               <div>
                 <strong>Personal Month</strong>
                 <span className="product-desk__meta">
-                  {numerologyProfile?.numerology_insights.personal_month ??
+                  {numerologyProfile?.month_reading ??
+                    numerologyProfile?.numerology_insights.personal_month ??
                     'Month-level timing will appear here.'}
                 </span>
               </div>
@@ -260,7 +297,8 @@ export function NumerologyDeskView() {
               <div>
                 <strong>Personal Day</strong>
                 <span className="product-desk__meta">
-                  {numerologyProfile?.numerology_insights.personal_day ??
+                  {numerologyProfile?.daily_reading?.text ??
+                    numerologyProfile?.numerology_insights.personal_day ??
                     'Day-level timing will appear here.'}
                 </span>
               </div>
@@ -320,7 +358,7 @@ export function NumerologyDeskView() {
                 <li key={`p-${item.number}-${index}`} className="product-desk__list-item">
                   <div>
                     <strong>{formatArcLabel('Pinnacle', index, item.ages)}</strong>
-                    <span className="product-desk__meta">{item.meaning}</span>
+                    <span className="product-desk__meta">{item.reading ?? item.meaning}</span>
                   </div>
                   <span className="product-desk__badge">{item.number}</span>
                 </li>
@@ -331,7 +369,7 @@ export function NumerologyDeskView() {
                 <li key={`c-${item.number}-${index}`} className="product-desk__list-item">
                   <div>
                     <strong>{formatArcLabel('Challenge', index, item.ages)}</strong>
-                    <span className="product-desk__meta">{item.meaning}</span>
+                    <span className="product-desk__meta">{item.reading ?? item.meaning}</span>
                   </div>
                   <span className="product-desk__badge">{item.number}</span>
                 </li>
@@ -352,8 +390,11 @@ export function NumerologyDeskView() {
               {numerologyProfile.karmic_debts.map((item) => (
                 <li key={`${item.raw}-${item.label}`} className="product-desk__list-item">
                   <div>
-                    <strong>{item.label}</strong>
-                    <span className="product-desk__meta">{item.description}</span>
+                    <strong>
+                      {item.label}
+                      {item.reading_title ? ` · ${item.reading_title}` : ''}
+                    </strong>
+                    <span className="product-desk__meta">{item.reading ?? item.description}</span>
                   </div>
                   <span className="product-desk__badge">{item.raw}</span>
                 </li>
