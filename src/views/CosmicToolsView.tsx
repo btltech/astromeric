@@ -5,7 +5,7 @@ import { DailyFeaturesCard } from '../components/DailyFeaturesCard';
 import { DocumentMeta } from '../components/DocumentMeta';
 import { getRouteMeta } from '../seo/routeMeta';
 import { MoonPhaseCard } from '../components/MoonPhaseCard';
-import { OracleYesNo } from '../components/OracleYesNo';
+import { OracleAppShowcase } from '../components/OracleAppShowcase';
 import { TarotCard } from '../components/TarotCard';
 import TimingAdvisor from '../components/TimingAdvisor';
 import { useProfiles } from '../hooks';
@@ -59,13 +59,13 @@ export function CosmicToolsView() {
         <span className="product-desk__eyebrow">Tools desk</span>
         <h1>Cosmic tools, all in one place.</h1>
         <p>
-          Timing windows, tarot, daily signal cards, oracle guidance, and follow-up interpretation —
-          the fast-use tools in one desk.
+          Timing windows, tarot, daily signal cards, and follow-up interpretation — the fast-use
+          tools in one desk.
         </p>
         <div className="product-desk__chips">
           <span className="product-desk__chip">Timing windows</span>
           <span className="product-desk__chip">Daily signal pack</span>
-          <span className="product-desk__chip">Tarot + oracle</span>
+          <span className="product-desk__chip">Tarot</span>
           <span className="product-desk__chip">Guide follow-ups</span>
         </div>
         <div className="product-desk__actions">
@@ -106,7 +106,7 @@ export function CosmicToolsView() {
           <div className="product-desk__linkgrid">
             <a href="#daily-tools" className="product-desk__linkcard">
               <strong>Daily tools</strong>
-              <span>Tarot, oracle, lunar pulse, and your daily signal pack.</span>
+              <span>Tarot, lunar pulse, and your daily signal pack.</span>
             </a>
             <a href="#timing-planning" className="product-desk__linkcard">
               <strong>Timing &amp; planning</strong>
@@ -127,7 +127,7 @@ export function CosmicToolsView() {
           <h2>Symbolic, fast, and easy to revisit.</h2>
           <p>
             This lane groups the tools that should feel habit-forming on web: lunar pulse, daily
-            signals, tarot reflection, and quick oracle guidance.
+            signals, and tarot reflection. The Oracle is in the app.
           </p>
         </article>
 
@@ -142,9 +142,7 @@ export function CosmicToolsView() {
         </article>
 
         <article className="product-desk__panel product-desk__panel--wide">
-          <div className="tools-content">
-            <OracleYesNo />
-          </div>
+          <OracleAppShowcase />
         </article>
 
         <article className="product-desk__panel">

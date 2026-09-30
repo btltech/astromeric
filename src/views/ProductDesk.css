@@ -303,3 +303,34 @@
     flex-direction: column;
   }
 }
+
+/* The Oracle is app-only; this panel shows what it does. */
+.oracle-showcase {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.oracle-showcase h2 {
+  margin: 0;
+}
+
+.oracle-showcase p {
+  margin: 0;
+}
+
+.oracle-showcase__points {
+  display: grid;
+  gap: 0.6rem;
+  margin: 0;
+  padding-left: 1.2rem;
+}
+
+.oracle-showcase__points strong {
+  color: #eceff4;
+}
+
+.oracle-showcase__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
