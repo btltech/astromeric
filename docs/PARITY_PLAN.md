@@ -93,6 +93,17 @@ Paths are relative to the repo root. iOS paths are under `AstroNumeric-iOS/Astro
 - W33 Birthplace: keep the region, offer every timezone in the manual fallback, and mention the OpenStreetMap lookup in the privacy policy.
 - W34 Delete dead code with wrong response shapes: about 20 unused components and hooks, the old relationship and course calls, and the leftover Oracle strings.
 
+### Owner decisions for the website
+
+- W35 **Add the six extra charts** that Android has: solar arc, relocation, lunar return, profections, declinations, fixed stars (routes in `backend/app/routers/charts.py`; screens to port from Android's `AdvancedChartScreens.kt`). Do after W15.
+- W36 **Remove email accounts and cloud sync** so the website matches the app: the sign-in and register form, cloud sync and migration in `ReadingView.tsx`, `useAuth.ts`, `useMigrateReadings.ts`, and the Authorization headers in `client.ts`. Readings and profiles stay in the browser. The backend auth routes stay until nothing uses them. Update the privacy policy.
+
+## iOS additions (owner decision)
+
+| # | Gap | Port from | Change |
+| --- | --- | --- | --- |
+| I1 | **Add the six extra charts** to the app's Advanced Charts: solar arc, relocation, lunar return, profections, declinations, fixed stars. The backend routes exist. | Android `feature/charts/AdvancedChartScreens.kt`, `core/model/ChartModels.kt` | `Features/Charts/AdvancedChartsView.swift` and new views, `Core/API/Endpoints.swift`, models, localisation |
+
 ## Android gaps
 
 Kotlin paths are under `AstroNumeric-Android/app/src/main/kotlin/com/astromeric/android/`.
@@ -104,7 +115,7 @@ Kotlin paths are under `AstroNumeric-Android/app/src/main/kotlin/com/astromeric/
 | A1 | **Friends fails against the current server.** It sends the profile id in the URL instead of the per-install key in `X-Owner-Key`, so list, add and remove fail. | `Core/Utilities/FriendsOwnerKey.swift`, `Core/API/Endpoints.swift` | new `FriendsOwnerKey.kt`; `core/data/remote/AstroRemoteData.kt`, `FriendModels.kt`, `FriendsScreen.kt`, `RelationshipsScreen.kt` |
 | A2 | **Moon ritual fails to load.** The server now sends `avoid` as one string; Android expects a list. | – | `core/model/ToolModels.kt` and the moon screens |
 | A3 | **Support email can't receive mail** (support@ and privacy@astromeric.app, 8 places). | `Profile/HelpView.swift` | `res/values/strings.xml`, `SupportScreens.kt`, `PrivacyScreen.kt`, `ProfileScreens.kt` |
-| A4 | **Health data.** Android reads heart rate, sleep and steps from Health Connect and puts them in AI prompts; iOS removed Apple Health. **Decision needed** (see below). | commit 0de31b4 | manifest, `feature/guide/*Health*`, `BioCosmicCorrelator.kt`, `PrivacyScreen.kt` |
+| A4 | **Remove Health Connect** (owner's decision, 2026-09-30), as iOS removed Apple Health. Android reads heart rate, sleep and steps and puts them in AI prompts. | commit 0de31b4 | manifest permissions, `feature/guide/*Health*`, `BioCosmicCorrelator.kt`, `app/Health*Activity.kt`, `PrivacyScreen.kt`, the Health Connect dependency in `build.gradle.kts` |
 | A5 | **Release setup:** no signing config, R8 off, no Android job in CI, Play Data Safety form not filled in. Version 1.0.0 (2). | `.github/workflows/ci.yml` iOS jobs | `app/build.gradle.kts`, `proguard-rules.pro`, `ci.yml` |
 
 ### P1: privacy, AI and core features
@@ -135,7 +146,7 @@ Kotlin paths are under `AstroNumeric-Android/app/src/main/kotlin/com/astromeric/
 | B1 | No v2 timezone lookup for the website (W2). | add `GET /v2/geocode/timezone` |
 | B2 | `/v2/habits/list` keeps one in-memory list shared by every caller, and it's lost on deploy. | make habits device-local on every platform, or key them per install |
 | B3 | `/v2/daily/yes-no` seeds its pick with Python `hash()`, which changes per server process. It is used only by Android until A9. | retire after A9 |
-| B4 | Six advanced-chart routes (solar arc, relocation, lunar return, profections, declinations, fixed stars) are used by Android but not by iOS or the website. | decide whether iOS and the website get them or Android drops them |
+| B4 | Six advanced-chart routes (solar arc, relocation, lunar return, profections, declinations, fixed stars) are used by Android but not by iOS or the website. | **add them to iOS and the website** (owner's decision), see W35 and I1 |
 
 ## Things the website or Android have that iOS doesn't
 
@@ -149,16 +160,21 @@ Each step is one or more PRs. Website fixes deploy on merge; Android needs disk 
 1. **Website correctness (W1–W12, B1).** Birthplace, timezone, reading shape, share card, sample-profile removal, dead "explain" button, dates, notification sign-in. This is the most urgent: website charts are wrong today.
 2. **Android broken and privacy (A1–A3, A6–A8, and A4 once decided).**
 3. **Core features, both platforms:** website home brief, profiles, weekly days (W13, W14, W21, A15); numerology (W17, A10); relationships and friends on the website (W18, W19); Android Oracle (A9).
-4. **Remaining features:** website advanced charts, natal detail, habits, daily guide, Year Ahead, moon, affirmation, birthstones (W15, W16, W20, W22–W25); scrolling (W26, A13); Learn courses (W27, A12); Android translations (A11).
+4. **Remaining features:** website advanced charts including the six extras (W15, W35) and the same six on iOS (I1); natal detail, habits, daily guide, Year Ahead, moon, affirmation, birthstones (W16, W20, W22–W25); scrolling (W26, A13); Learn courses (W27, A12); Android translations (A11); removing website accounts (W36).
 5. **Release and clean-up:** Android release setup (A5, A18); website polish and dead-code removal (W28–W34); backend clean-up (B2–B4).
 
-## Decisions needed from the owner
+## Owner decisions
 
-1. **Health Connect on Android (A4):** remove it to match iOS (recommended), or keep it and complete Google's health-data declaration and in-app disclosure.
-2. **Premium / billing on Android (A18):** remove it, or plan paid features on iOS too.
-3. **Website accounts:** keep email sign-in and cloud sync (the app has none), or remove them to match the app.
-4. **Extra advanced charts (B4):** add them to iOS and the website, or drop them from Android.
-5. **Disk space:** free about 10 GB so Android can be built and tested.
+Made 2026-09-30:
+
+1. **Health Connect on Android:** remove it (A4).
+2. **Website email accounts and cloud sync:** remove them to match the app (W36).
+3. **Six extra advanced charts:** add them to iOS (I1) and the website (W35).
+
+Still open:
+
+4. **Premium / billing on Android (A18):** remove it, or plan paid features on iOS too.
+5. **Disk space:** about 10 GB free is needed to build and test Android.
 
 ## How each fix is checked
 
