@@ -147,19 +147,18 @@ export function LocationAutocomplete({
   const getTimezone = useCallback(async (lat: number, lon: number): Promise<string> => {
     try {
       const baseUrl = getApiBaseUrl();
-      const response = await fetch(`${baseUrl}/geocode/timezone?lat=${lat}&lon=${lon}`);
+      const response = await fetch(`${baseUrl}/v2/geocode/timezone?lat=${lat}&lon=${lon}`);
       if (response.ok) {
         const data = await response.json();
-        return data.timezone || 'UTC';
+        if (typeof data.timezone === 'string' && data.timezone) return data.timezone;
       }
     } catch {
-      // Fallback: estimate timezone from longitude
-      const offsetHours = Math.round(lon / 15);
-      if (offsetHours === 0) return 'UTC';
-      const sign = offsetHours > 0 ? '+' : '-';
-      return `Etc/GMT${sign}${Math.abs(offsetHours)}`;
+      /* fall through to the estimate */
     }
-    return 'UTC';
+    // Estimate from longitude (Etc/GMT signs are inverted: GMT-1 is UTC+1).
+    const offsetHours = Math.round(lon / 15);
+    if (offsetHours === 0) return 'UTC';
+    return `Etc/GMT${offsetHours > 0 ? '-' : '+'}${Math.abs(offsetHours)}`;
   }, []);
 
   const handleSelect = useCallback(

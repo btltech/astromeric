@@ -49,6 +49,7 @@ interface AppState {
   setProfiles: (profiles: SavedProfile[]) => void;
   setSelectedProfileId: (id: number | null) => void;
   addProfile: (profile: SavedProfile) => void;
+  updateProfile: (id: number, changes: Partial<SavedProfile>) => void;
 
   // Session profile (never saved to backend, kept only for the current browser session)
   sessionProfile: SavedProfile | null;
@@ -126,6 +127,10 @@ export const useStore = create<AppState>()(
       setProfiles: (profiles) => set({ profiles }),
       setSelectedProfileId: (id) => set({ selectedProfileId: id }),
       addProfile: (profile) => set((state) => ({ profiles: [...state.profiles, profile] })),
+      updateProfile: (id, changes) =>
+        set((state) => ({
+          profiles: state.profiles.map((p) => (p.id === id ? { ...p, ...changes } : p)),
+        })),
 
       // Session profile (browser-session only)
       sessionProfile: readSessionProfile(),
