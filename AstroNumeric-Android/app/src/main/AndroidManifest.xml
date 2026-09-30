@@ -6,15 +6,6 @@
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.READ_CALENDAR" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
-    <uses-permission android:name="android.permission.health.READ_HEART_RATE" />
-    <uses-permission android:name="android.permission.health.READ_RESTING_HEART_RATE" />
-    <uses-permission android:name="android.permission.health.READ_STEPS" />
-    <uses-permission android:name="android.permission.health.READ_TOTAL_CALORIES_BURNED" />
-    <uses-permission android:name="android.permission.health.READ_SLEEP" />
-
-    <queries>
-        <package android:name="com.google.android.apps.healthdata" />
-    </queries>
 
     <application
         android:name=".app.AstroNumericApplication"
@@ -26,46 +17,6 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/Theme.AstroNumeric.Android">
-        <activity
-            android:name=".app.HealthPermissionsRationaleActivity"
-            android:exported="true"
-            android:theme="@style/Theme.AstroNumeric.Android">
-            <intent-filter>
-                <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
-            </intent-filter>
-        </activity>
-
-        <activity-alias
-            android:name="ViewPermissionUsageActivity"
-            android:exported="true"
-            android:targetActivity=".app.HealthPermissionsRationaleActivity"
-            android:permission="android.permission.START_VIEW_PERMISSION_USAGE">
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW_PERMISSION_USAGE" />
-                <category android:name="android.intent.category.HEALTH_PERMISSIONS" />
-            </intent-filter>
-        </activity-alias>
-
-        <activity
-            android:name=".app.HealthOnboardingActivity"
-            android:exported="true"
-            android:permission="com.google.android.apps.healthdata.permission.START_ONBOARDING"
-            android:theme="@style/Theme.AstroNumeric.Android">
-            <intent-filter>
-                <action android:name="androidx.health.ACTION_SHOW_ONBOARDING" />
-            </intent-filter>
-        </activity>
-
-        <activity-alias
-            android:name="UAndAboveOnboardingActivity"
-            android:exported="true"
-            android:targetActivity=".app.HealthOnboardingActivity"
-            android:permission="android.permission.health.START_ONBOARDING">
-            <intent-filter>
-                <action android:name="android.health.connect.action.SHOW_ONBOARDING" />
-            </intent-filter>
-        </activity-alias>
-
         <activity
             android:name=".app.MainActivity"
             android:exported="true"

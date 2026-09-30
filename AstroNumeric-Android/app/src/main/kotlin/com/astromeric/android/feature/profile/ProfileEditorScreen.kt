@@ -57,7 +57,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.time.LocalDate
-import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
@@ -85,8 +84,10 @@ fun ProfileEditorScreen(
     var placeOfBirth by rememberSaveable(existingProfile?.id) { mutableStateOf(existingProfile?.placeOfBirth.orEmpty()) }
     var isSaving by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    // Several places can share a name (Lagos, Nigeria and Lagos, Portugal), so the person picks.
+    var placeCandidates by remember { mutableStateOf<List<BirthplaceCandidate>>(emptyList()) }
+    var chosenPlace by remember { mutableStateOf<BirthplaceCandidate?>(null) }
 
-    val fallbackTimezone = existingProfile?.timezone?.takeUnless { it.isBlank() } ?: ZoneId.systemDefault().id
     val canSave = name.isNotBlank() &&
         birthDate.isNotBlank() &&
         placeOfBirth.isNotBlank() &&
@@ -106,7 +107,7 @@ fun ProfileEditorScreen(
             isSaving = true
             try {
                 val trimmedBirthplace = placeOfBirth.trim()
-                val resolvedBirthplace = existingProfile
+                val storedBirthplace = existingProfile
                     ?.takeIf {
                         it.placeOfBirth?.equals(trimmedBirthplace, ignoreCase = true) == true &&
                             it.latitude != null &&
@@ -121,11 +122,38 @@ fun ProfileEditorScreen(
                             timezone = requireNotNull(it.timezone),
                         )
                     }
-                    ?: resolveBirthplace(
-                        context = context,
-                        query = trimmedBirthplace,
-                        fallbackTimezone = fallbackTimezone,
-                    )
+
+                val place: BirthplaceCandidate? = if (storedBirthplace != null) {
+                    null
+                } else {
+                    chosenPlace?.takeIf { it.displayName.equals(trimmedBirthplace, ignoreCase = true) }
+                        ?: run {
+                            val found = searchBirthplaces(context, trimmedBirthplace)
+                            when {
+                                found.isEmpty() -> {
+                                    errorMessage = context.getString(R.string.profile_editor_error_birth_place_confirmation)
+                                    return@launch
+                                }
+                                found.size == 1 -> found.first()
+                                else -> {
+                                    placeCandidates = found
+                                    errorMessage = context.getString(R.string.profile_editor_error_birth_place_choose)
+                                    return@launch
+                                }
+                            }
+                        }
+                }
+
+                // The birth timezone comes from the birthplace's coordinates, never from
+                // the phone's current timezone (a Lagos birth entered in London is not London time).
+                val resolvedBirthplace = storedBirthplace ?: place?.let { chosen ->
+                    val timezone = profileRepository.timezoneForCoordinates(chosen.latitude, chosen.longitude).getOrNull()
+                    if (timezone == null) {
+                        errorMessage = context.getString(R.string.profile_editor_error_birth_timezone)
+                        return@launch
+                    }
+                    ResolvedBirthplace(chosen.displayName, chosen.latitude, chosen.longitude, timezone)
+                }
 
                 if (resolvedBirthplace == null) {
                     errorMessage = context.getString(R.string.profile_editor_error_birth_place_confirmation)
@@ -198,13 +226,31 @@ fun ProfileEditorScreen(
 
         OutlinedTextField(
             value = placeOfBirth,
-            onValueChange = { placeOfBirth = it },
+            onValueChange = {
+                placeOfBirth = it
+                placeCandidates = emptyList()
+                chosenPlace = null
+            },
             label = { Text(stringResource(R.string.profile_editor_label_birth_place)) },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(onDone = { submitProfile() }),
         )
+
+        placeCandidates.forEach { candidate ->
+            TextButton(
+                onClick = {
+                    placeOfBirth = candidate.displayName
+                    chosenPlace = candidate
+                    placeCandidates = emptyList()
+                    errorMessage = null
+                },
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(candidate.displayName)
+            }
+        }
 
         Text(
             text = stringResource(R.string.profile_editor_birth_place_helper),
@@ -477,44 +523,45 @@ private data class ResolvedBirthplace(
 )
 
 @Suppress("DEPRECATION")
-private suspend fun resolveBirthplace(
+private suspend fun searchBirthplaces(
     context: Context,
     query: String,
-    fallbackTimezone: String = ZoneId.systemDefault().id,
-): ResolvedBirthplace? = withContext(Dispatchers.IO) {
+): List<BirthplaceCandidate> = withContext(Dispatchers.IO) {
     if (query.isBlank() || !Geocoder.isPresent()) {
-        return@withContext null
+        return@withContext emptyList()
     }
 
     val geocoder = Geocoder(context, Locale.getDefault())
     val addresses = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         suspendGeocode(geocoder, query)
     } else {
-        geocoder.getFromLocationName(query, 1).orEmpty()
+        geocoder.getFromLocationName(query, GEOCODER_RESULTS).orEmpty()
     }
 
-    val address = addresses.firstOrNull() ?: return@withContext null
-    val displayName = listOfNotNull(address.locality, address.adminArea, address.countryName)
-        .distinct()
-        .joinToString(separator = ", ")
-        .ifBlank { address.featureName ?: query }
-    val timezone = address.extras?.getString("timezone")
-        ?: address.extras?.getString("timeZone")
-        ?: fallbackTimezone
-
-    ResolvedBirthplace(
-        displayName = displayName,
-        latitude = address.latitude,
-        longitude = address.longitude,
-        timezone = timezone,
+    distinctBirthplaces(
+        addresses.map { address ->
+            BirthplaceCandidate(
+                displayName = birthplaceDisplayName(
+                    locality = address.locality,
+                    adminArea = address.adminArea,
+                    countryName = address.countryName,
+                    featureName = address.featureName,
+                    query = query,
+                ),
+                latitude = address.latitude,
+                longitude = address.longitude,
+            )
+        },
     )
 }
+
+private const val GEOCODER_RESULTS = 8
 
 private suspend fun suspendGeocode(
     geocoder: Geocoder,
     query: String,
 ): List<android.location.Address> = kotlinx.coroutines.suspendCancellableCoroutine { continuation ->
-    geocoder.getFromLocationName(query, 1) { addresses ->
+    geocoder.getFromLocationName(query, GEOCODER_RESULTS) { addresses ->
         if (continuation.isActive) {
             continuation.resume(addresses) { _, _, _ -> }
         }

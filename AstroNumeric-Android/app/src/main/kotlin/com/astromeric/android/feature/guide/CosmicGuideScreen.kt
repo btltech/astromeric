@@ -1,8 +1,6 @@
 package com.astromeric.android.feature.guide
 
 import android.Manifest
-import android.content.Intent
-import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -34,10 +32,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.health.connect.client.PermissionController
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.astromeric.android.R
-import com.astromeric.android.core.data.local.ExactTransitCacheStore
 import com.astromeric.android.core.data.local.NatalChartCacheStore
 import com.astromeric.android.core.ephemeris.LocalSwissEphemerisEngine
 import com.astromeric.android.core.data.preferences.AppPreferencesStore
@@ -76,14 +72,11 @@ fun CosmicGuideScreen(
     val scope = rememberCoroutineScope()
     val guideTone by preferencesStore.guideTone.collectAsStateWithLifecycle(initialValue = GuideTone.BALANCED)
     val calendarContextEnabled by preferencesStore.guideCalendarContextEnabled.collectAsStateWithLifecycle(initialValue = false)
-    val biometricContextEnabled by preferencesStore.guideBiometricContextEnabled.collectAsStateWithLifecycle(initialValue = false)
     val localJournalEntries by preferencesStore.localJournalEntries.collectAsStateWithLifecycle(initialValue = emptyList())
 
     val chartCacheStore = remember(context) { NatalChartCacheStore(context.applicationContext) }
-    val transitCacheStore = remember(context) { ExactTransitCacheStore(context.applicationContext) }
     val localEphemerisEngine = remember(context) { LocalSwissEphemerisEngine.getInstance(context.applicationContext) }
     val calendarProvider = remember(context) { GuideCalendarContextProvider(context.applicationContext) }
-    val healthBridge = remember(context) { GuideHealthConnectBridge(context.applicationContext) }
 
     var inputText by remember(selectedProfile?.id) { mutableStateOf("") }
     var messages by remember(selectedProfile?.id) { mutableStateOf(emptyList<GuideChatMessage>()) }
@@ -94,9 +87,6 @@ fun CosmicGuideScreen(
     var risingSign by remember(selectedProfile?.id) { mutableStateOf<String?>(null) }
     var showCalendarRationale by remember { mutableStateOf(false) }
     val calendarPermissionDeniedMessage = stringResource(R.string.privacy_calendar_permission_denied)
-    val healthPermissionRequiredMessage = stringResource(R.string.guide_health_permission_required)
-    val healthUpdateRequiredMessage = stringResource(R.string.guide_health_update_required_message)
-    val healthUnavailableMessage = stringResource(R.string.guide_health_unavailable_message)
     val guideErrorFallback = stringResource(R.string.guide_error_fallback)
 
     val calendarPermissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -107,16 +97,6 @@ fun CosmicGuideScreen(
             onShowMessage(calendarPermissionDeniedMessage)
         }
     }
-    val healthPermissionLauncher = rememberLauncherForActivityResult(PermissionController.createRequestPermissionResultContract()) { granted ->
-        val approved = granted.containsAll(healthBridge.requiredPermissions)
-        scope.launch {
-            preferencesStore.setGuideBiometricContextEnabled(approved)
-        }
-        if (!approved) {
-            onShowMessage(healthPermissionRequiredMessage)
-        }
-    }
-
     fun requestCalendarPermission() {
         if (shouldShowPermissionRationale(context, Manifest.permission.READ_CALENDAR)) {
             showCalendarRationale = true
@@ -258,39 +238,6 @@ fun CosmicGuideScreen(
                     )
                 }
                 item {
-                    val availability = healthBridge.availability()
-                    GuideContextCard(
-                        title = stringResource(R.string.privacy_biometric_guidance_title),
-                        body = when {
-                            biometricContextEnabled -> stringResource(R.string.guide_biometric_body_enabled)
-                            availability == GuideHealthAvailability.UPDATE_REQUIRED -> stringResource(R.string.guide_biometric_body_update_required)
-                            availability == GuideHealthAvailability.UNAVAILABLE -> stringResource(R.string.guide_biometric_body_unavailable)
-                            else -> stringResource(R.string.guide_biometric_body_disabled)
-                        },
-                        actionLabel = if (biometricContextEnabled) stringResource(R.string.preference_state_on) else stringResource(R.string.action_enable),
-                        onAction = {
-                            if (biometricContextEnabled) {
-                                scope.launch {
-                                    preferencesStore.setGuideBiometricContextEnabled(false)
-                                }
-                            } else {
-                                when (availability) {
-                                    GuideHealthAvailability.AVAILABLE -> {
-                                        healthPermissionLauncher.launch(healthBridge.requiredPermissions)
-                                    }
-                                    GuideHealthAvailability.UPDATE_REQUIRED -> {
-                                        openHealthConnectListing(context)
-                                        onShowMessage(healthUpdateRequiredMessage)
-                                    }
-                                    GuideHealthAvailability.UNAVAILABLE -> {
-                                        onShowMessage(healthUnavailableMessage)
-                                    }
-                                }
-                            }
-                        },
-                    )
-                }
-                item {
                     Card(modifier = Modifier.fillMaxWidth()) {
                         Column(
                             modifier = Modifier.padding(16.dp),
@@ -385,20 +332,6 @@ fun CosmicGuideScreen(
                                 } else {
                                     null
                                 }
-                                val biometricSnapshot = if (biometricContextEnabled && healthBridge.hasAllPermissions()) {
-                                    healthBridge.readTodaySnapshot()
-                                } else {
-                                    GuideBiometricSnapshot()
-                                }
-
-                                val cachedTransits = transitCacheStore
-                                    .read(selectedProfile.id)?.transits
-                                    .orEmpty()
-                                val bioCosmicContext = BioCosmicCorrelator.contextBlock(
-                                    snapshot = biometricSnapshot.takeIf { it.hasData },
-                                    transits = cachedTransits,
-                                    query = trimmed,
-                                )
 
                                 val request = CosmicGuideChatRequestData(
                                     message = trimmed,
@@ -412,14 +345,11 @@ fun CosmicGuideScreen(
                                         profile = selectedProfile,
                                         tone = guideTone,
                                         isMystic = isMystic,
-                                        hideSensitiveDetailsEnabled = hideSensitiveDetailsEnabled,
                                         moonSign = moonSign,
                                         risingSign = risingSign,
                                         journalEntries = localJournalEntries.filter { it.profileId == selectedProfile.id },
                                         userQuery = trimmed,
                                         calendarContext = calendarContext,
-                                        biometricSnapshot = biometricSnapshot.takeIf { it.hasData },
-                                        bioCosmicContext = bioCosmicContext,
                                     ),
                                     tone = guideTone.wireValue,
                                 )
@@ -515,25 +445,3 @@ private fun defaultGuidePrompts(): List<String> = listOf(
     stringResource(R.string.guide_prompt_4),
     stringResource(R.string.guide_prompt_5),
 )
-
-private fun openHealthConnectListing(context: android.content.Context) {
-    val uri = Uri.parse(
-        "market://details?id=${GuideHealthConnectBridge.providerPackageName}&url=healthconnect%3A%2F%2Fonboarding",
-    )
-    val intent = Intent(Intent.ACTION_VIEW).apply {
-        setPackage("com.android.vending")
-        data = uri
-        putExtra("overlay", true)
-        putExtra("callerId", context.packageName)
-    }
-    runCatching {
-        context.startActivity(intent)
-    }.onFailure {
-        context.startActivity(
-            Intent(
-                Intent.ACTION_VIEW,
-                Uri.parse("https://play.google.com/store/apps/details?id=${GuideHealthConnectBridge.providerPackageName}"),
-            ),
-        )
-    }
-}

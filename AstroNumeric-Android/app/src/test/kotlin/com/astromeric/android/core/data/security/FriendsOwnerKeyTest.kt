@@ -9,7 +9,7 @@ import org.junit.Test
 /** The owner key gates a whole friend list, so it has to match the server's rules and iOS. */
 class FriendsOwnerKeyTest {
     private class MemoryStore(var secret: ByteArray? = null, val canWrite: Boolean = true) :
-        FriendsOwnerKey.SecretStore {
+        SecretStore {
         var writes = 0
 
         override fun read(): ByteArray? = secret
@@ -19,6 +19,10 @@ class FriendsOwnerKeyTest {
             writes += 1
             this.secret = secret
             return true
+        }
+
+        override fun clear() {
+            secret = null
         }
     }
 

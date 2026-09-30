@@ -124,7 +124,7 @@ fun OracleScreen(
                                 isConsulting = true
                                 errorMessage = null
                                 guidance = null
-                                guidance = remoteDataSource.fetchYesNoGuidance(q, selectedProfile)
+                                guidance = remoteDataSource.fetchYesNoGuidance(q)
                                     .onFailure { errorMessage = it.message ?: oracleErrorMessage }
                                     .getOrNull()
                                 isConsulting = false

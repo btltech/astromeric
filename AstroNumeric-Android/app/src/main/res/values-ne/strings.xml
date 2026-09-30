@@ -24,9 +24,6 @@
     <string name="privacy_calendar_guidance_title">क्यालेन्डर-आधारित मार्गदर्शन</string>
     <string name="privacy_calendar_guidance_detail">वैकल्पिक। Android Cosmic Guide ले अहिले नै आउँदै गरेका घटनाहरूको गोप्य सारांश प्रयोग गर्न सक्छ। शीर्षक र ठ्याक्कै समय पठाइँदैन।</string>
     <string name="privacy_calendar_enabled_message">क्यालेन्डर सन्दर्भ हालका गाइड वार्तालापका लागि सक्षम छ।</string>
-    <string name="privacy_biometric_guidance_title">बायोमेट्रिक-आधारित मार्गदर्शन</string>
-    <string name="privacy_biometric_guidance_detail">वैकल्पिक। तपाईंले सहमति दिएपछि Android Cosmic Guide ले Health Connect को सारांश प्रयोग गर्न सक्छ। कच्चा रेकर्डहरू उपकरणमै रहन्छन्।</string>
-    <string name="privacy_biometric_enabled_message">बायोमेट्रिक सन्दर्भ हालका गाइड वार्तालापका लागि सक्षम छ।</string>
     <string name="journal_title">जर्नल</string>
     <string name="journal_summary">के भयो, कस्तो महसुस भयो, र पढाइ मिल्यो कि मिलेन लेखेर मार्गदर्शनलाई प्रमाणमा बदल्नुहोस्।</string>
     <string name="journal_account_synced_mode">खातासँग सिंक गरिएको मोड</string>

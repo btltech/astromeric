@@ -1,5 +1,7 @@
 package com.astromeric.android.feature.tools
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.astromeric.android.core.data.security.AIAccess
 import android.content.Context
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -65,6 +67,8 @@ fun YearAheadScreen(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
+    // The explanation is an AI answer, which is owner-only.
+    val aiEnabled by AIAccess.isEnabled.collectAsStateWithLifecycle()
     val yearAheadLoadError = stringResource(R.string.year_ahead_error_load)
     val currentYear = remember { Year.now().value }
     var selectedYear by remember(selectedProfile?.id) { mutableIntStateOf(currentYear) }
@@ -253,17 +257,19 @@ fun YearAheadScreen(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-                    Button(
-                        onClick = { isExplaining = true },
-                        enabled = !isExplaining,
-                    ) {
-                        Text(
-                            if (isExplaining) {
-                                stringResource(R.string.year_ahead_generating)
-                            } else {
-                                stringResource(R.string.year_ahead_explain_this_year)
-                            },
-                        )
+                    if (aiEnabled) {
+                        Button(
+                            onClick = { isExplaining = true },
+                            enabled = !isExplaining,
+                        ) {
+                            Text(
+                                if (isExplaining) {
+                                    stringResource(R.string.year_ahead_generating)
+                                } else {
+                                    stringResource(R.string.year_ahead_explain_this_year)
+                                },
+                            )
+                        }
                     }
                 }
 

@@ -28,7 +28,6 @@ import com.astromeric.android.core.model.AppProfile
 import com.astromeric.android.core.model.AstroDataSource
 import com.astromeric.android.core.model.PrivacyDisplayRole
 import com.astromeric.android.core.model.displayName
-import com.astromeric.android.feature.guide.GuideHealthAvailability
 import java.time.Duration
 import java.time.LocalTime
 
@@ -45,7 +44,6 @@ internal fun SystemDiagnosticsCard(
     notificationsEnabledInSystem: Boolean,
     notificationPermissionGranted: Boolean,
     calendarPermissionGranted: Boolean,
-    healthAvailability: GuideHealthAvailability,
     dailyReminderEnabled: Boolean,
     habitReminderEnabled: Boolean,
     timingAlertEnabled: Boolean,
@@ -136,10 +134,6 @@ internal fun SystemDiagnosticsCard(
                 } else {
                     stringResource(R.string.profile_diagnostics_calendar_permission_not_granted)
                 },
-            )
-            ProfileDiagnosticsStatusRow(
-                label = stringResource(R.string.profile_diagnostics_health_connect_label),
-                value = healthAvailability.label(context),
             )
             ProfileDiagnosticsStatusRow(
                 label = stringResource(R.string.profile_diagnostics_morning_brief_widgets_label),
@@ -343,12 +337,6 @@ private fun exactTransitAlarmLabel(
     !accessGranted -> context.getString(R.string.profile_diagnostics_exact_alarm_access_required)
     scheduledCount == 0 -> context.getString(R.string.profile_diagnostics_exact_alarm_none)
     else -> context.getString(R.string.profile_diagnostics_exact_alarm_scheduled_count, scheduledCount)
-}
-
-private fun GuideHealthAvailability.label(context: Context): String = when (this) {
-    GuideHealthAvailability.AVAILABLE -> context.getString(R.string.profile_diagnostics_health_available)
-    GuideHealthAvailability.UPDATE_REQUIRED -> context.getString(R.string.profile_diagnostics_health_update_required)
-    GuideHealthAvailability.UNAVAILABLE -> context.getString(R.string.profile_diagnostics_health_unavailable)
 }
 
 private fun MorningBriefWidgetSnapshot.cacheStatusLabel(context: Context): String {
