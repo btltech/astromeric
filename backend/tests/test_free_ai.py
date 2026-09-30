@@ -270,3 +270,35 @@ def test_the_day_follows_pacific_time():
     late = datetime(2026, 10, 1, 6, 59, tzinfo=timezone.utc)
     assert free_ai.quota_day(late) == "2026-09-30"
     assert free_ai.resets_at(late) == datetime(2026, 10, 1, 7, 0, tzinfo=timezone.utc)
+
+
+def test_the_reading_a_visitor_is_looking_at_reaches_the_guide(monkeypatch):
+    gemini = _FakeGemini(monkeypatch)
+    resp = client.post(
+        "/v2/cosmic-guide/chat",
+        json={
+            "message": "What should I do about this?",
+            "reading_summary": "Full Moon. Today calls for Air focus.",
+            "reading_transits": ["Venus sextile Uranus", "Saturn square Mars"],
+        },
+        headers=_headers(),
+    )
+    assert resp.status_code == 200, resp.text
+    system = gemini.calls[0]["system"]
+    assert "Full Moon. Today calls for Air focus." in system
+    assert "Venus sextile Uranus; Saturn square Mars" in system
+
+
+def test_reading_context_is_size_limited():
+    too_long = client.post(
+        "/v2/cosmic-guide/chat",
+        json={"message": "hi", "reading_summary": "x" * 701},
+        headers=_headers(),
+    )
+    assert too_long.status_code in (400, 422)
+    too_many = client.post(
+        "/v2/cosmic-guide/chat",
+        json={"message": "hi", "reading_transits": ["a"] * 7},
+        headers=_headers(),
+    )
+    assert too_many.status_code in (400, 422)

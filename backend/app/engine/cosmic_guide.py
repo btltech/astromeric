@@ -190,6 +190,12 @@ def _build_context(
         theme = reading_data.get("theme", "")
         if theme:
             parts.append(f"Current theme: {theme}")
+        summary = reading_data.get("summary", "")
+        if summary:
+            parts.append(f"The reading they are looking at: {summary}")
+        transits = reading_data.get("transits") or []
+        if transits:
+            parts.append("Active transits in it: " + "; ".join(transits))
 
     if parts:
         return "\nUser's cosmic context:\n" + "\n".join(parts)

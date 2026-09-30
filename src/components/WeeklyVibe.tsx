@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { fetchWeeklyForecast, type ForecastDay, type ProfilePayload } from '../api/client';
+import { parseCalendarDate } from '../utils/dates';
 import { getComparisonUrl } from '../utils/comparison';
 import { toast } from './Toast';
 
@@ -235,7 +236,7 @@ export function WeeklyVibe({ profile, showShare = true }: Props) {
           const scoresVary = forecast[bestIdx].score !== forecast[worstIdx].score;
 
           return forecast.map((day, i) => {
-            const dateObj = new Date(day.date);
+            const dateObj = parseCalendarDate(day.date);
             const isToday = i === 0;
             const isBest = scoresVary && i === bestIdx;
             const isWorst = scoresVary && i === worstIdx && worstIdx !== bestIdx;
@@ -309,13 +310,13 @@ function getWeeklySummary(days: ForecastDay[]): string {
   if (best.score === worst.score) {
     return 'Your energy is steady throughout the week — a good time to keep a consistent routine.';
   }
-  const bestDay = new Date(best.date).toLocaleDateString(undefined, { weekday: 'long' });
-  const worstDay = new Date(worst.date).toLocaleDateString(undefined, { weekday: 'long' });
+  const bestDay = parseCalendarDate(best.date).toLocaleDateString(undefined, { weekday: 'long' });
+  const worstDay = parseCalendarDate(worst.date).toLocaleDateString(undefined, { weekday: 'long' });
   return `Push your most important work to ${bestDay}. Keep ${worstDay} light — your energy will be lower.`;
 }
 
 function formatWeekday(date: string, style: 'short' | 'long' = 'short') {
-  return new Date(date).toLocaleDateString(undefined, { weekday: style });
+  return parseCalendarDate(date).toLocaleDateString(undefined, { weekday: style });
 }
 
 function buildWeeklyRhythm(days: ForecastDay[]) {

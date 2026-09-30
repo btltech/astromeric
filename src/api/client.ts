@@ -215,24 +215,6 @@ export interface LiveNumerologyProfile {
   month_reading?: string | null;
 }
 
-export interface AiExplainSectionPayload {
-  title?: string;
-  highlights?: string[];
-}
-
-export interface AiExplainPayload {
-  scope: string;
-  headline?: string;
-  theme?: string;
-  sections: AiExplainSectionPayload[];
-  numerology_summary?: string;
-}
-
-export interface AiExplainResponse {
-  summary: string;
-  provider: string;
-}
-
 export interface ApiResponse<T> {
   status: 'success' | 'error';
   data?: T;
@@ -272,6 +254,8 @@ export interface CosmicGuideRequest {
   moon_sign?: string;
   rising_sign?: string;
   history?: ChatMessage[];
+  reading_summary?: string;
+  reading_transits?: string[];
 }
 
 /** A website visitor's one free AI answer a day (backend/app/free_ai.py). */
@@ -465,25 +449,6 @@ export async function fetchNumerologyProfile(
   throw new Error(response.message || 'Failed to fetch numerology profile');
 }
 
-export async function fetchAiExplanation(
-  payload: AiExplainPayload,
-  token?: string
-): Promise<AiExplainResponse> {
-  const headers: Record<string, string> = {};
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
-  const response = await apiFetch<ApiResponse<AiExplainResponse>>('/v2/ai/explain', {
-    method: 'POST',
-    headers,
-    body: JSON.stringify(payload),
-  });
-  if (response.status === 'success' && response.data) {
-    return response.data;
-  }
-  throw new Error(response.message || 'Failed to get AI explanation');
-}
-
 export function sendSectionFeedback(payload: SectionFeedbackPayload, token?: string) {
   const headers: Record<string, string> = {};
   if (token) headers['Authorization'] = `Bearer ${token}`;
@@ -510,7 +475,8 @@ export async function chatWithCosmicGuide(
   moonSign?: string,
   risingSign?: string,
   history?: ChatMessage[],
-  token?: string
+  token?: string,
+  reading?: { summary?: string; transits?: string[] }
 ) {
   const headers: Record<string, string> = await visitorHeaders();
   if (token) headers['Authorization'] = `Bearer ${token}`;
@@ -521,6 +487,8 @@ export async function chatWithCosmicGuide(
     moon_sign: moonSign,
     rising_sign: risingSign,
     history: history?.map((h) => ({ role: h.role, content: h.content })),
+    reading_summary: reading?.summary?.slice(0, 700),
+    reading_transits: reading?.transits?.slice(0, 6),
   };
 
   return apiFetch<{ status: string; data: CosmicGuideResponse }>('/v2/cosmic-guide/chat', {
