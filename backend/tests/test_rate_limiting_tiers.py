@@ -6,7 +6,6 @@ from starlette.testclient import TestClient
 from backend.app.main import app
 from backend.app.middleware.rate_limit import (
     GENERAL_DAILY_LIMIT,
-    gemini_daily_limiter,
     general_daily_limiter,
     login_limiter,
 )
@@ -18,7 +17,6 @@ def setup_rate_limiting_test():
     os.environ["TEST_RATE_LIMITING"] = "1"
 
     # Reset limiter states
-    gemini_daily_limiter.requests.clear()
     general_daily_limiter.requests.clear()
     login_limiter.tokens.clear()
     login_limiter.last_update.clear()
@@ -33,17 +31,20 @@ def setup_rate_limiting_test():
 client = TestClient(app)
 
 
-def test_gemini_api_daily_rate_limiting():
-    # Gemini allows 1 request then blocks the 2nd
-    response1 = client.post("/v2/ai/explain", json={})
-    assert response1.status_code != 429
+def test_ai_endpoints_share_the_general_daily_limit():
+    # A visitor's one AI answer a day is enforced by app/free_ai.py; later
+    # chat replies come from the built-in guide, so the endpoint stays open
+    # until the general daily limit.
+    for _ in range(3):
+        response = client.post("/v2/cosmic-guide/chat", json={"message": "hi"})
+        assert response.status_code != 429
 
-    response2 = client.post("/v2/ai/explain", json={})
-    assert response2.status_code == 429
-    data = response2.json()
-    assert "Gemini AI" in data["detail"]
-    assert "reset_time" in data
-    assert "retry_after" in data
+    for _ in range(GENERAL_DAILY_LIMIT - 3):
+        client.post("/v2/natal", json={})
+
+    response = client.post("/v2/cosmic-guide/chat", json={"message": "hi"})
+    assert response.status_code == 429
+    assert "Core Services" in response.json()["detail"]
 
 
 def test_general_services_daily_rate_limiting():
@@ -97,15 +98,14 @@ def test_unknown_api_routes_fall_under_general_limit():
 
 
 def test_ios_requests_bypass_daily_limits():
-    # iOS requests bypass the 1/day Gemini limit and the daily service limit
+    # iOS requests bypass the website's daily limit
     headers = {"X-Client-Platform": "ios"}
 
-    # 1. Gemini AI endpoint (allows more than 1)
     for _ in range(5):
         response = client.post("/v2/ai/explain", json={}, headers=headers)
         assert response.status_code != 429
 
-    # 2. General core services (allows more than the website's daily limit)
+    # General core services (allows more than the website's daily limit)
     for _ in range(GENERAL_DAILY_LIMIT + 5):
         response = client.post("/v2/natal", json={}, headers=headers)
         assert response.status_code != 429

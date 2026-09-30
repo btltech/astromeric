@@ -1,8 +1,15 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import type { PredictionData } from '../types';
 import { SectionGrid } from './SectionGrid';
 import { DailyGuidance } from './DailyGuidance';
-import { fetchAiExplanation, chatWithCosmicGuide } from '../api/client';
+import {
+  ApiError,
+  fetchAiExplanation,
+  chatWithCosmicGuide,
+  fetchFreeAIStatus,
+  type FreeAIStatus,
+} from '../api/client';
+import { freeAIBanner, freeAIReplyNote } from '../utils/freeAI';
 import { useStore } from '../store/useStore';
 import { useProfiles } from '../hooks';
 import { toast } from './Toast';
@@ -91,9 +98,27 @@ export function FortuneResult({ data, onReset }: Props) {
   const [pdfLoading, setPdfLoading] = useState(false);
 
   // Cosmic Guide Chat State
-  const [messages, setMessages] = useState<{ role: 'user' | 'assistant'; content: string }[]>([]);
+  const [messages, setMessages] = useState<
+    { role: 'user' | 'assistant'; content: string; note?: string }[]
+  >([]);
   const [chatInput, setChatInput] = useState('');
   const [chatLoading, setChatLoading] = useState(false);
+  // Website visitors get one free AI answer a day; later replies are built-in.
+  const [freeAI, setFreeAI] = useState<FreeAIStatus | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchFreeAIStatus()
+      .then((status) => {
+        if (!cancelled) setFreeAI(status);
+      })
+      .catch(() => {
+        /* no banner; replies still say where they came from */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const keyTakeaways = useMemo(() => {
     const factors = data.summary?.top_factors ?? [];
@@ -328,10 +353,22 @@ export function FortuneResult({ data, onReset }: Props) {
         token ?? undefined
       );
 
-      setMessages((prev) => [...prev, { role: 'assistant', content: response.response }]);
+      if (response.free_ai) setFreeAI(response.free_ai);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: 'assistant',
+          content: response.response,
+          note: freeAIReplyNote(response.free_ai) ?? undefined,
+        },
+      ]);
     } catch (err) {
       console.error('Chat failed', err);
-      toast.error('Something went wrong. Please try again.');
+      if (err instanceof ApiError && err.status === 429) {
+        toast.error("You've reached today's limit on the website. Please come back tomorrow.");
+      } else {
+        toast.error('Something went wrong. Please try again.');
+      }
     } finally {
       setChatLoading(false);
     }
@@ -564,6 +601,7 @@ export function FortuneResult({ data, onReset }: Props) {
           {messages.map((msg, i) => (
             <div key={i} className={`chat-bubble ${msg.role}`}>
               {msg.content}
+              {msg.note && <p className="chat-free-ai-note">{msg.note}</p>}
             </div>
           ))}
           {chatLoading && (
@@ -574,6 +612,12 @@ export function FortuneResult({ data, onReset }: Props) {
             </div>
           )}
         </div>
+
+        {freeAIBanner(freeAI) && (
+          <p className="chat-free-ai-banner" role="status">
+            {freeAIBanner(freeAI)}
+          </p>
+        )}
 
         <form onSubmit={handleChatSubmit} className="chat-input-container">
           <input

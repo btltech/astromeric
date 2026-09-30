@@ -5,7 +5,7 @@ import './PrivacyPolicy.css';
 
 export function PrivacyPolicy() {
   const currentYear = new Date().getFullYear();
-  const lastUpdated = '2026-09-22';
+  const lastUpdated = '2026-09-30';
 
   return (
     <>
@@ -123,6 +123,16 @@ export function PrivacyPolicy() {
                 default.
               </li>
               <li>
+                <strong>Free AI answer (website):</strong> To give each visitor one free AI answer a
+                day, the website keeps a random device ID in your browser and works out a signature
+                from your browser&apos;s settings (such as screen size, language and time zone). It
+                sends these with Cosmic Guide questions. Our server stores only scrambled (keyed
+                hash) versions of the device ID, of the signature combined with your IP address, and
+                of your account ID if you are signed in. We cannot turn them back into the
+                originals, and we delete them after a day. We use them only to enforce the daily
+                limit.
+              </li>
+              <li>
                 <strong>Notifications (iOS):</strong> Reminders are scheduled and shown by your
                 device. The Apple Push Notification token stays on the device and is never sent to
                 our backend.
@@ -152,13 +162,21 @@ export function PrivacyPolicy() {
             </p>
             <p>
               <strong>Cosmic Guide (iOS app):</strong> When you ask the Cosmic Guide a question, the
-              app sends your question, your recent chat messages, your profile name and birth
-              details (masked if you turn on Hide Sensitive Details), your chart positions, excerpts
-              of up to three matching journal entries, the names and relationship types of friends
-              you have saved, and, if you turn on calendar context, the day and time of day of
-              upcoming events (never their titles or details). Our server writes the answer itself:
-              Cosmic Guide requests are not passed to a third-party AI provider, and we do not store
-              the conversations. The same applies to the website.
+              app sends your question, your recent chat messages, your chart positions and whether
+              your birth time is confirmed, excerpts of up to three matching journal entries, the
+              relationship types of friends you have saved (not their names), and, if you turn on
+              calendar context, the day and time of day of upcoming events (never their titles or
+              details). It does not send your name or birth date, time or place. Our server writes
+              the answer itself: app requests are not passed to a third-party AI provider, and we do
+              not store the conversations.
+            </p>
+            <p>
+              <strong>Cosmic Guide (website):</strong> Each visitor gets one free AI answer a day,
+              while that day&apos;s free answers last. For that answer we send your question and
+              your Sun, Moon and rising signs to Google&apos;s Gemini service. We never send your
+              name or birth details. Google may use what it receives to improve its products, so
+              please don&apos;t include personal details in your question. All other replies are
+              written by our own server, and we do not store the conversations.
             </p>
           </section>
 

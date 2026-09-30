@@ -10,7 +10,15 @@ from fastapi import APIRouter, Body, HTTPException, Request
 from pydantic import BaseModel
 from starlette.concurrency import run_in_threadpool
 
-from ..ai_service import explain_with_gemini, fallback_summary, has_ai_access
+from .. import free_ai
+from ..ai_service import (
+    GEMINI_ONLY,
+    DailyQuotaExhausted,
+    explain_reading,
+    explain_with_gemini,
+    fallback_summary,
+    has_ai_access,
+)
 from ..engine.astrology import get_zodiac_sign
 from ..engine.cosmic_guide import ask_cosmic_guide
 from ..exceptions import StructuredLogger
@@ -34,6 +42,8 @@ class GuidanceResponse(BaseModel):
     recommendations: List[str]
     affirmation: str
     generated_at: datetime
+    # Website visitors only: their free daily AI answer (see app/free_ai.py).
+    free_ai: Optional[Dict[str, str]] = None
 
 
 class InterpretationData(BaseModel):
@@ -68,11 +78,44 @@ class ChatResponse(BaseModel):
     response: str
     provider: str
     model: Optional[str] = None
+    # Website visitors only: their free daily AI answer (see app/free_ai.py).
+    free_ai: Optional[Dict[str, str]] = None
+
+
+class FreeAIStatus(BaseModel):
+    """Whether this website visitor can still get today's free AI answer."""
+
+    status: str
+    resets_at: Optional[str] = None
+
+
+async def _claim_free_ai(request: Request, owner: bool):
+    """Reserve a website visitor's free answer; None for the owner and the apps."""
+    if owner or not free_ai.is_offered(request):
+        return None
+    return await run_in_threadpool(free_ai.claim, request)
+
+
+async def _settle_free_ai(state, answered: bool, daily_quota_hit: bool):
+    if state is None:
+        return None
+    return await run_in_threadpool(free_ai.settle, state, answered, daily_quota_hit)
 
 
 # ============================================================================
 # ENDPOINTS
 # ============================================================================
+
+
+@router.get("/free-ai", response_model=ApiResponse[FreeAIStatus])
+async def free_ai_status(request: Request) -> ApiResponse[FreeAIStatus]:
+    """Whether this website visitor still has today's free AI answer."""
+    if not free_ai.is_offered(request):
+        data = FreeAIStatus(status="not_offered")
+    else:
+        state = await run_in_threadpool(free_ai.check, request)
+        data = FreeAIStatus(**state.public())
+    return ApiResponse(status=ResponseStatus.SUCCESS, data=data)
 
 
 @router.post("/chat")
@@ -121,6 +164,9 @@ async def chat_with_cosmic_guide(
             if req.rising_sign:
                 chart_data["houses"] = [{"house": 1, "sign": req.rising_sign}]
 
+        owner = has_ai_access(request)
+        free_state = await _claim_free_ai(request, owner)
+
         # Use the proper cosmic guide engine
         result = await ask_cosmic_guide(
             question=req.message,
@@ -128,9 +174,17 @@ async def chat_with_cosmic_guide(
             conversation_history=req.history,
             birth_time_assumed=req.birth_time_assumed or False,
             time_confidence=req.time_confidence,
-            system_prompt=req.system_prompt,
+            # A website visitor's free answer is the Cosmic Guide's own; they
+            # can't swap its prompt. (free_state is None for the owner and apps.)
+            system_prompt=req.system_prompt if free_state is None else None,
             tone=req.tone,
-            use_ai=has_ai_access(request),
+            use_ai=owner or bool(free_state and free_state.granted),
+            ai_provider=None if owner else GEMINI_ONLY,
+        )
+        free_state = await _settle_free_ai(
+            free_state,
+            answered=result.get("provider") != "fallback",
+            daily_quota_hit=result.get("reason") == "daily_quota",
         )
 
         response_text = result.get(
@@ -142,7 +196,10 @@ async def chat_with_cosmic_guide(
         return ApiResponse(
             status=ResponseStatus.SUCCESS,
             data=ChatResponse(
-                response=response_text, provider=provider, model=result.get("model")
+                response=response_text,
+                provider=provider,
+                model=result.get("model"),
+                free_ai=free_state.public() if free_state else None,
             ),
             request_id=request_id,
         )
@@ -190,7 +247,7 @@ async def get_cosmic_guidance(
 
     try:
         payload = payload or {}
-        effective_question = question or payload.get("topic")
+        effective_question = question or payload.get("question") or payload.get("topic")
 
         effective_profile = None
         if "profile" in payload and isinstance(payload["profile"], dict):
@@ -224,19 +281,37 @@ async def get_cosmic_guidance(
                     ],
                 }
             )
-
-        if has_ai_access(request):
-            guidance_text = await run_in_threadpool(
-                explain_with_gemini,
-                scope="guidance",
-                headline=effective_question,
-                theme=None,
-                sections=sections,
-                numerology=None,
-                simple_language=True,
+        elif isinstance(payload.get("sun_sign"), str) and payload["sun_sign"].strip():
+            sections.append(
+                {
+                    "title": "Profile",
+                    "highlights": [f"Sun sign: {payload['sun_sign'].strip()[:20]}"],
+                }
             )
-        else:
-            guidance_text = None
+
+        owner = has_ai_access(request)
+        free_state = await _claim_free_ai(request, owner)
+        guidance_text = None
+        daily_quota_hit = False
+        if owner or (free_state and free_state.granted):
+            try:
+                result = await run_in_threadpool(
+                    explain_reading,
+                    scope="guidance",
+                    headline=effective_question,
+                    theme=None,
+                    sections=sections,
+                    numerology=None,
+                    simple_language=True,
+                    provider=None if owner else GEMINI_ONLY,
+                )
+            except DailyQuotaExhausted:
+                result = None
+                daily_quota_hit = True
+            guidance_text = result.text if result else None
+        free_state = await _settle_free_ai(
+            free_state, bool(guidance_text), daily_quota_hit
+        )
         if not guidance_text:
             guidance_text = fallback_summary(
                 effective_question,
@@ -255,6 +330,7 @@ async def get_cosmic_guidance(
             ],
             affirmation="I am guided by the universe's infinite wisdom",
             generated_at=datetime.now(timezone.utc),
+            free_ai=free_state.public() if free_state else None,
         )
 
         return ApiResponse(

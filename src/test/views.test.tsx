@@ -60,6 +60,7 @@ vi.mock('../api/client', () => {
     askOracle: vi.fn().mockResolvedValue({}),
     chatWithCosmicGuide: vi.fn().mockResolvedValue({}),
     fetchQuickInsight: vi.fn().mockResolvedValue({}),
+    fetchFreeAIStatus: vi.fn().mockResolvedValue({ status: 'available' }),
     fetchAiExplanation: vi.fn().mockResolvedValue({}),
     sendSectionFeedback: vi.fn().mockResolvedValue({}),
     fetchCompatibility: vi.fn().mockResolvedValue({
