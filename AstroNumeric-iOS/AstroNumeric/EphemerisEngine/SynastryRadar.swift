@@ -122,8 +122,14 @@ actor SynastryRadar {
             case .moderate: icon = "⚡"
             case .calm: icon = "·"
             }
-            lines.append("  \(icon) \(alert.personName) (\(alert.relationshipType)): Transit \(alert.transitPlanet) \(alert.aspectName) their natal \(alert.natalPlanet)")
-            lines.append("    → \(alert.advice)")
+            // Contacts are described by relationship, never by name: other
+            // people's details don't go to the AI provider.
+            lines.append("  \(icon) Your \(alert.relationshipType.lowercased()) contact: Transit \(alert.transitPlanet) \(alert.aspectName) their natal \(alert.natalPlanet)")
+            var advice = alert.advice
+            if !alert.personName.isEmpty {
+                advice = advice.replacingOccurrences(of: alert.personName, with: "this contact")
+            }
+            lines.append("    → \(advice.prefix(1).uppercased() + advice.dropFirst())")
         }
         
         return lines.joined(separator: "\n")
