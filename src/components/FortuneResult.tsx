@@ -325,7 +325,13 @@ export function FortuneResult({ data, onReset }: Props) {
         moonSign,
         risingSign,
         messages as Parameters<typeof chatWithCosmicGuide>[4],
-        token ?? undefined
+        token ?? undefined,
+        {
+          summary: data.tldr,
+          transits: data.active_transits?.map(
+            (t) => `${t.transit_planet} ${t.aspect} ${t.natal_planet}`
+          ),
+        }
       );
 
       if (response.free_ai) setFreeAI(response.free_ai);
