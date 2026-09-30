@@ -353,25 +353,19 @@ export async function apiFetch<T>(endpoint: string, options: RequestInit = {}): 
   return resp.json() as Promise<T>;
 }
 
-function getResolvedLocation(profile: ProfilePayload) {
-  return {
-    latitude: profile.location?.latitude ?? 0,
-    longitude: profile.location?.longitude ?? 0,
-    timezone: profile.location?.timezone ?? 'UTC',
-  };
-}
-
+// Only what the profile really has is sent. A missing place is left out, not
+// sent as 0°, 0° UTC, so the server can flag the result as approximate.
 function toFlatProfilePayload(profile: ProfilePayload) {
-  const location = getResolvedLocation(profile);
+  const hasPlace = profile.location?.latitude != null && profile.location?.longitude != null;
 
   return {
     name: profile.name,
     date_of_birth: profile.date_of_birth,
     time_of_birth: profile.time_of_birth,
     place_of_birth: profile.place_of_birth,
-    latitude: location.latitude,
-    longitude: location.longitude,
-    timezone: location.timezone,
+    latitude: hasPlace ? profile.location?.latitude : undefined,
+    longitude: hasPlace ? profile.location?.longitude : undefined,
+    timezone: hasPlace ? profile.location?.timezone ?? 'UTC' : undefined,
     house_system: profile.house_system ?? 'Placidus',
   };
 }
@@ -413,17 +407,9 @@ export async function fetchForecast(
 export async function fetchNatalProfile(profile: ProfilePayload): Promise<LiveNatalProfile> {
   // The server reads latitude, longitude and timezone at the top level of the
   // profile; a nested `location` is ignored and the chart is cast at 0°, 0°.
-  // Without a birthplace they're left out, so the server flags the chart as
-  // location-assumed instead of treating 0°, 0° as real.
-  const hasPlace = profile.location?.latitude != null && profile.location?.longitude != null;
-  const flat = toFlatProfilePayload(profile);
   const response = await apiFetch<ApiResponse<LiveNatalProfile>>('/v2/profiles/natal', {
     method: 'POST',
-    body: JSON.stringify({
-      profile: hasPlace
-        ? flat
-        : { ...flat, latitude: undefined, longitude: undefined, timezone: undefined },
-    }),
+    body: JSON.stringify({ profile: toFlatProfilePayload(profile) }),
   });
   if (response.status === 'success' && response.data) {
     return response.data;

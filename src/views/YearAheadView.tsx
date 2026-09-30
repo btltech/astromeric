@@ -1,40 +1,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { fetchYearAhead, type ProfilePayload } from '../api/client';
+import { fetchYearAhead } from '../api/client';
 import { DocumentMeta } from '../components/DocumentMeta';
 import { getRouteMeta } from '../seo/routeMeta';
 import { useActiveProfile } from '../hooks';
-import type { SavedProfile, YearAheadForecast, YearAheadMonthlyForecast } from '../types';
+import type { YearAheadForecast, YearAheadMonthlyForecast } from '../types';
+import { toProfilePayload } from '../utils/profilePayload';
 import './ProductDesk.css';
 import './YearAheadView.css';
-
-const previewProfile: SavedProfile = {
-  id: -1,
-  name: 'Amara Lewis',
-  date_of_birth: '1994-11-18',
-  time_of_birth: '08:30',
-  place_of_birth: 'London, UK',
-  latitude: 51.5072,
-  longitude: -0.1276,
-  timezone: 'Europe/London',
-  house_system: 'Placidus',
-};
-
-function toProfilePayload(profile: SavedProfile | null): ProfilePayload {
-  const source = profile ?? previewProfile;
-  return {
-    name: source.name,
-    date_of_birth: source.date_of_birth,
-    time_of_birth: source.time_of_birth ?? undefined,
-    place_of_birth: source.place_of_birth ?? undefined,
-    location: {
-      latitude: source.latitude ?? previewProfile.latitude ?? 0,
-      longitude: source.longitude ?? previewProfile.longitude ?? 0,
-      timezone: source.timezone ?? previewProfile.timezone ?? 'UTC',
-    },
-    house_system: source.house_system ?? 'Placidus',
-  };
-}
 
 const MONTH_ABBR = [
   'Jan',

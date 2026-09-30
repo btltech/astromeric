@@ -19,6 +19,7 @@ import { getRouteMeta } from '../seo/routeMeta';
 import { useActiveProfile } from '../hooks';
 import { useStore } from '../store/useStore';
 import type { SavedProfile } from '../types';
+import { missingChartDetails, toProfilePayload } from '../utils/profilePayload';
 import './ProductExperienceView.css';
 
 type ChartWheelData = React.ComponentProps<typeof ChartWheel>['chartData'];
@@ -64,18 +65,6 @@ type WorkflowStep = {
   detail: string;
 };
 
-const previewProfile: SavedProfile = {
-  id: -1,
-  name: 'Amara Lewis',
-  date_of_birth: '1994-11-18',
-  time_of_birth: '08:30',
-  place_of_birth: 'London, UK',
-  latitude: 51.5072,
-  longitude: -0.1276,
-  timezone: 'Europe/London',
-  house_system: 'Placidus',
-};
-
 const surfaceTags = [
   'Chart desk',
   'Numerology desk',
@@ -83,23 +72,6 @@ const surfaceTags = [
   'Daily brief',
 ] as const;
 const featuredPlanetNames = ['Sun', 'Moon', 'Mercury'] as const;
-
-function toProfilePayload(profile: SavedProfile | null): ProfilePayload {
-  const source = profile ?? previewProfile;
-
-  return {
-    name: source.name,
-    date_of_birth: source.date_of_birth,
-    time_of_birth: source.time_of_birth ?? previewProfile.time_of_birth ?? undefined,
-    place_of_birth: source.place_of_birth ?? previewProfile.place_of_birth ?? undefined,
-    location: {
-      latitude: source.latitude ?? previewProfile.latitude ?? 0,
-      longitude: source.longitude ?? previewProfile.longitude ?? 0,
-      timezone: source.timezone ?? previewProfile.timezone ?? 'UTC',
-    },
-    house_system: source.house_system ?? previewProfile.house_system ?? 'Placidus',
-  };
-}
 
 function formatScore(score: number) {
   if (score >= 80) return 'Strong';
@@ -420,6 +392,7 @@ export function ProductExperienceView() {
   }, [availableComparisonProfiles, compareProfileId]);
 
   const primaryPayload = useMemo(() => toProfilePayload(activeProfile), [activeProfile]);
+  const missingDetails = useMemo(() => missingChartDetails(activeProfile), [activeProfile]);
   const comparisonPayload = useMemo(
     () => (comparisonProfile ? toProfilePayload(comparisonProfile) : null),
     [comparisonProfile]
@@ -786,6 +759,15 @@ export function ProductExperienceView() {
                   <strong>{numerologyProfile?.life_path.number ?? '...'}</strong>
                 </div>
               </div>
+
+              {missingDetails.length > 0 && (
+                <p className="experience-profile-note" role="note">
+                  This profile has no {missingDetails.join(' or ')}, so the rising sign, houses and
+                  sometimes the Moon sign are approximate. Your Sun sign and numerology are not
+                  affected. Create the profile again with{' '}
+                  {missingDetails.length > 1 ? 'them' : 'it'} for a full chart.
+                </p>
+              )}
 
               {hasPrimarySelectorOptions ? (
                 <label className="experience-profile-selector">
