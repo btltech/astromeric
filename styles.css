@@ -13221,3 +13221,50 @@ header {
   color: var(--primary);
   border-color: rgba(136, 192, 208, 0.5);
 }
+
+/* Active transits and the estimate note on a reading. */
+.reading-transits-card {
+  margin: 1rem 0;
+  padding: 1rem 1.1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.reading-transits-list {
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.reading-transits-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--text);
+}
+
+.reading-transits-list__symbol {
+  width: 1.5rem;
+  text-align: center;
+  font-size: 1.15rem;
+}
+
+.reading-transits-list__orb {
+  margin-left: auto;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.reading-estimate-note {
+  margin: 0 0 1rem;
+  padding: 0.7rem 0.9rem;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 201, 138, 0.28);
+  background: rgba(255, 201, 138, 0.06);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}

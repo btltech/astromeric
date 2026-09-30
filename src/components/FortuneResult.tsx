@@ -66,6 +66,14 @@ const BIRTHSTONES: Record<number, { stone: string; color: string }> = {
 //   </div>
 // );
 
+const ASPECT_SYMBOL: Record<string, string> = {
+  conjunction: '☌',
+  opposition: '☍',
+  trine: '△',
+  square: '□',
+  sextile: '⚹',
+};
+
 export function FortuneResult({ data, onReset }: Props) {
   // Get user and token from store for paid check
   const { token } = useStore();
@@ -91,6 +99,9 @@ export function FortuneResult({ data, onReset }: Props) {
 
   // Use theme as headline if summary is missing
   const headline = data.summary?.headline || data.theme;
+  // The server's summary is a paragraph, which is too long for a title.
+  const heroTitle =
+    headline && headline.length <= 90 && !data.tldr ? headline : `${scopeLabel} outlook`;
   const [aiInsight, setAiInsight] = useState<string | null>(null);
   const [_aiInsightProvider, setAiInsightProvider] = useState<string | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
@@ -128,13 +139,22 @@ export function FortuneResult({ data, onReset }: Props) {
   const summaryChips = useMemo(() => {
     const chips: string[] = [];
 
+    if (typeof data.overall_score === 'number')
+      chips.push(`Energy ${data.overall_score.toFixed(1)}/10`);
     if (sunSign) chips.push(`${sunSign} sun`);
     if (typeof data.life_path_number === 'number') chips.push(`Life Path ${data.life_path_number}`);
     if (data.lucky_numbers?.length)
       chips.push(`Lucky ${data.lucky_numbers.slice(0, 2).join(' · ')}`);
+    if (data.birth_time_assumed) chips.push('Birth time estimated');
 
-    return chips.slice(0, 3);
-  }, [data.life_path_number, data.lucky_numbers, sunSign]);
+    return chips.slice(0, 4);
+  }, [
+    data.birth_time_assumed,
+    data.life_path_number,
+    data.lucky_numbers,
+    data.overall_score,
+    sunSign,
+  ]);
 
   const actionSignals = useMemo(() => {
     const sectionHighlights = data.sections.flatMap((section) => section.highlights ?? []);
@@ -400,9 +420,10 @@ export function FortuneResult({ data, onReset }: Props) {
           </span>
         </div>
 
-        <h1 className="reading-hero-card__title">{headline ?? `${scopeLabel} outlook ready`}</h1>
+        <h1 className="reading-hero-card__title">{heroTitle}</h1>
         <p className="reading-hero-card__body">
-          {data.sections[0]?.highlights[0] ??
+          {data.tldr ??
+            data.sections[0]?.highlights[0] ??
             keyTakeaways[0]?.description ??
             'The strongest forecast signal is summarized here first so the user can act before scrolling into the deeper reading.'}
         </p>
@@ -451,6 +472,36 @@ export function FortuneResult({ data, onReset }: Props) {
             ))}
           </div>
         </section>
+      )}
+
+      {data.active_transits && data.active_transits.length > 0 && (
+        <section className="reading-transits-card" aria-label="Active transits">
+          <div className="reading-drivers-card__header">
+            <span>Active transits</span>
+            <strong>Today&apos;s sky to your birth chart</strong>
+          </div>
+          <ul className="reading-transits-list">
+            {data.active_transits.map((t) => (
+              <li key={`${t.transit_planet}-${t.aspect}-${t.natal_planet}`}>
+                <span className="reading-transits-list__symbol" aria-hidden="true">
+                  {ASPECT_SYMBOL[t.aspect] ?? '—'}
+                </span>
+                <span>
+                  {t.transit_planet} {t.aspect} {t.natal_planet}
+                </span>
+                <span className="reading-transits-list__orb">orb {t.orb.toFixed(1)}°</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {data.birth_time_assumed && (
+        <p className="reading-estimate-note" role="note">
+          This profile has no birth time, so the houses and rising sign
+          {data.moon_sign_uncertain ? ' and Moon sign' : ''} are estimated. Your Sun sign and the
+          daily outlook still hold.
+        </p>
       )}
 
       {(keyTakeaways.length > 0 || headline) && (
