@@ -70,7 +70,6 @@ fun PrivacyScreen(
     val scope = rememberCoroutineScope()
     val hideSensitiveDetailsEnabled by preferencesStore.hideSensitiveDetailsEnabled.collectAsStateWithLifecycle(initialValue = false)
     val calendarContextEnabled by preferencesStore.guideCalendarContextEnabled.collectAsStateWithLifecycle(initialValue = false)
-    val biometricContextEnabled by preferencesStore.guideBiometricContextEnabled.collectAsStateWithLifecycle(initialValue = false)
     val chartCacheStore = remember(context) { NatalChartCacheStore(context.applicationContext) }
     var pendingExport by remember { mutableStateOf<PendingProfileExport?>(null) }
     var showCalendarRationale by remember { mutableStateOf(false) }
@@ -267,41 +266,6 @@ fun PrivacyScreen(
                 if (calendarContextEnabled) {
                     Text(
                         text = stringResource(R.string.privacy_calendar_enabled_message),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.primary,
-                    )
-                }
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                ) {
-                    Column(
-                        modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(4.dp),
-                    ) {
-                        Text(
-                            text = stringResource(R.string.privacy_biometric_guidance_title),
-                            style = MaterialTheme.typography.bodyLarge,
-                        )
-                        Text(
-                            text = stringResource(R.string.privacy_biometric_guidance_detail),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                    Button(
-                        onClick = {
-                            scope.launch {
-                                preferencesStore.setGuideBiometricContextEnabled(!biometricContextEnabled)
-                            }
-                        },
-                    ) {
-                        Text(stringResource(if (biometricContextEnabled) R.string.preference_state_on else R.string.preference_state_off))
-                    }
-                }
-                if (biometricContextEnabled) {
-                    Text(
-                        text = stringResource(R.string.privacy_biometric_enabled_message),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.primary,
                     )

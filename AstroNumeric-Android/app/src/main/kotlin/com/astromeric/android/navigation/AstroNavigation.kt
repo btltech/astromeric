@@ -1,5 +1,6 @@
 package com.astromeric.android.navigation
 
+import com.astromeric.android.core.data.security.AIAccess
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -222,6 +223,8 @@ fun AstroShell(
         ?.firstOrNull { route -> TopLevelDestination.entries.any { it.route == route } }
         ?: TopLevelDestination.HOME.route
     val isProfileEditorRoute = currentDestination?.route?.startsWith(ProfileEditorBaseRoute) == true
+    // AI is owner-only: without the access code the guide button is not shown.
+    val aiEnabled by AIAccess.isEnabled.collectAsStateWithLifecycle()
     val completionProfile = selectedProfile ?: profiles.lastOrNull()
 
     LaunchedEffect(launchRouteNonce) {
@@ -266,7 +269,7 @@ fun AstroShell(
                 }
             },
             floatingActionButton = {
-                if (!isProfileEditorRoute && !currentTopLevelRoute.startsWith(TopLevelDestination.PROFILE.route)) {
+                if (aiEnabled && !isProfileEditorRoute && !currentTopLevelRoute.startsWith(TopLevelDestination.PROFILE.route)) {
                     PremiumGuideFab(
                         onClick = {
                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -875,6 +878,12 @@ private fun AstroNavHost(
             )
         }
         composable(CosmicGuideRoute) {
+            // Reached from a shortcut or an old link on a device without the code: go back.
+            val aiEnabled by AIAccess.isEnabled.collectAsStateWithLifecycle()
+            if (!aiEnabled) {
+                LaunchedEffect(Unit) { navController.popBackStack() }
+                return@composable
+            }
             CosmicGuideScreen(
                 selectedProfile = selectedProfile,
                 remoteDataSource = remoteDataSource,

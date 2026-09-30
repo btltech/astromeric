@@ -1,6 +1,7 @@
 package com.astromeric.android.core.data.remote
 
 import com.astromeric.android.BuildConfig
+import com.astromeric.android.core.data.security.AIAccess
 import com.astromeric.android.core.data.security.FriendsOwnerKey
 import com.astromeric.android.core.model.AffirmationData
 import com.astromeric.android.core.model.AIExplainRequestData
@@ -83,6 +84,7 @@ import com.astromeric.android.core.model.TimingAdvicePayload
 import com.astromeric.android.core.model.TransitAlertSubscriptionData
 import com.astromeric.android.core.model.TransitAlertSubscriptionRequestData
 import com.astromeric.android.core.model.TransitDailyRequestData
+import com.astromeric.android.core.model.GeocodeTimezoneData
 import com.astromeric.android.core.model.YesNoGuidanceData
 import com.astromeric.android.core.model.YearAheadForecastData
 import com.astromeric.android.core.model.YearAheadRequest
@@ -171,11 +173,17 @@ interface AstroApiService {
     @POST("v2/daily/yes-no")
     suspend fun fetchYesNoGuidance(
         @Query("question") question: String,
-        @Body profile: ProfilePayload,
     ): V2ApiResponse<YesNoGuidanceData>
 
     @POST("v2/daily/tarot")
     suspend fun drawTarotCard(): V2ApiResponse<TarotCardData>
+
+    // The timezone a birthplace was in, from its coordinates (not the phone's own).
+    @GET("v2/geocode/timezone")
+    suspend fun fetchGeocodeTimezone(
+        @Query("lat") latitude: Double,
+        @Query("lon") longitude: Double,
+    ): GeocodeTimezoneData
 
     @GET("v2/daily/moon-phase")
     suspend fun fetchMoonPhase(): V2ApiResponse<MoonPhaseInfoData>
@@ -490,12 +498,19 @@ class AstroRemoteDataSource(
             apiService.fetchAffirmation(profile.toPayload()).data
         }
 
-    suspend fun fetchYesNoGuidance(
-        question: String,
-        profile: AppProfile,
-    ): Result<YesNoGuidanceData> =
+    /** IANA timezone for a place, or a failure if the server could only guess it. */
+    suspend fun fetchTimezoneForCoordinates(latitude: Double, longitude: Double): Result<String> =
         runCatching {
-            apiService.fetchYesNoGuidance(question, profile.toPayload()).data
+            val result = apiService.fetchGeocodeTimezone(latitude, longitude)
+            check(!result.estimated && result.timezone.isNotBlank()) { "Timezone lookup was only an estimate" }
+            result.timezone
+        }
+
+    // Only the question is sent. The answer doesn't depend on who is asking, so the
+    // profile (name, birth date, time and place) stays on the phone.
+    suspend fun fetchYesNoGuidance(question: String): Result<YesNoGuidanceData> =
+        runCatching {
+            apiService.fetchYesNoGuidance(question).data
         }
 
     suspend fun drawTarotCard(): Result<TarotCardData> =
@@ -1030,6 +1045,7 @@ class AstroRemoteDataSource(
         fun create(): AstroRemoteDataSource {
             val logging = HttpLoggingInterceptor().apply {
                 redactHeader(FriendsOwnerKey.HEADER)
+                redactHeader(AIAccess.HEADER)
                 level = if (BuildConfig.DEBUG) {
                     HttpLoggingInterceptor.Level.BASIC
                 } else {
@@ -1040,6 +1056,10 @@ class AstroRemoteDataSource(
             val platformInterceptor = okhttp3.Interceptor { chain ->
                 val request = chain.request().newBuilder()
                     .header("X-Client-Platform", "android")
+                    .apply {
+                        // Only the owner's device has a code; everyone else sends nothing.
+                        AIAccess.code()?.let { header(AIAccess.HEADER, it) }
+                    }
                     .build()
                 chain.proceed(request)
             }

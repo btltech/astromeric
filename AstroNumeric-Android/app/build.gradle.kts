@@ -110,7 +110,6 @@ dependencies {
     ksp("androidx.room:room-compiler:$roomVersion")
 
     implementation("androidx.datastore:datastore-preferences:1.1.2")
-    implementation("androidx.health.connect:connect-client:1.1.0-alpha12")
     implementation("androidx.work:work-runtime-ktx:2.10.1")
 
     implementation("com.squareup.retrofit2:retrofit:2.11.0")

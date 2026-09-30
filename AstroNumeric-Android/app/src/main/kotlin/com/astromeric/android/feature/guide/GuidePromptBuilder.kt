@@ -4,25 +4,17 @@ import com.astromeric.android.core.model.AppProfile
 import com.astromeric.android.core.model.DataQuality
 import com.astromeric.android.core.model.GuideTone
 import com.astromeric.android.core.model.LocalJournalEntryData
-import com.astromeric.android.core.model.PrivacyDisplayRole
-import com.astromeric.android.core.model.displayName
-import com.astromeric.android.core.model.maskedBirthTime
-import com.astromeric.android.core.model.maskedBirthplace
-import com.astromeric.android.core.model.maskedDateOfBirth
 import com.astromeric.android.core.model.zodiacSignName
 
 fun buildGuideSystemPrompt(
     profile: AppProfile,
     tone: GuideTone,
     isMystic: Boolean = true,
-    hideSensitiveDetailsEnabled: Boolean,
     moonSign: String?,
     risingSign: String?,
     journalEntries: List<LocalJournalEntryData> = emptyList(),
     userQuery: String? = null,
     calendarContext: String?,
-    biometricSnapshot: GuideBiometricSnapshot?,
-    bioCosmicContext: String? = null,
 ): String {
     val sections = mutableListOf<String>()
     sections += """
@@ -38,12 +30,11 @@ fun buildGuideSystemPrompt(
     }
 
     val sunSign = profile.zodiacSignName()?.replaceFirstChar { it.uppercase() } ?: "Unknown"
+    // The chart is worked out on our side, so the model only needs the signs. The
+    // name and the birth date, time and place are deliberately not sent.
+    val birthTimeConfirmed = profile.dataQuality == DataQuality.FULL
     sections += buildString {
-        appendLine("PROFILE CONTEXT:")
-        appendLine("- Name: ${profile.displayName(hideSensitiveDetailsEnabled, PrivacyDisplayRole.ACTIVE_USER)}")
-        appendLine("- Birth Date: ${profile.maskedDateOfBirth(hideSensitiveDetailsEnabled)}")
-        appendLine("- Birth Time: ${profile.maskedBirthTime(hideSensitiveDetailsEnabled)}")
-        appendLine("- Birth Place: ${profile.maskedBirthplace(hideSensitiveDetailsEnabled)}")
+        appendLine("USER CHART (the user's name and birth details are deliberately not shared):")
         appendLine("- Sun Sign: $sunSign")
         if (!moonSign.isNullOrBlank()) {
             appendLine("- Moon Sign: $moonSign")
@@ -51,6 +42,7 @@ fun buildGuideSystemPrompt(
         if (!risingSign.isNullOrBlank()) {
             appendLine("- Rising Sign: $risingSign")
         }
+        appendLine("- Birth time: ${if (birthTimeConfirmed) "confirmed" else "UNCONFIRMED"}")
     }.trim()
 
     if (profile.dataQuality != DataQuality.FULL) {
@@ -72,20 +64,12 @@ fun buildGuideSystemPrompt(
         sections += journalContext
     }
 
-    biometricSnapshot?.takeIf { it.hasData }?.let { snapshot ->
-        sections += "TODAY'S BIOMETRIC CONTEXT:\n${snapshot.promptDescription}"
-    }
-
-    bioCosmicContext?.takeIf { it.isNotBlank() }?.let {
-        sections += it
-    }
-
     sections += """
         RESPONSE RULES:
         - Keep the answer to 2-4 short paragraphs.
-        - Anchor each major claim to something concrete when possible: signs, chart factors, timing, calendar pressure, or biometric rhythm.
+        - Anchor each major claim to something concrete when possible: signs, chart factors, timing, or calendar pressure.
         - If journal entries are provided, reference the user's own past reflections when relevant.
-        - Do not present astrology, biometrics, or journaling as proof of future events.
+        - Do not present astrology or journaling as proof of future events.
         - Do not give medical, legal, financial, or emergency instructions.
     """.trimIndent()
 

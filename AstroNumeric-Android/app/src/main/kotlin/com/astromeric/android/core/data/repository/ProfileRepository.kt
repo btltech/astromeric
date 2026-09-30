@@ -18,6 +18,10 @@ class ProfileRepository(
     private val preferencesStore: AppPreferencesStore,
     private val remoteDataSource: AstroRemoteDataSource,
 ) {
+    /** The timezone of a birthplace, worked out from its coordinates. */
+    suspend fun timezoneForCoordinates(latitude: Double, longitude: Double): Result<String> =
+        remoteDataSource.fetchTimezoneForCoordinates(latitude, longitude)
+
     val profiles: Flow<List<AppProfile>> = profileDao.observeAll().map { entities ->
         entities.map { it.toDomain() }
     }

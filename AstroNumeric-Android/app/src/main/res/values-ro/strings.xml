@@ -24,9 +24,6 @@
     <string name="privacy_calendar_guidance_title">Ghidare bazată pe calendar</string>
     <string name="privacy_calendar_guidance_detail">Opțional. Cosmic Guide pe Android poate folosi acum un rezumat redactat al evenimentelor viitoare. Titlurile și orele exacte nu sunt trimise.</string>
     <string name="privacy_calendar_enabled_message">Contextul calendarului este activ pentru conversațiile actuale cu ghidul.</string>
-    <string name="privacy_biometric_guidance_title">Ghidare biometrică</string>
-    <string name="privacy_biometric_guidance_detail">Opțional. Cosmic Guide pe Android poate folosi un instantaneu Health Connect când îți dai consimțământul. Datele brute rămân pe dispozitiv.</string>
-    <string name="privacy_biometric_enabled_message">Contextul biometric este activ pentru conversațiile actuale cu ghidul.</string>
     <string name="journal_title">Jurnal</string>
     <string name="journal_summary">Transformă ghidarea în dovezi salvând ce s-a întâmplat, cum s-a simțit și dacă lectura s-a potrivit.</string>
     <string name="journal_account_synced_mode">mod sincronizat cu contul</string>

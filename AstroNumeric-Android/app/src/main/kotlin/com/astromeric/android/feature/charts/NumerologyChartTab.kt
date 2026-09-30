@@ -1,5 +1,8 @@
 package com.astromeric.android.feature.charts
 
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.astromeric.android.core.data.security.AIAccess
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -73,6 +76,8 @@ private fun NumerologyContextCard(
     onExplain: () -> Unit,
     onOpenFullScreen: (() -> Unit)? = null,
 ) {
+    // The explanation is an AI answer, which is owner-only.
+    val aiEnabled by AIAccess.isEnabled.collectAsStateWithLifecycle()
     StudioSectionCard(
         title = stringResource(R.string.charts_numerology_context_title),
         subtitle = stringResource(R.string.charts_numerology_context_subtitle),
@@ -104,17 +109,19 @@ private fun NumerologyContextCard(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            OutlinedButton(
-                onClick = onExplain,
-                enabled = numerology != null && !isExplaining,
-            ) {
-                Text(
-                    if (isExplaining) {
-                        stringResource(R.string.charts_numerology_generating)
-                    } else {
-                        stringResource(R.string.charts_numerology_explain)
-                    },
-                )
+            if (aiEnabled) {
+                OutlinedButton(
+                    onClick = onExplain,
+                    enabled = numerology != null && !isExplaining,
+                ) {
+                    Text(
+                        if (isExplaining) {
+                            stringResource(R.string.charts_numerology_generating)
+                        } else {
+                            stringResource(R.string.charts_numerology_explain)
+                        },
+                    )
+                }
             }
             onOpenFullScreen?.let { openFull ->
                 TextButton(onClick = openFull) {

@@ -261,7 +261,6 @@ fun ToolsScreen(
                         yesNoError = null
                         yesNoGuidance = remoteDataSource.fetchYesNoGuidance(
                             question = oracleQuestion.trim(),
-                            profile = selectedProfile,
                         )
                             .onFailure { yesNoError = it.message ?: oracleLoadError }
                             .getOrNull()

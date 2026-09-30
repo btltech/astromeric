@@ -394,3 +394,11 @@ data class V2ApiResponse<T>(
     @SerializedName("data")
     val data: T,
 )
+
+/** Answer of `GET /v2/geocode/timezone`. `estimated` means the server could only guess from longitude. */
+data class GeocodeTimezoneData(
+    @SerializedName("timezone")
+    val timezone: String = "",
+    @SerializedName("estimated")
+    val estimated: Boolean = false,
+)

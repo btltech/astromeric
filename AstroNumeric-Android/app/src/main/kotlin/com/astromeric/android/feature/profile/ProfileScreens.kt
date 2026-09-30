@@ -1,5 +1,8 @@
 package com.astromeric.android.feature.profile
 
+import com.astromeric.android.core.data.security.AIAccess
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.clickable
 import android.Manifest
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
@@ -104,8 +107,6 @@ import com.astromeric.android.core.model.maskedDateOfBirth
 import com.astromeric.android.core.model.maskedBirthTime
 import com.astromeric.android.core.ui.PremiumContentCard
 import com.astromeric.android.core.ui.PremiumHeroCard
-import com.astromeric.android.feature.guide.GuideHealthAvailability
-import com.astromeric.android.feature.guide.GuideHealthConnectBridge
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -148,6 +149,11 @@ fun ProfileListScreen(
     val context = LocalContext.current
     val keyboardController = LocalSoftwareKeyboardController.current
     val scope = rememberCoroutineScope()
+    // AI is owner-only: the guide chips are hidden without the access code, which is
+    // entered by tapping the version line seven times.
+    val aiEnabled by AIAccess.isEnabled.collectAsStateWithLifecycle()
+    var versionTaps by remember { mutableStateOf(0) }
+    var showAiAccessDialog by remember { mutableStateOf(false) }
     val localOnlyCount = profiles.count(AppProfile::isLocalOnly)
     val syncedCount = profiles.count(AppProfile::isRemoteBacked)
     val selectedProfile = profiles.firstOrNull { it.id == selectedProfileId } ?: profiles.firstOrNull()
@@ -158,7 +164,6 @@ fun ProfileListScreen(
     val largeTextEnabled by preferencesStore.largeTextEnabled.collectAsStateWithLifecycle(initialValue = false)
     val appLanguage by preferencesStore.appLanguage.collectAsStateWithLifecycle(initialValue = AppLanguage.defaultFromSystem())
     val calendarContextEnabled by preferencesStore.guideCalendarContextEnabled.collectAsStateWithLifecycle(initialValue = false)
-    val biometricContextEnabled by preferencesStore.guideBiometricContextEnabled.collectAsStateWithLifecycle(initialValue = false)
     val dailyReminderEnabled by preferencesStore.notifyDailyReadingEnabled.collectAsStateWithLifecycle(initialValue = false)
     val habitReminderEnabled by preferencesStore.notifyHabitReminderEnabled.collectAsStateWithLifecycle(initialValue = false)
     val timingAlertEnabled by preferencesStore.notifyTimingAlertEnabled.collectAsStateWithLifecycle(initialValue = false)
@@ -196,9 +201,10 @@ fun ProfileListScreen(
     val notificationPermissionGranted = Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
         ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
     val calendarPermissionGranted = ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CALENDAR) == PackageManager.PERMISSION_GRANTED
-    val healthAvailability = remember(context) {
-        GuideHealthConnectBridge(context.applicationContext)
-    }.availability()
+
+    if (showAiAccessDialog) {
+        AIAccessCodeDialog(onDismiss = { showAiAccessDialog = false })
+    }
 
     LazyColumn(
         modifier = modifier
@@ -263,7 +269,6 @@ fun ProfileListScreen(
                 notificationsEnabledInSystem = notificationsEnabledInSystem,
                 notificationPermissionGranted = notificationPermissionGranted,
                 calendarPermissionGranted = calendarPermissionGranted,
-                healthAvailability = healthAvailability,
                 dailyReminderEnabled = dailyReminderEnabled,
                 habitReminderEnabled = habitReminderEnabled,
                 timingAlertEnabled = timingAlertEnabled,
@@ -509,10 +514,6 @@ fun ProfileListScreen(
                         label = stringResource(R.string.profile_hub_status_calendar_context),
                         value = stringResource(if (calendarContextEnabled) R.string.profile_hub_status_on else R.string.profile_hub_status_off),
                     )
-                    ProfileStatusRow(
-                        label = stringResource(R.string.profile_hub_status_biometric_context),
-                        value = stringResource(if (biometricContextEnabled) R.string.profile_hub_status_on else R.string.profile_hub_status_off),
-                    )
                     FlowRow(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -521,10 +522,12 @@ fun ProfileListScreen(
                             onClick = onOpenNotifications,
                             label = { Text(stringResource(R.string.profile_hub_chip_notification_settings)) },
                         )
-                        ElevatedAssistChip(
-                            onClick = onOpenGuide,
-                            label = { Text(stringResource(R.string.profile_hub_chip_guide_preferences)) },
-                        )
+                        if (aiEnabled) {
+                            ElevatedAssistChip(
+                                onClick = onOpenGuide,
+                                label = { Text(stringResource(R.string.profile_hub_chip_guide_preferences)) },
+                            )
+                        }
                         ElevatedAssistChip(
                             onClick = onOpenPrivacy,
                             label = { Text(stringResource(R.string.profile_hub_chip_privacy_controls)) },
@@ -554,10 +557,12 @@ fun ProfileListScreen(
                             onClick = onOpenLearn,
                             label = { Text(stringResource(R.string.profile_hub_chip_learn_astrology)) },
                         )
-                        ElevatedAssistChip(
-                            onClick = onOpenGuide,
-                            label = { Text(stringResource(R.string.profile_hub_chip_open_cosmic_guide)) },
-                        )
+                        if (aiEnabled) {
+                            ElevatedAssistChip(
+                                onClick = onOpenGuide,
+                                label = { Text(stringResource(R.string.profile_hub_chip_open_cosmic_guide)) },
+                            )
+                        }
                         ElevatedAssistChip(
                             onClick = {
                                 launchMailIntent(
@@ -673,6 +678,16 @@ fun ProfileListScreen(
                     Text(
                         text = "AstroNumeric Android ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
                         style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                        ) {
+                            versionTaps += 1
+                            if (versionTaps >= 7) {
+                                versionTaps = 0
+                                showAiAccessDialog = true
+                            }
+                        },
                     )
                     Text(
                         text = "This build stays dark-first and local-first while sharing the same backend contract as iOS.",

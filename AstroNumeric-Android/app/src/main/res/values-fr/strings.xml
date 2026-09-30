@@ -24,9 +24,6 @@
     <string name="privacy_calendar_guidance_title">Guidance basée sur le calendrier</string>
     <string name="privacy_calendar_guidance_detail">Optionnel. Cosmic Guide sur Android peut déjà utiliser un résumé expurgé des événements à venir. Les titres et heures exactes ne sont pas envoyés.</string>
     <string name="privacy_calendar_enabled_message">Le contexte du calendrier est activé pour les conversations actuelles avec le guide.</string>
-    <string name="privacy_biometric_guidance_title">Guidance biométrique</string>
-    <string name="privacy_biometric_guidance_detail">Optionnel. Cosmic Guide sur Android peut utiliser un instantané Health Connect avec votre consentement. Les données brutes restent sur l’appareil.</string>
-    <string name="privacy_biometric_enabled_message">Le contexte biométrique est activé pour les conversations actuelles avec le guide.</string>
     <string name="journal_title">Journal</string>
     <string name="journal_summary">Transformez la guidance en preuves en notant ce qui s’est passé, le ressenti et si la lecture a résonné.</string>
     <string name="journal_account_synced_mode">mode synchronisé au compte</string>

@@ -24,9 +24,6 @@
     <string name="privacy_calendar_guidance_title">Orientación basada en el calendario</string>
     <string name="privacy_calendar_guidance_detail">Opcional. La Guía Cósmica de Android puede usar hoy un resumen redactado de próximos eventos. Los títulos y horas exactas no se envían.</string>
     <string name="privacy_calendar_enabled_message">El contexto del calendario está habilitado para las conversaciones actuales con la guía.</string>
-    <string name="privacy_biometric_guidance_title">Orientación basada en biometría</string>
-    <string name="privacy_biometric_guidance_detail">Opcional. La Guía Cósmica de Android puede usar un resumen de Health Connect cuando des tu consentimiento. Los registros sin procesar permanecen en el dispositivo.</string>
-    <string name="privacy_biometric_enabled_message">El contexto biométrico está habilitado para las conversaciones actuales con la guía.</string>
     <string name="journal_title">Diario</string>
     <string name="journal_summary">Convierte la guía en evidencia guardando qué pasó, cómo se sintió y si la lectura encajó.</string>
     <string name="journal_account_synced_mode">modo sincronizado con cuenta</string>

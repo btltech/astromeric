@@ -23,17 +23,15 @@ verified build (couldn't be done from the code environment).
 ## Before release (console / verified build)
 
 - ☐ **Data Safety form (Play Console).** Declare data the app handles:
-  - Personal info: **Name** (app functionality, on-device + sent to backend for chart calc).
+  - Personal info: **Name** and birth date (app functionality; sent to the backend to work out charts, never to an AI provider).
   - Location: **birthplace lat/long** the user enters (app functionality).
-  - Health & fitness: **heart rate, resting heart rate, sleep, steps, calories**
-    via Health Connect — declare purpose (personalized insights), state whether it
-    leaves the device, and link the privacy policy. Health Connect also requires a
-    visible in-app privacy disclosure.
+  - Health & fitness: **none.** Health Connect was removed (as Apple Health was on
+    iOS), so there is no health-data declaration to make.
   - Audio: **voice journal** recordings (microphone) — declare handling.
   - Confirm encryption-in-transit (yes, HTTPS) and a data-deletion path.
 - ☐ **Permissions justification.** `RECORD_AUDIO` (voice journal),
   `READ_CALENDAR` (cosmic-guide context), `SCHEDULE_EXACT_ALARM` (transit alarms),
-  `POST_NOTIFICATIONS`, and the five Health Connect read permissions — each must
+  and `POST_NOTIFICATIONS` — each must
   map to a user-facing feature in the listing/Data Safety. Remove any that aren't
   actually used.
 - ☐ **Release signing.** Configure an upload keystore (`signingConfigs`) and

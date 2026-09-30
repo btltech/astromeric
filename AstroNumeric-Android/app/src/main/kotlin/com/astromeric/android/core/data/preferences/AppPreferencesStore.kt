@@ -45,7 +45,6 @@ class AppPreferencesStore(
     private val appLanguageKey = stringPreferencesKey("app_language")
     private val guideToneKey = stringPreferencesKey("guide_tone")
     private val guideCalendarContextEnabledKey = booleanPreferencesKey("guide_calendar_context_enabled")
-    private val guideBiometricContextEnabledKey = booleanPreferencesKey("guide_biometric_context_enabled")
     private val notifyDailyReadingKey = booleanPreferencesKey("notify_daily_reading")
     private val notifyMoonEventsKey = booleanPreferencesKey("notify_moon_events")
     private val notifyHabitReminderKey = booleanPreferencesKey("notify_habit_reminder")
@@ -176,16 +175,6 @@ class AppPreferencesStore(
             }
         }
         .map { preferences -> preferences[guideCalendarContextEnabledKey] ?: false }
-
-    val guideBiometricContextEnabled: Flow<Boolean> = context.dataStore.data
-        .catch { exception ->
-            if (exception is IOException) {
-                emit(emptyPreferences())
-            } else {
-                throw exception
-            }
-        }
-        .map { preferences -> preferences[guideBiometricContextEnabledKey] ?: false }
 
     val notifyDailyReadingEnabled: Flow<Boolean> = context.dataStore.data
         .catch { exception ->
@@ -437,12 +426,6 @@ class AppPreferencesStore(
     suspend fun setGuideCalendarContextEnabled(enabled: Boolean) {
         context.dataStore.edit { preferences ->
             preferences[guideCalendarContextEnabledKey] = enabled
-        }
-    }
-
-    suspend fun setGuideBiometricContextEnabled(enabled: Boolean) {
-        context.dataStore.edit { preferences ->
-            preferences[guideBiometricContextEnabledKey] = enabled
         }
     }
 
