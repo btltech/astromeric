@@ -643,48 +643,6 @@ export async function drawTarotCard(): Promise<TarotCardResponse> {
   };
 }
 
-// ========== ORACLE API ==========
-
-export interface YesNoResponse {
-  question: string;
-  answer: 'Yes' | 'No' | 'Maybe' | 'Wait';
-  emoji: string;
-  confidence: number;
-  message: string;
-  reasoning: string;
-  timing: string;
-  asked_at: string;
-}
-
-interface ServerYesNo {
-  question: string;
-  answer: YesNoResponse['answer'];
-  confidence: number;
-  reasoning: string;
-  guidance: string[];
-}
-
-export async function askOracle(question: string): Promise<YesNoResponse> {
-  // The server reads the question from the query string, not the body.
-  const response = await apiFetch<ApiResponse<ServerYesNo>>(
-    `/v2/daily/yes-no?${new URLSearchParams({ question }).toString()}`,
-    { method: 'POST' }
-  );
-  const result = response.data;
-  if (!result) throw new Error('Oracle answer missing from response');
-  return {
-    question: result.question,
-    answer: result.answer,
-    emoji: '',
-    // 0-1 from the server; the meter shows a percentage.
-    confidence: Math.round(result.confidence <= 1 ? result.confidence * 100 : result.confidence),
-    message: result.guidance[0] ?? '',
-    reasoning: result.reasoning,
-    timing: result.guidance.slice(1).join(' '),
-    asked_at: new Date().toISOString(),
-  };
-}
-
 export interface QuickInsightResponse {
   insight: string;
   free_ai?: FreeAIStatus | null;

@@ -82,31 +82,6 @@ describe('tool endpoints read the server envelope', () => {
     expect(card.message).toBe("Don't isolate too long. Seek balance.");
   });
 
-  it('sends the oracle question in the query string and shows confidence as a percentage', async () => {
-    const { askOracle } = await import('../api/client');
-    fetchMock.mockResolvedValueOnce(
-      reply({
-        question: 'Should I start the project this week?',
-        answer: 'No',
-        confidence: 0.81,
-        reasoning: "There are unseen obstacles. This isn't a permanent no, just not now.",
-        guidance: [
-          'The cosmos advises against this path right now.',
-          'Revisit this question in a lunar cycle.',
-        ],
-      })
-    );
-
-    const result = await askOracle('Should I start the project this week?');
-    expect(fetchMock.mock.calls[0][0]).toBe(
-      'https://example.test/v2/daily/yes-no?question=Should+I+start+the+project+this+week%3F'
-    );
-    expect(result.answer).toBe('No');
-    expect(result.confidence).toBe(81);
-    expect(result.message).toBe('The cosmos advises against this path right now.');
-    expect(result.timing).toBe('Revisit this question in a lunar cycle.');
-  });
-
   it('returns the full daily features from the daily reading', async () => {
     const { fetchDailyFeatures } = await import('../api/client');
     fetchMock.mockResolvedValueOnce(

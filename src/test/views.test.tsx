@@ -57,7 +57,6 @@ vi.mock('../api/client', () => {
     fetchBestDays: vi.fn().mockResolvedValue({ best_days: [] }),
     fetchTimingActivities: vi.fn().mockResolvedValue({ activities: [] }),
     drawTarotCard: vi.fn().mockResolvedValue({}),
-    askOracle: vi.fn().mockResolvedValue({}),
     chatWithCosmicGuide: vi.fn().mockResolvedValue({}),
     fetchQuickInsight: vi.fn().mockResolvedValue({}),
     fetchFreeAIStatus: vi.fn().mockResolvedValue({ status: 'available' }),
