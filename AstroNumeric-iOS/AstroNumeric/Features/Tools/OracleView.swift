@@ -169,18 +169,12 @@ struct OracleView: View {
                 .submitLabel(.go)
                 // A wrapping field turns Return into a newline; treat it as
                 // "ask" instead, since the keyboard hides the button below.
+                // (No keyboard toolbar button: on iOS 26 it floats over the
+                // field and covers what is being typed.)
                 .onChange(of: question) { _, newValue in
                     guard newValue.contains("\n") else { return }
                     question = newValue.replacingOccurrences(of: "\n", with: "")
                     submitQuestion()
-                }
-                .toolbar {
-                    ToolbarItemGroup(placement: .keyboard) {
-                        Spacer()
-                        Button("ui.oracle.1".localized) { submitQuestion() }
-                            .fontWeight(.semibold)
-                            .disabled(!canAsk)
-                    }
                 }
         }
     }

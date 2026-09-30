@@ -5,54 +5,89 @@ import SwiftUI
 
 struct FloatingAIButton: View {
     @State private var isShowingChat = false
-    @State private var isPressed = false
+    @State private var isPulsing = false
+    @State private var isExpanded = false
+    @State private var collapseTask: Task<Void, Never>?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.accessibilityVoiceOverEnabled) private var voiceOverEnabled
     @Environment(\.horizontalSizeClass) private var hSizeClass
     @ScaledMetric(relativeTo: .body) private var bottomPadding: CGFloat = 96
 
     var body: some View {
-        // Single clearly-labelled pill button — no pulsing aura, no expand/collapse.
-        // "AI Insight" label is always visible so users know exactly what it does.
-        Button {
-            HapticManager.impact(.medium)
-            isShowingChat = true
-        } label: {
-            HStack(spacing: 6) {
-                Image(systemName: "sparkles")
-                    .font(.footnote.weight(.bold))
-                    .symbolRenderingMode(.hierarchical)
-                Text("ai.insight.button".localized)
-                    .font(.footnote.weight(.semibold))
+        ZStack {
+            // Outer aura ring: a slow pulse so the small dot is still noticed.
+            if !reduceMotion && !isExpanded {
+                Circle()
+                    .stroke(Color.cosmicPurple.opacity(0.35), lineWidth: 1.2)
+                    .frame(width: isPulsing ? 70 : 54, height: isPulsing ? 70 : 54)
+                    .opacity(isPulsing ? 0 : 0.9)
+                    .animation(
+                        .easeOut(duration: 2.4).repeatForever(autoreverses: false),
+                        value: isPulsing
+                    )
+                    .allowsHitTesting(false)
             }
-            .foregroundStyle(.white)
-            .padding(.horizontal, 14)
-            .padding(.vertical, 10)
-            .background(
-                Capsule()
-                    .fill(Color.cosmicPurple)
-                    .overlay(Capsule().stroke(.white.opacity(0.20), lineWidth: Stroke.hairline))
-            )
-            .shadow(color: Color.cosmicPurple.opacity(0.40), radius: 10, y: 4)
-            .scaleEffect(isPressed ? 0.95 : 1.0)
-            .animation(Motion.press, value: isPressed)
-            .contentShape(Capsule())
+
+            // Rests as a small sparkle dot so it doesn't sit over the page.
+            // The first tap opens it out to "AI Insight"; a second tap opens
+            // the chat. Left alone, it folds back after a few seconds.
+            Button(action: handleTap) {
+                HStack(spacing: 6) {
+                    Image(systemName: "sparkles")
+                        .font(.callout.weight(.semibold))
+                        .symbolRenderingMode(.hierarchical)
+                    if isExpanded {
+                        Text("ai.insight.button".localized)
+                            .font(.footnote.weight(.semibold))
+                            .fixedSize()
+                            .transition(.opacity.combined(with: .scale(scale: 0.85)))
+                    }
+                }
+                .foregroundStyle(.white)
+                .padding(.horizontal, isExpanded ? 14 : 12)
+                .padding(.vertical, 10)
+                .background(
+                    Capsule()
+                        .fill(Color.cosmicPurple)
+                        .overlay(Capsule().stroke(.white.opacity(0.20), lineWidth: Stroke.hairline))
+                )
+                .shadow(color: Color.cosmicPurple.opacity(0.40), radius: 10, y: 4)
+                .contentShape(Capsule())
+            }
+            .buttonStyle(AccessibleButtonStyle())
+            .accessibilityLabel("ai.insight.button".localized)
+            .accessibilityHint("ai.insight.hint".localized)
         }
-        .buttonStyle(AccessibleButtonStyle())
-        .accessibilityLabel("ai.insight.button".localized)
-        .accessibilityHint("ai.insight.hint".localized)
-        .simultaneousGesture(
-            DragGesture(minimumDistance: 0)
-                .onChanged { _ in isPressed = true }
-                .onEnded   { _ in isPressed = false }
-        )
         // Positioned by the safeAreaInset in ContentView, so it only needs to sit
         // at the trailing edge — no manual bottom offset to keep in sync with the
         // tab bar height.
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
         .padding(.trailing, hSizeClass == .regular ? 28 : 16)
         .padding(.bottom, hSizeClass == .regular ? 24 : bottomPadding)
+        .onAppear { isPulsing = true }
+        .onDisappear { collapseTask?.cancel() }
         .fullScreenCover(isPresented: $isShowingChat) {
             CosmicGuideChatSheet(isPresented: $isShowingChat)
+        }
+    }
+
+    private func handleTap() {
+        collapseTask?.cancel()
+        // VoiceOver already reads the label, so one activation opens the chat.
+        if isExpanded || voiceOverEnabled {
+            HapticManager.impact(.medium)
+            isShowingChat = true
+            isExpanded = false
+            return
+        }
+        HapticManager.impact(.light)
+        withAnimation(Motion.press) { isExpanded = true }
+        collapseTask = Task { @MainActor in
+            try? await Task.sleep(for: .seconds(3))
+            guard !Task.isCancelled else { return }
+            withAnimation(.spring(response: 0.25, dampingFraction: 0.85)) {
+                isExpanded = false
+            }
         }
     }
 }
