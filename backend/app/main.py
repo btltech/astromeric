@@ -277,6 +277,7 @@ def register_routers():
         "cosmic_guide",
         "learning",
         "feedback",
+        "geocode",
         "system",
     ]
 

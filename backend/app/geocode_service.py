@@ -25,26 +25,28 @@ def estimate_timezone_from_longitude(lon: float) -> str:
     return f"Etc/GMT{'+' if offset_hours < 0 else '-'}{abs(offset_hours)}"
 
 
-def get_iana_timezone(lat: float, lon: float) -> str:
-    """
-    Get IANA timezone from coordinates.
-    Uses timeapi.io (free, no key required) or falls back to estimation.
-    """
+def fetch_iana_timezone(lat: float, lon: float) -> str | None:
+    """IANA timezone from timeapi.io (free, no key), or None if it can't answer."""
     try:
-        # Try free timeapi.io
         url = (
             f"https://timeapi.io/api/TimeZone/coordinate?latitude={lat}&longitude={lon}"
         )
         with httpx.Client(timeout=5.0) as client:
             resp = client.get(url)
             if resp.status_code == 200:
-                data = resp.json()
-                return data.get("timeZone", estimate_timezone_from_longitude(lon))
+                tz = resp.json().get("timeZone")
+                return tz if isinstance(tz, str) and tz else None
     except Exception:
         pass
+    return None
 
-    # Fallback to longitude-based estimation
-    return estimate_timezone_from_longitude(lon)
+
+def get_iana_timezone(lat: float, lon: float) -> str:
+    """
+    Get IANA timezone from coordinates.
+    Uses timeapi.io (free, no key required) or falls back to estimation.
+    """
+    return fetch_iana_timezone(lat, lon) or estimate_timezone_from_longitude(lon)
 
 
 async def search_locations(query: str, limit: int = 5) -> list[dict]:

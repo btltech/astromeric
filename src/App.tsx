@@ -5,6 +5,7 @@ import { CookieConsent } from './components/CookieConsent';
 import { Footer } from './components/Footer';
 import { PWAPrompt } from './components/PWAPrompt';
 import { NavigationBar } from './components/home/NavigationBar';
+import { repairSavedTimezones } from './utils/timezoneRepair';
 
 // Lazy load views for code splitting
 const HomeSupportView = React.lazy(() => import('./views/HomeSupportView'));
@@ -81,6 +82,11 @@ function Layout() {
 }
 
 export function App() {
+  React.useEffect(() => {
+    // Best effort: a failed lookup just leaves the profile as it was.
+    repairSavedTimezones().catch(() => undefined);
+  }, []);
+
   return (
     <BrowserRouter>
       <Layout />

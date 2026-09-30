@@ -395,18 +395,18 @@ export async function fetchForecast(
 }
 
 export async function fetchNatalProfile(profile: ProfilePayload): Promise<LiveNatalProfile> {
-  const location = getResolvedLocation(profile);
-
+  // The server reads latitude, longitude and timezone at the top level of the
+  // profile; a nested `location` is ignored and the chart is cast at 0°, 0°.
+  // Without a birthplace they're left out, so the server flags the chart as
+  // location-assumed instead of treating 0°, 0° as real.
+  const hasPlace = profile.location?.latitude != null && profile.location?.longitude != null;
+  const flat = toFlatProfilePayload(profile);
   const response = await apiFetch<ApiResponse<LiveNatalProfile>>('/v2/profiles/natal', {
     method: 'POST',
     body: JSON.stringify({
-      profile: {
-        name: profile.name,
-        date_of_birth: profile.date_of_birth,
-        time_of_birth: profile.time_of_birth,
-        location,
-        house_system: profile.house_system ?? 'Placidus',
-      },
+      profile: hasPlace
+        ? flat
+        : { ...flat, latitude: undefined, longitude: undefined, timezone: undefined },
     }),
   });
   if (response.status === 'success' && response.data) {
