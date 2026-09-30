@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Body, HTTPException, Request
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from starlette.concurrency import run_in_threadpool
 
 from .. import free_ai
@@ -70,6 +70,9 @@ class ChatRequest(BaseModel):
     history: Optional[List[Dict[str, str]]] = None
     system_prompt: Optional[str] = None
     tone: Optional[str] = None
+    # The reading the visitor is looking at, so a follow-up question can refer to it.
+    reading_summary: Optional[str] = Field(default=None, max_length=700)
+    reading_transits: Optional[List[str]] = Field(default=None, max_length=6)
 
 
 class ChatResponse(BaseModel):
@@ -167,10 +170,18 @@ async def chat_with_cosmic_guide(
         owner = has_ai_access(request)
         free_state = await _claim_free_ai(request, owner)
 
+        reading_data = {}
+        if req.reading_summary and req.reading_summary.strip():
+            reading_data["summary"] = req.reading_summary.strip()
+        transits = [t.strip()[:60] for t in (req.reading_transits or []) if t.strip()]
+        if transits:
+            reading_data["transits"] = transits
+
         # Use the proper cosmic guide engine
         result = await ask_cosmic_guide(
             question=req.message,
             chart_data=chart_data,
+            reading_data=reading_data or None,
             conversation_history=req.history,
             birth_time_assumed=req.birth_time_assumed or False,
             time_confidence=req.time_confidence,

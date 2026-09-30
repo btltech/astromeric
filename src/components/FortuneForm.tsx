@@ -244,9 +244,7 @@ export function FortuneForm({ onSubmit, isLoading, showSaveOption = true }: Prop
                 {errors.date_of_birth && <p className="error-text">{errors.date_of_birth}</p>}
               </div>
               <div className="form-group">
-                <label>
-                  {t('form.timeOfBirth')} ({t('common.optional', 'optional')})
-                </label>
+                <label>{t('form.timeOfBirth')}</label>
                 <input
                   type="time"
                   value={formData.time_of_birth}

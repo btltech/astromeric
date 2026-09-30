@@ -2,19 +2,13 @@ import React, { useEffect, useMemo, useState } from 'react';
 import type { PredictionData } from '../types';
 import { SectionGrid } from './SectionGrid';
 import { DailyGuidance } from './DailyGuidance';
-import {
-  ApiError,
-  fetchAiExplanation,
-  chatWithCosmicGuide,
-  fetchFreeAIStatus,
-  type FreeAIStatus,
-} from '../api/client';
+import { ApiError, chatWithCosmicGuide, fetchFreeAIStatus, type FreeAIStatus } from '../api/client';
+import { parseCalendarDate } from '../utils/dates';
 import { freeAIBanner, freeAIReplyNote } from '../utils/freeAI';
 import { useStore } from '../store/useStore';
 import { useProfiles } from '../hooks';
 import { toast } from './Toast';
 import { CosmicCard } from './CosmicCard';
-import { MarkdownText } from './MarkdownText';
 import { CollapsibleSection } from './CollapsibleSection';
 
 interface Props {
@@ -78,7 +72,6 @@ export function FortuneResult({ data, onReset }: Props) {
   // Get user and token from store for paid check
   const { token } = useStore();
   const { selectedProfile } = useProfiles();
-  const isPaid = true; // All features are free now
 
   const scopeLabel =
     typeof data.scope === 'string' && data.scope.length > 0
@@ -90,7 +83,7 @@ export function FortuneResult({ data, onReset }: Props) {
 
   // Get birth month for birthstone
   const birthMonth = selectedProfile?.date_of_birth
-    ? new Date(selectedProfile.date_of_birth).getMonth() + 1
+    ? parseCalendarDate(selectedProfile.date_of_birth).getMonth() + 1
     : null;
 
   // Get zodiac stones data
@@ -102,10 +95,6 @@ export function FortuneResult({ data, onReset }: Props) {
   // The server's summary is a paragraph, which is too long for a title.
   const heroTitle =
     headline && headline.length <= 90 && !data.tldr ? headline : `${scopeLabel} outlook`;
-  const [aiInsight, setAiInsight] = useState<string | null>(null);
-  const [_aiInsightProvider, setAiInsightProvider] = useState<string | null>(null);
-  const [aiLoading, setAiLoading] = useState(false);
-  const [_showUpgradeMessage, setShowUpgradeMessage] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
 
   // Cosmic Guide Chat State
@@ -234,7 +223,7 @@ export function FortuneResult({ data, onReset }: Props) {
   const readingText = useMemo(() => {
     const lines: string[] = [];
     lines.push(
-      `${data.scope?.toUpperCase?.() ?? 'READING'} — ${new Date(
+      `${data.scope?.toUpperCase?.() ?? 'READING'} — ${parseCalendarDate(
         data.date || Date.now()
       ).toLocaleDateString()}`
     );
@@ -317,43 +306,9 @@ export function FortuneResult({ data, onReset }: Props) {
     }
   };
 
-  const handleAiExplain = async () => {
-    // Check if user is paid
-    if (!isPaid) {
-      setShowUpgradeMessage(true);
-      return;
-    }
-
-    setAiLoading(true);
-    try {
-      const sections =
-        data.sections?.map((section) => ({
-          title: section.title,
-          highlights: section.highlights,
-        })) ?? [];
-      const payload = {
-        scope: data.scope,
-        headline,
-        theme: data.theme,
-        sections,
-        numerology_summary: data.numerology?.cycles?.personal_day?.meaning,
-      };
-      const response = await fetchAiExplanation(payload, token ?? undefined);
-      setAiInsight(response.summary);
-      setAiInsightProvider(response.provider);
-    } finally {
-      setAiLoading(false);
-    }
-  };
-
   const handleChatSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!chatInput.trim() || chatLoading) return;
-
-    if (!isPaid) {
-      setShowUpgradeMessage(true);
-      return;
-    }
 
     const userMessage = chatInput.trim();
     setChatInput('');
@@ -586,12 +541,6 @@ export function FortuneResult({ data, onReset }: Props) {
         </section>
       )}
 
-      {aiInsight && (
-        <CollapsibleSection title="Deeper Explanation" icon="🔍" defaultExpanded={true}>
-          <MarkdownText text={aiInsight} />
-        </CollapsibleSection>
-      )}
-
       {data.guidance && <DailyGuidance guidance={data.guidance} scope={data.scope} />}
 
       {data.sections && data.sections.length > 0 && (
@@ -692,16 +641,6 @@ export function FortuneResult({ data, onReset }: Props) {
       <CosmicCard data={data} userName={selectedProfile?.name || 'Seeker'} />
 
       <div className="action-buttons">
-        <button
-          onClick={handleAiExplain}
-          className={`btn-secondary btn-wide ${!isPaid ? 'locked' : ''}`}
-          disabled={aiLoading}
-          aria-label="Explain this reading"
-          aria-busy={aiLoading}
-          type="button"
-        >
-          {aiLoading ? 'Thinking…' : 'Explain This Reading'}
-        </button>
         <button
           onClick={onReset}
           className="btn-secondary"
