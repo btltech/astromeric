@@ -29,29 +29,8 @@ class RateLimiter:
         self.last_update: Dict[str, float] = defaultdict(time.time)
 
     def _get_client_id(self, request: Request) -> str:
-        """Extract client identifier from request.
-
-        X-Forwarded-For is only trusted when the request originates from a
-        known proxy (Cloudflare).  Trusting it blindly allows attackers to
-        spoof the header and bypass IP-based rate limiting.
-        """
-        # Cloudflare sets CF-Connecting-IP to the real visitor IP and cannot
-        # be spoofed by the client.  Prefer it when present.
-        cf_ip = request.headers.get("CF-Connecting-IP")
-        if cf_ip:
-            return cf_ip.strip()
-
-        # Railway / other trusted reverse proxies: use the rightmost
-        # non-private IP in X-Forwarded-For (the last hop the proxy added),
-        # NOT the leftmost which is client-controlled.
-        forwarded = request.headers.get("X-Forwarded-For")
-        if forwarded:
-            ips = [ip.strip() for ip in forwarded.split(",") if ip.strip()]
-            if ips:
-                return ips[-1]  # rightmost = added by the trusted proxy
-
-        # Fall back to direct client IP
-        return request.client.host if request.client else "unknown"
+        """The visitor's IP address; see :func:`get_client_ip`."""
+        return get_client_ip(request)
 
     def _refill_tokens(self, client_id: str) -> None:
         """Refill tokens based on time elapsed."""
@@ -171,7 +150,6 @@ class DailyRateLimiter:
 # 50 lets a visitor use every website tool a few times a day; 3 ran out
 # within a page or two, since single pages make one to three calls.
 GENERAL_DAILY_LIMIT = 50
-gemini_daily_limiter = DailyRateLimiter(limit=1)
 general_daily_limiter = DailyRateLimiter(limit=GENERAL_DAILY_LIMIT)
 
 
@@ -195,11 +173,27 @@ def get_user_id_from_request(request: Request) -> Optional[str]:
     return None
 
 
+def _trust_cloudflare_header() -> bool:
+    return os.getenv("TRUST_CF_CONNECTING_IP", "").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+    }
+
+
 def get_client_ip(request: Request) -> str:
-    """Extract client IP from request."""
-    cf_ip = request.headers.get("CF-Connecting-IP")
-    if cf_ip:
-        return cf_ip.strip()
+    """The visitor's IP address.
+
+    Browsers reach the API on Railway directly, not through Cloudflare, so a
+    CF-Connecting-IP header can only have come from the caller and is ignored
+    unless TRUST_CF_CONNECTING_IP is set (for when the API sits behind
+    Cloudflare). Railway's proxy appends the real address to X-Forwarded-For,
+    so the rightmost entry is used; the leftmost is whatever the caller sent.
+    """
+    if _trust_cloudflare_header():
+        cf_ip = request.headers.get("CF-Connecting-IP")
+        if cf_ip:
+            return cf_ip.strip()
 
     forwarded = request.headers.get("X-Forwarded-For")
     if forwarded:
@@ -257,20 +251,10 @@ async def rate_limit_middleware(request: Request, call_next):
     ):
         allowed, headers = password_reset_limiter.is_allowed(request)
         limit_name = "Auth Reset"
-    # 4. Gemini endpoints
-    elif path in [
-        "/v2/ai/explain",
-        "/v2/cosmic-guide/chat",
-        "/v2/cosmic-guide/guidance",
-        "/v2/cosmic-guide/interpret",
-    ]:
-        if is_app:
-            allowed, headers = default_limiter.is_allowed(request)
-            limit_name = "Gemini AI (app)"
-        else:
-            allowed, headers = gemini_daily_limiter.is_allowed(client_id)
-            limit_name = "Gemini AI"
-    # 5. Everything else under the API (including unknown routes)
+    # 4. Everything else under the API (including unknown routes). The AI
+    # endpoints count here too: a website visitor's one AI answer a day is
+    # enforced by app/free_ai.py, and replies after it come from the built-in
+    # guide, so blocking the whole endpoint would take those away as well.
     else:
         if is_app:
             allowed, headers = default_limiter.is_allowed(request)

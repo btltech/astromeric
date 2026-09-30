@@ -11,7 +11,12 @@ import asyncio
 import os
 from typing import Dict, List, Optional
 
-from app.ai_service import _configure_client, ai_configured, generate_ai_text
+from app.ai_service import (
+    DailyQuotaExhausted,
+    _configure_client,
+    ai_configured,
+    generate_ai_text,
+)
 from app.interpretation.translations import get_translation
 
 COSMIC_SYSTEM_PROMPT = """You are the Cosmic Guide, a mystical yet friendly AI assistant for Astronumeric, 
@@ -231,6 +236,7 @@ async def ask_cosmic_guide(
     system_prompt: Optional[str] = None,
     tone: Optional[str] = None,
     use_ai: bool = True,
+    ai_provider: Optional[str] = None,
 ) -> Dict:
     """
     Ask the Cosmic Guide a question.
@@ -246,6 +252,7 @@ async def ask_cosmic_guide(
         lang: Language code for response
         system_prompt: Optional client-provided prompt context
         tone: Optional tone override for response style
+        ai_provider: ``GEMINI_ONLY`` for a website visitor's free answer
 
     Returns:
         Dict with response and metadata
@@ -295,7 +302,18 @@ async def ask_cosmic_guide(
         full_prompt += f"\n\nTone override:\n{tone_instruction}"
 
     # The HTTP calls block (and may wait to retry), so keep them off the event loop.
-    result = await asyncio.to_thread(generate_ai_text, question, full_prompt)
+    try:
+        result = await asyncio.to_thread(
+            generate_ai_text, question, full_prompt, provider=ai_provider
+        )
+    except DailyQuotaExhausted:
+        topic, response = _fallback_response(question, lang)
+        return {
+            "response": response,
+            "provider": "fallback",
+            "reason": "daily_quota",
+            "topic_detected": topic,
+        }
     if result is None:
         topic, response = _fallback_response(question, lang)
         return {

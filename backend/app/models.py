@@ -195,6 +195,30 @@ class Friend(Base):
     )
 
 
+class FreeAIClaim(Base):
+    """One website visitor's free AI answer for a day (see app/free_ai.py).
+
+    Each answer is stored once per identifier (device, browser-on-network,
+    account), all sharing a ``claim_id``. ``key`` is a keyed hash, so no IP
+    address or device detail is kept, and rows older than a day are deleted.
+    """
+
+    __tablename__ = "free_ai_claims"
+
+    id = Column(Integer, primary_key=True)
+    day = Column(String(10), nullable=False)
+    key = Column(String(80), nullable=False)
+    claim_id = Column(String(32), nullable=False)
+    created_at = Column(
+        DateTime, default=lambda: datetime.now(timezone.utc), nullable=False
+    )
+
+    __table_args__ = (
+        Index("idx_free_ai_claims_day_key", "day", "key", unique=True),
+        Index("idx_free_ai_claims_claim", "claim_id"),
+    )
+
+
 class TransitSubscription(Base):
     __tablename__ = "transit_subscriptions"
 

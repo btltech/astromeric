@@ -2,6 +2,7 @@ import warnings
 
 from starlette.testclient import TestClient
 
+from backend.app.ai_service import AIText
 from backend.app.main import app
 from backend.app.routers import cosmic_guide as cosmic_guide_router
 
@@ -13,8 +14,10 @@ def test_cosmic_guidance_accepts_ios_body_contract(monkeypatch):
     monkeypatch.setenv("AI_ACCESS_CODE", "owner-code")
     monkeypatch.setattr(
         cosmic_guide_router,
-        "explain_with_gemini",
-        lambda **_: "Guidance from the stars.",
+        "explain_reading",
+        lambda **_: AIText(
+            text="Guidance from the stars.", provider="nvidia", model="m"
+        ),
     )
 
     resp = client.post(
@@ -77,6 +80,7 @@ def test_cosmic_chat_accepts_ios_tone_and_system_prompt(monkeypatch):
 
     resp = client.post(
         "/v2/cosmic-guide/chat",
+        headers={"X-Client-Platform": "ios"},
         json={
             "message": "Tell me plainly.",
             "sun_sign": "Gemini",

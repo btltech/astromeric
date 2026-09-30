@@ -4,6 +4,7 @@
  */
 import type { NumerologyProfile } from '../types';
 import { getApiBaseUrl } from './config';
+import { visitorHeaders } from '../utils/visitor';
 
 export interface ProfilePayload {
   name: string;
@@ -263,10 +264,25 @@ export interface CosmicGuideRequest {
   history?: ChatMessage[];
 }
 
+/** A website visitor's one free AI answer a day (backend/app/free_ai.py). */
+export type FreeAIStatusCode =
+  | 'available' // today's answer is still unused
+  | 'answered' // this reply was it
+  | 'used' // already used today
+  | 'pool_empty' // today's free answers have all gone
+  | 'unavailable' // AI failed this time; the answer is still unused
+  | 'not_offered';
+
+export interface FreeAIStatus {
+  status: FreeAIStatusCode;
+  resets_at?: string;
+}
+
 export interface CosmicGuideResponse {
   response: string;
   provider: string;
   model?: string;
+  free_ai?: FreeAIStatus | null;
 }
 
 export class ApiError extends Error {
@@ -491,7 +507,7 @@ export function saveReading(payload: SaveReadingPayload, token?: string) {
   });
 }
 
-export function chatWithCosmicGuide(
+export async function chatWithCosmicGuide(
   message: string,
   sunSign?: string,
   moonSign?: string,
@@ -499,7 +515,7 @@ export function chatWithCosmicGuide(
   history?: ChatMessage[],
   token?: string
 ) {
-  const headers: Record<string, string> = {};
+  const headers: Record<string, string> = await visitorHeaders();
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
   const payload: CosmicGuideRequest = {
@@ -671,13 +687,30 @@ export async function askOracle(question: string): Promise<YesNoResponse> {
 
 export interface QuickInsightResponse {
   insight: string;
+  free_ai?: FreeAIStatus | null;
 }
 
-export function fetchQuickInsight(topic: string, sunSign?: string) {
-  return apiFetch<QuickInsightResponse>('/v2/cosmic-guide/guidance', {
-    method: 'POST',
-    body: JSON.stringify({ question: topic, sun_sign: sunSign }),
+export async function fetchQuickInsight(
+  topic: string,
+  sunSign?: string
+): Promise<QuickInsightResponse> {
+  const res = await apiFetch<{ data: { guidance: string; free_ai?: FreeAIStatus | null } }>(
+    '/v2/cosmic-guide/guidance',
+    {
+      method: 'POST',
+      headers: await visitorHeaders(),
+      body: JSON.stringify({ question: topic, sun_sign: sunSign }),
+    }
+  );
+  return { insight: res.data.guidance, free_ai: res.data.free_ai };
+}
+
+/** Whether this visitor still has today's free AI answer. */
+export async function fetchFreeAIStatus(): Promise<FreeAIStatus> {
+  const res = await apiFetch<{ data: FreeAIStatus }>('/v2/cosmic-guide/free-ai', {
+    headers: await visitorHeaders(),
   });
+  return res.data;
 }
 
 // ========== LEARNING API ==========

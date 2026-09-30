@@ -29,10 +29,10 @@ def _get_ai_access_code() -> str | None:
 def has_ai_access(request: Request) -> bool:
     """Return True only for callers holding the private AI access code.
 
-    Gemini runs on an unpaid key whose prompts Google may use to improve its
-    products, so it is reserved for the owner's own device: the code is typed in
-    once there and is never shipped in the app. Every other caller falls back to
-    the built-in responses, and their questions and chart data never leave us.
+    Unlimited AI is reserved for the owner's own device: the code is typed in
+    once there and is never shipped in the app. App users get the built-in
+    responses; website visitors get one free Gemini answer a day
+    (``app/free_ai.py``) and the built-in responses after that.
     """
     expected = _get_ai_access_code()
     if not expected:
@@ -283,7 +283,20 @@ def _nvidia_generate(
     return AIText(text=text, provider="nvidia", model=model)
 
 
-def _gemini_generate(prompt: str, system: Optional[str]) -> Optional[AIText]:
+class DailyQuotaExhausted(Exception):
+    """Gemini's free daily quota is used up until it resets at midnight Pacific."""
+
+
+def _is_daily_quota_error(error: Exception) -> bool:
+    """True for Gemini's per-day quota error, not its per-minute one."""
+    message = str(error)
+    rate_limited = "429" in message or "RESOURCE_EXHAUSTED" in message
+    return rate_limited and "PerDay" in message
+
+
+def _gemini_generate(
+    prompt: str, system: Optional[str], raise_daily_quota: bool = False
+) -> Optional[AIText]:
     client = create_gemini_client()
     if client is None:
         return None
@@ -311,6 +324,8 @@ def _gemini_generate(prompt: str, system: Optional[str]) -> Optional[AIText]:
         return AIText(text=result, provider="gemini", model=model)
     except Exception as e:
         _log.warning("Gemini call failed: %s: %s", type(e).__name__, str(e))
+        if raise_daily_quota and _is_daily_quota_error(e):
+            raise DailyQuotaExhausted() from e
         return None
     finally:
         close_gemini_client(client)
@@ -337,17 +352,27 @@ def redact_identity(text: Optional[str]) -> Optional[str]:
     return _IDENTITY_LINE.sub("", text)
 
 
+# Website visitors' free daily answer goes to Gemini only: NVIDIA's free access
+# is for development and testing, not a public service.
+GEMINI_ONLY = "gemini"
+
+
 def generate_ai_text(
     prompt: str,
     system: Optional[str] = None,
     max_tokens: int = DEFAULT_MAX_TOKENS,
+    provider: Optional[str] = None,
 ) -> Optional[AIText]:
     """Try NVIDIA, then Gemini. Return None when neither answers.
 
+    With ``provider=GEMINI_ONLY`` only Gemini is tried, and its daily quota
+    running out raises :class:`DailyQuotaExhausted` instead of returning None.
     Identity lines are removed first: see :func:`redact_identity`.
     """
     prompt = redact_identity(prompt) or ""
     system = redact_identity(system)
+    if provider == GEMINI_ONLY:
+        return _gemini_generate(prompt, system, raise_daily_quota=True)
     return _nvidia_generate(prompt, system, max_tokens) or _gemini_generate(
         prompt, system
     )
@@ -370,9 +395,10 @@ def explain_reading(
     sections: List[dict],
     numerology: Optional[str],
     simple_language: bool = True,
+    provider: Optional[str] = None,
 ) -> Optional[AIText]:
     prompt = build_prompt(scope, headline, theme, sections, numerology, simple_language)
-    return generate_ai_text(prompt, max_tokens=512)
+    return generate_ai_text(prompt, max_tokens=512, provider=provider)
 
 
 def explain_with_gemini(
