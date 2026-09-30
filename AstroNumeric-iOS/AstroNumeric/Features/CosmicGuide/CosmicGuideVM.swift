@@ -213,7 +213,6 @@ final class CosmicGuideVM {
 
         // Profile context
         if let profile = profile {
-            let hideSensitive = AppStore.shared.hideSensitiveDetailsEnabled
             // Calculate Ascendant degree for precise Big Three injection
             var ascendantDetail = risingSign ?? "unknown"
             if let chart = try? await EphemerisEngine.shared.calculateNatalChart(profile: profile),
@@ -222,11 +221,9 @@ final class CosmicGuideVM {
             }
 
             sections.append("""
-            USER IDENTITY (Big Three — The Psychological Core):
-            - Name: \(profile.promptName(hideSensitive: hideSensitive))
-            - Birth Date: \(profile.promptBirthDate(hideSensitive: hideSensitive))
-            - Birth Time: \(profile.promptBirthTime(hideSensitive: hideSensitive))\(birthTimeAssumed ? " ⚠️ UNCONFIRMED — noon used as default" : "")
-            - Birth Place: \(profile.promptBirthPlace(hideSensitive: hideSensitive))
+            USER CHART (Big Three — The Psychological Core). The chart is already
+            calculated; the user's name and birth details are deliberately not shared.
+            - Birth time: \(birthTimeAssumed ? "⚠️ UNCONFIRMED — noon used as default" : "confirmed")
             - Sun Sign: \(profile.sign ?? "unknown") — their ego, drive, and life purpose
             - Moon Sign: \(moonSign ?? "unknown") — their subconscious, emotional reflexes, and trauma responses
             - Rising Sign (Ascendant): \(ascendantDetail)\(birthTimeAssumed ? " ⚠️ ESTIMATED — treat as uncertain, not confirmed" : "") — their physical avatar, \

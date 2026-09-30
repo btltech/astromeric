@@ -11,6 +11,7 @@ from pydantic import BaseModel
 from starlette.concurrency import run_in_threadpool
 
 from ..ai_service import explain_with_gemini, fallback_summary, has_ai_access
+from ..engine.astrology import get_zodiac_sign
 from ..engine.cosmic_guide import ask_cosmic_guide
 from ..exceptions import StructuredLogger
 from ..schemas import ApiResponse, ProfilePayload, ResponseStatus
@@ -213,12 +214,13 @@ async def get_cosmic_guidance(
         if context:
             sections.append({"title": "Context", "highlights": [context]})
         if effective_profile:
+            # The sign is all the guidance needs; the birth date itself never
+            # goes to the AI provider.
             sections.append(
                 {
                     "title": "Profile",
                     "highlights": [
-                        effective_profile.date_of_birth,
-                        effective_profile.timezone or "UTC",
+                        f"Sun sign: {get_zodiac_sign(effective_profile.date_of_birth)}"
                     ],
                 }
             )

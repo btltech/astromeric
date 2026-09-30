@@ -286,3 +286,63 @@ def test_cosmic_guide_access_gate_still_skips_ai(monkeypatch):
     assert result["provider"] == "fallback"
     assert result["reason"] == "ai_not_enabled"
     assert nvidia.requests == []
+
+
+def test_identity_lines_never_reach_the_ai_provider(monkeypatch):
+    from backend.app import ai_service
+
+    sent = {}
+
+    def fake_nvidia(prompt, system, max_tokens):
+        sent["prompt"], sent["system"] = prompt, system
+        return ai_service.AIText(text="ok", provider="nvidia", model="test")
+
+    monkeypatch.setattr(ai_service, "_nvidia_generate", fake_nvidia)
+    system = (
+        "USER IDENTITY:\n"
+        "- Name: Abiola Bolaji\n"
+        "- Birth Date: 1990-06-15\n"
+        "- Birth Time: 08:30\n"
+        "- Birth Place: Lagos, Nigeria\n"
+        "- Sun Sign: Gemini\n"
+        "Email: someone@example.com\n"
+    )
+    ai_service.generate_ai_text("What should I focus on?", system=system)
+
+    for private in ["Abiola", "1990-06-15", "08:30", "Lagos", "someone@example.com"]:
+        assert private not in sent["system"]
+    assert "Sun Sign: Gemini" in sent["system"]
+    assert sent["prompt"] == "What should I focus on?"
+
+
+def test_guidance_sends_the_sign_not_the_birth_date(monkeypatch):
+    from starlette.testclient import TestClient
+
+    from backend.app import ai_service
+    from backend.app.main import app
+    from backend.app.routers import cosmic_guide as guide_router
+
+    sent = {}
+
+    def fake_nvidia(prompt, system, max_tokens):
+        sent["prompt"] = prompt
+        return ai_service.AIText(text="Take one step.", provider="nvidia", model="test")
+
+    monkeypatch.setattr(ai_service, "_nvidia_generate", fake_nvidia)
+    monkeypatch.setattr(guide_router, "has_ai_access", lambda request: True)
+    resp = TestClient(app).post(
+        "/v2/cosmic-guide/guidance",
+        params={"question": "What should I focus on?"},
+        json={
+            "profile": {
+                "name": "Abiola Bolaji",
+                "date_of_birth": "1990-06-15",
+                "timezone": "Africa/Lagos",
+            }
+        },
+    )
+    assert resp.status_code == 200, resp.text
+    assert "1990-06-15" not in sent["prompt"]
+    assert "Abiola" not in sent["prompt"]
+    assert "Africa/Lagos" not in sent["prompt"]
+    assert "Gemini" in sent["prompt"]  # 15 June is a Gemini Sun

@@ -306,7 +306,6 @@ struct OracleView: View {
     
     private func askOracle() async {
         guard let profile = store.activeProfile else { return }
-        let hideSensitive = store.hideSensitiveDetailsEnabled
         let trimmedQuestion = question.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedQuestion.isEmpty else { return }
         
@@ -384,9 +383,7 @@ struct OracleView: View {
         - Rule-based reading: \(builtIn.answer.uppercased()) — \(builtIn.reasoning) \((builtIn.factors ?? []).map(\.text).joined(separator: " "))
         
         USER'S NATAL DATA:
-        - Name: \(profile.promptName(hideSensitive: hideSensitive))
         - Sun Sign: \(profile.sign ?? "unknown")
-        - Birth Date: \(profile.promptBirthDate(hideSensitive: hideSensitive))
         
         RULES:
         1. If the Moon is Void of Course, strongly lean toward NO or caution.

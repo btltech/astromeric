@@ -316,12 +316,38 @@ def _gemini_generate(prompt: str, system: Optional[str]) -> Optional[AIText]:
         close_gemini_client(client)
 
 
+# Lines that name the person or their birth details. The readings are already
+# calculated on our side, so a hosted model never needs who someone is, only
+# the signs, positions and numbers; this keeps identity out even when an older
+# app build still puts it in the prompt.
+_IDENTITY_LINE = re.compile(
+    r"^[ \t]*(?:[-*\u2022][ \t]*)?"
+    r"(?:user'?s[ \t]+)?"
+    r"(?:name|full[ \t]+name|birth[ \t]*date|date[ \t]+of[ \t]+birth|dob"
+    r"|birth[ \t]*time|time[ \t]+of[ \t]+birth|birth[ \t]*place|place[ \t]+of[ \t]+birth"
+    r"|birthplace|email)[ \t]*:.*(?:\r?\n|$)",
+    re.IGNORECASE | re.MULTILINE,
+)
+
+
+def redact_identity(text: Optional[str]) -> Optional[str]:
+    """Drop lines that give a name, birth date, time or place, or an email."""
+    if not text:
+        return text
+    return _IDENTITY_LINE.sub("", text)
+
+
 def generate_ai_text(
     prompt: str,
     system: Optional[str] = None,
     max_tokens: int = DEFAULT_MAX_TOKENS,
 ) -> Optional[AIText]:
-    """Try NVIDIA, then Gemini. Return None when neither answers."""
+    """Try NVIDIA, then Gemini. Return None when neither answers.
+
+    Identity lines are removed first: see :func:`redact_identity`.
+    """
+    prompt = redact_identity(prompt) or ""
+    system = redact_identity(system)
     return _nvidia_generate(prompt, system, max_tokens) or _gemini_generate(
         prompt, system
     )
