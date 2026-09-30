@@ -562,7 +562,7 @@ fun ProfileListScreen(
                             onClick = {
                                 launchMailIntent(
                                     context = context,
-                                    address = "support@astromeric.app",
+                                    address = "support@myrepairflow.com",
                                     subject = context.getString(R.string.support_help_email_subject),
                                     body = buildSupportEmailBody(
                                         profilesCount = profiles.size,
@@ -645,7 +645,7 @@ fun ProfileListScreen(
                         onClick = {
                             launchMailIntent(
                                 context = context,
-                                address = "support@astromeric.app",
+                                address = "support@myrepairflow.com",
                                 subject = context.getString(R.string.support_help_email_subject),
                                 body = buildSupportEmailBody(
                                     profilesCount = profiles.size,

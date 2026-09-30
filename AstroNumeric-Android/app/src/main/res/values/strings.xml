@@ -143,7 +143,7 @@
     <string name="privacy_screen_section_backups_bullet_2">Plain-text sharing can be redacted when privacy mode is enabled.</string>
     <string name="privacy_screen_section_deletion_title">Deletion and control</string>
     <string name="privacy_screen_section_deletion_bullet_1">Deleting a profile removes it from the local Android store.</string>
-    <string name="privacy_screen_section_deletion_bullet_2">Questions about backend-held data such as synced friend records or notification tokens should go to privacy@astromeric.app.</string>
+    <string name="privacy_screen_section_deletion_bullet_2">Questions about backend-held data such as synced friend records or notification tokens should go to support@myrepairflow.com.</string>
     <string name="privacy_screen_hero_eyebrow">Privacy</string>
     <string name="privacy_screen_hero_title">Make the data boundary legible.</string>
     <string name="privacy_screen_hero_body">This screen explains what stays local, what still reaches the backend, and how redaction changes the visible UI.</string>
@@ -162,9 +162,9 @@
     <string name="privacy_screen_share_text_summary">Share text summary</string>
     <string name="privacy_screen_import_profile_backup">Import profile backup</string>
     <string name="privacy_screen_questions_title">Questions?</string>
-    <string name="privacy_screen_questions_body">For privacy questions, deletion requests, or backend-held data concerns, email privacy@astromeric.app.</string>
+    <string name="privacy_screen_questions_body">For privacy questions, deletion requests, or backend-held data concerns, email support@myrepairflow.com.</string>
     <string name="privacy_screen_privacy_question_subject">AstroNumeric privacy question</string>
-    <string name="privacy_screen_privacy_email">privacy@astromeric.app</string>
+    <string name="privacy_screen_privacy_email">support@myrepairflow.com</string>
     <string name="profile_hub_hero_eyebrow">Profile</string>
     <string name="profile_hub_hero_title">Your Cosmic Identity</string>
     <string name="profile_hub_hero_body">Manage local-first identity, privacy, alerts, and account state without leaving the main shell.</string>
@@ -296,7 +296,7 @@
     <string name="support_help_question_edit_birth_details">How do I edit my birth details?</string>
     <string name="support_help_answer_edit_birth_details">Open Profile, pick the profile you want, then tap Edit. Saving recalculates the profile-backed readings automatically.</string>
     <string name="support_help_question_delete_data">How do I delete my data?</string>
-    <string name="support_help_answer_delete_data">Delete a profile from the profile list to remove it from the local Android store. For backend-held data such as push tokens or synced friend records, email privacy@astromeric.app.</string>
+    <string name="support_help_answer_delete_data">Delete a profile from the profile list to remove it from the local Android store. For backend-held data such as push tokens or synced friend records, email support@myrepairflow.com.</string>
     <string name="support_help_question_hide_sensitive_details">What does Hide Sensitive Details do?</string>
     <string name="support_help_answer_hide_sensitive_details">It masks names, birth details, share cards, and some cached labels across the UI. It does not remove the underlying data needed for chart calculations, and backup files still retain full details for restore.</string>
     <string name="support_help_section_readings_accuracy_title">Readings &amp; Accuracy</string>

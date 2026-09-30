@@ -1,6 +1,7 @@
 package com.astromeric.android.core.data.remote
 
 import com.astromeric.android.BuildConfig
+import com.astromeric.android.core.data.security.FriendsOwnerKey
 import com.astromeric.android.core.model.AffirmationData
 import com.astromeric.android.core.model.AIExplainRequestData
 import com.astromeric.android.core.model.AIExplainResponseData
@@ -200,24 +201,28 @@ interface AstroApiService {
         @Query("category") category: String? = null,
     ): PaginatedGlossaryEntriesData
 
+    // The owner key is a secret for the whole friend list, so it travels in a header
+    // (URLs end up in logs), never in the path or body.
     @POST("v2/friends/add")
     suspend fun addFriend(
+        @Header(FriendsOwnerKey.HEADER) ownerKey: String,
         @Body request: AddFriendRequestData,
     ): V2ApiResponse<FriendProfileData>
 
-    @GET("v2/friends/list/{ownerId}")
+    @GET("v2/friends/list")
     suspend fun listFriends(
-        @Path("ownerId") ownerId: String,
+        @Header(FriendsOwnerKey.HEADER) ownerKey: String,
     ): V2ApiResponse<List<FriendProfileData>>
 
-    @DELETE("v2/friends/remove/{ownerId}/{friendId}")
+    @DELETE("v2/friends/remove/{friendId}")
     suspend fun removeFriend(
-        @Path("ownerId") ownerId: String,
+        @Header(FriendsOwnerKey.HEADER) ownerKey: String,
         @Path("friendId") friendId: String,
     ): V2ApiResponse<Map<String, Int>>
 
     @POST("v2/friends/compare-all")
     suspend fun compareAllFriends(
+        @Header(FriendsOwnerKey.HEADER) ownerKey: String,
         @Body request: CompareAllFriendsRequestData,
     ): V2ApiResponse<List<FriendCompatibilityData>>
 
@@ -531,12 +536,7 @@ class AstroRemoteDataSource(
         friend: FriendProfileData,
     ): Result<FriendProfileData> =
         runCatching {
-            apiService.addFriend(
-                AddFriendRequestData(
-                    ownerId = ownerId,
-                    friend = friend,
-                ),
-            ).data
+            apiService.addFriend(ownerId, AddFriendRequestData(friend = friend)).data
         }
 
     suspend fun listFriends(ownerId: String): Result<List<FriendProfileData>> =
@@ -555,10 +555,8 @@ class AstroRemoteDataSource(
     ): Result<List<FriendCompatibilityData>> =
         runCatching {
             apiService.compareAllFriends(
-                CompareAllFriendsRequestData(
-                    ownerId = ownerId,
-                    ownerProfile = profile.toPayload(),
-                ),
+                ownerId,
+                CompareAllFriendsRequestData(ownerProfile = profile.toPayload()),
             ).data
         }
 
@@ -1031,6 +1029,7 @@ class AstroRemoteDataSource(
     companion object {
         fun create(): AstroRemoteDataSource {
             val logging = HttpLoggingInterceptor().apply {
+                redactHeader(FriendsOwnerKey.HEADER)
                 level = if (BuildConfig.DEBUG) {
                     HttpLoggingInterceptor.Level.BASIC
                 } else {

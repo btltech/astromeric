@@ -16,10 +16,14 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.ui.platform.LocalContext
+import com.astromeric.android.core.data.security.FriendsOwnerKey
+import kotlinx.coroutines.Dispatchers
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -56,6 +60,7 @@ import com.astromeric.android.core.model.toSavedRelationship
 import com.astromeric.android.core.ui.PremiumContentCard
 import com.astromeric.android.core.ui.PremiumHeroCard
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -123,7 +128,13 @@ fun RelationshipsScreen(
     } else {
         null
     }
-    val ownerId = selectedProfile?.id?.toString()
+    // The owner key is a per-install secret, worked out off the main thread.
+    val ownerContext = LocalContext.current
+    val ownerId by produceState<String?>(initialValue = null, selectedProfile?.id) {
+        value = selectedProfile?.let { profile ->
+            withContext(Dispatchers.IO) { FriendsOwnerKey.ownerId(ownerContext, profile.id) }
+        }
+    }
     val existingSavedRelationship = savedRelationships.firstOrNull {
         it.primaryProfileId == selectedProfile?.id &&
             it.comparisonProfileId == (if (useSavedProfileForCompatibility) compatibilityComparisonProfile?.id else manualComparisonRelationshipId) &&
@@ -226,17 +237,18 @@ fun RelationshipsScreen(
         }
     }
 
-    LaunchedEffect(selectedProfile?.id, friendsRefreshVersion) {
+    LaunchedEffect(selectedProfile?.id, ownerId, friendsRefreshVersion) {
         friendsError = null
-        if (selectedProfile == null || ownerId == null) {
+        val ownerKey = ownerId
+        if (selectedProfile == null || ownerKey == null) {
             syncedFriends = emptyList()
             friendCompatibilities = emptyList()
         } else {
-            syncedFriends = remoteDataSource.listFriends(ownerId)
+            syncedFriends = remoteDataSource.listFriends(ownerKey)
                 .onFailure { friendsError = it.message ?: syncedFriendsLoadError }
                 .getOrDefault(emptyList())
 
-            friendCompatibilities = remoteDataSource.compareAllFriends(ownerId, selectedProfile)
+            friendCompatibilities = remoteDataSource.compareAllFriends(ownerKey, selectedProfile)
                 .onFailure { friendsError = friendsError ?: it.message ?: friendCompatibilityLoadError }
                 .getOrDefault(emptyList())
         }

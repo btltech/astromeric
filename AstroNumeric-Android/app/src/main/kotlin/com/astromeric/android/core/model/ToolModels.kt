@@ -1,5 +1,6 @@
 package com.astromeric.android.core.model
 
+import com.google.gson.annotations.JsonAdapter
 import com.google.gson.annotations.SerializedName
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -146,7 +147,9 @@ data class MoonRitualDetail(
     val signFocus: String? = null,
     @SerializedName("activities")
     val activities: List<String> = emptyList(),
+    // The server sends this as one comma-separated string; older builds sent a list.
     @SerializedName("avoid")
+    @JsonAdapter(StringOrListAdapter::class, nullSafe = false)
     val avoid: List<String> = emptyList(),
     @SerializedName("element_boost")
     val elementBoost: String? = null,

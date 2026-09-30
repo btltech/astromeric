@@ -378,7 +378,7 @@ fun PrivacyScreen(
                 OutlinedButton(
                     onClick = {
                         val emailIntent = Intent(Intent.ACTION_SENDTO).apply {
-                            data = Uri.parse("mailto:privacy@astromeric.app")
+                            data = Uri.parse("mailto:support@myrepairflow.com")
                             putExtra(Intent.EXTRA_SUBJECT, context.getString(R.string.privacy_screen_privacy_question_subject))
                             putExtra(Intent.EXTRA_TEXT, privacySupportEmailBody(context))
                         }
