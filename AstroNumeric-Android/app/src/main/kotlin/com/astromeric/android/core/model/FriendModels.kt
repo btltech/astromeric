@@ -29,15 +29,11 @@ data class FriendProfileData(
 )
 
 data class AddFriendRequestData(
-    @SerializedName("owner_id")
-    val ownerId: String,
     @SerializedName("friend")
     val friend: FriendProfileData,
 )
 
 data class CompareAllFriendsRequestData(
-    @SerializedName("owner_id")
-    val ownerId: String,
     @SerializedName("owner_profile")
     val ownerProfile: ProfilePayload,
 )

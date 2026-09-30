@@ -32,10 +32,13 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.ui.platform.LocalContext
+import com.astromeric.android.core.data.security.FriendsOwnerKey
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -50,8 +53,10 @@ import com.astromeric.android.core.model.AppProfile
 import com.astromeric.android.core.model.FriendCompatibilityData
 import com.astromeric.android.core.model.FriendProfileData
 import kotlinx.coroutines.async
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -79,20 +84,26 @@ fun FriendsScreen(
     var showAddSheet by remember { mutableStateOf(false) }
     val addSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    val ownerId = selectedProfile?.id?.toString().orEmpty()
+    // The owner key is a per-install secret, worked out off the main thread.
+    val ownerContext = LocalContext.current
+    val ownerId by produceState<String?>(initialValue = null, selectedProfile?.id) {
+        value = selectedProfile?.let { profile ->
+            withContext(Dispatchers.IO) { FriendsOwnerKey.ownerId(ownerContext, profile.id) }
+        }
+    }
 
-    LaunchedEffect(selectedProfile?.id, refreshVersion) {
-        if (ownerId.isBlank()) return@LaunchedEffect
+    LaunchedEffect(selectedProfile?.id, ownerId, refreshVersion) {
+        val ownerKey = ownerId ?: return@LaunchedEffect
         isLoading = true
         errorMessage = null
         coroutineScope {
-            val friendsDeferred = async { remoteDataSource.listFriends(ownerId) }
+            val friendsDeferred = async { remoteDataSource.listFriends(ownerKey) }
             val friendsResult = friendsDeferred.await()
             friendsResult.onFailure { errorMessage = it.message ?: friendsLoadError }
             friends = friendsResult.getOrDefault(emptyList())
 
             if (selectedProfile != null && friends.isNotEmpty()) {
-                val compatResult = async { remoteDataSource.compareAllFriends(ownerId, selectedProfile) }
+                val compatResult = async { remoteDataSource.compareAllFriends(ownerKey, selectedProfile) }
                 compatibilities = compatResult.await().getOrDefault(emptyList())
             }
         }
@@ -198,7 +209,8 @@ fun FriendsScreen(
                                 friend = friend,
                                 onRemove = {
                                     scope.launch {
-                                        remoteDataSource.removeFriend(ownerId, friend.id)
+                                        val ownerKey = ownerId ?: return@launch
+                                        remoteDataSource.removeFriend(ownerKey, friend.id)
                                             .onSuccess { refreshVersion += 1 }
                                             .onFailure { errorMessage = it.message ?: friendRemoveError }
                                     }
@@ -219,13 +231,14 @@ fun FriendsScreen(
             onDismiss = { showAddSheet = false },
             onSave = { name, dob, relType, avatar ->
                 scope.launch {
+                    val ownerKey = ownerId ?: return@launch
                     val newFriend = FriendProfileData(
                         name = name,
                         dateOfBirth = dob,
                         relationshipType = relType,
                         avatarEmoji = avatar,
                     )
-                    remoteDataSource.addFriend(ownerId, newFriend)
+                    remoteDataSource.addFriend(ownerKey, newFriend)
                         .onSuccess {
                             showAddSheet = false
                             refreshVersion += 1

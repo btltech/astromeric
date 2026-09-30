@@ -242,7 +242,7 @@ private fun launchSupportEmail(
     subject: String,
 ) {
     val emailIntent = Intent(Intent.ACTION_SENDTO).apply {
-        data = Uri.parse("mailto:support@astromeric.app")
+        data = Uri.parse("mailto:support@myrepairflow.com")
         putExtra(Intent.EXTRA_SUBJECT, subject)
         putExtra(Intent.EXTRA_TEXT, supportEmailBody(context))
     }
