@@ -2,23 +2,15 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { fetchWeeklyForecast, type ForecastDay, type ProfilePayload } from '../api/client';
 import { parseCalendarDate } from '../utils/dates';
-import { getComparisonUrl } from '../utils/comparison';
-import { toast } from './Toast';
 
 interface Props {
   profile: ProfilePayload;
-  showShare?: boolean;
 }
 
-export function WeeklyVibe({ profile, showShare = true }: Props) {
+export function WeeklyVibe({ profile }: Props) {
   const [forecast, setForecast] = useState<ForecastDay[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const latitude = profile.location?.latitude;
-  const longitude = profile.location?.longitude;
-  const timezone = profile.location?.timezone;
-  const canShareComparison = latitude != null && longitude != null && Boolean(timezone);
 
   useEffect(() => {
     let cancelled = false;
@@ -67,30 +59,6 @@ export function WeeklyVibe({ profile, showShare = true }: Props) {
     [forecast]
   );
   const rhythm = useMemo(() => buildWeeklyRhythm(forecast), [forecast]);
-
-  async function handleShareComparison() {
-    if (!canShareComparison || latitude == null || longitude == null || !timezone) {
-      toast.error('Add birth location details to enable comparison sharing.');
-      return;
-    }
-
-    try {
-      const url = getComparisonUrl({
-        name: profile.name,
-        dob: profile.date_of_birth,
-        tob: profile.time_of_birth,
-        lat: latitude,
-        lng: longitude,
-        tz: timezone,
-      });
-
-      await navigator.clipboard.writeText(url);
-      toast.success('Comparison link copied! Send it to a friend.');
-    } catch (err) {
-      console.error('Failed to copy comparison link:', err);
-      toast.error('Could not copy the comparison link.');
-    }
-  }
 
   if (loading) {
     return (
@@ -168,21 +136,6 @@ export function WeeklyVibe({ profile, showShare = true }: Props) {
           </h3>
           <p className="weekly-vibe-copy">{getWeeklySummary(forecast)}</p>
         </div>
-        {showShare && (
-          <button
-            className="btn-aura-share weekly-vibe-share"
-            type="button"
-            onClick={handleShareComparison}
-            disabled={!canShareComparison}
-            title={
-              canShareComparison
-                ? 'Copy a comparison link'
-                : 'Add a birth location to enable comparison sharing'
-            }
-          >
-            Share & Compare
-          </button>
-        )}
       </div>
 
       <div className="weekly-vibe-overview">

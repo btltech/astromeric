@@ -194,26 +194,13 @@ struct WeeklyVibeView: View {
     // MARK: - Actions
     
     private func shareVibeLink() {
-        guard let profile = store.selectedProfile else { return }
+        // Only the website address is shared. The old link carried the person's name,
+        // birth date and coordinates in the URL, and the page it pointed to no longer exists.
+        shareItems = [
+            "Check out AstroNumeric's weekly vibe ✨",
+            LegalConfig.websiteBaseURL
+        ]
 
-        if store.hideSensitiveDetailsEnabled {
-            shareItems = [
-                "Check out AstroNumeric's weekly vibe ✨",
-                LegalConfig.websiteBaseURL
-            ]
-        } else {
-            let shareURL = viewModel.getShareURL(for: profile)
-            UIPasteboard.general.string = shareURL
-            if let url = URL(string: shareURL) {
-                shareItems = [
-                    "Check out my cosmic vibe! 🌟",
-                    url
-                ]
-            } else {
-                shareItems = ["Check out my cosmic vibe! 🌟"]
-            }
-        }
-        
         HapticManager.notification(.success)
         showShareSheet = true
     }
@@ -325,16 +312,6 @@ final class WeeklyVibeVM {
             self.error = error.localizedDescription
             // Silently fail - weekly vibe is optional content
         }
-    }
-    
-    /// Generate comparison URL for sharing
-    func getShareURL(for profile: Profile) -> String {
-        let shareableProfile = ShareableProfile(from: profile)
-        let encodedProfile = shareableProfile.encode() ?? ""
-        let compareURL = LegalConfig.websiteBaseURL.appendingPathComponent("compare")
-        var components = URLComponents(url: compareURL, resolvingAgainstBaseURL: false)
-        components?.queryItems = [URLQueryItem(name: "p", value: encodedProfile)]
-        return components?.url?.absoluteString ?? compareURL.absoluteString
     }
 }
 
