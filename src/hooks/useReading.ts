@@ -4,8 +4,10 @@
  */
 import { useCallback } from 'react';
 import { useStore } from '../store/useStore';
-import { ApiError, fetchForecast, saveReading } from '../api/client';
-import type { PredictionData, SavedProfile } from '../types';
+import { ApiError, fetchForecast, fetchNatalProfile, saveReading } from '../api/client';
+import { buildPredictionData } from '../utils/prediction';
+import { toProfilePayload } from '../utils/profilePayload';
+import type { SavedProfile } from '../types';
 
 export function useReading() {
   const {
@@ -40,29 +42,25 @@ export function useReading() {
       setError('');
 
       try {
-        const hasCoordinates =
-          typeof profile.latitude === 'number' &&
-          typeof profile.longitude === 'number' &&
-          profile.latitude !== null &&
-          profile.longitude !== null;
+        // Forecasts are worked out for a place, so a profile without one can't get a reading.
+        // Nothing is made up: a missing birth time is sent as missing, and the server
+        // marks the reading as estimated.
+        const payload = toProfilePayload(profile);
+        if (!payload.location) {
+          setError('Add a birthplace to this profile to get a reading.');
+          return null;
+        }
 
-        const payload = {
-          name: profile.name,
-          date_of_birth: profile.date_of_birth,
-          time_of_birth: profile.time_of_birth || '12:00:00',
-          place_of_birth: profile.place_of_birth || undefined,
-          location: {
-            latitude: hasCoordinates ? (profile.latitude as number) : 0,
-            longitude: hasCoordinates ? (profile.longitude as number) : 0,
-            timezone: profile.timezone || 'UTC',
-          },
-          house_system: profile.house_system || 'Placidus',
-        };
-
-        const data = await fetchForecast(payload, selectedScope);
+        // The forecast has no signs of its own; the birth chart supplies them. If the
+        // chart fails the reading still shows, just without the signs.
+        const [forecast, natal] = await Promise.all([
+          fetchForecast(payload, selectedScope),
+          fetchNatalProfile(payload).catch(() => null),
+        ]);
+        const data = buildPredictionData(forecast, natal);
         // Persist reading only when the user opted in and the profile is saved (positive ID)
         if (allowCloudHistory && profileId > 0) {
-          const date = (data as PredictionData).date || new Date().toISOString();
+          const date = data.date || new Date().toISOString();
           saveReading(
             {
               profile_id: profileId,
@@ -75,7 +73,7 @@ export function useReading() {
             console.warn('Cloud history save failed (non-blocking):', err);
           });
         }
-        setResult(data as unknown as PredictionData);
+        setResult(data);
         return data;
       } catch (err) {
         console.error('Prediction error:', err);

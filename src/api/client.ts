@@ -29,6 +29,8 @@ export interface ForecastSection {
   rating?: number;
   highlights?: string[];
   affirmation?: string;
+  /** Same numbers as `topics`, under the name the section grid reads. */
+  topic_scores?: Record<string, number>;
 }
 
 export interface ForecastResponse {
@@ -38,6 +40,14 @@ export interface ForecastResponse {
   overall_score: number;
   profile: ProfilePayload;
   generated_at: string;
+  tldr?: string;
+  active_transits?: Array<{
+    transit_planet: string;
+    natal_planet: string;
+    aspect: string;
+    orb: number;
+  }>;
+  birth_time_assumed?: boolean;
   // Legacy fields for backwards compatibility
   theme?: string;
   ratings?: Record<string, number>;
@@ -397,6 +407,7 @@ export async function fetchForecast(
         return {
           ...section,
           highlights,
+          topic_scores: section.topics,
         };
       }),
     };

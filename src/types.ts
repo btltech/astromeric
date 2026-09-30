@@ -57,9 +57,23 @@ export interface DailyGuidance {
   current_planetary_hour?: PlanetaryHourInfo | null;
 }
 
+export interface ActiveTransit {
+  transit_planet: string;
+  natal_planet: string;
+  aspect: string;
+  orb: number;
+}
+
 export interface PredictionData {
   scope: string;
   date: string;
+  /** One-paragraph summary of the day, week or month, as the server writes it. */
+  tldr?: string;
+  /** 0 to 10. */
+  overall_score?: number;
+  active_transits?: ActiveTransit[];
+  birth_time_assumed?: boolean;
+  moon_sign_uncertain?: boolean;
   theme?: string;
   mood?: string;
   advice?: string;
