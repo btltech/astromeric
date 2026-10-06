@@ -43,8 +43,8 @@ export function TermsOfService() {
           <section>
             <h2>3. Accounts</h2>
             <p>
-              Creating an account is optional. If you create an account, you can request deletion
-              from within the iOS app (Profile → Account → Delete Account) or by contacting us.
+              The iOS and Android apps need no account. Creating a website account is optional; if
+              you create one, you can ask us to delete it by contacting us.
             </p>
           </section>
 
