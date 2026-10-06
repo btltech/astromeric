@@ -44,7 +44,7 @@ export function SupportCenter() {
             <h2>1. Contact support</h2>
             <p>
               AstroNumeric support is available for iOS, Android, and web app questions. If you need
-              help with a bug, billing issue, account problem, or feature question, email{' '}
+              help with a bug, a problem with your data, or a feature question, email{' '}
               <a href={`mailto:${supportEmail}`}>{supportEmail}</a>.
             </p>
             <p>
